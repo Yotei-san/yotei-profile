@@ -4,96 +4,96 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  
 }
 
 model User {
-  id                 String    @id @default(cuid())
-  email              String    @unique
-  username           String    @unique
-  passwordHash       String
-  displayName        String?
-  bio                String?
+  id                   String      @id @default(cuid())
+  email                String      @unique
+  username             String      @unique
+  passwordHash         String
+  displayName          String?
+  bio                  String?
 
-  plan               String    @default("free")
-  premiumUntil       DateTime?
-  premiumBadge       Boolean   @default(false)
+  plan                 String      @default("free")
+  premiumUntil         DateTime?
+  premiumBadge         Boolean     @default(false)
 
-  stripeCustomerId   String?   @unique
-  stripeSubscriptionId String? @unique
-  stripePriceId      String?
-  subscriptionStatus String?
+  stripeCustomerId     String?     @unique
+  stripeSubscriptionId String?     @unique
+  stripePriceId        String?
+  subscriptionStatus   String?
 
-  avatarUrl          String?
-  bannerUrl          String?
-  backgroundUrl      String?
-  videoBgUrl         String?
+  avatarUrl            String?
+  bannerUrl            String?
+  backgroundUrl        String?
+  videoBgUrl           String?
 
-  themeColor         String?   @default("#2563eb")
-  textColor          String?   @default("#ffffff")
-  cardOpacity        Int?      @default(72)
-  cardBlur           Int?      @default(16)
-  backgroundStyle    String?   @default("gradient")
+  themeColor           String?     @default("#2563eb")
+  textColor            String?     @default("#ffffff")
+  cardOpacity          Int?        @default(72)
+  cardBlur             Int?        @default(16)
+  backgroundStyle      String?     @default("gradient")
 
-  websiteUrl         String?
-  discordUrl         String?
-  githubUrl          String?
-  xUrl               String?
-  instagramUrl       String?
-  youtubeUrl         String?
-  tiktokUrl          String?
+  websiteUrl           String?
+  discordUrl           String?
+  githubUrl            String?
+  xUrl                 String?
+  instagramUrl         String?
+  youtubeUrl           String?
+  tiktokUrl            String?
 
-  musicUrl           String?
-  musicTitle         String?
-  musicArtist        String?
-  musicCoverUrl      String?
+  musicUrl             String?
+  musicTitle           String?
+  musicArtist          String?
+  musicCoverUrl        String?
 
-  aboutTitle         String?
-  aboutText          String?
+  aboutTitle           String?
+  aboutText            String?
 
-  showSocials        Boolean   @default(true)
-  showMusic          Boolean   @default(true)
-  showStats          Boolean   @default(true)
-  showAbout          Boolean   @default(true)
-  showGallery        Boolean   @default(true)
-  showReactions      Boolean   @default(true)
+  showSocials          Boolean     @default(true)
+  showMusic            Boolean     @default(true)
+  showStats            Boolean     @default(true)
+  showAbout            Boolean     @default(true)
+  showGallery          Boolean     @default(true)
+  showReactions        Boolean     @default(true)
 
-  buttonStyle        String?   @default("solid")
-  glowIntensity      Int?      @default(35)
+  buttonStyle          String?     @default("solid")
+  glowIntensity        Int?        @default(35)
 
-  stat1Label         String?
-  stat1Value         String?
-  stat2Label         String?
-  stat2Value         String?
-  stat3Label         String?
-  stat3Value         String?
+  stat1Label           String?
+  stat1Value           String?
+  stat2Label           String?
+  stat2Value           String?
+  stat3Label           String?
+  stat3Value           String?
 
-  badge1             String?
-  badge2             String?
-  badge3             String?
+  badge1               String?
+  badge2               String?
+  badge3               String?
 
-  gallery1           String?
-  gallery2           String?
-  gallery3           String?
-  gallery4           String?
-  gallery5           String?
-  gallery6           String?
+  gallery1             String?
+  gallery2             String?
+  gallery3             String?
+  gallery4             String?
+  gallery5             String?
+  gallery6             String?
 
-  presetTheme        String?   @default("custom")
-  layoutStyle        String?   @default("stacked")
-  containerWidth     String?   @default("normal")
-  avatarPosition     String?   @default("center")
-  linksStyle         String?   @default("rounded")
-  blocksOrder        String?   @default("stats,about,gallery,music,reactions,links")
+  presetTheme          String?     @default("custom")
+  layoutStyle          String?     @default("stacked")
+  containerWidth       String?     @default("normal")
+  avatarPosition       String?     @default("center")
+  linksStyle           String?     @default("rounded")
+  blocksOrder          String?     @default("stats,about,gallery,music,reactions,links")
 
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
 
-  sessions           Session[]
-  links              Link[]
-  reactions          Reaction[]
-  presets            Preset[]
-  profileViews       ProfileView[]
+  sessions             Session[]
+  links                Link[]
+  reactions            Reaction[]
+  presets              Preset[]
+  profileViews         ProfileView[]
+  badges               UserBadge[]
 }
 
 model Preset {
@@ -190,4 +190,37 @@ model ProfileView {
   @@index([createdAt])
   @@index([country])
   @@index([deviceType])
+}
+
+model Badge {
+  id            String     @id @default(cuid())
+  key           String     @unique
+  name          String
+  description   String?
+  icon          String?
+  color         String?
+  category      String?
+  rarity        String?
+  isHidden      Boolean    @default(false)
+  isAutoAwarded Boolean    @default(false)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  users         UserBadge[]
+}
+
+model UserBadge {
+  id        String   @id @default(cuid())
+  userId    String
+  badgeId   String
+  earnedAt  DateTime @default(now())
+  isPinned  Boolean  @default(false)
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badge     Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, badgeId])
+  @@index([userId])
+  @@index([badgeId])
+  @@index([earnedAt])
 }
