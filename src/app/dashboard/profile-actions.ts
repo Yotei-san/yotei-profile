@@ -31,6 +31,53 @@ function isPremiumPlan(user: { plan: string; premiumUntil: Date | null }) {
   return new Date(user.premiumUntil) > new Date();
 }
 
+function getPresetThemeValues(presetTheme: string | null) {
+  switch (presetTheme) {
+    case "minimal":
+      return {
+        themeColor: "#64748b",
+        textColor: "#f8fafc",
+        backgroundStyle: "solid",
+        buttonStyle: "solid",
+        glowIntensity: 20,
+      };
+    case "dark-glass":
+      return {
+        themeColor: "#8b5cf6",
+        textColor: "#f8fafc",
+        backgroundStyle: "gradient",
+        buttonStyle: "glass",
+        glowIntensity: 35,
+      };
+    case "neon-blue":
+      return {
+        themeColor: "#00e5ff",
+        textColor: "#f8fafc",
+        backgroundStyle: "gradient",
+        buttonStyle: "solid",
+        glowIntensity: 55,
+      };
+    case "crimson":
+      return {
+        themeColor: "#ef4444",
+        textColor: "#fff1f2",
+        backgroundStyle: "gradient",
+        buttonStyle: "solid",
+        glowIntensity: 45,
+      };
+    case "cyber":
+      return {
+        themeColor: "#22c55e",
+        textColor: "#ecfeff",
+        backgroundStyle: "gradient",
+        buttonStyle: "outline",
+        glowIntensity: 50,
+      };
+    default:
+      return null;
+  }
+}
+
 export async function updateProfile(formData: FormData): Promise<void> {
   const user = await requireUser();
 
@@ -109,8 +156,22 @@ export async function updateProfile(formData: FormData): Promise<void> {
   }
 
   if (hasField(formData, "presetTheme")) {
-    data.presetTheme =
+    const presetTheme =
       getNullableString(formData, "presetTheme") ?? "custom";
+
+    data.presetTheme = presetTheme;
+
+    if (presetTheme !== "custom") {
+      const presetValues = getPresetThemeValues(presetTheme);
+
+      if (presetValues) {
+        data.themeColor = presetValues.themeColor;
+        data.textColor = presetValues.textColor;
+        data.backgroundStyle = presetValues.backgroundStyle;
+        data.buttonStyle = presetValues.buttonStyle;
+        data.glowIntensity = presetValues.glowIntensity;
+      }
+    }
   }
 
   if (hasField(formData, "layoutStyle")) {
