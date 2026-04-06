@@ -1,5 +1,6 @@
 "use client";
 
+import { upload } from "@vercel/blob/client";
 import { useMemo, useRef, useState } from "react";
 
 type Props = {
@@ -15,7 +16,6 @@ function isVideoField(name: string, label: string) {
 
 function isVideoUrl(url: string) {
   const normalized = url.toLowerCase();
-
   return (
     normalized.endsWith(".mp4") ||
     normalized.endsWith(".webm") ||
@@ -47,33 +47,43 @@ export default function UploadField({ label, name, initialValue }: Props) {
     setError("");
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
+      const isVideo = allowVideo && file.type.startsWith("video/");
 
-      const response = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
+      if (isVideo) {
+        const blob = await upload(file.name, file, {
+          access: "public",
+          handleUploadUrl: "/api/upload/client",
+        });
 
-      const contentType = response.headers.get("content-type") || "";
-
-      let data: any = null;
-      if (contentType.includes("application/json")) {
-        data = await response.json();
+        setValue(blob.url);
       } else {
-        const text = await response.text();
-        throw new Error(text || "Erro no upload.");
-      }
+        const formData = new FormData();
+        formData.append("file", file);
 
-      if (!response.ok) {
-        throw new Error(data?.error || "Erro no upload.");
-      }
+        const response = await fetch("/api/upload", {
+          method: "POST",
+          body: formData,
+        });
 
-      if (!data?.url || typeof data.url !== "string") {
-        throw new Error("Upload concluído, mas a URL não foi retornada.");
-      }
+        const contentType = response.headers.get("content-type") || "";
 
-      setValue(data.url);
+        if (!contentType.includes("application/json")) {
+          const text = await response.text();
+          throw new Error(text || "Erro no upload.");
+        }
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data?.error || "Erro no upload.");
+        }
+
+        if (!data?.url || typeof data.url !== "string") {
+          throw new Error("Upload concluído, mas a URL não foi retornada.");
+        }
+
+        setValue(data.url);
+      }
 
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
@@ -81,19 +91,7 @@ export default function UploadField({ label, name, initialValue }: Props) {
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Erro no upload.";
-
-      if (
-        allowVideo &&
-        (
-          message.includes("Request Entity Too Large") ||
-          message.includes("FUNCTION_PAYLOAD_TOO_LARGE") ||
-          message.includes("413")
-        )
-      ) {
-        setError("Vídeo muito grande para upload via servidor no Vercel. Use um arquivo menor que ~4.5 MB.");
-      } else {
-        setError(message);
-      }
+      setError(message);
     } finally {
       setUploading(false);
     }
