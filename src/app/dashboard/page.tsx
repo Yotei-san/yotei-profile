@@ -8,12 +8,12 @@ import PlanBannerActions from "./PlanBannerActions";
 import PricingQuickActions from "./PricingQuickActions";
 import {
   applySavedPreset,
-  createLink,
   deletePreset,
   logoutAction,
   savePreset,
-  updateProfile,
 } from "./actions";
+import { updateProfile } from "./profile-actions";
+import { createLink } from "./links-actions";
 
 type DashboardPageProps = {
   searchParams?: Promise<{
