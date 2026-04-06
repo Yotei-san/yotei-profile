@@ -1,0 +1,192 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id                 String    @id @default(cuid())
+  email              String    @unique
+  username           String    @unique
+  passwordHash       String
+  displayName        String?
+  bio                String?
+
+  plan               String    @default("free")
+  premiumUntil       DateTime?
+  premiumBadge       Boolean   @default(true)
+
+  stripeCustomerId   String?   @unique
+  stripeSubscriptionId String? @unique
+  stripePriceId      String?
+  subscriptionStatus String?
+
+  avatarUrl          String?
+  bannerUrl          String?
+  backgroundUrl      String?
+  videoBgUrl         String?
+
+  themeColor         String?   @default("#2563eb")
+  textColor          String?   @default("#ffffff")
+  cardOpacity        Int?      @default(72)
+  cardBlur           Int?      @default(16)
+  backgroundStyle    String?   @default("gradient")
+
+  websiteUrl         String?
+  discordUrl         String?
+  githubUrl          String?
+  xUrl               String?
+  instagramUrl       String?
+  youtubeUrl         String?
+  tiktokUrl          String?
+
+  musicUrl           String?
+  musicTitle         String?
+  musicArtist        String?
+  musicCoverUrl      String?
+
+  aboutTitle         String?
+  aboutText          String?
+
+  showSocials        Boolean   @default(true)
+  showMusic          Boolean   @default(true)
+  showStats          Boolean   @default(true)
+  showAbout          Boolean   @default(true)
+  showGallery        Boolean   @default(true)
+  showReactions      Boolean   @default(true)
+
+  buttonStyle        String?   @default("solid")
+  glowIntensity      Int?      @default(35)
+
+  stat1Label         String?
+  stat1Value         String?
+  stat2Label         String?
+  stat2Value         String?
+  stat3Label         String?
+  stat3Value         String?
+
+  badge1             String?
+  badge2             String?
+  badge3             String?
+
+  gallery1           String?
+  gallery2           String?
+  gallery3           String?
+  gallery4           String?
+  gallery5           String?
+  gallery6           String?
+
+  presetTheme        String?   @default("custom")
+  layoutStyle        String?   @default("stacked")
+  containerWidth     String?   @default("normal")
+  avatarPosition     String?   @default("center")
+  linksStyle         String?   @default("rounded")
+  blocksOrder        String?   @default("stats,about,gallery,music,reactions,links")
+
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  sessions           Session[]
+  links              Link[]
+  reactions          Reaction[]
+  presets            Preset[]
+  profileViews       ProfileView[]
+}
+
+model Preset {
+  id              String   @id @default(cuid())
+  userId          String
+  name            String
+
+  themeColor      String?
+  textColor       String?
+  cardOpacity     Int?
+  cardBlur        Int?
+  backgroundStyle String?
+  buttonStyle     String?
+  glowIntensity   Int?
+
+  presetTheme     String?
+  layoutStyle     String?
+  containerWidth  String?
+  avatarPosition  String?
+  linksStyle      String?
+  blocksOrder     String?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
+}
+
+model Link {
+  id        String   @id @default(cuid())
+  title     String?
+  url       String
+  userId    String
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clicks Click[]
+
+  @@index([userId])
+  @@index([sortOrder])
+}
+
+model Click {
+  id        String   @id @default(cuid())
+  linkId    String
+  createdAt DateTime @default(now())
+
+  link Link @relation(fields: [linkId], references: [id], onDelete: Cascade)
+
+  @@index([linkId])
+}
+
+model Reaction {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String
+  count     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, type])
+  @@index([userId])
+}
+
+model ProfileView {
+  id         String   @id @default(cuid())
+  userId     String
+  country    String?
+  deviceType String?
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([country])
+  @@index([deviceType])
+}
