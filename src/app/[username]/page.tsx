@@ -421,8 +421,7 @@ export default async function PublicProfilePage({ params }: Props) {
             Nenhum link disponível.
           </div>
         ) : (
-          user.links.map(
-          (link: { id: string; title: string | null; url: string }) => (
+          (user.links as { id: string; title: string | null; url: string }[]).map((link) => (
             <a
               key={link.id}
               href={`/go/${link.id}`}
