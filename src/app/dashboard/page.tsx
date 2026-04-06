@@ -597,6 +597,17 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               <UploadField label="Fundo" name="backgroundUrl" initialValue={dashboardUser.backgroundUrl} />
               <UploadField label="Vídeo de fundo (Premium)" name="videoBgUrl" initialValue={premium ? dashboardUser.videoBgUrl : null} />
 
+              <select
+              name="backgroundStyle"
+              defaultValue={dashboardUser.backgroundStyle ?? "gradient"}
+              style={inputStyle}
+>
+              <option value="gradient">Gradient</option>
+              <option value="solid">Solid</option>
+              <option value="image">Imagem de fundo</option>
+              <option value="banner-soft">Banner soft</option>
+</select>
+
               <select name="presetTheme" defaultValue={dashboardUser.presetTheme ?? "custom"} style={inputStyle}>
                 <option value="custom">Custom</option>
                 <option value="minimal">Minimal</option>

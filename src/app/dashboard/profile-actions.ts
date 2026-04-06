@@ -3,16 +3,26 @@
 import { requireUser } from "@/app/lib/auth";
 import { prisma } from "@/app/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
-function toNullableString(value: FormDataEntryValue | null) {
-  const parsed = value?.toString().trim() || "";
-  return parsed || null;
+function hasField(formData: FormData, key: string) {
+  return formData.has(key);
 }
 
-function toNullableInt(value: FormDataEntryValue | null, fallback?: number) {
-  const parsed = Number(value?.toString() ?? "");
-  if (Number.isNaN(parsed)) return fallback ?? null;
-  return parsed;
+function getNullableString(formData: FormData, key: string) {
+  const value = formData.get(key);
+  if (value === null) return undefined;
+
+  const parsed = value.toString().trim();
+  return parsed === "" ? null : parsed;
+}
+
+function getNullableInt(formData: FormData, key: string) {
+  const value = formData.get(key);
+  if (value === null) return undefined;
+
+  const parsed = Number(value.toString());
+  return Number.isNaN(parsed) ? undefined : parsed;
 }
 
 function isPremiumPlan(user: { plan: string; premiumUntil: Date | null }) {
@@ -27,6 +37,7 @@ export async function updateProfile(formData: FormData): Promise<void> {
   const dbUser = await prisma.user.findUnique({
     where: { id: user.id },
     select: {
+      id: true,
       username: true,
       plan: true,
       premiumUntil: true,
@@ -39,91 +50,128 @@ export async function updateProfile(formData: FormData): Promise<void> {
 
   const premium = isPremiumPlan(dbUser);
 
-  const displayName = toNullableString(formData.get("displayName"));
-  const bio = toNullableString(formData.get("bio"));
+  const data: Record<string, unknown> = {};
 
-  const avatarUrl = toNullableString(formData.get("avatarUrl"));
-  const bannerUrl = toNullableString(formData.get("bannerUrl"));
-  const backgroundUrl = toNullableString(formData.get("backgroundUrl"));
-  const videoBgUrl = premium ? toNullableString(formData.get("videoBgUrl")) : null;
+  if (hasField(formData, "displayName")) {
+    data.displayName = getNullableString(formData, "displayName");
+  }
 
-  const themeColor = toNullableString(formData.get("themeColor")) ?? "#2563eb";
-  const textColor = toNullableString(formData.get("textColor")) ?? "#ffffff";
+  if (hasField(formData, "bio")) {
+    data.bio = getNullableString(formData, "bio");
+  }
 
-  const cardOpacity = toNullableInt(formData.get("cardOpacity"), 72);
-  const cardBlur = toNullableInt(formData.get("cardBlur"), 16);
-  const glowIntensity = toNullableInt(formData.get("glowIntensity"), 35);
+  if (hasField(formData, "avatarUrl")) {
+    data.avatarUrl = getNullableString(formData, "avatarUrl");
+  }
 
-  const backgroundStyle =
-    toNullableString(formData.get("backgroundStyle")) ?? "gradient";
-  const buttonStyle =
-    toNullableString(formData.get("buttonStyle")) ?? "solid";
+  if (hasField(formData, "bannerUrl")) {
+    data.bannerUrl = getNullableString(formData, "bannerUrl");
+  }
 
-  const presetTheme = toNullableString(formData.get("presetTheme")) ?? "custom";
+  if (hasField(formData, "backgroundUrl")) {
+    data.backgroundUrl = getNullableString(formData, "backgroundUrl");
+  }
 
-  const layoutStyle = premium
-    ? toNullableString(formData.get("layoutStyle")) ?? "stacked"
-    : "stacked";
+  if (hasField(formData, "videoBgUrl")) {
+    data.videoBgUrl = premium ? getNullableString(formData, "videoBgUrl") : null;
+  }
 
-  const containerWidth = premium
-    ? toNullableString(formData.get("containerWidth")) ?? "normal"
-    : "normal";
+  if (hasField(formData, "themeColor")) {
+    data.themeColor = getNullableString(formData, "themeColor") ?? "#2563eb";
+  }
 
-  const avatarPosition = premium
-    ? toNullableString(formData.get("avatarPosition")) ?? "center"
-    : "center";
+  if (hasField(formData, "textColor")) {
+    data.textColor = getNullableString(formData, "textColor") ?? "#ffffff";
+  }
 
-  const linksStyle = premium
-    ? toNullableString(formData.get("linksStyle")) ?? "rounded"
-    : "rounded";
+  if (hasField(formData, "cardOpacity")) {
+    const cardOpacity = getNullableInt(formData, "cardOpacity");
+    if (cardOpacity !== undefined) data.cardOpacity = cardOpacity;
+  }
 
-  const blocksOrder =
-    toNullableString(formData.get("blocksOrder")) ??
-    "stats,about,gallery,music,reactions,links";
+  if (hasField(formData, "cardBlur")) {
+    const cardBlur = getNullableInt(formData, "cardBlur");
+    if (cardBlur !== undefined) data.cardBlur = cardBlur;
+  }
 
-  const aboutTitle = toNullableString(formData.get("aboutTitle"));
-  const aboutText = toNullableString(formData.get("aboutText"));
+  if (hasField(formData, "glowIntensity")) {
+    const glowIntensity = getNullableInt(formData, "glowIntensity");
+    if (glowIntensity !== undefined) data.glowIntensity = glowIntensity;
+  }
 
-  const badge1 = premium ? toNullableString(formData.get("badge1")) : null;
-  const badge2 = premium ? toNullableString(formData.get("badge2")) : null;
-  const badge3 = premium ? toNullableString(formData.get("badge3")) : null;
+  if (hasField(formData, "backgroundStyle")) {
+    data.backgroundStyle =
+      getNullableString(formData, "backgroundStyle") ?? "gradient";
+  }
+
+  if (hasField(formData, "buttonStyle")) {
+    data.buttonStyle = getNullableString(formData, "buttonStyle") ?? "solid";
+  }
+
+  if (hasField(formData, "presetTheme")) {
+    data.presetTheme = getNullableString(formData, "presetTheme") ?? "custom";
+  }
+
+  if (hasField(formData, "layoutStyle")) {
+    data.layoutStyle = premium
+      ? getNullableString(formData, "layoutStyle") ?? "stacked"
+      : "stacked";
+  }
+
+  if (hasField(formData, "containerWidth")) {
+    data.containerWidth = premium
+      ? getNullableString(formData, "containerWidth") ?? "normal"
+      : "normal";
+  }
+
+  if (hasField(formData, "avatarPosition")) {
+    data.avatarPosition = premium
+      ? getNullableString(formData, "avatarPosition") ?? "center"
+      : "center";
+  }
+
+  if (hasField(formData, "linksStyle")) {
+    data.linksStyle = premium
+      ? getNullableString(formData, "linksStyle") ?? "rounded"
+      : "rounded";
+  }
+
+  if (hasField(formData, "blocksOrder")) {
+    data.blocksOrder =
+      getNullableString(formData, "blocksOrder") ??
+      "stats,about,gallery,music,reactions,links";
+  }
+
+  if (hasField(formData, "aboutTitle")) {
+    data.aboutTitle = getNullableString(formData, "aboutTitle");
+  }
+
+  if (hasField(formData, "aboutText")) {
+    data.aboutText = getNullableString(formData, "aboutText");
+  }
+
+  if (hasField(formData, "badge1")) {
+    data.badge1 = premium ? getNullableString(formData, "badge1") : null;
+  }
+
+  if (hasField(formData, "badge2")) {
+    data.badge2 = premium ? getNullableString(formData, "badge2") : null;
+  }
+
+  if (hasField(formData, "badge3")) {
+    data.badge3 = premium ? getNullableString(formData, "badge3") : null;
+  }
+
+  if (Object.keys(data).length === 0) {
+    return;
+  }
 
   await prisma.user.update({
-    where: { id: user.id },
-    data: {
-      displayName,
-      bio,
-
-      avatarUrl,
-      bannerUrl,
-      backgroundUrl,
-      videoBgUrl,
-
-      themeColor,
-      textColor,
-      cardOpacity,
-      cardBlur,
-      glowIntensity,
-
-      backgroundStyle,
-      buttonStyle,
-      presetTheme,
-
-      layoutStyle,
-      containerWidth,
-      avatarPosition,
-      linksStyle,
-      blocksOrder,
-
-      aboutTitle,
-      aboutText,
-
-      badge1,
-      badge2,
-      badge3,
-    },
+    where: { id: dbUser.id },
+    data,
   });
 
   revalidatePath("/dashboard");
   revalidatePath(`/${dbUser.username}`);
+  redirect("/dashboard");
 }
