@@ -1,107 +1,61 @@
+import { put } from "@vercel/blob";
 import { NextResponse } from "next/server";
-import { stripe } from "@/app/lib/stripe";
-import { prisma } from "@/app/lib/prisma";
-import { getCurrentUser } from "@/app/lib/auth";
 
-export async function POST() {
+const ALLOWED_TYPES = new Set([
+  "image/png",
+  "image/jpeg",
+  "image/jpg",
+  "image/webp",
+  "image/gif",
+  "video/mp4",
+  "video/webm",
+  "video/quicktime",
+]);
+
+export async function POST(request: Request) {
   try {
-    const user = await getCurrentUser();
+    const formData = await request.formData();
+    const file = formData.get("file");
 
-    if (!user) {
-      console.error("[STRIPE_CHECKOUT] Usuário não autenticado");
-      return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
+    if (!(file instanceof File)) {
+      return NextResponse.json({ error: "Arquivo inválido." }, { status: 400 });
     }
 
-    const dbUser = await prisma.user.findUnique({
-      where: { id: user.id },
-      select: {
-        id: true,
-        email: true,
-        username: true,
-        stripeCustomerId: true,
-      },
-    });
-
-    if (!dbUser) {
-      console.error("[STRIPE_CHECKOUT] Usuário não encontrado no banco");
-      return NextResponse.json({ error: "Usuário não encontrado." }, { status: 404 });
-    }
-
-    if (!dbUser.email) {
-      console.error("[STRIPE_CHECKOUT] Usuário sem email");
-      return NextResponse.json({ error: "Usuário sem email." }, { status: 400 });
-    }
-
-    const appUrl =
-      process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || process.env.NEXTAUTH_URL;
-
-    const priceId = process.env.STRIPE_PRICE_PREMIUM_MONTHLY;
-
-    console.log("[STRIPE_CHECKOUT] appUrl:", appUrl);
-    console.log("[STRIPE_CHECKOUT] priceId:", priceId);
-    console.log("[STRIPE_CHECKOUT] userId:", dbUser.id);
-
-    if (!appUrl || !priceId) {
+    if (!ALLOWED_TYPES.has(file.type)) {
       return NextResponse.json(
-        { error: "Configuração Stripe incompleta." },
-        { status: 500 }
+        { error: "Tipo de arquivo não permitido." },
+        { status: 400 }
       );
     }
 
-    let customerId = dbUser.stripeCustomerId;
-
-    if (!customerId) {
-      const customer = await stripe.customers.create({
-        email: dbUser.email,
-        metadata: {
-          userId: dbUser.id,
-          username: dbUser.username,
-        },
-      });
-
-      customerId = customer.id;
-
-      await prisma.user.update({
-        where: { id: dbUser.id },
-        data: {
-          stripeCustomerId: customerId,
-        },
-      });
+    if (file.size === 0) {
+      return NextResponse.json(
+        { error: "Arquivo vazio." },
+        { status: 400 }
+      );
     }
 
-    const session = await stripe.checkout.sessions.create({
-      mode: "subscription",
-      customer: customerId,
-      line_items: [
-        {
-          price: priceId,
-          quantity: 1,
-        },
-      ],
-      success_url: `${appUrl}/dashboard?stripe=success`,
-      cancel_url: `${appUrl}/pricing?stripe=cancel`,
-      allow_promotion_codes: true,
-      metadata: {
-        userId: dbUser.id,
-        username: dbUser.username,
-      },
-      subscription_data: {
-        metadata: {
-          userId: dbUser.id,
-          username: dbUser.username,
-        },
-      },
+    const safeName =
+      file.name
+        .toLowerCase()
+        .replace(/\s+/g, "-")
+        .replace(/[^a-z0-9._-]/g, "") || "upload.bin";
+
+    const filename = `${Date.now()}-${safeName}`;
+
+    const blob = await put(filename, file, {
+      access: "public",
+      addRandomSuffix: true,
     });
 
-    return NextResponse.json({ url: session.url });
+    return NextResponse.json({
+      url: blob.url,
+    });
   } catch (error) {
-    console.error("[STRIPE_CHECKOUT_POST]", error);
+    console.error("[UPLOAD_POST]", error);
 
     return NextResponse.json(
-      {
-        error:
-          error instanceof Error ? error.message : "Erro ao criar checkout.",
-      },
+      { error: "Falha ao fazer upload." },
       { status: 500 }
     );
   }

@@ -1,7 +1,5 @@
+import { put } from "@vercel/blob";
 import { NextResponse } from "next/server";
-import { mkdir, writeFile } from "fs/promises";
-import path from "path";
-import { randomUUID } from "crypto";
 
 const ALLOWED_TYPES = new Set([
   "image/png",
@@ -9,6 +7,9 @@ const ALLOWED_TYPES = new Set([
   "image/jpg",
   "image/webp",
   "image/gif",
+  "video/mp4",
+  "video/webm",
+  "video/quicktime",
 ]);
 
 export async function POST(request: Request) {
@@ -27,26 +28,32 @@ export async function POST(request: Request) {
       );
     }
 
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
+    if (file.size === 0) {
+      return NextResponse.json(
+        { error: "Arquivo vazio." },
+        { status: 400 }
+      );
+    }
 
-    const uploadsDir = path.join(process.cwd(), "public", "uploads");
-    await mkdir(uploadsDir, { recursive: true });
+    const safeName =
+      file.name
+        .toLowerCase()
+        .replace(/\s+/g, "-")
+        .replace(/[^a-z0-9._-]/g, "") || "upload.bin";
 
-    const extension =
-      file.name.split(".").pop()?.toLowerCase() ||
-      file.type.split("/").pop() ||
-      "bin";
+    const filename = `${Date.now()}-${safeName}`;
 
-    const filename = `${randomUUID()}.${extension}`;
-    const filepath = path.join(uploadsDir, filename);
-
-    await writeFile(filepath, buffer);
+    const blob = await put(filename, file, {
+      access: "public",
+      addRandomSuffix: true,
+    });
 
     return NextResponse.json({
-      url: `/uploads/${filename}`,
+      url: blob.url,
     });
-  } catch {
+  } catch (error) {
+    console.error("[UPLOAD_POST]", error);
+
     return NextResponse.json(
       { error: "Falha ao fazer upload." },
       { status: 500 }
