@@ -9,6 +9,18 @@ type Props = {
   }>;
 };
 
+type PublicLink = {
+  id: string;
+  title: string | null;
+  url: string;
+};
+
+type SocialLinkItem = {
+  label: string;
+  url: string;
+  symbol: string;
+};
+
 function isPremiumPlan(user: { plan: string; premiumUntil: Date | null }) {
   if (user.plan !== "premium") return false;
   if (!user.premiumUntil) return true;
@@ -131,7 +143,7 @@ function socialLinks(user: {
   instagramUrl: string | null;
   youtubeUrl: string | null;
   tiktokUrl: string | null;
-}) {
+}): SocialLinkItem[] {
   return [
     { label: "Site", url: user.websiteUrl, symbol: "🌐" },
     { label: "Discord", url: user.discordUrl, symbol: "💬" },
@@ -140,7 +152,7 @@ function socialLinks(user: {
     { label: "Instagram", url: user.instagramUrl, symbol: "📸" },
     { label: "YouTube", url: user.youtubeUrl, symbol: "▶" },
     { label: "TikTok", url: user.tiktokUrl, symbol: "♪" },
-  ].filter((item) => item.url);
+  ].filter((item): item is SocialLinkItem => Boolean(item.url));
 }
 
 function getOrderedBlocks(blocksOrder: string | null | undefined) {
@@ -200,6 +212,11 @@ export default async function PublicProfilePage({ params }: Props) {
   const cardBlur = user.cardBlur ?? 16;
   const glowIntensity = user.glowIntensity ?? 35;
   const rgb = hexToRgb(themeColor);
+  const typedLinks: PublicLink[] = user.links.map((link) => ({
+    id: link.id,
+    title: link.title,
+    url: link.url,
+  }));
 
   const pageBackground = getPageBackground(
     user.backgroundStyle,
@@ -213,7 +230,9 @@ export default async function PublicProfilePage({ params }: Props) {
     { label: user.stat1Label, value: user.stat1Value },
     { label: user.stat2Label, value: user.stat2Value },
     { label: user.stat3Label, value: user.stat3Value },
-  ].filter((item) => item.label && item.value);
+  ].filter(
+    (item): item is { label: string; value: string } => Boolean(item.label && item.value)
+  );
 
   const badges = [user.badge1, user.badge2, user.badge3].filter(Boolean) as string[];
 
@@ -403,9 +422,9 @@ export default async function PublicProfilePage({ params }: Props) {
         </section>
       ) : null,
 
-    links:
+    links: (
       <div style={{ display: "grid", gap: "16px", marginBottom: "18px" }}>
-        {user.links.length === 0 ? (
+        {typedLinks.length === 0 ? (
           <div
             style={{
               backgroundColor: `rgba(15,15,15,${cardOpacity / 100})`,
@@ -421,7 +440,7 @@ export default async function PublicProfilePage({ params }: Props) {
             Nenhum link disponível.
           </div>
         ) : (
-          (user.links as { id: string; title: string | null; url: string }[]).map((link) => (
+          typedLinks.map((link) => (
             <a
               key={link.id}
               href={`/go/${link.id}`}
@@ -438,7 +457,8 @@ export default async function PublicProfilePage({ params }: Props) {
             </a>
           ))
         )}
-      </div>,
+      </div>
+    ),
   };
 
   return (
@@ -619,7 +639,7 @@ export default async function PublicProfilePage({ params }: Props) {
                 backgroundColor: `rgba(15,15,15,${cardOpacity / 100})`,
                 backdropFilter: `blur(${cardBlur}px)`,
                 WebkitBackdropFilter: `blur(${cardBlur}px)`,
-                border: `1px solid rgba(${rgb}, 0.20)`,
+                border: `1px solid rgba(${rgb}, 0.20)` ,
                 borderRadius: "24px",
                 padding: "22px",
                 boxShadow: "0 10px 28px rgba(0,0,0,0.24)",
@@ -647,7 +667,7 @@ export default async function PublicProfilePage({ params }: Props) {
                   {socials.map((item) => (
                     <a
                       key={item.label}
-                      href={item.url!}
+                      href={item.url}
                       target="_blank"
                       rel="noreferrer"
                       style={{
