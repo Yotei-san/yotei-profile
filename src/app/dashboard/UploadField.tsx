@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 type Props = {
   label: string;
@@ -8,11 +8,38 @@ type Props = {
   initialValue?: string | null;
 };
 
+function isVideoField(name: string, label: string) {
+  const value = `${name} ${label}`.toLowerCase();
+  return value.includes("video");
+}
+
+function isVideoUrl(url: string) {
+  const normalized = url.toLowerCase();
+
+  return (
+    normalized.endsWith(".mp4") ||
+    normalized.endsWith(".webm") ||
+    normalized.endsWith(".mov") ||
+    normalized.includes("/video/upload/") ||
+    normalized.includes(".mp4?") ||
+    normalized.includes(".webm?") ||
+    normalized.includes(".mov?")
+  );
+}
+
 export default function UploadField({ label, name, initialValue }: Props) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [value, setValue] = useState(initialValue ?? "");
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
+
+  const allowVideo = useMemo(() => isVideoField(name, label), [name, label]);
+
+  const accept = allowVideo
+    ? "image/png,image/jpeg,image/jpg,image/webp,image/gif,video/mp4,video/webm,video/quicktime"
+    : "image/png,image/jpeg,image/jpg,image/webp,image/gif";
+
+  const shouldRenderVideoPreview = allowVideo && value && isVideoUrl(value);
 
   async function handleFileChange(file: File | null) {
     if (!file) return;
@@ -35,9 +62,19 @@ export default function UploadField({ label, name, initialValue }: Props) {
         throw new Error(data?.error || "Erro no upload.");
       }
 
+      if (!data?.url || typeof data.url !== "string") {
+        throw new Error("Upload concluído, mas a URL não foi retornada.");
+      }
+
       setValue(data.url);
-    } catch (err: any) {
-      setError(err?.message || "Erro no upload.");
+
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Erro no upload.";
+      setError(message);
     } finally {
       setUploading(false);
     }
@@ -64,12 +101,7 @@ export default function UploadField({ label, name, initialValue }: Props) {
         {label}
       </label>
 
-      <input
-        type="hidden"
-        name={name}
-        value={value}
-        readOnly
-      />
+      <input type="hidden" name={name} value={value} readOnly />
 
       <input
         type="text"
@@ -91,13 +123,15 @@ export default function UploadField({ label, name, initialValue }: Props) {
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
+          disabled={uploading}
           style={{
             padding: "12px 14px",
             borderRadius: "12px",
             border: "1px solid #2a2a2a",
-            backgroundColor: "#1a1a1a",
+            backgroundColor: uploading ? "#141414" : "#1a1a1a",
             color: "#fff",
-            cursor: "pointer",
+            cursor: uploading ? "not-allowed" : "pointer",
+            opacity: uploading ? 0.75 : 1,
           }}
         >
           {uploading ? "Enviando..." : "Upload do PC"}
@@ -106,7 +140,13 @@ export default function UploadField({ label, name, initialValue }: Props) {
         {value && (
           <button
             type="button"
-            onClick={() => setValue("")}
+            onClick={() => {
+              setValue("");
+              setError("");
+              if (fileInputRef.current) {
+                fileInputRef.current.value = "";
+              }
+            }}
             style={{
               padding: "12px 14px",
               borderRadius: "12px",
@@ -124,7 +164,7 @@ export default function UploadField({ label, name, initialValue }: Props) {
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/png,image/jpeg,image/jpg,image/webp,image/gif"
+        accept={accept}
         style={{ display: "none" }}
         onChange={(e) => handleFileChange(e.target.files?.[0] ?? null)}
       />
@@ -144,16 +184,31 @@ export default function UploadField({ label, name, initialValue }: Props) {
             backgroundColor: "#0f0f0f",
           }}
         >
-          <img
-            src={value}
-            alt={label}
-            style={{
-              width: "100%",
-              maxHeight: "180px",
-              objectFit: "cover",
-              display: "block",
-            }}
-          />
+          {shouldRenderVideoPreview ? (
+            <video
+              src={value}
+              controls
+              muted
+              playsInline
+              style={{
+                width: "100%",
+                maxHeight: "220px",
+                display: "block",
+                backgroundColor: "#000",
+              }}
+            />
+          ) : (
+            <img
+              src={value}
+              alt={label}
+              style={{
+                width: "100%",
+                maxHeight: "180px",
+                objectFit: "cover",
+                display: "block",
+              }}
+            />
+          )}
         </div>
       )}
     </div>
