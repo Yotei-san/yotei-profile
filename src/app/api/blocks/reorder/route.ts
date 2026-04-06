@@ -14,8 +14,11 @@ export async function POST(request: Request) {
   const body = await request.json();
   const blocks = Array.isArray(body?.blocks) ? body.blocks : [];
 
-  const normalized = [...new Set(blocks.map((b: unknown) => String(b).trim().toLowerCase()))]
-    .filter((b) => allowed.has(b));
+  const normalized: string[] = Array.from(
+  new Set(
+    (blocks as unknown[]).map((b) => String(b).trim().toLowerCase())
+  )
+).filter((b) => allowed.has(b));
 
   if (normalized.length === 0) {
     return NextResponse.json({ error: "Ordem inválida." }, { status: 400 });
