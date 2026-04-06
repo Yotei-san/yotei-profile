@@ -49,7 +49,6 @@ export async function updateProfile(formData: FormData): Promise<void> {
   }
 
   const premium = isPremiumPlan(dbUser);
-
   const data: Record<string, unknown> = {};
 
   if (hasField(formData, "displayName")) {
@@ -85,18 +84,18 @@ export async function updateProfile(formData: FormData): Promise<void> {
   }
 
   if (hasField(formData, "cardOpacity")) {
-    const cardOpacity = getNullableInt(formData, "cardOpacity");
-    if (cardOpacity !== undefined) data.cardOpacity = cardOpacity;
+    const value = getNullableInt(formData, "cardOpacity");
+    if (value !== undefined) data.cardOpacity = value;
   }
 
   if (hasField(formData, "cardBlur")) {
-    const cardBlur = getNullableInt(formData, "cardBlur");
-    if (cardBlur !== undefined) data.cardBlur = cardBlur;
+    const value = getNullableInt(formData, "cardBlur");
+    if (value !== undefined) data.cardBlur = value;
   }
 
   if (hasField(formData, "glowIntensity")) {
-    const glowIntensity = getNullableInt(formData, "glowIntensity");
-    if (glowIntensity !== undefined) data.glowIntensity = glowIntensity;
+    const value = getNullableInt(formData, "glowIntensity");
+    if (value !== undefined) data.glowIntensity = value;
   }
 
   if (hasField(formData, "backgroundStyle")) {
@@ -105,11 +104,13 @@ export async function updateProfile(formData: FormData): Promise<void> {
   }
 
   if (hasField(formData, "buttonStyle")) {
-    data.buttonStyle = getNullableString(formData, "buttonStyle") ?? "solid";
+    data.buttonStyle =
+      getNullableString(formData, "buttonStyle") ?? "solid";
   }
 
   if (hasField(formData, "presetTheme")) {
-    data.presetTheme = getNullableString(formData, "presetTheme") ?? "custom";
+    data.presetTheme =
+      getNullableString(formData, "presetTheme") ?? "custom";
   }
 
   if (hasField(formData, "layoutStyle")) {
@@ -163,7 +164,7 @@ export async function updateProfile(formData: FormData): Promise<void> {
   }
 
   if (Object.keys(data).length === 0) {
-    return;
+    redirect("/dashboard");
   }
 
   await prisma.user.update({
