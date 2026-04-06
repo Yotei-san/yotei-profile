@@ -229,6 +229,10 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               Leaderboard
             </Link>
 
+            <Link href="/dashboard/settings" style={topLinkStyle}>
+              Settings
+            </Link>
+
             <form action={logoutAction}>
               <button type="submit" style={logoutButtonStyle}>
                 Sair
