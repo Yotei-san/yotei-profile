@@ -20,7 +20,6 @@ function isVideoUrl(url: string) {
     normalized.endsWith(".mp4") ||
     normalized.endsWith(".webm") ||
     normalized.endsWith(".mov") ||
-    normalized.includes("/video/upload/") ||
     normalized.includes(".mp4?") ||
     normalized.includes(".webm?") ||
     normalized.includes(".mov?")
@@ -56,7 +55,15 @@ export default function UploadField({ label, name, initialValue }: Props) {
         body: formData,
       });
 
-      const data = await response.json();
+      const contentType = response.headers.get("content-type") || "";
+
+      let data: any = null;
+      if (contentType.includes("application/json")) {
+        data = await response.json();
+      } else {
+        const text = await response.text();
+        throw new Error(text || "Erro no upload.");
+      }
 
       if (!response.ok) {
         throw new Error(data?.error || "Erro no upload.");
@@ -74,7 +81,19 @@ export default function UploadField({ label, name, initialValue }: Props) {
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Erro no upload.";
-      setError(message);
+
+      if (
+        allowVideo &&
+        (
+          message.includes("Request Entity Too Large") ||
+          message.includes("FUNCTION_PAYLOAD_TOO_LARGE") ||
+          message.includes("413")
+        )
+      ) {
+        setError("Vídeo muito grande para upload via servidor no Vercel. Use um arquivo menor que ~4.5 MB.");
+      } else {
+        setError(message);
+      }
     } finally {
       setUploading(false);
     }
