@@ -2,97 +2,107 @@
 
 import { prisma } from "@/app/lib/prisma";
 import { requireUser } from "@/app/lib/auth";
-import { revalidatePath } from "next/cache";
 
-export async function createLink(formData: FormData): Promise<void> {
-  const user = await requireUser();
+function normalizeUrl(url: string) {
+  const trimmed = url.trim();
 
-  const title = formData.get("title")?.toString().trim() || "";
-  const url = formData.get("url")?.toString().trim() || "";
+  if (!trimmed) return "";
 
-  if (!title || !url) {
-    throw new Error("Preencha título e URL.");
+  if (/^https?:\/\//i.test(trimmed)) {
+    return trimmed;
   }
 
-  if (!url.startsWith("http://") && !url.startsWith("https://")) {
-    throw new Error("A URL precisa começar com http:// ou https://");
+  return `https://${trimmed}`;
+}
+
+export async function createLink(formData: FormData) {
+  const user = await requireUser();
+
+  const title = String(formData.get("title") ?? "").trim();
+  const rawUrl = String(formData.get("url") ?? "").trim();
+  const url = normalizeUrl(rawUrl);
+
+  if (!url) {
+    throw new Error("URL inválida.");
+  }
+
+  const dbUser = await prisma.user.findUnique({
+    where: { id: user.id },
+    select: { plan: true, premiumUntil: true },
+  });
+
+  if (!dbUser) {
+    throw new Error("Usuário não encontrado.");
+  }
+
+  const isPremium =
+    dbUser.plan === "premium" &&
+    (!dbUser.premiumUntil || new Date(dbUser.premiumUntil) > new Date());
+
+  const totalLinks = await prisma.link.count({
+    where: { userId: user.id },
+  });
+
+  if (!isPremium && totalLinks >= 5) {
+    throw new Error("Plano Free permite no máximo 5 links.");
   }
 
   const lastLink = await prisma.link.findFirst({
     where: { userId: user.id },
-    orderBy: { position: "desc" },
+    orderBy: { sortOrder: "desc" },
   });
 
-  const nextPosition = lastLink ? lastLink.position + 1 : 1;
+  const nextSortOrder = lastLink ? lastLink.sortOrder + 1 : 1;
 
   await prisma.link.create({
     data: {
-      title,
-      url,
-      position: nextPosition,
       userId: user.id,
+      title: title || null,
+      url,
+      sortOrder: nextSortOrder,
     },
   });
-
-  revalidatePath("/dashboard");
-  revalidatePath(`/${user.username}`);
 }
 
-export async function deleteLink(formData: FormData): Promise<void> {
+export async function deleteLink(formData: FormData) {
   const user = await requireUser();
-  const linkId = formData.get("linkId")?.toString() || "";
+
+  const linkId = String(formData.get("linkId") ?? "").trim();
 
   if (!linkId) {
     throw new Error("Link inválido.");
   }
 
-  await prisma.link.deleteMany({
+  const existingLink = await prisma.link.findFirst({
     where: {
       id: linkId,
       userId: user.id,
     },
   });
 
-  revalidatePath("/dashboard");
-  revalidatePath(`/${user.username}`);
-}
-
-export async function updateLink(formData: FormData): Promise<void> {
-  const user = await requireUser();
-
-  const linkId = formData.get("linkId")?.toString() || "";
-  const title = formData.get("title")?.toString().trim() || "";
-  const url = formData.get("url")?.toString().trim() || "";
-
-  if (!linkId || !title || !url) {
-    throw new Error("Dados inválidos.");
+  if (!existingLink) {
+    throw new Error("Link não encontrado.");
   }
 
-  if (!url.startsWith("http://") && !url.startsWith("https://")) {
-    throw new Error("A URL precisa começar com http:// ou https://");
-  }
-
-  await prisma.link.updateMany({
-    where: {
-      id: linkId,
-      userId: user.id,
-    },
-    data: {
-      title,
-      url,
-    },
+  await prisma.link.delete({
+    where: { id: existingLink.id },
   });
-
-  revalidatePath("/dashboard");
-  revalidatePath(`/${user.username}`);
 }
 
-export async function moveLinkUp(formData: FormData): Promise<void> {
+export async function moveLinkUp(formData: FormData) {
   const user = await requireUser();
-  const linkId = formData.get("linkId")?.toString() || "";
+
+  const linkId = String(formData.get("linkId") ?? "").trim();
+
+  if (!linkId) {
+    throw new Error("Link inválido.");
+  }
 
   const currentLink = await prisma.link.findFirst({
-    where: { id: linkId, userId: user.id },
+    where: {
+      id: linkId,
+      userId: user.id,
+    },
   });
 
   if (!currentLink) {
@@ -102,9 +112,9 @@ export async function moveLinkUp(formData: FormData): Promise<void> {
   const previousLink = await prisma.link.findFirst({
     where: {
       userId: user.id,
-      position: { lt: currentLink.position },
+      sortOrder: { lt: currentLink.sortOrder },
     },
-    orderBy: { position: "desc" },
+    orderBy: { sortOrder: "desc" },
   });
 
   if (!previousLink) {
@@ -114,24 +124,29 @@ export async function moveLinkUp(formData: FormData): Promise<void> {
   await prisma.$transaction([
     prisma.link.update({
       where: { id: currentLink.id },
-      data: { position: previousLink.position },
+      data: { sortOrder: previousLink.sortOrder },
     }),
     prisma.link.update({
       where: { id: previousLink.id },
-      data: { position: currentLink.position },
+      data: { sortOrder: currentLink.sortOrder },
     }),
   ]);
-
-  revalidatePath("/dashboard");
-  revalidatePath(`/${user.username}`);
 }
 
-export async function moveLinkDown(formData: FormData): Promise<void> {
+export async function moveLinkDown(formData: FormData) {
   const user = await requireUser();
-  const linkId = formData.get("linkId")?.toString() || "";
+
+  const linkId = String(formData.get("linkId") ?? "").trim();
+
+  if (!linkId) {
+    throw new Error("Link inválido.");
+  }
 
   const currentLink = await prisma.link.findFirst({
-    where: { id: linkId, userId: user.id },
+    where: {
+      id: linkId,
+      userId: user.id,
+    },
   });
 
   if (!currentLink) {
@@ -141,9 +156,9 @@ export async function moveLinkDown(formData: FormData): Promise<void> {
   const nextLink = await prisma.link.findFirst({
     where: {
       userId: user.id,
-      position: { gt: currentLink.position },
+      sortOrder: { gt: currentLink.sortOrder },
     },
-    orderBy: { position: "asc" },
+    orderBy: { sortOrder: "asc" },
   });
 
   if (!nextLink) {
@@ -153,14 +168,11 @@ export async function moveLinkDown(formData: FormData): Promise<void> {
   await prisma.$transaction([
     prisma.link.update({
       where: { id: currentLink.id },
-      data: { position: nextLink.position },
+      data: { sortOrder: nextLink.sortOrder },
     }),
     prisma.link.update({
       where: { id: nextLink.id },
-      data: { position: currentLink.position },
+      data: { sortOrder: currentLink.sortOrder },
     }),
   ]);
-
-  revalidatePath("/dashboard");
-  revalidatePath(`/${user.username}`);
 }

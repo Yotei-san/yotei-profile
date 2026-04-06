@@ -3,7 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
+  
 }
 
 model User {
@@ -16,7 +17,7 @@ model User {
 
   plan               String    @default("free")
   premiumUntil       DateTime?
-  premiumBadge       Boolean   @default(true)
+  premiumBadge       Boolean   @default(false)
 
   stripeCustomerId   String?   @unique
   stripeSubscriptionId String? @unique

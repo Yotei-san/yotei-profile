@@ -4,15 +4,19 @@ import Link from "next/link";
 
 type PricingQuickActionsProps = {
   premium: boolean;
+  variant: "free" | "premium";
   topLinkStyle: React.CSSProperties;
   secondaryButtonWideStyle: React.CSSProperties;
+  primaryButtonWideStyle: React.CSSProperties;
   currentPlanBoxStyle: React.CSSProperties;
 };
 
 export default function PricingQuickActions({
   premium,
+  variant,
   topLinkStyle,
   secondaryButtonWideStyle,
+  primaryButtonWideStyle,
   currentPlanBoxStyle,
 }: PricingQuickActionsProps) {
   async function handleManageSubscription() {
@@ -32,8 +36,8 @@ export default function PricingQuickActions({
     }
   }
 
-  return (
-    <>
+  if (variant === "free") {
+    return (
       <div style={{ marginTop: "18px" }}>
         {!premium ? (
           <div style={currentPlanBoxStyle}>Plano atual</div>
@@ -47,19 +51,26 @@ export default function PricingQuickActions({
           </button>
         )}
       </div>
+    );
+  }
 
-      <div style={{ marginTop: "18px" }}>
-        {premium ? (
-          <div style={currentPlanBoxStyle}>Plano atual</div>
-        ) : (
-          <Link
-            href="/pricing"
-            style={{ ...topLinkStyle, display: "block", textAlign: "center" }}
-          >
-            Assinar Premium
-          </Link>
-        )}
-      </div>
-    </>
+  return (
+    <div style={{ marginTop: "18px" }}>
+      {premium ? (
+        <div style={currentPlanBoxStyle}>Plano atual</div>
+      ) : (
+        <Link
+          href="/pricing"
+          style={{
+            ...topLinkStyle,
+            ...primaryButtonWideStyle,
+            display: "block",
+            textAlign: "center",
+          }}
+        >
+          Assinar Premium
+        </Link>
+      )}
+    </div>
   );
 }

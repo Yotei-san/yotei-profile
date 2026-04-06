@@ -62,9 +62,6 @@ export async function POST(request: Request) {
         const customerId =
           typeof invoice.customer === "string" ? invoice.customer : null;
 
-        const subscriptionId =
-          typeof invoice.subscription === "string" ? invoice.subscription : null;
-
         let premiumUntil: Date | null = null;
 
         const lines = invoice.lines?.data ?? [];
@@ -80,7 +77,6 @@ export async function POST(request: Request) {
             data: {
               plan: "premium",
               premiumBadge: true,
-              stripeSubscriptionId: subscriptionId ?? undefined,
               premiumUntil: premiumUntil ?? undefined,
               subscriptionStatus: "active",
             },
