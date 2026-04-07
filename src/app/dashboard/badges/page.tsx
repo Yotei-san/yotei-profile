@@ -7,7 +7,7 @@ import {
   pinBadge,
   unpinAllBadges,
 } from "./actions";
-import { ensureDefaultBadges, syncAutomaticBadges } from "@/app/lib/badges";
+import { ensureDefaultBadges, syncAutomaticBadges, getBadgeMissionProgress } from "@/app/lib/badges";
 
 const MAX_PINNED_BADGES = 5;
 
@@ -86,9 +86,12 @@ export default async function BadgesPage() {
     throw new Error("Usuário não encontrado.");
   }
 
-  const badges = await prisma.badge.findMany({
-    orderBy: [{ rarity: "desc" }, { name: "asc" }],
-  });
+  const [badges, missions] = await Promise.all([
+    prisma.badge.findMany({
+      orderBy: [{ rarity: "desc" }, { name: "asc" }],
+    }),
+    getBadgeMissionProgress(user.id),
+  ]);
 
   const earnedMap = new Map(user.badges.map((item) => [item.badgeId, item]));
   const pinnedCount = user.badges.filter((item) => item.isPinned).length;
@@ -144,11 +147,11 @@ export default async function BadgesPage() {
                 ✦ Status • Prestige • Progression
               </div>
               <h1 style={{ margin: 0, fontSize: "46px", lineHeight: 1 }}>
-                Badges
+                Badges & Missions
               </h1>
               <p style={{ color: "#a3a3a3", marginTop: "10px", marginBottom: 0 }}>
-                Sistema avançado de badges no estilo produto premium:
-                raridade, pin múltiplo, eventos, missões e status visual forte.
+                Sistema avançado de badges com missões reais, progresso automático
+                e loadout público.
               </p>
             </div>
 
@@ -249,6 +252,103 @@ export default async function BadgesPage() {
                 value={user.displayName ? `${user.displayName} (@${user.username})` : `@${user.username}`}
               />
             </div>
+          </div>
+        </section>
+
+        <section
+          style={{
+            backgroundColor: "#0b0b0b",
+            border: "1px solid #1f1f1f",
+            borderRadius: "24px",
+            padding: "22px",
+            marginBottom: "22px",
+          }}
+        >
+          <h2 style={{ margin: 0, fontSize: "30px" }}>Missões</h2>
+          <p style={{ color: "#a3a3a3", marginTop: "10px", marginBottom: "18px" }}>
+            Complete missões para liberar badges automaticamente.
+          </p>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+              gap: "16px",
+            }}
+          >
+            {missions.map((mission) => {
+              const percent = Math.min(100, Math.round((mission.current / mission.target) * 100));
+
+              return (
+                <div
+                  key={mission.key}
+                  style={{
+                    backgroundColor: "rgba(255,255,255,0.03)",
+                    border: "1px solid rgba(255,255,255,0.06)",
+                    borderRadius: "20px",
+                    padding: "18px",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      gap: "12px",
+                      alignItems: "center",
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontSize: "22px", fontWeight: 800 }}>{mission.title}</div>
+                      <div style={{ color: "#a3a3a3", marginTop: "6px" }}>
+                        {mission.description}
+                      </div>
+                    </div>
+
+                    <div
+                      style={{
+                        padding: "8px 12px",
+                        borderRadius: "999px",
+                        backgroundColor: mission.completed
+                          ? "rgba(34,197,94,0.12)"
+                          : "rgba(255,255,255,0.05)",
+                        border: mission.completed
+                          ? "1px solid rgba(34,197,94,0.22)"
+                          : "1px solid rgba(255,255,255,0.08)",
+                        color: mission.completed ? "#86efac" : "#d4d4d8",
+                        fontWeight: 800,
+                        fontSize: "12px",
+                      }}
+                    >
+                      {mission.completed ? "COMPLETED" : `${percent}%`}
+                    </div>
+                  </div>
+
+                  <div
+                    style={{
+                      marginTop: "14px",
+                      height: "12px",
+                      borderRadius: "999px",
+                      backgroundColor: "#151515",
+                      overflow: "hidden",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: `${percent}%`,
+                        height: "100%",
+                        background: mission.completed
+                          ? "linear-gradient(90deg, #22c55e, #16a34a)"
+                          : "linear-gradient(90deg, #ec4899, #8b5cf6)",
+                      }}
+                    />
+                  </div>
+
+                  <div style={{ marginTop: "10px", color: "#d4d4d8" }}>
+                    Progresso: {mission.current}/{mission.target} • Recompensa: {mission.rewardBadgeKey}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </section>
 

@@ -1,4 +1,5 @@
 import { prisma } from "@/app/lib/prisma";
+import { syncMissionBadges, getBadgeMissionProgress } from "@/app/lib/badge-missions";
 
 export const DEFAULT_BADGES = [
   {
@@ -51,6 +52,28 @@ export const DEFAULT_BADGES = [
     description: "Alcançou 100 visualizações de perfil.",
     icon: "🔥",
     color: "#f97316",
+    category: "mission",
+    rarity: "epic",
+    isHidden: false,
+    isAutoAwarded: true,
+  },
+  {
+    key: "complete-profile",
+    name: "Complete Profile",
+    description: "Completou avatar, banner e bio do perfil.",
+    icon: "🧩",
+    color: "#14b8a6",
+    category: "mission",
+    rarity: "rare",
+    isHidden: false,
+    isAutoAwarded: true,
+  },
+  {
+    key: "click-master",
+    name: "Click Master",
+    description: "Acumulou 25 cliques nos links.",
+    icon: "⚡",
+    color: "#eab308",
     category: "mission",
     rarity: "epic",
     isHidden: false,
@@ -175,11 +198,6 @@ export async function syncAutomaticBadges(userId: string) {
 
   if (!user) return;
 
-  const [linkCount, profileViewsCount] = await Promise.all([
-    prisma.link.count({ where: { userId } }),
-    prisma.profileView.count({ where: { userId } }),
-  ]);
-
   const ownerUsername = process.env.BADGE_OWNER_USERNAME?.trim().toLowerCase() || "arthurro";
   const earlyUserDeadline = process.env.BADGE_EARLY_USER_DEADLINE
     ? new Date(process.env.BADGE_EARLY_USER_DEADLINE)
@@ -199,11 +217,7 @@ export async function syncAutomaticBadges(userId: string) {
     await awardBadgeByKey(userId, "early-user");
   }
 
-  if (linkCount >= 5) {
-    await awardBadgeByKey(userId, "creator");
-  }
-
-  if (profileViewsCount >= 100) {
-    await awardBadgeByKey(userId, "popular");
-  }
+  await syncMissionBadges(userId);
 }
+
+export { getBadgeMissionProgress };
