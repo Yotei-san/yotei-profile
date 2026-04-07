@@ -4,7 +4,11 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/app/lib/auth";
 import { prisma } from "@/app/lib/prisma";
-import { awardBadgeByKey, ensureDefaultBadges, syncAutomaticBadges } from "@/app/lib/badges";
+import {
+  awardBadgeByKey,
+  ensureDefaultBadges,
+  syncAutomaticBadges,
+} from "@/app/lib/badges";
 
 export async function pinBadge(formData: FormData) {
   const user = await requireUser();
@@ -14,17 +18,24 @@ export async function pinBadge(formData: FormData) {
     redirect("/dashboard/badges");
   }
 
-  await prisma.userBadge.updateMany({
-    where: { userId: user.id },
-    data: { isPinned: false },
+  const badge = await prisma.userBadge.findUnique({
+    where: { id: userBadgeId },
+    select: {
+      id: true,
+      userId: true,
+      isPinned: true,
+    },
   });
 
-  await prisma.userBadge.updateMany({
-    where: {
-      id: userBadgeId,
-      userId: user.id,
+  if (!badge || badge.userId !== user.id) {
+    redirect("/dashboard/badges");
+  }
+
+  await prisma.userBadge.update({
+    where: { id: badge.id },
+    data: {
+      isPinned: !badge.isPinned,
     },
-    data: { isPinned: true },
   });
 
   revalidatePath("/dashboard/badges");
@@ -52,16 +63,20 @@ export async function claimBadge(formData: FormData) {
   await ensureDefaultBadges();
   await syncAutomaticBadges(user.id);
 
-  if (
-    badgeKey === "premium" ||
-    badgeKey === "owner" ||
-    badgeKey === "creator" ||
-    badgeKey === "popular" ||
-    badgeKey === "early-user"
-  ) {
+  if (!badgeKey) {
     redirect("/dashboard/badges");
   }
 
+  const manualClaimableBadges = ["beta-tester", "verified"];
+
+  if (!manualClaimableBadges.includes(badgeKey)) {
+    redirect("/dashboard/badges");
+  }
+
+  await awardBadgeByKey(user.id, badgeKey);
+
+  revalidatePath("/dashboard/badges");
+  revalidatePath(`/${user.username}`);
   redirect("/dashboard/badges");
 }
 

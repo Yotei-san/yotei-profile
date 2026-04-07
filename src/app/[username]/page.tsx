@@ -2,6 +2,7 @@ import { prisma } from "@/app/lib/prisma";
 import { notFound } from "next/navigation";
 import ReactionBar from "./ReactionBar";
 import ProfileTracker from "./ProfileTracker";
+import ProfileBadges from "./ProfileBadges";
 
 type Props = {
   params: Promise<{
@@ -200,6 +201,12 @@ export default async function PublicProfilePage({ params }: Props) {
       links: {
         orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
       },
+      badges: {
+        include: {
+          badge: true,
+        },
+        orderBy: [{ isPinned: "desc" }, { earnedAt: "desc" }],
+      },
     },
   });
 
@@ -234,7 +241,8 @@ export default async function PublicProfilePage({ params }: Props) {
     (item): item is { label: string; value: string } => Boolean(item.label && item.value)
   );
 
-  const badges = [user.badge1, user.badge2, user.badge3].filter(Boolean) as string[];
+  const pinnedBadges = user.badges.filter((item) => item.isPinned);
+  const fallbackBadges = [user.badge1, user.badge2, user.badge3].filter(Boolean) as string[];
 
   const gallery = [
     user.gallery1,
@@ -612,7 +620,9 @@ export default async function PublicProfilePage({ params }: Props) {
               {premium && user.premiumBadge && <Badge value="Premium" premium />}
             </div>
 
-            {badges.length > 0 && (
+            {pinnedBadges.length > 0 ? (
+              <ProfileBadges badges={pinnedBadges} />
+            ) : fallbackBadges.length > 0 ? (
               <div
                 style={{
                   display: "flex",
@@ -627,11 +637,11 @@ export default async function PublicProfilePage({ params }: Props) {
                   marginTop: "16px",
                 }}
               >
-                {badges.map((badge, index) => (
+                {fallbackBadges.map((badge, index) => (
                   <Badge key={`${badge}-${index}`} value={badge} />
                 ))}
               </div>
-            )}
+            ) : null}
 
             <div
               style={{
