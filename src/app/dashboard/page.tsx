@@ -229,8 +229,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               Leaderboard
             </Link>
 
-            <Link href="/dashboard/settings" style={topLinkStyle}>
-              Settings
+            <Link href="/dashboard/badges" style={topLinkStyle}>
+              Badges
             </Link>
 
             <form action={logoutAction}>

@@ -67,9 +67,14 @@ export async function claimBadge(formData: FormData) {
 
 export async function grantOwnerBadgeToCurrentUser() {
   const user = await requireUser();
+
   await ensureDefaultBadges();
   await awardBadgeByKey(user.id, "owner");
+  await syncAutomaticBadges(user.id);
+
+  revalidatePath("/dashboard");
   revalidatePath("/dashboard/badges");
   revalidatePath(`/${user.username}`);
+
   redirect("/dashboard/badges");
 }
