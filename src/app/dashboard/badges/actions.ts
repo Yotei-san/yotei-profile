@@ -3,12 +3,14 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/app/lib/auth";
-import { prisma } from "@/app/lib/prisma";
 import {
   awardBadgeByKey,
   ensureDefaultBadges,
   syncAutomaticBadges,
 } from "@/app/lib/badges";
+import { prisma } from "@/app/lib/prisma";
+
+const MAX_PINNED_BADGES = 5;
 
 export async function pinBadge(formData: FormData) {
   const user = await requireUser();
@@ -28,6 +30,17 @@ export async function pinBadge(formData: FormData) {
   });
 
   if (!badge || badge.userId !== user.id) {
+    redirect("/dashboard/badges");
+  }
+
+  const pinnedCount = await prisma.userBadge.count({
+    where: {
+      userId: user.id,
+      isPinned: true,
+    },
+  });
+
+  if (!badge.isPinned && pinnedCount >= MAX_PINNED_BADGES) {
     redirect("/dashboard/badges");
   }
 
