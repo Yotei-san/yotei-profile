@@ -14,6 +14,11 @@ model User {
   displayName          String?
   bio                  String?
 
+  role                 String      @default("user")
+  status               String      @default("active")
+  banReason            String?
+  bannedAt             DateTime?
+
   plan                 String      @default("free")
   premiumUntil         DateTime?
   premiumBadge         Boolean     @default(false)
@@ -94,6 +99,10 @@ model User {
   presets              Preset[]
   profileViews         ProfileView[]
   badges               UserBadge[]
+
+  adminAuditLogs       AdminAuditLog[] @relation("AdminActorLogs")
+  adminAuditTargets    AdminAuditLog[] @relation("AdminTargetLogs")
+  ipLogs               UserIpLog[]
 }
 
 model Preset {
@@ -223,4 +232,37 @@ model UserBadge {
   @@index([userId])
   @@index([badgeId])
   @@index([earnedAt])
+}
+
+model UserIpLog {
+  id         String   @id @default(cuid())
+  userId     String
+  ipAddress  String
+  route      String?
+  createdAt  DateTime @default(now())
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([ipAddress])
+  @@index([createdAt])
+}
+
+model AdminAuditLog {
+  id           String   @id @default(cuid())
+  actorUserId  String
+  targetUserId String?
+  action       String
+  badgeKey     String?
+  ipAddress    String?
+  details      String?
+  createdAt    DateTime @default(now())
+
+  actor        User     @relation("AdminActorLogs", fields: [actorUserId], references: [id], onDelete: Cascade)
+  target       User?    @relation("AdminTargetLogs", fields: [targetUserId], references: [id], onDelete: SetNull)
+
+  @@index([actorUserId])
+  @@index([targetUserId])
+  @@index([action])
+  @@index([createdAt])
 }
