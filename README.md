@@ -1,36 +1,189 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🚀 Yotei Profile
 
-## Getting Started
+Uma plataforma moderna de **biolink personalizável**, inspirada em soluções como Linktree e Haunt.gg, com foco em **visual premium, personalização avançada e analytics em tempo real**.
 
-First, run the development server:
+🔗 Deploy: https://yotei-profile.vercel.app
+📦 Repositório: https://github.com/Yotei-san/yotei-profile
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+---
+
+## ✨ Visão do Projeto
+
+O **Yotei Profile** foi criado para oferecer uma experiência superior de perfil público, permitindo que usuários centralizem sua presença digital em uma página elegante, altamente customizável e com aparência de produto premium.
+
+---
+
+## 🔥 Principais Features
+
+### 👤 Perfil Público Dinâmico
+
+* Página personalizada por username (`/username`)
+* Avatar, banner e background customizáveis
+* Vídeo de fundo (Premium)
+* Bio, redes sociais e galeria
+
+### 🎨 Sistema de Customização
+
+* Tema (cores, blur, glow, opacity)
+* Layout (stacked, compact, wide)
+* Estilo de links (rounded, square, pill)
+* Ordem dos blocos configurável
+
+### 🔗 Links Inteligentes
+
+* Criação e edição de links
+* Redirecionamento com tracking (`/go/[id]`)
+* Ordenação manual (drag & drop)
+
+### 📊 Analytics
+
+* Visualizações de perfil
+* Cliques em links
+* Dispositivos dos visitantes
+* Países de acesso
+* Gráficos em tempo real
+
+### ⭐ Sistema de Reações
+
+* Likes / Dislikes públicos
+* Score do perfil
+
+### 🏆 Badges
+
+* Sistema de badges com pin
+* Badges customizadas e premium
+
+### 💎 Sistema Premium
+
+* Liberação de features avançadas:
+
+  * Vídeo de fundo
+  * Badges premium
+  * Layouts avançados
+  * Presets salvos
+* Integração com Stripe
+
+### 🧠 Presets
+
+* Salvar e aplicar estilos de perfil
+* Sistema de temas reutilizáveis
+
+### 🛡️ Admin System
+
+* Gestão de usuários
+* Logs de auditoria
+* Controle de badges
+* Logs de IP
+
+---
+
+## 🧱 Stack Tecnológica
+
+* **Frontend:** Next.js (App Router)
+* **Backend:** Server Actions (Next.js)
+* **Banco de dados:** PostgreSQL + Prisma ORM
+* **Autenticação:** Sistema próprio com sessão via cookies
+* **Deploy:** Vercel
+* **Pagamentos:** Stripe
+
+---
+
+## 📁 Estrutura do Projeto
+
+```
+src/
+ └── app/
+     ├── dashboard/
+     ├── api/
+     ├── [username]/
+     └── lib/
+
+prisma/
+ └── schema.prisma
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## ⚙️ Como rodar o projeto
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 1. Clone o repositório
 
-## Learn More
+```
+git clone https://github.com/Yotei-san/yotei-profile.git
+cd yotei-profile
+```
 
-To learn more about Next.js, take a look at the following resources:
+### 2. Instale as dependências
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+npm install
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 3. Configure o ambiente
 
-## Deploy on Vercel
+Crie um `.env` com:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```
+DATABASE_URL=
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+(Adicione também suas chaves do Stripe se necessário)
+
+### 4. Execute as migrations
+
+```
+npx prisma migrate dev
+```
+
+### 5. Rode o projeto
+
+```
+npm run dev
+```
+
+---
+
+## 📌 Status do Projeto
+
+🟡 Em desenvolvimento ativo
+🚀 Evoluindo para versão SaaS completa
+
+---
+
+## 🎯 Roadmap
+
+* [ ] Sistema de Decorations (estilo Haunt.gg)
+* [ ] Melhorias de performance
+* [ ] Refatoração para arquitetura mais escalável
+* [ ] Sistema de templates públicos
+* [ ] SEO e otimização de perfil público
+
+---
+
+## 💡 Objetivo
+
+Transformar o Yotei em uma plataforma de referência para:
+
+* criadores de conteúdo
+* desenvolvedores
+* comunidades online
+
+---
+
+## 🤝 Contribuição
+
+Contribuições são bem-vindas!
+Sinta-se livre para abrir issues ou pull requests.
+
+---
+
+## 📜 Licença
+
+MIT License
+
+---
+
+## 👨‍💻 Autor
+
+Desenvolvido por **Arthur Jesus (Yotei)**
+🔗 https://github.com/Yotei-san
