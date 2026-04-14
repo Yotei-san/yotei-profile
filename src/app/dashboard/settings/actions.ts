@@ -1,6 +1,6 @@
 "use server";
 
-import bcryptjs from "bcryptjs";
+import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/app/lib/auth";
