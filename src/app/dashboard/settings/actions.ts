@@ -1,6 +1,6 @@
 "use server";
 
-import bcrypt from "bcrypt";
+import bcryptjs from "bcryptjs";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/app/lib/auth";
@@ -112,7 +112,7 @@ export async function updatePassword(formData: FormData) {
     redirect("/dashboard/settings?error=user-not-found");
   }
 
-  const passwordMatches = await bcrypt.compare(
+  const passwordMatches = await bcryptjs.compare(
     currentPassword,
     user.passwordHash
   );
@@ -121,13 +121,13 @@ export async function updatePassword(formData: FormData) {
     redirect("/dashboard/settings?error=wrong-password");
   }
 
-  const samePassword = await bcrypt.compare(newPassword, user.passwordHash);
+  const samePassword = await bcryptjs.compare(newPassword, user.passwordHash);
 
   if (samePassword) {
     redirect("/dashboard/settings?error=same-password");
   }
 
-  const newPasswordHash = await bcrypt.hash(newPassword, 10);
+  const newPasswordHash = await bcryptjs.hash(newPassword, 10);
 
   await prisma.user.update({
     where: { id: user.id },

@@ -35,7 +35,7 @@ export async function loginUser(formData: FormData) {
   throw new Error("Conta desativada.");
 }
 
-  const passwordMatches = await bcrypt.compare(password, user.password);
+  const passwordMatches = await bcryptjs.compare(password, user.password);
 
   if (!passwordMatches) {
     throw new Error("Usuário ou senha inválidos.");
