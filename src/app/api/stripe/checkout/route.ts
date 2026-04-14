@@ -1,62 +1,102 @@
-import { put } from "@vercel/blob";
 import { NextResponse } from "next/server";
+import Stripe from "stripe";
+import { prisma } from "@/app/lib/prisma";
+import { getCurrentUser } from "@/app/lib/auth";
 
-const ALLOWED_TYPES = new Set([
-  "image/png",
-  "image/jpeg",
-  "image/jpg",
-  "image/webp",
-  "image/gif",
-  "video/mp4",
-  "video/webm",
-  "video/quicktime",
-]);
+const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
 
-export async function POST(request: Request) {
+if (!stripeSecretKey) {
+  throw new Error("STRIPE_SECRET_KEY não configurada.");
+}
+
+const stripe = new Stripe(stripeSecretKey);
+
+export async function POST() {
   try {
-    const formData = await request.formData();
-    const file = formData.get("file");
+    const user = await getCurrentUser();
 
-    if (!(file instanceof File)) {
-      return NextResponse.json({ error: "Arquivo inválido." }, { status: 400 });
-    }
-
-    if (!ALLOWED_TYPES.has(file.type)) {
+    if (!user) {
       return NextResponse.json(
-        { error: "Tipo de arquivo não permitido." },
-        { status: 400 }
+        { error: "Você precisa estar logado." },
+        { status: 401 }
       );
     }
 
-    if (file.size === 0) {
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+    const priceId = process.env.STRIPE_PRICE_PREMIUM_MONTHLY;
+
+    console.log("[CHECKOUT] user:", {
+      id: user.id,
+      email: user.email,
+      username: user.username,
+      stripeCustomerId: user.stripeCustomerId,
+    });
+
+    console.log("[CHECKOUT] env:", {
+      appUrl,
+      priceId,
+      hasStripeSecretKey: Boolean(process.env.STRIPE_SECRET_KEY),
+    });
+
+    if (!appUrl) {
       return NextResponse.json(
-        { error: "Arquivo vazio." },
-        { status: 400 }
+        { error: "NEXT_PUBLIC_APP_URL não configurada." },
+        { status: 500 }
       );
     }
 
-    const safeName =
-      file.name
-        .toLowerCase()
-        .replace(/\s+/g, "-")
-        .replace(/[^a-z0-9._-]/g, "") || "upload.bin";
+    if (!priceId) {
+      return NextResponse.json(
+        { error: "STRIPE_PRICE_PREMIUM_MONTHLY não configurada." },
+        { status: 500 }
+      );
+    }
 
-    const filename = `${Date.now()}-${safeName}`;
+    let customerId = user.stripeCustomerId ?? null;
 
-    const blob = await put(filename, file, {
-      access: "public",
-      addRandomSuffix: true,
+    if (!customerId) {
+      const customer = await stripe.customers.create({
+        email: user.email,
+        metadata: {
+          userId: user.id,
+          username: user.username,
+        },
+      });
+
+      customerId = customer.id;
+
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { stripeCustomerId: customerId },
+      });
+    }
+
+    const session = await stripe.checkout.sessions.create({
+      mode: "subscription",
+      customer: customerId,
+      payment_method_types: ["card"],
+      line_items: [
+        {
+          price: priceId,
+          quantity: 1,
+        },
+      ],
+      success_url: `${appUrl}/dashboard?checkout=success`,
+      cancel_url: `${appUrl}/pricing?checkout=cancelled`,
+      metadata: {
+        userId: user.id,
+      },
     });
 
     return NextResponse.json({
-      url: blob.url,
+      url: session.url,
     });
   } catch (error) {
-    console.error("[UPLOAD_POST]", error);
+    console.error("[STRIPE_CHECKOUT_POST]", error);
 
-    return NextResponse.json(
-      { error: "Falha ao fazer upload." },
-      { status: 500 }
-    );
+    const message =
+      error instanceof Error ? error.message : "Erro desconhecido no checkout.";
+
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

@@ -1,60 +1,61 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 
-type Props = {
+type RouteProps = {
   params: Promise<{
     username: string;
   }>;
 };
 
-function detectDeviceType(userAgent: string) {
-  const ua = userAgent.toLowerCase();
+export async function POST(_req: Request, { params }: RouteProps) {
+  try {
+    const { username } = await params;
 
-  if (/mobile|android|iphone|ipod/i.test(ua)) {
-    return "Mobile";
+    const normalizedUsername = username.trim().toLowerCase();
+
+    if (!normalizedUsername) {
+      return NextResponse.json(
+        { error: "Username inválido." },
+        { status: 400 }
+      );
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { username: normalizedUsername },
+      select: {
+        id: true,
+        status: true,
+        _count: {
+          select: {
+            profileViews: true,
+          },
+        },
+      },
+    });
+
+    if (!user || user.status === "banned") {
+      return NextResponse.json(
+        { error: "Perfil não encontrado." },
+        { status: 404 }
+      );
+    }
+
+    await prisma.profileView.create({
+      data: {
+        userId: user.id,
+      },
+    });
+
+    return NextResponse.json({
+      ok: true,
+      views: user._count.profileViews + 1,
+    });
+  } catch (error) {
+    console.error("profile view route error", error);
+
+    return NextResponse.json(
+      { error: "Falha ao registrar view." },
+      { status: 500 }
+    );
   }
-
-  if (/ipad|tablet/i.test(ua)) {
-    return "Tablet";
-  }
-
-  return "Desktop";
-}
-
-function detectCountry(request: Request) {
-  const headers = request.headers;
-
-  return (
-    headers.get("x-vercel-ip-country") ||
-    headers.get("cf-ipcountry") ||
-    headers.get("x-country-code") ||
-    "Unknown"
-  );
-}
-
-export async function POST(request: Request, { params }: Props) {
-  const { username } = await params;
-
-  const user = await prisma.user.findUnique({
-    where: { username },
-    select: { id: true },
-  });
-
-  if (!user) {
-    return NextResponse.json({ error: "Perfil não encontrado." }, { status: 404 });
-  }
-
-  const userAgent = request.headers.get("user-agent") || "";
-  const deviceType = detectDeviceType(userAgent);
-  const country = detectCountry(request);
-
-  await prisma.profileView.create({
-    data: {
-      userId: user.id,
-      country,
-      deviceType,
-    },
-  });
-
-  return NextResponse.json({ ok: true });
 }

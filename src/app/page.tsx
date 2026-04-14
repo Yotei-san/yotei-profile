@@ -1,481 +1,623 @@
+"use client";
+
 import Link from "next/link";
+import { motion } from "framer-motion";
+import { useMemo } from "react";
 
-const navLinkStyle: React.CSSProperties = {
-  color: "#f4f4f5",
-  textDecoration: "none",
-  fontSize: "15px",
-  fontWeight: 500,
-  opacity: 0.92,
+const container = {
+  hidden: {},
+  show: {
+    transition: {
+      staggerChildren: 0.08,
+    },
+  },
 };
 
-const primaryButtonStyle: React.CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  gap: "10px",
-  textDecoration: "none",
-  background:
-    "linear-gradient(135deg, rgba(236,72,153,0.24), rgba(168,85,247,0.22))",
-  border: "1px solid rgba(244,114,182,0.26)",
-  color: "#ffe4f1",
-  padding: "14px 20px",
-  borderRadius: "16px",
-  fontWeight: 700,
-  boxShadow: "0 12px 40px rgba(236,72,153,0.14)",
+const fadeUp = {
+  hidden: { opacity: 0, y: 24 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.55,
+      ease: "easeOut",
+    },
+  },
 };
 
-const secondaryButtonStyle: React.CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  textDecoration: "none",
-  backgroundColor: "rgba(255,255,255,0.04)",
-  border: "1px solid rgba(255,255,255,0.08)",
-  color: "#ffffff",
-  padding: "14px 20px",
-  borderRadius: "16px",
-  fontWeight: 600,
-};
-
-const sectionTitleStyle: React.CSSProperties = {
-  fontSize: "42px",
-  lineHeight: 1.05,
-  margin: 0,
-  color: "#ffffff",
-};
-
-const mutedTextStyle: React.CSSProperties = {
-  color: "#b4b4bd",
-  lineHeight: 1.75,
-  fontSize: "17px",
-};
-
-function FeatureCard({
+function HeroMockLink({
   title,
-  description,
+  subtitle,
+  accent,
 }: {
   title: string;
-  description: string;
+  subtitle: string;
+  accent: string;
 }) {
   return (
     <div
       style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: "12px",
+        padding: "16px",
+        borderRadius: "18px",
         background:
-          "linear-gradient(180deg, rgba(20,20,24,0.95), rgba(10,10,12,0.95))",
-        border: "1px solid rgba(255,255,255,0.06)",
-        borderRadius: "22px",
-        padding: "22px",
-        boxShadow: "0 18px 40px rgba(0,0,0,0.22)",
+          "linear-gradient(180deg, rgba(15,15,19,0.92), rgba(9,9,12,0.96))",
+        border: `1px solid ${accent}30`,
+        boxShadow: `0 10px 24px ${accent}12`,
       }}
     >
-      <div
-        style={{
-          width: "42px",
-          height: "42px",
-          borderRadius: "14px",
-          background:
-            "linear-gradient(135deg, rgba(236,72,153,0.18), rgba(168,85,247,0.16))",
-          border: "1px solid rgba(244,114,182,0.16)",
-          marginBottom: "16px",
-        }}
-      />
-      <h3 style={{ margin: 0, fontSize: "24px", color: "#fff" }}>{title}</h3>
-      <p style={{ ...mutedTextStyle, fontSize: "15px", marginBottom: 0 }}>
-        {description}
-      </p>
-    </div>
-  );
-}
+      <div style={{ display: "flex", alignItems: "center", gap: "12px", minWidth: 0 }}>
+        <div
+          style={{
+            width: "42px",
+            height: "42px",
+            borderRadius: "14px",
+            background: `${accent}20`,
+            border: `1px solid ${accent}40`,
+            flexShrink: 0,
+          }}
+        />
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontWeight: 900, letterSpacing: "-0.02em" }}>{title}</div>
+          <div
+            style={{
+              marginTop: "4px",
+              fontSize: "13px",
+              color: "#97a1b1",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {subtitle}
+          </div>
+        </div>
+      </div>
 
-function StepCard({
-  step,
-  title,
-  description,
-}: {
-  step: string;
-  title: string;
-  description: string;
-}) {
-  return (
-    <div
-      style={{
-        backgroundColor: "rgba(255,255,255,0.03)",
-        border: "1px solid rgba(255,255,255,0.06)",
-        borderRadius: "22px",
-        padding: "22px",
-      }}
-    >
       <div
         style={{
-          display: "inline-flex",
+          width: "36px",
+          height: "36px",
+          borderRadius: "12px",
+          backgroundColor: "rgba(255,255,255,0.03)",
+          border: "1px solid rgba(255,255,255,0.05)",
+          display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          minWidth: "44px",
-          height: "44px",
-          borderRadius: "999px",
-          background:
-            "linear-gradient(135deg, rgba(236,72,153,0.20), rgba(168,85,247,0.20))",
-          color: "#ffd7ea",
-          fontWeight: 800,
-          marginBottom: "14px",
+          color: "#dbe3ee",
+          flexShrink: 0,
         }}
       >
-        {step}
+        ↗
       </div>
-      <h3 style={{ margin: 0, color: "#fff", fontSize: "24px" }}>{title}</h3>
-      <p style={{ ...mutedTextStyle, fontSize: "15px", marginBottom: 0 }}>
-        {description}
+    </div>
+  );
+}
+
+function FeatureCard({
+  accent,
+  icon,
+  title,
+  text,
+}: {
+  accent: string;
+  icon: string;
+  title: string;
+  text: string;
+}) {
+  return (
+    <div
+      style={{
+        borderRadius: "24px",
+        padding: "22px",
+        background:
+          "linear-gradient(180deg, rgba(14,14,18,0.90), rgba(8,8,12,0.96))",
+        border: `1px solid ${accent}24`,
+        boxShadow: `0 14px 28px ${accent}10`,
+        position: "relative",
+        overflow: "hidden",
+      }}
+    >
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          background: `radial-gradient(circle at top right, ${accent}10, transparent 40%)`,
+          pointerEvents: "none",
+        }}
+      />
+
+      <div
+        style={{
+          width: "46px",
+          height: "46px",
+          borderRadius: "15px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: `${accent}18`,
+          border: `1px solid ${accent}30`,
+          fontSize: "20px",
+        }}
+      >
+        {icon}
+      </div>
+
+      <h3
+        style={{
+          margin: "16px 0 0",
+          fontSize: "20px",
+          fontWeight: 900,
+          letterSpacing: "-0.03em",
+        }}
+      >
+        {title}
+      </h3>
+
+      <p
+        style={{
+          marginTop: "10px",
+          color: "#b9c2cf",
+          lineHeight: 1.75,
+          fontSize: "15px",
+        }}
+      >
+        {text}
       </p>
     </div>
   );
 }
 
-function PricingCard({
-  name,
-  price,
-  featured,
-  features,
-}: {
-  name: string;
-  price: string;
-  featured?: boolean;
-  features: string[];
-}) {
+function StatCard({ label, value }: { label: string; value: string }) {
   return (
     <div
       style={{
-        background: featured
-          ? "linear-gradient(180deg, rgba(48,16,31,0.98), rgba(20,10,18,0.98))"
-          : "linear-gradient(180deg, rgba(18,18,20,0.98), rgba(10,10,12,0.98))",
-        border: featured
-          ? "1px solid rgba(244,114,182,0.20)"
-          : "1px solid rgba(255,255,255,0.07)",
-        borderRadius: "24px",
-        padding: "24px",
-        boxShadow: featured
-          ? "0 24px 60px rgba(236,72,153,0.16)"
-          : "0 18px 40px rgba(0,0,0,0.24)",
+        borderRadius: "22px",
+        padding: "20px",
+        background:
+          "linear-gradient(180deg, rgba(14,14,18,0.88), rgba(8,8,12,0.96))",
+        border: "1px solid rgba(255,255,255,0.05)",
+        boxShadow: "0 12px 28px rgba(0,0,0,0.22)",
       }}
     >
+      <div style={{ color: "#aeb8c6", fontSize: "14px" }}>{label}</div>
       <div
         style={{
-          display: "inline-block",
-          padding: "8px 12px",
-          borderRadius: "999px",
-          backgroundColor: featured
-            ? "rgba(244,114,182,0.12)"
-            : "rgba(255,255,255,0.04)",
-          border: featured
-            ? "1px solid rgba(244,114,182,0.20)"
-            : "1px solid rgba(255,255,255,0.08)",
-          color: featured ? "#f9a8d4" : "#d4d4d8",
-          fontSize: "13px",
-          fontWeight: 700,
-          marginBottom: "14px",
+          marginTop: "10px",
+          fontSize: "30px",
+          fontWeight: 900,
+          letterSpacing: "-0.04em",
         }}
       >
-        {featured ? "Mais popular" : "Starter"}
-      </div>
-
-      <h3 style={{ color: "#fff", fontSize: "34px", margin: "0 0 4px 0" }}>
-        {name}
-      </h3>
-      <div style={{ color: "#f9a8d4", fontWeight: 700, marginBottom: "12px" }}>
-        {price}
-      </div>
-
-      <div style={{ display: "grid", gap: "10px", color: "#f4f4f5" }}>
-        {features.map((feature) => (
-          <div key={feature}>• {feature}</div>
-        ))}
+        {value}
       </div>
     </div>
   );
 }
 
 export default function HomePage() {
+  const mockLinks = useMemo(
+    () => [
+      { title: "Discord", subtitle: "community / social identity", accent: "#5865F2" },
+      { title: "Instagram", subtitle: "visual presence / content", accent: "#E4405F" },
+      { title: "GitHub", subtitle: "projects / developer profile", accent: "#cbd5e1" },
+      { title: "X", subtitle: "updates / audience / reach", accent: "#60a5fa" },
+    ],
+    []
+  );
+
   return (
     <main
       style={{
         minHeight: "100vh",
-        background:
-          "radial-gradient(circle at top, rgba(236,72,153,0.14), transparent 24%), radial-gradient(circle at 80% 20%, rgba(168,85,247,0.10), transparent 20%), linear-gradient(180deg, #14070d 0%, #08080a 38%, #050507 100%)",
         color: "#ffffff",
+        background:
+          "radial-gradient(circle at top, rgba(244,114,182,0.12), transparent 20%), radial-gradient(circle at 82% 18%, rgba(96,165,250,0.12), transparent 16%), radial-gradient(circle at 20% 75%, rgba(192,132,252,0.08), transparent 18%), #050507",
         fontFamily: "Arial, Helvetica, sans-serif",
         overflow: "hidden",
+        position: "relative",
       }}
     >
-      <div
-        style={{
-          position: "fixed",
-          inset: 0,
-          pointerEvents: "none",
-          opacity: 0.14,
-          backgroundImage:
-            "radial-gradient(rgba(244,114,182,0.32) 1px, transparent 1px)",
-          backgroundSize: "120px 120px",
-          maskImage: "linear-gradient(180deg, rgba(0,0,0,0.9), transparent)",
+      <style>{`
+        .yotei-shell {
+          width: min(1240px, calc(100% - 32px));
+          margin: 0 auto;
+        }
+
+        .yotei-grid-hero {
+          display: grid;
+          grid-template-columns: 1.02fr 0.98fr;
+          gap: 28px;
+          align-items: center;
+        }
+
+        .yotei-grid-features {
+          display: grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 16px;
+        }
+
+        .yotei-grid-stats {
+          display: grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 16px;
+        }
+
+        .yotei-grid-showcase {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 18px;
+        }
+
+        .yotei-button-main,
+        .yotei-button-secondary,
+        .yotei-showcase-panel,
+        .yotei-mockup-shell {
+          transition:
+            transform 180ms ease,
+            box-shadow 180ms ease,
+            border-color 180ms ease,
+            background 180ms ease;
+        }
+
+        .yotei-button-main:hover,
+        .yotei-button-secondary:hover,
+        .yotei-showcase-panel:hover,
+        .yotei-mockup-shell:hover {
+          transform: translateY(-3px);
+        }
+
+        .hero-title-gradient {
+          background: linear-gradient(90deg, #f472b6, #c084fc, #60a5fa);
+          -webkit-background-clip: text;
+          background-clip: text;
+          color: transparent;
+        }
+
+        .noise-layer {
+          position: absolute;
+          inset: 0;
+          pointer-events: none;
+          opacity: 0.03;
+          background-image:
+            radial-gradient(rgba(255,255,255,0.6) 0.6px, transparent 0.6px);
+          background-size: 6px 6px;
+          mix-blend-mode: soft-light;
+        }
+
+        @media (max-width: 1024px) {
+          .yotei-grid-hero,
+          .yotei-grid-showcase {
+            grid-template-columns: 1fr;
+          }
+
+          .yotei-grid-features,
+          .yotei-grid-stats {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
+        }
+
+        @media (max-width: 640px) {
+          .yotei-grid-features,
+          .yotei-grid-stats {
+            grid-template-columns: 1fr;
+          }
+        }
+      `}</style>
+
+      <div className="noise-layer" />
+
+      <motion.div
+        animate={{
+          x: [0, 12, -6, 0],
+          y: [0, 12, 6, 0],
+          scale: [1, 1.04, 0.98, 1],
         }}
+        transition={{ duration: 22, repeat: Infinity, ease: "easeInOut" }}
+        style={glowOrb("300px", "300px", "-70px", "40px", "rgba(244,114,182,0.18)")}
+      />
+      <motion.div
+        animate={{
+          x: [0, -12, 8, 0],
+          y: [0, -10, 8, 0],
+          scale: [1, 0.98, 1.03, 1],
+        }}
+        transition={{ duration: 24, repeat: Infinity, ease: "easeInOut" }}
+        style={glowOrb("280px", "280px", undefined, "120px", "rgba(96,165,250,0.16)", "-50px")}
       />
 
-      <div style={{ maxWidth: "1320px", margin: "0 auto", padding: "26px 24px 80px" }}>
-        <nav
+      <header
+        style={{
+          position: "sticky",
+          top: 0,
+          zIndex: 30,
+          backdropFilter: "blur(8px)",
+          backgroundColor: "rgba(5,5,7,0.50)",
+          borderBottom: "1px solid rgba(255,255,255,0.04)",
+        }}
+      >
+        <div
+          className="yotei-shell"
           style={{
-            position: "sticky",
-            top: "18px",
-            zIndex: 20,
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            gap: "20px",
-            padding: "16px 20px",
-            marginBottom: "34px",
-            borderRadius: "22px",
-            backgroundColor: "rgba(14,14,18,0.72)",
-            border: "1px solid rgba(255,255,255,0.06)",
-            backdropFilter: "blur(18px)",
-            boxShadow: "0 16px 40px rgba(0,0,0,0.24)",
+            minHeight: "74px",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <div
-              style={{
-                width: "38px",
-                height: "38px",
-                borderRadius: "14px",
-                background:
-                  "linear-gradient(135deg, rgba(236,72,153,0.95), rgba(168,85,247,0.95))",
-                boxShadow: "0 12px 30px rgba(236,72,153,0.35)",
-              }}
-            />
-            <div style={{ fontWeight: 800, fontSize: "36px", letterSpacing: "-0.04em" }}>
-              Yotei
-            </div>
-          </div>
-
-          <div style={{ display: "flex", alignItems: "center", gap: "28px", flexWrap: "wrap" }}>
-            <Link href="/pricing" style={navLinkStyle}>
-              Pricing
-            </Link>
-            <Link href="/leaderboard" style={navLinkStyle}>
-              Leaderboard
-            </Link>
-            <Link href="/login" style={navLinkStyle}>
-              Login
-            </Link>
-            <Link href="/register" style={primaryButtonStyle}>
-              Criar perfil
-            </Link>
-          </div>
-        </nav>
-
-        <section
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1.05fr 0.95fr",
-            gap: "34px",
-            alignItems: "center",
-            minHeight: "calc(100vh - 180px)",
-            padding: "24px 0 40px",
-          }}
-        >
-          <div>
-            <div
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "10px",
-                padding: "10px 14px",
-                borderRadius: "999px",
-                backgroundColor: "rgba(244,114,182,0.10)",
-                border: "1px solid rgba(244,114,182,0.18)",
-                color: "#fbcfe8",
-                marginBottom: "18px",
-                fontWeight: 700,
-              }}
-            >
-              ✦ Seu perfil digital com cara de produto premium
-            </div>
-
-            <h1
-              style={{
-                fontSize: "74px",
-                lineHeight: 0.95,
-                letterSpacing: "-0.05em",
-                margin: "0 0 18px 0",
-                maxWidth: "760px",
-              }}
-            >
-              Sua identidade
-              <span
-                style={{
-                  display: "block",
-                  background:
-                    "linear-gradient(90deg, #ffffff 0%, #f9a8d4 42%, #c084fc 100%)",
-                  WebkitBackgroundClip: "text",
-                  color: "transparent",
-                }}
-              >
-                em um único lugar.
-              </span>
-            </h1>
-
-            <p style={{ ...mutedTextStyle, maxWidth: "640px", marginBottom: "22px" }}>
-              Crie uma página biolink elegante, personalizável e com aparência
-              realmente forte. Reúna links, mídia, badges, analytics e estilo
-              premium em um perfil que parece produto real.
-            </p>
-
-            <div
-              style={{
-                display: "flex",
-                gap: "14px",
-                flexWrap: "wrap",
-                marginBottom: "22px",
-              }}
-            >
-              <Link href="/register" style={primaryButtonStyle}>
-                Começar grátis
-              </Link>
-              <Link href="/pricing" style={secondaryButtonStyle}>
-                Ver planos
-              </Link>
-            </div>
-
-            <div
-              style={{
-                display: "flex",
-                flexWrap: "wrap",
-                gap: "12px",
-                alignItems: "center",
-                marginBottom: "18px",
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  minWidth: "320px",
-                  flexWrap: "wrap",
-                  backgroundColor: "rgba(255,255,255,0.04)",
-                  border: "1px solid rgba(255,255,255,0.08)",
-                  borderRadius: "18px",
-                  overflow: "hidden",
-                }}
-              >
-                <div
-                  style={{
-                    padding: "16px 18px",
-                    color: "#a1a1aa",
-                    borderRight: "1px solid rgba(255,255,255,0.06)",
-                  }}
-                >
-                  yotei.gg/
-                </div>
-                <div style={{ padding: "16px 18px", color: "#ffffff" }}>seuusername</div>
-              </div>
-
-              <Link href="/register" style={primaryButtonStyle}>
-                Garantir username
-              </Link>
-            </div>
-
-            <div
-              style={{
-                display: "flex",
-                gap: "18px",
-                flexWrap: "wrap",
-                color: "#a1a1aa",
-                fontSize: "14px",
-              }}
-            >
-              <div>● 100% grátis para começar</div>
-              <div>● Sem cartão para testar</div>
-              <div>● Visual premium desde o início</div>
-            </div>
-          </div>
-
-          <div
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
             style={{
-              position: "relative",
               display: "flex",
-              justifyContent: "center",
+              alignItems: "center",
+              gap: "12px",
+              fontWeight: 900,
+              fontSize: "22px",
+              letterSpacing: "-0.03em",
             }}
           >
             <div
               style={{
-                position: "absolute",
-                inset: "12% 8% auto 8%",
-                height: "68%",
-                borderRadius: "999px",
+                width: "40px",
+                height: "40px",
+                borderRadius: "14px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
                 background:
-                  "radial-gradient(circle, rgba(236,72,153,0.22), rgba(236,72,153,0.02) 60%, transparent 80%)",
-                filter: "blur(30px)",
-              }}
-            />
-
-            <div
-              style={{
-                width: "100%",
-                maxWidth: "480px",
-                borderRadius: "30px",
-                padding: "14px",
-                background:
-                  "linear-gradient(180deg, rgba(26,12,20,0.95), rgba(8,8,12,0.95))",
-                border: "1px solid rgba(244,114,182,0.22)",
-                boxShadow: "0 30px 80px rgba(0,0,0,0.36)",
-                position: "relative",
+                  "linear-gradient(135deg, rgba(244,114,182,0.95), rgba(168,85,247,0.95))",
+                boxShadow: "0 10px 24px rgba(244,114,182,0.16)",
+                fontSize: "16px",
               }}
             >
-              <div
+              Y
+            </div>
+            <span>Yotei Profile</span>
+          </motion.div>
+
+          <motion.nav
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.08 }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "12px",
+              flexWrap: "wrap",
+            }}
+          >
+            <Link href="/login" style={navLinkStyle}>
+              Login
+            </Link>
+            <Link href="/register" style={navPrimaryStyle}>
+              Criar conta
+            </Link>
+          </motion.nav>
+        </div>
+      </header>
+
+      <section style={{ padding: "56px 0 28px", position: "relative" }}>
+        <div className="yotei-shell yotei-grid-hero">
+          <motion.div variants={container} initial="hidden" animate="show">
+            <motion.div variants={fadeUp} style={pillStyle("#f472b6")}>
+              ✦ Premium animated identity layer
+            </motion.div>
+
+            <motion.h1
+              variants={fadeUp}
+              style={{
+                margin: "18px 0 0",
+                fontSize: "clamp(44px, 8vw, 86px)",
+                lineHeight: 0.92,
+                letterSpacing: "-0.06em",
+                fontWeight: 900,
+                maxWidth: "780px",
+              }}
+            >
+              The profile
+              <br />
+              platform that
+              <br />
+              <span className="hero-title-gradient">looks expensive.</span>
+            </motion.h1>
+
+            <motion.p
+              variants={fadeUp}
+              style={{
+                marginTop: "22px",
+                maxWidth: "670px",
+                color: "#c5cad3",
+                fontSize: "18px",
+                lineHeight: 1.85,
+              }}
+            >
+              Build a public identity with animated avatar decorations, premium
+              links, reactions, badges, analytics, and cinematic visual
+              customization — inside a profile that feels like a real product,
+              not just another bio page.
+            </motion.p>
+
+            <motion.div
+              variants={fadeUp}
+              style={{
+                display: "flex",
+                gap: "14px",
+                flexWrap: "wrap",
+                marginTop: "28px",
+              }}
+            >
+              <Link href="/register" className="yotei-button-main" style={ctaMainStyle}>
+                Criar meu perfil
+              </Link>
+
+              <a
+                href="#preview"
+                className="yotei-button-secondary"
+                style={ctaSecondaryStyle}
+              >
+                Ver experiência
+              </a>
+            </motion.div>
+
+            <motion.div
+              variants={fadeUp}
+              style={{
+                display: "flex",
+                gap: "24px",
+                flexWrap: "wrap",
+                marginTop: "28px",
+                color: "#b8c0cc",
+                fontSize: "14px",
+              }}
+            >
+              <span>✔ Visual premium raro</span>
+              <span>✔ Decorações animadas</span>
+              <span>✔ Analytics + reactions</span>
+            </motion.div>
+          </motion.div>
+
+          <motion.div
+            id="preview"
+            initial={{ opacity: 0, y: 28, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.7, delay: 0.12, ease: "easeOut" }}
+          >
+            <motion.div
+              className="yotei-mockup-shell"
+              style={{
+                position: "relative",
+                borderRadius: "34px",
+                padding: "18px",
+                background:
+                  "linear-gradient(180deg, rgba(18,18,24,0.88), rgba(9,9,14,0.96))",
+                border: "1px solid rgba(255,255,255,0.08)",
+                boxShadow:
+                  "0 26px 72px rgba(0,0,0,0.42), 0 0 0 1px rgba(255,255,255,0.03) inset",
+              }}
+            >
+              <motion.div
+                animate={{
+                  opacity: [0.32, 0.48, 0.32],
+                  scale: [1, 1.02, 1],
+                }}
+                transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
                 style={{
-                  height: "240px",
-                  borderRadius: "22px 22px 0 0",
+                  position: "absolute",
+                  inset: "-18px",
+                  borderRadius: "38px",
                   background:
-                    "linear-gradient(180deg, rgba(255,206,229,0.10), rgba(255,255,255,0.04)), url('https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=1200&auto=format&fit=crop') center/cover",
-                  border: "1px solid rgba(255,255,255,0.06)",
+                    "radial-gradient(circle at 20% 20%, rgba(244,114,182,0.10), transparent 35%), radial-gradient(circle at 80% 10%, rgba(96,165,250,0.10), transparent 30%)",
+                  filter: "blur(10px)",
+                  pointerEvents: "none",
                 }}
               />
 
               <div
                 style={{
-                  marginTop: "-58px",
+                  height: "240px",
+                  borderRadius: "24px",
+                  background:
+                    "linear-gradient(135deg, rgba(244,114,182,0.42), rgba(96,165,250,0.22), rgba(0,0,0,0.32)), url(https://placehold.co/1200x400) center/cover no-repeat",
+                }}
+              />
+
+              <div
+                style={{
+                  marginTop: "-72px",
                   padding: "0 18px 18px",
+                  position: "relative",
+                  zIndex: 2,
                 }}
               >
                 <div
                   style={{
-                    width: "116px",
-                    height: "116px",
+                    width: "136px",
+                    height: "136px",
                     borderRadius: "999px",
-                    background:
-                      "url('https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=400&auto=format&fit=crop') center/cover",
-                    border: "4px solid rgba(15,15,18,0.96)",
-                    boxShadow: "0 18px 45px rgba(236,72,153,0.22)",
-                    margin: "0 auto 14px",
+                    position: "relative",
+                    margin: "0 auto",
                   }}
-                />
+                >
+                  <motion.div
+                    animate={{ rotate: [0, 360] }}
+                    transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
+                    style={{
+                      position: "absolute",
+                      inset: "-14px",
+                      borderRadius: "999px",
+                      border: "2px solid rgba(244,114,182,0.34)",
+                      boxShadow: "0 0 18px rgba(244,114,182,0.16)",
+                    }}
+                  />
+                  <img
+                    src="https://placehold.co/300x300"
+                    alt="Mockup avatar"
+                    style={{
+                      width: "136px",
+                      height: "136px",
+                      objectFit: "cover",
+                      borderRadius: "999px",
+                      border: "5px solid #f472b6",
+                      boxShadow:
+                        "0 0 0 10px rgba(0,0,0,0.54), 0 18px 42px rgba(244,114,182,0.18)",
+                      display: "block",
+                    }}
+                  />
+                </div>
 
-                <div style={{ textAlign: "center" }}>
-                  <div style={{ fontSize: "38px", fontWeight: 800 }}>Yotei</div>
-                  <div style={{ color: "#a1a1aa", marginTop: "6px" }}>@yotei</div>
-
+                <div style={{ textAlign: "center", marginTop: "16px" }}>
                   <div
                     style={{
-                      display: "inline-flex",
-                      gap: "8px",
-                      alignItems: "center",
-                      marginTop: "12px",
-                      padding: "10px 14px",
-                      borderRadius: "999px",
-                      backgroundColor: "rgba(244,114,182,0.10)",
-                      border: "1px solid rgba(244,114,182,0.18)",
-                      color: "#fbcfe8",
-                      fontWeight: 700,
+                      fontSize: "32px",
+                      fontWeight: 900,
+                      letterSpacing: "-0.045em",
                     }}
                   >
-                    ✦ Premium
+                    Yotei
                   </div>
+                  <div
+                    style={{
+                      marginTop: "6px",
+                      color: "#b8c0cc",
+                    }}
+                  >
+                    @yotei-san
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    marginTop: "16px",
+                    padding: "14px 16px",
+                    borderRadius: "18px",
+                    backgroundColor: "rgba(255,255,255,0.03)",
+                    border: "1px solid rgba(255,255,255,0.05)",
+                    color: "#d8dde7",
+                    lineHeight: 1.7,
+                    textAlign: "center",
+                  }}
+                >
+                  Animated identity. Custom profile aesthetic. Premium links.
+                  Analytics and reactions in one public layer.
+                </div>
+
+                <div
+                  style={{
+                    marginTop: "16px",
+                    display: "flex",
+                    justifyContent: "center",
+                    gap: "10px",
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <div style={mockupPill("#4ade80")}>👍 214</div>
+                  <div style={mockupPill("#f87171")}>👎 12</div>
+                  <div style={mockupPill("#cbd5e1")}>👁 1.2k views</div>
                 </div>
 
                 <div
@@ -485,197 +627,444 @@ export default function HomePage() {
                     gap: "12px",
                   }}
                 >
-                  {["Discord", "GitHub", "TikTok", "Meu servidor"].map((item) => (
-                    <div
-                      key={item}
-                      style={{
-                        backgroundColor: "rgba(255,255,255,0.03)",
-                        border: "1px solid rgba(255,255,255,0.06)",
-                        borderRadius: "18px",
-                        padding: "16px 18px",
-                        color: "#ffffff",
-                        fontWeight: 600,
-                      }}
-                    >
-                      {item}
-                    </div>
+                  {mockLinks.map((item) => (
+                    <HeroMockLink
+                      key={item.title}
+                      title={item.title}
+                      subtitle={item.subtitle}
+                      accent={item.accent}
+                    />
                   ))}
                 </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        </div>
+      </section>
 
+      <section style={{ padding: "18px 0 22px" }}>
+        <motion.div
+          className="yotei-shell yotei-grid-stats"
+          variants={container}
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, amount: 0.22 }}
+        >
+          <StatCard label="Identity layer" value="Alive" />
+          <StatCard label="Decorations" value="Animated" />
+          <StatCard label="Analytics" value="Tracked" />
+          <StatCard label="Aesthetic" value="Premium" />
+        </motion.div>
+      </section>
+
+      <section style={{ padding: "34px 0" }}>
+        <div className="yotei-shell">
+          <motion.div
+            initial={{ opacity: 0, y: 18 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.35 }}
+            transition={{ duration: 0.5 }}
+            style={{ textAlign: "center", marginBottom: "20px" }}
+          >
+            <div style={pillStyle("#60a5fa")}>✦ Core features</div>
+            <h2
+              style={{
+                margin: "16px 0 0",
+                fontSize: "clamp(32px, 5vw, 58px)",
+                lineHeight: 1,
+                letterSpacing: "-0.045em",
+              }}
+            >
+              More than a bio page.
+            </h2>
+            <p
+              style={{
+                margin: "14px auto 0",
+                maxWidth: "760px",
+                color: "#bcc5d2",
+                fontSize: "17px",
+                lineHeight: 1.8,
+              }}
+            >
+              Yotei is built to feel like your own public identity layer — rare,
+              expressive, and premium from the first click.
+            </p>
+          </motion.div>
+
+          <motion.div
+            className="yotei-grid-features"
+            variants={container}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, amount: 0.2 }}
+          >
+            <FeatureCard
+              accent="#f472b6"
+              icon="✦"
+              title="Animated decorations"
+              text="Add premium avatar frames and visual identity that makes the profile feel alive."
+            />
+            <FeatureCard
+              accent="#60a5fa"
+              icon="📈"
+              title="Smart analytics"
+              text="Track clicks, views, and engagement to understand what actually performs."
+            />
+            <FeatureCard
+              accent="#4ade80"
+              icon="🎨"
+              title="Custom visual style"
+              text="Use banners, avatars, theme colors, and profile composition that fit your identity."
+            />
+            <FeatureCard
+              accent="#c084fc"
+              icon="🏅"
+              title="Badges and status"
+              text="Build recognition with premium profile layers like badges, reactions, and visible status."
+            />
+          </motion.div>
+        </div>
+      </section>
+
+      <section style={{ padding: "26px 0 38px" }}>
+        <div className="yotei-shell yotei-grid-showcase">
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ duration: 0.55 }}
+            className="yotei-showcase-panel"
+            style={showcasePanelStyle()}
+          >
+            <div style={pillStyle("#c084fc")}>✦ Why it feels premium</div>
+            <h3
+              style={{
+                margin: "18px 0 0",
+                fontSize: "42px",
+                lineHeight: 1,
+                letterSpacing: "-0.04em",
+              }}
+            >
+              Identity first.
+            </h3>
+            <p
+              style={{
+                marginTop: "16px",
+                color: "#c2cad6",
+                lineHeight: 1.85,
+                fontSize: "16px",
+              }}
+            >
+              Your page should feel like a personal product. Strong visuals,
+              premium links, reactions, badges, decorations, and analytics all
+              work together to create a high-end public presence.
+            </p>
+
+            <div
+              style={{
+                display: "grid",
+                gap: "12px",
+                marginTop: "20px",
+              }}
+            >
+              {[
+                "Public profile with premium aesthetic",
+                "Links that look intentional, not generic",
+                "Reactions, views and profile feedback loop",
+                "Ready for premium plans later",
+              ].map((item) => (
                 <div
+                  key={item}
                   style={{
-                    marginTop: "18px",
                     display: "flex",
-                    justifyContent: "space-between",
-                    gap: "12px",
-                    color: "#d4d4d8",
-                    fontSize: "14px",
+                    alignItems: "center",
+                    gap: "10px",
+                    color: "#e7ebf2",
                   }}
                 >
-                  <span>👁 12.8k</span>
-                  <span>❤ 3.1k</span>
-                  <span>🔗 4 links</span>
+                  <div
+                    style={{
+                      width: "26px",
+                      height: "26px",
+                      borderRadius: "999px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      backgroundColor: "rgba(244,114,182,0.14)",
+                      border: "1px solid rgba(244,114,182,0.24)",
+                      color: "#f9a8d4",
+                      fontSize: "13px",
+                      flexShrink: 0,
+                    }}
+                  >
+                    ✓
+                  </div>
+                  <span>{item}</span>
                 </div>
-              </div>
+              ))}
             </div>
-          </div>
-        </section>
+          </motion.div>
 
-        <section style={{ padding: "42px 0 24px" }}>
-          <div style={{ maxWidth: "760px", marginBottom: "24px" }}>
-            <h2 style={sectionTitleStyle}>Tudo o que seu perfil precisa para parecer grande.</h2>
-            <p style={mutedTextStyle}>
-              O Yotei foi pensado para deixar o seu perfil com visual premium,
-              recursos úteis e liberdade para personalizar de verdade.
-            </p>
-          </div>
-
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
-              gap: "18px",
-            }}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ duration: 0.55, delay: 0.04 }}
+            className="yotei-showcase-panel"
+            style={showcasePanelStyle()}
           >
-            <FeatureCard
-              title="Visual premium"
-              description="Tema escuro, glow, banners, avatar, background e layouts modernos para um perfil com presença."
-            />
-            <FeatureCard
-              title="Links e mídia"
-              description="Coloque seus links principais, galeria, badges e vídeo de fundo para destacar seu perfil."
-            />
-            <FeatureCard
-              title="Analytics"
-              description="Acompanhe views, cliques, países e dispositivos para entender como as pessoas encontram você."
-            />
-            <FeatureCard
-              title="Conta completa"
-              description="Área de settings, troca de username, display name, senha e upgrades de conta em um painel separado."
-            />
-          </div>
-        </section>
+            <div style={pillStyle("#4ade80")}>✦ Built for evolution</div>
+            <div
+              style={{
+                marginTop: "18px",
+                display: "grid",
+                gap: "14px",
+              }}
+            >
+              {[
+                {
+                  title: "Premium plans",
+                  text: "Prepare the base for paid features without breaking the product structure.",
+                },
+                {
+                  title: "Creator identity",
+                  text: "Let each profile look like a real identity layer, not a copy of everyone else.",
+                },
+                {
+                  title: "Scalable dashboard",
+                  text: "Profile editing, links, decorations and analytics stay organized as the platform grows.",
+                },
+              ].map((item) => (
+                <div
+                  key={item.title}
+                  style={{
+                    borderRadius: "20px",
+                    padding: "18px",
+                    backgroundColor: "rgba(255,255,255,0.03)",
+                    border: "1px solid rgba(255,255,255,0.05)",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontWeight: 900,
+                      fontSize: "18px",
+                      letterSpacing: "-0.02em",
+                    }}
+                  >
+                    {item.title}
+                  </div>
+                  <div
+                    style={{
+                      marginTop: "8px",
+                      color: "#bcc5d2",
+                      lineHeight: 1.75,
+                    }}
+                  >
+                    {item.text}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        </div>
+      </section>
 
-        <section
+      <section style={{ padding: "20px 0 78px" }}>
+        <motion.div
+          className="yotei-shell"
+          initial={{ opacity: 0, y: 18, scale: 0.99 }}
+          whileInView={{ opacity: 1, y: 0, scale: 1 }}
+          viewport={{ once: true, amount: 0.35 }}
+          transition={{ duration: 0.55 }}
           style={{
-            padding: "58px 0 24px",
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr 1fr",
-            gap: "18px",
-          }}
-        >
-          <StepCard
-            step="1"
-            title="Crie sua conta"
-            description="Registre seu username e tenha uma base pronta para personalizar seu perfil em minutos."
-          />
-          <StepCard
-            step="2"
-            title="Deixe com a sua cara"
-            description="Escolha tema, avatar, banner, links, badges e monte um perfil com aparência realmente forte."
-          />
-          <StepCard
-            step="3"
-            title="Compartilhe"
-            description="Envie seu link único e acompanhe visualizações, cliques e crescimento da sua presença online."
-          />
-        </section>
-
-        <section style={{ padding: "58px 0 24px" }}>
-          <div style={{ maxWidth: "720px", marginBottom: "22px" }}>
-            <h2 style={sectionTitleStyle}>Planos simples, visual forte desde o começo.</h2>
-            <p style={mutedTextStyle}>
-              Comece grátis e evolua quando quiser liberar vídeo de fundo,
-              badges, presets e layouts mais avançados.
-            </p>
-          </div>
-
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: "18px",
-            }}
-          >
-            <PricingCard
-              name="Free"
-              price="Grátis"
-              features={[
-                "Até 5 links",
-                "Até 2 imagens na galeria",
-                "Analytics básico",
-                "Perfil com tema customizável",
-              ]}
-            />
-            <PricingCard
-              name="Premium"
-              price="Upgrade mensal"
-              featured
-              features={[
-                "Links ilimitados",
-                "Vídeo de fundo",
-                "Badges premium",
-                "Layouts avançados",
-                "Presets salvos",
-                "Mais mídia e personalização",
-              ]}
-            />
-          </div>
-        </section>
-
-        <section
-          style={{
-            marginTop: "54px",
-            padding: "34px 28px",
-            borderRadius: "28px",
+            borderRadius: "34px",
+            padding: "34px",
             background:
-              "linear-gradient(135deg, rgba(236,72,153,0.12), rgba(168,85,247,0.10))",
-            border: "1px solid rgba(244,114,182,0.16)",
+              "linear-gradient(135deg, rgba(244,114,182,0.16), rgba(96,165,250,0.10), rgba(10,10,14,0.82))",
+            border: "1px solid rgba(255,255,255,0.08)",
+            boxShadow: "0 24px 72px rgba(0,0,0,0.30)",
             textAlign: "center",
+            position: "relative",
+            overflow: "hidden",
           }}
         >
-          <h2 style={{ ...sectionTitleStyle, fontSize: "54px" }}>
-            Crie seu perfil Yotei hoje.
+          <motion.div
+            animate={{
+              opacity: [0.2, 0.36, 0.2],
+              scale: [1, 1.05, 1],
+            }}
+            transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+            style={{
+              position: "absolute",
+              width: "320px",
+              height: "320px",
+              borderRadius: "999px",
+              background: "rgba(244,114,182,0.12)",
+              filter: "blur(28px)",
+              left: "-60px",
+              top: "-80px",
+              pointerEvents: "none",
+            }}
+          />
+
+          <div style={pillStyle("#f472b6")}>✦ Launch your identity</div>
+          <h2
+            style={{
+              margin: "18px 0 0",
+              fontSize: "clamp(34px, 6vw, 62px)",
+              lineHeight: 1,
+              letterSpacing: "-0.05em",
+              position: "relative",
+            }}
+          >
+            Start building your Yotei profile today.
           </h2>
-          <p style={{ ...mutedTextStyle, maxWidth: "760px", margin: "14px auto 22px" }}>
-            Se você quer uma home pública com visual forte, links organizados e
-            presença premium, o Yotei já está pronto para isso.
+          <p
+            style={{
+              margin: "16px auto 0",
+              maxWidth: "760px",
+              color: "#d4dbe6",
+              lineHeight: 1.8,
+              fontSize: "17px",
+              position: "relative",
+            }}
+          >
+            Create a public profile that feels premium, expressive, and ready to
+            grow into something much bigger.
           </p>
 
-          <div style={{ display: "flex", gap: "14px", justifyContent: "center", flexWrap: "wrap" }}>
-            <Link href="/register" style={primaryButtonStyle}>
-              Criar minha conta
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              gap: "14px",
+              flexWrap: "wrap",
+              marginTop: "24px",
+              position: "relative",
+            }}
+          >
+            <Link href="/register" className="yotei-button-main" style={ctaMainStyle}>
+              Criar conta agora
             </Link>
-            <Link href="/login" style={secondaryButtonStyle}>
-              Já tenho login
-            </Link>
-          </div>
-        </section>
-
-        <footer
-          style={{
-            padding: "44px 0 12px",
-            display: "flex",
-            justifyContent: "space-between",
-            gap: "18px",
-            flexWrap: "wrap",
-            color: "#8b8b95",
-          }}
-        >
-          <div>© {new Date().getFullYear()} Yotei. Todos os direitos reservados.</div>
-          <div style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}>
-            <Link href="/pricing" style={{ ...navLinkStyle, color: "#8b8b95" }}>
-              Pricing
-            </Link>
-            <Link href="/leaderboard" style={{ ...navLinkStyle, color: "#8b8b95" }}>
-              Leaderboard
-            </Link>
-            <Link href="/login" style={{ ...navLinkStyle, color: "#8b8b95" }}>
-              Login
+            <Link href="/login" className="yotei-button-secondary" style={ctaSecondaryStyle}>
+              Já tenho conta
             </Link>
           </div>
-        </footer>
-      </div>
+        </motion.div>
+      </section>
     </main>
   );
 }
+
+function glowOrb(
+  width: string,
+  height: string,
+  left: string | undefined,
+  top: string,
+  background: string,
+  right?: string
+): React.CSSProperties {
+  return {
+    position: "absolute",
+    width,
+    height,
+    left,
+    right,
+    top,
+    borderRadius: "999px",
+    filter: "blur(36px)",
+    pointerEvents: "none",
+    opacity: 0.34,
+    background,
+  };
+}
+
+function showcasePanelStyle(): React.CSSProperties {
+  return {
+    borderRadius: "30px",
+    padding: "24px",
+    background:
+      "linear-gradient(180deg, rgba(13,13,18,0.88), rgba(7,7,12,0.96))",
+    border: "1px solid rgba(255,255,255,0.06)",
+    boxShadow: "0 18px 48px rgba(0,0,0,0.28)",
+  };
+}
+
+function pillStyle(accent: string): React.CSSProperties {
+  return {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "8px",
+    padding: "10px 14px",
+    borderRadius: "999px",
+    backgroundColor: `${accent}14`,
+    border: `1px solid ${accent}28`,
+    color: accent,
+    fontWeight: 800,
+    fontSize: "13px",
+  };
+}
+
+const navLinkStyle: React.CSSProperties = {
+  color: "#d4dbe6",
+  textDecoration: "none",
+  padding: "10px 14px",
+  borderRadius: "12px",
+  border: "1px solid rgba(255,255,255,0.05)",
+  backgroundColor: "rgba(255,255,255,0.02)",
+};
+
+const navPrimaryStyle: React.CSSProperties = {
+  color: "#ffffff",
+  textDecoration: "none",
+  padding: "10px 16px",
+  borderRadius: "12px",
+  border: "1px solid rgba(244,114,182,0.24)",
+  background:
+    "linear-gradient(135deg, rgba(244,114,182,0.22), rgba(168,85,247,0.16))",
+  boxShadow: "0 12px 24px rgba(244,114,182,0.12)",
+  fontWeight: 800,
+};
+
+const ctaMainStyle: React.CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  textDecoration: "none",
+  minHeight: "56px",
+  padding: "0 24px",
+  borderRadius: "16px",
+  border: "1px solid rgba(244,114,182,0.26)",
+  background:
+    "linear-gradient(135deg, rgba(244,114,182,0.26), rgba(168,85,247,0.18))",
+  color: "#ffffff",
+  fontWeight: 900,
+  boxShadow: "0 16px 34px rgba(244,114,182,0.16)",
+};
+
+const ctaSecondaryStyle: React.CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  textDecoration: "none",
+  minHeight: "56px",
+  padding: "0 24px",
+  borderRadius: "16px",
+  border: "1px solid rgba(255,255,255,0.07)",
+  backgroundColor: "rgba(255,255,255,0.03)",
+  color: "#dbe4ef",
+  fontWeight: 800,
+};
+
+const mockupPill = (accent: string): React.CSSProperties => ({
+  display: "inline-flex",
+  alignItems: "center",
+  gap: "8px",
+  padding: "10px 12px",
+  borderRadius: "999px",
+  backgroundColor: `${accent}16`,
+  border: `1px solid ${accent}26`,
+  color: "#eef2f7",
+  fontWeight: 800,
+  fontSize: "13px",
+});

@@ -1,60 +1,50 @@
 "use server";
 
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
 import { prisma } from "@/app/lib/prisma";
 import { createUserSession } from "@/app/lib/auth";
 
-function slugifyUsername(value: string) {
-  return value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9_]/g, "")
-    .slice(0, 20);
-}
-
 export async function registerUser(formData: FormData) {
-  const email = String(formData.get("email") ?? "").trim().toLowerCase();
-  const usernameRaw = String(formData.get("username") ?? "").trim();
-  const password = String(formData.get("password") ?? "");
-  const displayName = String(formData.get("displayName") ?? "").trim();
-
-  const username = slugifyUsername(usernameRaw);
+  const email = String(formData.get("email") || "").trim().toLowerCase();
+  const username = String(formData.get("username") || "").trim().toLowerCase();
+  const password = String(formData.get("password") || "").trim();
+  const displayName = String(formData.get("displayName") || "").trim();
 
   if (!email || !username || !password) {
-    redirect("/register");
+    throw new Error("Preencha email, username e senha.");
   }
 
-  const existingEmail = await prisma.user.findUnique({
-    where: { email },
+  if (password.length < 6) {
+    throw new Error("A senha deve ter pelo menos 6 caracteres.");
+  }
+
+  const existingUser = await prisma.user.findFirst({
+    where: {
+      OR: [{ email }, { username }],
+    },
+    select: { id: true },
   });
 
-  if (existingEmail) {
-    redirect("/register");
+  if (existingUser) {
+    throw new Error("Email ou username já estão em uso.");
   }
 
-  const existingUsername = await prisma.user.findUnique({
-    where: { username },
-  });
-
-  if (existingUsername) {
-    redirect("/register");
-  }
-
-  const passwordHash = await bcrypt.hash(password, 10);
+  const hashedPassword = await bcrypt.hash(password, 10);
 
   const user = await prisma.user.create({
     data: {
       email,
       username,
-      passwordHash,
+      password: hashedPassword,
       displayName: displayName || username,
-      bio: "Meu perfil no Yotei Profile",
+    },
+    select: {
+      id: true,
+      username: true,
     },
   });
 
   await createUserSession(user.id);
-
   redirect("/dashboard");
 }

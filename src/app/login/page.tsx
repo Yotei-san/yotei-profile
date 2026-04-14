@@ -1,94 +1,220 @@
+"use client";
+
 import Link from "next/link";
+import { useState, useTransition } from "react";
 import { loginUser } from "./actions";
-import { getCurrentUser } from "../lib/auth";
-import { redirect } from "next/navigation";
 
-export default async function LoginPage() {
-  const user = await getCurrentUser();
+export default function LoginPage() {
+  const [error, setError] = useState("");
+  const [isPending, startTransition] = useTransition();
 
-  if (user) {
-    redirect("/dashboard");
+  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError("");
+
+    const formData = new FormData(event.currentTarget);
+
+    startTransition(async () => {
+      try {
+        await loginUser(formData);
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : "Erro ao fazer login.";
+
+        if (message.includes("NEXT_REDIRECT")) {
+          throw err;
+        }
+
+        setError(message);
+      }
+    });
   }
 
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        backgroundColor: "#0b0b0b",
-        color: "#fff",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "24px",
-        fontFamily: "Arial, Helvetica, sans-serif",
-      }}
-    >
-      <div
-        style={{
-          width: "100%",
-          maxWidth: "420px",
-          backgroundColor: "#151515",
-          border: "1px solid #2a2a2a",
-          borderRadius: "18px",
-          padding: "28px",
-        }}
-      >
-        <h1 style={{ margin: 0, fontSize: "32px", marginBottom: "8px" }}>
-          Entrar
-        </h1>
-        <p style={{ color: "#a3a3a3", marginBottom: "24px" }}>
-          Acesse seu painel do Yotei Profile
+    <main style={mainStyle}>
+      <section style={panelStyle}>
+        <div style={badgeStyle}>Yotei Profile</div>
+
+        <Link href="/" style={backLinkStyle}>
+          ← Voltar para a home
+        </Link>
+
+        <h1 style={titleStyle}>Entrar</h1>
+        <p style={subtitleStyle}>
+          Acesse seu dashboard com email ou username.
         </p>
 
-        <form action={loginUser} style={{ display: "grid", gap: "14px" }}>
-          <input
-            name="email"
-            type="email"
-            placeholder="Seu e-mail"
-            required
-            style={inputStyle}
-          />
-          <input
-            name="password"
-            type="password"
-            placeholder="Sua senha"
-            required
-            style={inputStyle}
-          />
+        <form onSubmit={handleSubmit} style={formStyle}>
+          <label style={labelStyle}>
+            <span style={labelTextStyle}>Email ou username</span>
+            <input
+              type="text"
+              name="identifier"
+              placeholder="Digite seu email ou username"
+              required
+              autoComplete="username"
+              style={inputStyle}
+            />
+          </label>
 
-          <button type="submit" style={buttonStyle}>
-            Entrar
+          <label style={labelStyle}>
+            <span style={labelTextStyle}>Senha</span>
+            <input
+              type="password"
+              name="password"
+              placeholder="Digite sua senha"
+              required
+              autoComplete="current-password"
+              style={inputStyle}
+            />
+          </label>
+
+          {error ? <div style={errorStyle}>{error}</div> : null}
+
+          <button type="submit" disabled={isPending} style={buttonStyle}>
+            {isPending ? "Entrando..." : "Entrar"}
           </button>
         </form>
 
-        <p style={{ marginTop: "20px", color: "#a3a3a3" }}>
-          Não tem conta?{" "}
-          <Link href="/register" style={{ color: "#60a5fa" }}>
+        <div style={footerRowStyle}>
+          <Link href="/forgot-password" style={textLinkStyle}>
+            Esqueci minha senha
+          </Link>
+
+          <Link href="/register" style={textLinkStyle}>
             Criar conta
           </Link>
-        </p>
-      </div>
+        </div>
+      </section>
     </main>
   );
 }
 
+const mainStyle: React.CSSProperties = {
+  minHeight: "100vh",
+  display: "grid",
+  placeItems: "center",
+  padding: "24px",
+  background:
+    "radial-gradient(circle at top, rgba(244,114,182,0.10), transparent 22%), linear-gradient(180deg, #09090b 0%, #050505 100%)",
+  color: "#ffffff",
+  fontFamily:
+    'Inter, Arial, Helvetica, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+};
+
+const panelStyle: React.CSSProperties = {
+  width: "100%",
+  maxWidth: "460px",
+  background: "linear-gradient(180deg, #111114 0%, #0a0a0d 100%)",
+  border: "1px solid rgba(255,255,255,0.08)",
+  borderRadius: "24px",
+  padding: "28px",
+  boxShadow: "0 18px 50px rgba(0,0,0,0.35)",
+};
+
+const badgeStyle: React.CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  padding: "8px 12px",
+  borderRadius: "999px",
+  border: "1px solid rgba(244,114,182,0.16)",
+  backgroundColor: "rgba(244,114,182,0.08)",
+  color: "#f9a8d4",
+  fontSize: "12px",
+  fontWeight: 800,
+  letterSpacing: "0.04em",
+  marginBottom: "16px",
+};
+
+const backLinkStyle: React.CSSProperties = {
+  color: "#a1a1aa",
+  textDecoration: "none",
+  fontWeight: 700,
+  fontSize: "14px",
+  display: "inline-block",
+  marginBottom: "18px",
+};
+
+const titleStyle: React.CSSProperties = {
+  margin: 0,
+  fontSize: "38px",
+  lineHeight: 1.05,
+  fontWeight: 900,
+  letterSpacing: "-0.03em",
+};
+
+const subtitleStyle: React.CSSProperties = {
+  marginTop: "10px",
+  marginBottom: "22px",
+  color: "#a1a1aa",
+  fontSize: "15px",
+  lineHeight: 1.6,
+};
+
+const formStyle: React.CSSProperties = {
+  display: "grid",
+  gap: "14px",
+};
+
+const labelStyle: React.CSSProperties = {
+  display: "grid",
+  gap: "8px",
+};
+
+const labelTextStyle: React.CSSProperties = {
+  fontSize: "13px",
+  fontWeight: 700,
+  color: "#e4e4e7",
+};
+
 const inputStyle: React.CSSProperties = {
   width: "100%",
   padding: "14px 16px",
-  borderRadius: "12px",
-  border: "1px solid #303030",
-  backgroundColor: "#0f0f0f",
-  color: "#fff",
+  borderRadius: "14px",
+  border: "1px solid #27272a",
+  backgroundColor: "#0d0d10",
+  color: "#ffffff",
   outline: "none",
+  fontSize: "15px",
+  transition: "border-color 0.18s ease, background-color 0.18s ease",
 };
 
 const buttonStyle: React.CSSProperties = {
   width: "100%",
   padding: "14px 16px",
-  borderRadius: "12px",
-  border: "none",
-  backgroundColor: "#2563eb",
-  color: "#fff",
-  fontWeight: "bold",
+  borderRadius: "14px",
+  border: "1px solid rgba(244,114,182,0.22)",
+  background:
+    "linear-gradient(180deg, rgba(244,114,182,0.22), rgba(236,72,153,0.16))",
+  color: "#ffffff",
   cursor: "pointer",
+  fontWeight: 800,
+  fontSize: "15px",
+  marginTop: "4px",
+  transition: "transform 0.16s ease, border-color 0.16s ease",
+};
+
+const errorStyle: React.CSSProperties = {
+  borderRadius: "14px",
+  border: "1px solid rgba(239,68,68,0.24)",
+  backgroundColor: "rgba(127,29,29,0.18)",
+  color: "#fca5a5",
+  padding: "12px 14px",
+  fontSize: "14px",
+  lineHeight: 1.5,
+};
+
+const footerRowStyle: React.CSSProperties = {
+  display: "flex",
+  justifyContent: "space-between",
+  gap: "12px",
+  flexWrap: "wrap",
+  marginTop: "18px",
+};
+
+const textLinkStyle: React.CSSProperties = {
+  color: "#a1a1aa",
+  textDecoration: "none",
+  fontWeight: 700,
+  fontSize: "14px",
 };

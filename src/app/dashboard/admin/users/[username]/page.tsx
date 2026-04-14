@@ -2,7 +2,12 @@ import Link from "next/link";
 import { requireUser } from "@/app/lib/auth";
 import { prisma } from "@/app/lib/prisma";
 import { requireAdminByUserId } from "@/app/lib/admin-auth";
-import { banUser, unbanUser, promoteAdmin, demoteAdmin } from "@/app/dashboard/admin/actions";
+import {
+  banUser,
+  unbanUser,
+  promoteAdmin,
+  demoteAdmin,
+} from "@/app/dashboard/admin/actions";
 
 type UserDetailPageProps = {
   params: Promise<{
@@ -30,9 +35,31 @@ function getMessage(type: "success" | "error", code?: string) {
   return "Não foi possível concluir a ação.";
 }
 
-export default async function AdminUserDetailPage({ params, searchParams }: UserDetailPageProps) {
+function pill(label: string, color: string) {
+  return (
+    <div
+      style={{
+        padding: "8px 12px",
+        borderRadius: "999px",
+        backgroundColor: `${color}14`,
+        border: `1px solid ${color}33`,
+        color,
+        fontWeight: 800,
+        fontSize: "12px",
+      }}
+    >
+      {label}
+    </div>
+  );
+}
+
+export default async function AdminUserDetailPage({
+  params,
+  searchParams,
+}: UserDetailPageProps) {
   const sessionUser = await requireUser();
   await requireAdminByUserId(sessionUser.id);
+
   const { username } = await params;
   const resolvedSearchParams = (await searchParams) ?? {};
 
@@ -43,17 +70,12 @@ export default async function AdminUserDetailPage({ params, searchParams }: User
         include: {
           badge: true,
         },
-        orderBy: [{ isPinned: "desc" }, { earnedAt: "desc" }],
-      },
-      ipLogs: {
-        orderBy: { createdAt: "desc" },
-        take: 20,
+        orderBy: [{ createdAt: "desc" }],
       },
       _count: {
         select: {
           links: true,
           badges: true,
-          profileViews: true,
         },
       },
     },
@@ -68,7 +90,7 @@ export default async function AdminUserDetailPage({ params, searchParams }: User
       style={{
         minHeight: "100vh",
         background:
-          "radial-gradient(circle at top, rgba(236,72,153,0.08), transparent 28%), #070707",
+          "radial-gradient(circle at top, rgba(236,72,153,0.08), transparent 28%), radial-gradient(circle at 80% 10%, rgba(168,85,247,0.06), transparent 22%), #070707",
         color: "#ffffff",
         padding: "24px",
         fontFamily: "Arial, Helvetica, sans-serif",
@@ -77,19 +99,53 @@ export default async function AdminUserDetailPage({ params, searchParams }: User
       <div style={{ maxWidth: "1440px", margin: "0 auto" }}>
         <section
           style={{
-            backgroundColor: "#0b0b0b",
-            border: "1px solid #1f1f1f",
-            borderRadius: "24px",
-            padding: "22px",
-            marginBottom: "18px",
+            background:
+              "linear-gradient(135deg, rgba(25,10,18,0.98), rgba(10,10,12,0.98))",
+            border: "1px solid rgba(244,114,182,0.14)",
+            borderRadius: "28px",
+            padding: "26px",
+            boxShadow: "0 24px 60px rgba(0,0,0,0.28)",
+            marginBottom: "22px",
           }}
         >
-          <div style={{ display: "flex", justifyContent: "space-between", gap: "16px", flexWrap: "wrap" }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              gap: "16px",
+              flexWrap: "wrap",
+              alignItems: "center",
+            }}
+          >
             <div>
-              <h1 style={{ margin: 0, fontSize: "40px" }}>
-                {user.displayName || user.username} <span style={{ color: "#a3a3a3" }}>@{user.username}</span>
+              <div
+                style={{
+                  display: "inline-flex",
+                  gap: "8px",
+                  alignItems: "center",
+                  padding: "8px 12px",
+                  borderRadius: "999px",
+                  backgroundColor: "rgba(244,114,182,0.08)",
+                  border: "1px solid rgba(244,114,182,0.14)",
+                  color: "#f9a8d4",
+                  fontWeight: 700,
+                  fontSize: "13px",
+                  marginBottom: "10px",
+                }}
+              >
+                ✦ Admin • User Profile • Haunt UI
+              </div>
+
+              <h1 style={{ margin: 0, fontSize: "42px", lineHeight: 1 }}>
+                {user.displayName || user.username}
+                <span style={{ color: "#a3a3a3", marginLeft: "10px" }}>
+                  @{user.username}
+                </span>
               </h1>
-              <p style={{ color: "#a3a3a3", marginTop: "10px" }}>{user.email}</p>
+
+              <p style={{ color: "#a3a3a3", marginTop: "10px", marginBottom: 0 }}>
+                {user.email}
+              </p>
             </div>
 
             <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
@@ -104,11 +160,15 @@ export default async function AdminUserDetailPage({ params, searchParams }: User
         </section>
 
         {getMessage("success", resolvedSearchParams.success) ? (
-          <div style={successBoxStyle}>{getMessage("success", resolvedSearchParams.success)}</div>
+          <div style={successBoxStyle}>
+            {getMessage("success", resolvedSearchParams.success)}
+          </div>
         ) : null}
 
         {getMessage("error", resolvedSearchParams.error) ? (
-          <div style={errorBoxStyle}>{getMessage("error", resolvedSearchParams.error)}</div>
+          <div style={errorBoxStyle}>
+            {getMessage("error", resolvedSearchParams.error)}
+          </div>
         ) : null}
 
         <section
@@ -121,24 +181,31 @@ export default async function AdminUserDetailPage({ params, searchParams }: User
         >
           <div style={panelStyle}>
             <h2 style={panelTitleStyle}>Resumo</h2>
-            <div style={{ display: "grid", gap: "12px" }}>
+            <div style={{ display: "grid", gap: "12px", marginTop: "16px" }}>
               <InfoRow label="Role" value={user.role} />
               <InfoRow label="Status" value={user.status} />
               <InfoRow label="Links" value={String(user._count.links)} />
               <InfoRow label="Badges" value={String(user._count.badges)} />
-              <InfoRow label="Views" value={String(user._count.profileViews)} />
-              <InfoRow label="Criado em" value={new Date(user.createdAt).toLocaleString("pt-BR")} />
-              <InfoRow label="Ban reason" value={user.banReason || "-"} />
+              <InfoRow
+                label="Criado em"
+                value={new Date(user.createdAt).toLocaleString("pt-BR")}
+              />
+              <InfoRow
+                label="Bio"
+                value={user.bio || "-"}
+              />
             </div>
           </div>
 
           <div style={panelStyle}>
             <h2 style={panelTitleStyle}>Ações</h2>
-            <div style={{ display: "grid", gap: "12px" }}>
+            <div style={{ display: "grid", gap: "12px", marginTop: "16px" }}>
               {user.status === "banned" ? (
                 <form action={unbanUser} style={{ display: "grid", gap: "12px" }}>
                   <input type="hidden" name="username" value={user.username} readOnly />
-                  <button type="submit" style={secondaryButtonStyle}>Desbanir usuário</button>
+                  <button type="submit" style={secondaryButtonStyle}>
+                    Desbanir usuário
+                  </button>
                 </form>
               ) : (
                 <form action={banUser} style={{ display: "grid", gap: "12px" }}>
@@ -149,23 +216,36 @@ export default async function AdminUserDetailPage({ params, searchParams }: User
                     rows={4}
                     style={inputStyle}
                   />
-                  <button type="submit" style={dangerButtonStyle}>Banir usuário</button>
+                  <button type="submit" style={dangerButtonStyle}>
+                    Banir usuário
+                  </button>
                 </form>
               )}
 
               {user.role === "admin" ? (
                 <form action={demoteAdmin}>
                   <input type="hidden" name="username" value={user.username} readOnly />
-                  <button type="submit" style={dangerButtonStyle}>Remover admin</button>
+                  <button type="submit" style={dangerButtonStyle}>
+                    Remover admin
+                  </button>
                 </form>
+              ) : user.role === "owner" ? (
+                <div style={emptyBoxStyle}>
+                  Esse usuário é owner e não deve ser alterado por essa tela.
+                </div>
               ) : (
                 <form action={promoteAdmin}>
                   <input type="hidden" name="username" value={user.username} readOnly />
-                  <button type="submit" style={primaryButtonStyle}>Promover para admin</button>
+                  <button type="submit" style={primaryButtonStyle}>
+                    Promover para admin
+                  </button>
                 </form>
               )}
 
-              <Link href={`/dashboard/admin/badges?username=${user.username}`} style={topLinkStyle}>
+              <Link
+                href={`/dashboard/admin/badges?username=${user.username}`}
+                style={topLinkStyle}
+              >
                 Abrir painel de badges desse usuário
               </Link>
             </div>
@@ -175,45 +255,16 @@ export default async function AdminUserDetailPage({ params, searchParams }: User
         <section
           style={{
             display: "grid",
-            gridTemplateColumns: "1fr 1fr",
+            gridTemplateColumns: "1fr",
             gap: "18px",
           }}
         >
-          <div style={panelStyle}>
-            <h2 style={panelTitleStyle}>IPs recentes</h2>
-            {user.ipLogs.length === 0 ? (
-              <div style={emptyBoxStyle}>Nenhum IP logado ainda.</div>
-            ) : (
-              <div style={{ display: "grid", gap: "12px" }}>
-                {user.ipLogs.map((log) => (
-                  <div
-                    key={log.id}
-                    style={{
-                      backgroundColor: "#101010",
-                      border: "1px solid #1f1f1f",
-                      borderRadius: "16px",
-                      padding: "14px 16px",
-                    }}
-                  >
-                    <div style={{ fontWeight: 800 }}>{log.ipAddress}</div>
-                    <div style={{ color: "#a3a3a3", fontSize: "14px", marginTop: "6px" }}>
-                      Route: {log.route || "-"}
-                    </div>
-                    <div style={{ color: "#71717a", fontSize: "12px", marginTop: "6px" }}>
-                      {new Date(log.createdAt).toLocaleString("pt-BR")}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
           <div style={panelStyle}>
             <h2 style={panelTitleStyle}>Badges</h2>
             {user.badges.length === 0 ? (
               <div style={emptyBoxStyle}>Esse usuário ainda não possui badges.</div>
             ) : (
-              <div style={{ display: "grid", gap: "12px" }}>
+              <div style={{ display: "grid", gap: "12px", marginTop: "16px" }}>
                 {user.badges.map((item) => (
                   <div
                     key={item.id}
@@ -230,21 +281,48 @@ export default async function AdminUserDetailPage({ params, searchParams }: User
                   >
                     <div>
                       <div style={{ fontWeight: 800 }}>
-                        {item.badge.icon || "🏅"} {item.badge.name} {item.isPinned ? "📌" : ""}
+                        {item.badge.icon || "🏅"} {item.badge.name}
                       </div>
-                      <div style={{ color: "#a3a3a3", fontSize: "14px", marginTop: "6px" }}>
-                        {item.badge.category || "general"} • {(item.badge.rarity || "common").toUpperCase()}
+                      <div
+                        style={{
+                          color: "#a3a3a3",
+                          fontSize: "14px",
+                          marginTop: "6px",
+                        }}
+                      >
+                        {item.badge.description || "Sem descrição"}
                       </div>
                     </div>
 
                     <div style={{ color: "#71717a", fontSize: "12px" }}>
-                      {new Date(item.earnedAt).toLocaleDateString("pt-BR")}
+                      {new Date(item.createdAt).toLocaleDateString("pt-BR")}
                     </div>
                   </div>
                 ))}
               </div>
             )}
           </div>
+        </section>
+
+        <section
+          style={{
+            marginTop: "18px",
+            display: "flex",
+            gap: "10px",
+            flexWrap: "wrap",
+          }}
+        >
+          {pill(
+            user.role.toUpperCase(),
+            user.role === "admin"
+              ? "#fb7185"
+              : user.role === "owner"
+              ? "#fde047"
+              : "#d4d4d8"
+          )}
+          {pill(user.status.toUpperCase(), user.status === "banned" ? "#fca5a5" : "#86efac")}
+          {pill(`${user._count.badges} BADGES`, "#c084fc")}
+          {pill(`${user._count.links} LINKS`, "#38bdf8")}
         </section>
       </div>
     </main>
@@ -261,7 +339,13 @@ function InfoRow({ label, value }: { label: string; value: string }) {
         padding: "14px 16px",
       }}
     >
-      <div style={{ color: "#f9a8d4", fontSize: "13px", marginBottom: "6px" }}>
+      <div
+        style={{
+          color: "#f9a8d4",
+          fontSize: "13px",
+          marginBottom: "6px",
+        }}
+      >
         {label}
       </div>
       <div style={{ color: "#ffffff" }}>{value}</div>
@@ -358,4 +442,5 @@ const emptyBoxStyle: React.CSSProperties = {
   padding: "24px",
   textAlign: "center",
   color: "#a3a3a3",
+  backgroundColor: "#0b0b0b",
 };

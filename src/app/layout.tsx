@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import CustomCursor from "./components/CustomCursor";
 
 export const metadata: Metadata = {
   title: "Yotei Profile",
@@ -13,7 +14,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt-BR">
-      <body>{children}</body>
+      <body>
+        <CustomCursor />
+        {children}
+      </body>
     </html>
   );
 }

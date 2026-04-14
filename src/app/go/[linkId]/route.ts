@@ -1,24 +1,28 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 
-type Props = {
+type RouteProps = {
   params: Promise<{
     linkId: string;
   }>;
 };
 
-export async function GET(_: Request, { params }: Props) {
+export async function GET(_req: Request, { params }: RouteProps) {
   const { linkId } = await params;
 
   const link = await prisma.link.findUnique({
     where: { id: linkId },
+    select: {
+      id: true,
+      url: true,
+    },
   });
 
   if (!link) {
-    return new NextResponse("Link não encontrado", { status: 404 });
+    return NextResponse.redirect(new URL("/", "http://localhost:3000"));
   }
 
-  await prisma.click.create({
+  await prisma.linkClick.create({
     data: {
       linkId: link.id,
     },

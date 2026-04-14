@@ -6,246 +6,172 @@ datasource db {
   provider = "postgresql"
 }
 
-model User {
-  id                   String      @id @default(cuid())
-  email                String      @unique
-  username             String      @unique
-  passwordHash         String
-  displayName          String?
-  bio                  String?
-
-  role                 String      @default("user")
-  status               String      @default("active")
-  banReason            String?
-  bannedAt             DateTime?
-
-  plan                 String      @default("free")
-  premiumUntil         DateTime?
-  premiumBadge         Boolean     @default(false)
-
-  stripeCustomerId     String?     @unique
-  stripeSubscriptionId String?     @unique
-  stripePriceId        String?
-  subscriptionStatus   String?
-
-  avatarUrl            String?
-  bannerUrl            String?
-  backgroundUrl        String?
-  videoBgUrl           String?
-
-  themeColor           String?     @default("#2563eb")
-  textColor            String?     @default("#ffffff")
-  cardOpacity          Int?        @default(72)
-  cardBlur             Int?        @default(16)
-  backgroundStyle      String?     @default("gradient")
-
-  websiteUrl           String?
-  discordUrl           String?
-  githubUrl            String?
-  xUrl                 String?
-  instagramUrl         String?
-  youtubeUrl           String?
-  tiktokUrl            String?
-
-  musicUrl             String?
-  musicTitle           String?
-  musicArtist          String?
-  musicCoverUrl        String?
-
-  aboutTitle           String?
-  aboutText            String?
-
-  showSocials          Boolean     @default(true)
-  showMusic            Boolean     @default(true)
-  showStats            Boolean     @default(true)
-  showAbout            Boolean     @default(true)
-  showGallery          Boolean     @default(true)
-  showReactions        Boolean     @default(true)
-
-  buttonStyle          String?     @default("solid")
-  glowIntensity        Int?        @default(35)
-
-  stat1Label           String?
-  stat1Value           String?
-  stat2Label           String?
-  stat2Value           String?
-  stat3Label           String?
-  stat3Value           String?
-
-  badge1               String?
-  badge2               String?
-  badge3               String?
-
-  gallery1             String?
-  gallery2             String?
-  gallery3             String?
-  gallery4             String?
-  gallery5             String?
-  gallery6             String?
-
-  presetTheme          String?     @default("custom")
-  layoutStyle          String?     @default("stacked")
-  containerWidth       String?     @default("normal")
-  avatarPosition       String?     @default("center")
-  linksStyle           String?     @default("rounded")
-  blocksOrder          String?     @default("stats,about,gallery,music,reactions,links")
-
-  createdAt            DateTime    @default(now())
-  updatedAt            DateTime    @updatedAt
-
-  sessions             Session[]
-  links                Link[]
-  reactions            Reaction[]
-  presets              Preset[]
-  profileViews         ProfileView[]
-  badges               UserBadge[]
-
-  adminAuditLogs       AdminAuditLog[] @relation("AdminActorLogs")
-  adminAuditTargets    AdminAuditLog[] @relation("AdminTargetLogs")
-  ipLogs               UserIpLog[]
+enum ReactionType {
+  like
+  dislike
 }
 
-model Preset {
-  id              String   @id @default(cuid())
-  userId          String
-  name            String
+model User {
+  id                        String   @id @default(cuid())
+  email                     String   @unique
+  username                  String   @unique
+  password                  String
+  displayName               String?
+  bio                       String?
+  avatarUrl                 String?
+  bannerUrl                 String?
+  themeColor                String?  @default("#f472b6")
+  role                      String   @default("user")
+  status                    String   @default("active")
+  stripeCustomerId          String?
 
-  themeColor      String?
-  textColor       String?
-  cardOpacity     Int?
-  cardBlur        Int?
-  backgroundStyle String?
-  buttonStyle     String?
-  glowIntensity   Int?
+  selectedDecorationId      String?
+  selectedDecorationScale   Float?   @default(165)
+  selectedDecorationOffsetX Float?   @default(0)
+  selectedDecorationOffsetY Float?   @default(0)
 
-  presetTheme     String?
-  layoutStyle     String?
-  containerWidth  String?
-  avatarPosition  String?
-  linksStyle      String?
-  blocksOrder     String?
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @default(now()) @updatedAt
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  selectedDecoration Decoration? @relation("SelectedDecoration", fields: [selectedDecorationId], references: [id], onDelete: SetNull)
+  uploadedDecorations Decoration[] @relation("UploadedDecorations")
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessions           Session[]
+  links              Link[]
+  reactionsGiven     Reaction[] @relation("ReactionsGiven")
+  reactionsReceived  Reaction[] @relation("ReactionsReceived")
+  badges             UserBadge[]
+  adminLogs          AdminAuditLog[] @relation("AdminActorLogs")
+  adminTargetLogs    AdminAuditLog[] @relation("AdminTargetLogs")
+  reportsCreated     Report[] @relation("ReportsCreated")
+  reportsAgainstUser Report[] @relation("ReportsAgainstUser")
+  reportsReviewed    Report[] @relation("ReportsReviewed")
+  profileViews       ProfileView[]
 
-  @@index([userId])
+  @@index([username])
+  @@index([status])
+  @@index([role])
 }
 
 model Session {
   id        String   @id @default(cuid())
   token     String   @unique
   userId    String
-  createdAt DateTime @default(now())
   expiresAt DateTime
+  createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([token])
   @@index([userId])
+  @@index([expiresAt])
 }
 
 model Link {
   id        String   @id @default(cuid())
+  userId    String
   title     String?
   url       String
-  userId    String
-  sortOrder Int      @default(0)
+  position  Int      @default(0)
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 
-  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  clicks Click[]
+  user    User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clicks  LinkClick[]
+  reports Report[]
 
-  @@index([userId])
-  @@index([sortOrder])
+  @@index([userId, position])
+  @@index([createdAt])
 }
 
-model Click {
+model LinkClick {
   id        String   @id @default(cuid())
   linkId    String
   createdAt DateTime @default(now())
 
   link Link @relation(fields: [linkId], references: [id], onDelete: Cascade)
 
-  @@index([linkId])
-}
-
-model Reaction {
-  id        String   @id @default(cuid())
-  userId    String
-  type      String
-  count     Int      @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, type])
-  @@index([userId])
+  @@index([linkId, createdAt])
 }
 
 model ProfileView {
-  id         String   @id @default(cuid())
-  userId     String
-  country    String?
-  deviceType String?
-  createdAt  DateTime @default(now())
+  id        String   @id @default(cuid())
+  userId    String
+  createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([userId])
-  @@index([createdAt])
-  @@index([country])
-  @@index([deviceType])
+  @@index([userId, createdAt])
+}
+
+model Decoration {
+  id              String   @id @default(cuid())
+  name            String
+  slug            String   @unique
+  imageUrl        String
+  previewUrl      String?
+  posterUrl       String?
+  mediaType       String   @default("image")
+  isPublic        Boolean  @default(true)
+  createdByUserId String?
+  sortOrder       Int      @default(0)
+  overlayScale    Float?   @default(165)
+  overlayOffsetY  Float?   @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @default(now()) @updatedAt
+
+  selectedByUsers User[] @relation("SelectedDecoration")
+  createdBy       User?  @relation("UploadedDecorations", fields: [createdByUserId], references: [id], onDelete: SetNull)
+
+  @@index([isPublic, sortOrder])
+  @@index([createdByUserId])
+}
+
+model Reaction {
+  id         String       @id @default(cuid())
+  fromUserId String
+  toUserId   String
+  type       ReactionType
+  createdAt  DateTime     @default(now())
+
+  fromUser User @relation("ReactionsGiven", fields: [fromUserId], references: [id], onDelete: Cascade)
+  toUser   User @relation("ReactionsReceived", fields: [toUserId], references: [id], onDelete: Cascade)
+
+  @@unique([fromUserId, toUserId])
+  @@index([toUserId, createdAt])
+  @@index([fromUserId])
 }
 
 model Badge {
-  id            String     @id @default(cuid())
-  key           String     @unique
+  id            String   @id @default(cuid())
+  slug          String   @unique
   name          String
+  icon          String
   description   String?
-  icon          String?
-  color         String?
-  category      String?
-  rarity        String?
-  isHidden      Boolean    @default(false)
-  isAutoAwarded Boolean    @default(false)
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
+  color         String?  @default("#f472b6")
+  category      String?  @default("general")
+  rarity        String?  @default("common")
+  isHidden      Boolean  @default(false)
+  isAutoAwarded Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @default(now()) @updatedAt
 
-  users         UserBadge[]
+  users UserBadge[]
+
+  @@index([category])
+  @@index([rarity])
 }
 
 model UserBadge {
   id        String   @id @default(cuid())
   userId    String
   badgeId   String
-  earnedAt  DateTime @default(now())
-  isPinned  Boolean  @default(false)
+  createdAt DateTime @default(now())
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  badge     Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badge Badge @relation(fields: [badgeId], references: [id], onDelete: Cascade)
 
   @@unique([userId, badgeId])
-  @@index([userId])
+  @@index([userId, createdAt])
   @@index([badgeId])
-  @@index([earnedAt])
-}
-
-model UserIpLog {
-  id         String   @id @default(cuid())
-  userId     String
-  ipAddress  String
-  route      String?
-  createdAt  DateTime @default(now())
-
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([ipAddress])
-  @@index([createdAt])
 }
 
 model AdminAuditLog {
@@ -253,16 +179,36 @@ model AdminAuditLog {
   actorUserId  String
   targetUserId String?
   action       String
-  badgeKey     String?
-  ipAddress    String?
-  details      String?
+  reason       String?
+  metadata     String?
   createdAt    DateTime @default(now())
 
-  actor        User     @relation("AdminActorLogs", fields: [actorUserId], references: [id], onDelete: Cascade)
-  target       User?    @relation("AdminTargetLogs", fields: [targetUserId], references: [id], onDelete: SetNull)
+  actorUser  User  @relation("AdminActorLogs", fields: [actorUserId], references: [id], onDelete: Cascade)
+  targetUser User? @relation("AdminTargetLogs", fields: [targetUserId], references: [id], onDelete: SetNull)
 
-  @@index([actorUserId])
-  @@index([targetUserId])
+  @@index([actorUserId, createdAt])
+  @@index([targetUserId, createdAt])
   @@index([action])
-  @@index([createdAt])
+}
+
+model Report {
+  id              String   @id @default(cuid())
+  createdByUserId String
+  targetUserId    String?
+  linkId          String?
+  reason          String
+  status          String   @default("open")
+  reviewerUserId  String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @default(now()) @updatedAt
+
+  createdByUser User  @relation("ReportsCreated", fields: [createdByUserId], references: [id], onDelete: Cascade)
+  targetUser    User? @relation("ReportsAgainstUser", fields: [targetUserId], references: [id], onDelete: SetNull)
+  reviewerUser  User? @relation("ReportsReviewed", fields: [reviewerUserId], references: [id], onDelete: SetNull)
+  link          Link? @relation(fields: [linkId], references: [id], onDelete: SetNull)
+
+  @@index([createdByUserId, createdAt])
+  @@index([targetUserId, createdAt])
+  @@index([reviewerUserId, createdAt])
+  @@index([status])
 }
