@@ -88,9 +88,13 @@ export async function updateDisplayName(formData: FormData) {
 export async function updatePassword(formData: FormData) {
   const sessionUser = await requireUser();
 
-  const currentPassword = String(formData.get("currentPassword") ?? "");
-  const newPassword = String(formData.get("newPassword") ?? "");
-  const confirmPassword = String(formData.get("confirmPassword") ?? "");
+  const currentPassword = String(formData.get("currentPassword") ?? "").trim();
+  const newPassword = String(formData.get("newPassword") ?? "").trim();
+  const confirmPassword = String(formData.get("confirmPassword") ?? "").trim();
+
+  if (!currentPassword || !newPassword || !confirmPassword) {
+    redirect("/dashboard/settings?error=missing-password-fields");
+  }
 
   if (newPassword.length < 8) {
     redirect("/dashboard/settings?error=password-too-short");
@@ -104,7 +108,7 @@ export async function updatePassword(formData: FormData) {
     where: { id: sessionUser.id },
     select: {
       id: true,
-      passwordHash: true,
+      password: true,
     },
   });
 
@@ -112,27 +116,27 @@ export async function updatePassword(formData: FormData) {
     redirect("/dashboard/settings?error=user-not-found");
   }
 
-  const passwordMatches = await bcryptjs.compare(
+  const passwordMatches = await bcrypt.compare(
     currentPassword,
-    user.passwordHash
+    user.password
   );
 
   if (!passwordMatches) {
     redirect("/dashboard/settings?error=wrong-password");
   }
 
-  const samePassword = await bcryptjs.compare(newPassword, user.passwordHash);
+  const samePassword = await bcrypt.compare(newPassword, user.password);
 
   if (samePassword) {
     redirect("/dashboard/settings?error=same-password");
   }
 
-  const newPasswordHash = await bcryptjs.hash(newPassword, 10);
+  const newPasswordHash = await bcrypt.hash(newPassword, 10);
 
   await prisma.user.update({
     where: { id: user.id },
     data: {
-      passwordHash: newPasswordHash,
+      password: newPasswordHash,
     },
   });
 

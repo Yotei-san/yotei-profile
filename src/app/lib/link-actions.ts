@@ -1,45 +1,100 @@
 import {
-  siDiscord,
-  siInstagram,
-  siGithub,
-  siX,
-  siYoutube,
-  siTwitch,
-  siTiktok,
-  siLinkedin,
-  siSpotify,
-} from "simple-icons";
+  FaDiscord,
+  FaInstagram,
+  FaGithub,
+  FaXTwitter,
+  FaYoutube,
+  FaTwitch,
+  FaTiktok,
+  FaLinkedin,
+  FaSpotify,
+  FaLink,
+} from "react-icons/fa6";
 
 type PlatformIcon = {
   name: string;
-  svg: string;
+  icon: React.ComponentType<{ size?: number; color?: string }>;
   color: string;
 };
-
-function makeIcon(icon: any): PlatformIcon {
-  return {
-    name: icon.title,
-    svg: icon.path,
-    color: `#${icon.hex}`,
-  };
-}
 
 export function getLinkPlatform(url: string, title?: string | null): PlatformIcon {
   const value = `${title || ""} ${url}`.toLowerCase();
 
-  if (value.includes("discord")) return makeIcon(siDiscord);
-  if (value.includes("instagram")) return makeIcon(siInstagram);
-  if (value.includes("github")) return makeIcon(siGithub);
-  if (value.includes("x.com") || value.includes("twitter")) return makeIcon(siX);
-  if (value.includes("youtube") || value.includes("youtu.be")) return makeIcon(siYoutube);
-  if (value.includes("twitch")) return makeIcon(siTwitch);
-  if (value.includes("tiktok")) return makeIcon(siTiktok);
-  if (value.includes("linkedin")) return makeIcon(siLinkedin);
-  if (value.includes("spotify")) return makeIcon(siSpotify);
+  if (value.includes("discord")) {
+    return {
+      name: "Discord",
+      icon: FaDiscord,
+      color: "#5865F2",
+    };
+  }
+
+  if (value.includes("instagram")) {
+    return {
+      name: "Instagram",
+      icon: FaInstagram,
+      color: "#E4405F",
+    };
+  }
+
+  if (value.includes("github")) {
+    return {
+      name: "GitHub",
+      icon: FaGithub,
+      color: "#ffffff",
+    };
+  }
+
+  if (value.includes("x.com") || value.includes("twitter")) {
+    return {
+      name: "X",
+      icon: FaXTwitter,
+      color: "#ffffff",
+    };
+  }
+
+  if (value.includes("youtube") || value.includes("youtu.be")) {
+    return {
+      name: "YouTube",
+      icon: FaYoutube,
+      color: "#FF0000",
+    };
+  }
+
+  if (value.includes("twitch")) {
+    return {
+      name: "Twitch",
+      icon: FaTwitch,
+      color: "#9146FF",
+    };
+  }
+
+  if (value.includes("tiktok")) {
+    return {
+      name: "TikTok",
+      icon: FaTiktok,
+      color: "#ffffff",
+    };
+  }
+
+  if (value.includes("linkedin")) {
+    return {
+      name: "LinkedIn",
+      icon: FaLinkedin,
+      color: "#0A66C2",
+    };
+  }
+
+  if (value.includes("spotify")) {
+    return {
+      name: "Spotify",
+      icon: FaSpotify,
+      color: "#1DB954",
+    };
+  }
 
   return {
     name: "Link",
-    svg: "",
+    icon: FaLink,
     color: "#888888",
   };
 }
