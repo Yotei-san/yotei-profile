@@ -1,10 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
 import { useMemo } from "react";
 
-const container = {
+const EASE_OUT = [0.16, 1, 0.3, 1] as const;
+const EASE_IN_OUT = [0.4, 0, 0.2, 1] as const;
+
+const container: Variants = {
   hidden: {},
   show: {
     transition: {
@@ -13,14 +16,14 @@ const container = {
   },
 };
 
-const fadeUp = {
+const fadeUp: Variants = {
   hidden: { opacity: 0, y: 24 },
   show: {
     opacity: 1,
     y: 0,
     transition: {
       duration: 0.55,
-      ease: "easeOut",
+      ease: EASE_OUT,
     },
   },
 };
@@ -316,7 +319,7 @@ export default function HomePage() {
           y: [0, 12, 6, 0],
           scale: [1, 1.04, 0.98, 1],
         }}
-        transition={{ duration: 22, repeat: Infinity, ease: "easeInOut" }}
+        transition={{ duration: 22, repeat: Infinity, ease: EASE_IN_OUT }}
         style={glowOrb("300px", "300px", "-70px", "40px", "rgba(244,114,182,0.18)")}
       />
       <motion.div
@@ -325,7 +328,7 @@ export default function HomePage() {
           y: [0, -10, 8, 0],
           scale: [1, 0.98, 1.03, 1],
         }}
-        transition={{ duration: 24, repeat: Infinity, ease: "easeInOut" }}
+        transition={{ duration: 24, repeat: Infinity, ease: EASE_IN_OUT }}
         style={glowOrb("280px", "280px", undefined, "120px", "rgba(96,165,250,0.16)", "-50px")}
       />
 
@@ -485,7 +488,7 @@ export default function HomePage() {
             id="preview"
             initial={{ opacity: 0, y: 28, scale: 0.97 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ duration: 0.7, delay: 0.12, ease: "easeOut" }}
+            transition={{ duration: 0.7, delay: 0.12, ease: EASE_OUT }}
           >
             <motion.div
               className="yotei-mockup-shell"
@@ -505,7 +508,7 @@ export default function HomePage() {
                   opacity: [0.32, 0.48, 0.32],
                   scale: [1, 1.02, 1],
                 }}
-                transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+                transition={{ duration: 8, repeat: Infinity, ease: EASE_IN_OUT }}
                 style={{
                   position: "absolute",
                   inset: "-18px",
@@ -893,7 +896,7 @@ export default function HomePage() {
               opacity: [0.2, 0.36, 0.2],
               scale: [1, 1.05, 1],
             }}
-            transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+            transition={{ duration: 10, repeat: Infinity, ease: EASE_IN_OUT }}
             style={{
               position: "absolute",
               width: "320px",

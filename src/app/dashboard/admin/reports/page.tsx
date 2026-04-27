@@ -29,7 +29,7 @@ export default async function AdminReportsPage({ searchParams }: PageProps) {
     orderBy: [{ status: "asc" }, { createdAt: "desc" }],
     take: 100,
     include: {
-      reporterUser: { select: { username: true } },
+      createdByUser: { select: { username: true } },
       targetUser: { select: { username: true } },
     },
   });
@@ -66,14 +66,14 @@ export default async function AdminReportsPage({ searchParams }: PageProps) {
             <article key={report.id} style={{ background: "linear-gradient(135deg, rgba(18,18,22,0.96), rgba(10,10,14,0.96))", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "24px", padding: "20px", display: "grid", gap: "14px", boxShadow: "0 16px 40px rgba(0,0,0,0.20)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", gap: "12px", flexWrap: "wrap", alignItems: "center" }}>
                 <div style={{ fontSize: "24px", fontWeight: 800 }}>
-                  {getReportLabel(report.type)}
+                  {getReportLabel(report)}
                   <span style={{ color: "#a3a3a3", marginLeft: "8px" }}>#{report.id.slice(0, 8)}</span>
                 </div>
                 {pill(report.status.toUpperCase(), getReportStatusColor(report.status))}
               </div>
 
               <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-                {pill(`DENUNCIANTE: @${report.reporterUser.username}`, "#38bdf8")}
+                {pill(`DENUNCIANTE: @${report.createdByUser.username}`, "#38bdf8")}
                 {report.targetUser ? pill(`ALVO: @${report.targetUser.username}`, "#f9a8d4") : null}
                 {pill(new Date(report.createdAt).toLocaleString("pt-BR"), "#d4d4d8")}
               </div>

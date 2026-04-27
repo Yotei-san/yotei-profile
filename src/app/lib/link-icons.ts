@@ -18,7 +18,10 @@ export type PlatformIcon = {
   color: string;
 };
 
-export function getLinkPlatform(url: string, title?: string | null): PlatformIcon {
+export function getLinkPlatform(
+  url: string,
+  title?: string | null
+): PlatformIcon {
   const value = `${title || ""} ${url}`.toLowerCase();
 
   if (value.includes("discord")) {

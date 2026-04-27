@@ -10,15 +10,15 @@ export async function giveBadge(formData: FormData) {
   const sessionUser = await requireUser();
   const admin = await requireAdminByUserId(sessionUser.id);
 
-  const username = String(formData.get("username") || "").toLowerCase();
-  const badgeKey = String(formData.get("badgeKey") || "");
+  const username = String(formData.get("username") || "").trim().toLowerCase();
+  const badgeKey = String(formData.get("badgeKey") || "").trim();
 
   const user = await prisma.user.findUnique({
     where: { username },
   });
 
   const badge = await prisma.badge.findUnique({
-    where: { key: badgeKey },
+    where: { slug: badgeKey },
   });
 
   if (!user || !badge) {
@@ -43,26 +43,26 @@ export async function giveBadge(formData: FormData) {
     actorUserId: admin.id,
     targetUserId: user.id,
     action: "give_badge",
-    badgeKey,
+    details: `Badge aplicada: ${badgeKey}`,
   });
 
   revalidatePath(`/dashboard/admin/users/${username}`);
-  redirect(`/dashboard/admin/badges?success=badge-given`);
+  redirect("/dashboard/admin/badges?success=badge-given");
 }
 
 export async function removeBadge(formData: FormData) {
   const sessionUser = await requireUser();
   const admin = await requireAdminByUserId(sessionUser.id);
 
-  const username = String(formData.get("username") || "").toLowerCase();
-  const badgeKey = String(formData.get("badgeKey") || "");
+  const username = String(formData.get("username") || "").trim().toLowerCase();
+  const badgeKey = String(formData.get("badgeKey") || "").trim();
 
   const user = await prisma.user.findUnique({
     where: { username },
   });
 
   const badge = await prisma.badge.findUnique({
-    where: { key: badgeKey },
+    where: { slug: badgeKey },
   });
 
   if (!user || !badge) {
@@ -80,9 +80,9 @@ export async function removeBadge(formData: FormData) {
     actorUserId: admin.id,
     targetUserId: user.id,
     action: "remove_badge",
-    badgeKey,
+    details: `Badge removida: ${badgeKey}`,
   });
 
   revalidatePath(`/dashboard/admin/users/${username}`);
-  redirect(`/dashboard/admin/badges?success=badge-removed`);
+  redirect("/dashboard/admin/badges?success=badge-removed");
 }

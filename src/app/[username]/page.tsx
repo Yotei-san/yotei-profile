@@ -450,6 +450,7 @@ export default async function ProfilePage({ params }: Props) {
             user.links.map((link) => {
               const platform = getLinkPlatform(link.url, link.title);
               const color = platform.color || themeColor;
+              const PlatformIcon = platform.icon;
 
               return (
                 <a
@@ -497,19 +498,7 @@ export default async function ProfilePage({ params }: Props) {
                       flexShrink: 0,
                     }}
                   >
-                    {platform.svg ? (
-                      <svg
-                        viewBox="0 0 24 24"
-                        width="22"
-                        height="22"
-                        fill={color}
-                        aria-hidden="true"
-                      >
-                        <path d={platform.svg} />
-                      </svg>
-                    ) : (
-                      <span style={{ fontSize: "20px" }}>🔗</span>
-                    )}
+                    <PlatformIcon size={22} color={color} aria-hidden="true" />
                   </div>
 
                   <div style={{ minWidth: 0, flex: 1 }}>

@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { requireUser } from "@/app/lib/auth";
 import { prisma } from "@/app/lib/prisma";
 import { requireAdminByUserId, createAdminAuditLog, getRequestIp } from "@/app/lib/admin-auth";
+import { getReportLabel } from "@/app/lib/moderation";
 
 export async function markReportReviewing(formData: FormData) {
   const admin = await requireUser();
@@ -40,7 +41,7 @@ export async function resolveReport(formData: FormData) {
 
   const report = await prisma.report.findUnique({
     where: { id: reportId },
-    select: { id: true, targetUserId: true, type: true, reason: true },
+    select: { id: true, targetUserId: true, linkId: true, reason: true },
   });
   if (!report) redirect("/dashboard/admin/reports?error=not-found");
 
@@ -48,9 +49,7 @@ export async function resolveReport(formData: FormData) {
     where: { id: reportId },
     data: {
       status: "resolved",
-      adminNote: adminNote || null,
-      reviewedById: admin.id,
-      reviewedAt: new Date(),
+      reviewerUserId: admin.id,
     },
   });
 
@@ -58,7 +57,7 @@ export async function resolveReport(formData: FormData) {
     actorUserId: admin.id,
     targetUserId: report.targetUserId ?? undefined,
     action: "report.resolved",
-    details: `Report ${report.id} resolvida. Tipo: ${report.type}. Motivo: ${report.reason}. Nota: ${adminNote || "-"}.`,
+    details: `Report ${report.id} resolvida. Categoria: ${getReportLabel(report)}. Motivo: ${report.reason}. Nota: ${adminNote || "-"}.`,
     ipAddress: await getRequestIp(),
   });
 
@@ -77,7 +76,7 @@ export async function rejectReport(formData: FormData) {
 
   const report = await prisma.report.findUnique({
     where: { id: reportId },
-    select: { id: true, targetUserId: true, type: true, reason: true },
+    select: { id: true, targetUserId: true, linkId: true, reason: true },
   });
   if (!report) redirect("/dashboard/admin/reports?error=not-found");
 
@@ -85,9 +84,7 @@ export async function rejectReport(formData: FormData) {
     where: { id: reportId },
     data: {
       status: "rejected",
-      adminNote: adminNote || null,
-      reviewedById: admin.id,
-      reviewedAt: new Date(),
+      reviewerUserId: admin.id,
     },
   });
 
@@ -95,7 +92,7 @@ export async function rejectReport(formData: FormData) {
     actorUserId: admin.id,
     targetUserId: report.targetUserId ?? undefined,
     action: "report.rejected",
-    details: `Report ${report.id} rejeitada. Tipo: ${report.type}. Motivo: ${report.reason}. Nota: ${adminNote || "-"}.`,
+    details: `Report ${report.id} rejeitada. Categoria: ${getReportLabel(report)}. Motivo: ${report.reason}. Nota: ${adminNote || "-"}.`,
     ipAddress: await getRequestIp(),
   });
 

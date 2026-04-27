@@ -167,6 +167,7 @@ export default async function LinksPage({ searchParams }: PageProps) {
             {user.links.length > 0 ? (
               user.links.map((item) => {
                 const platform = getLinkPlatform(item.url, item.title);
+                const PlatformIcon = platform.icon;
 
                 return (
                   <article
@@ -196,11 +197,10 @@ export default async function LinksPage({ searchParams }: PageProps) {
                           justifyContent: "center",
                           backgroundColor: "rgba(244,114,182,0.10)",
                           border: "1px solid rgba(244,114,182,0.18)",
-                          fontSize: "20px",
                           flexShrink: 0,
                         }}
                       >
-                        {platform.icon}
+                        <PlatformIcon size={20} color={platform.color} />
                       </div>
 
                       <div>

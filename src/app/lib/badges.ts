@@ -31,6 +31,30 @@ export const DEFAULT_BADGES = [
     icon: "🧪",
     description: "Participou da fase inicial.",
   },
+  {
+    slug: "creator",
+    name: "Creator",
+    icon: "ðŸŽ¯",
+    description: "Criou pelo menos 5 links no perfil.",
+  },
+  {
+    slug: "popular",
+    name: "Popular",
+    icon: "ðŸ”¥",
+    description: "Atingiu 100 visualizaÃ§Ãµes de perfil.",
+  },
+  {
+    slug: "complete-profile",
+    name: "Complete Profile",
+    icon: "âœ¨",
+    description: "Completou avatar, banner e bio no perfil.",
+  },
+  {
+    slug: "click-master",
+    name: "Click Master",
+    icon: "ðŸ–±ï¸",
+    description: "Acumulou 25 cliques nos links.",
+  },
 ];
 
 export async function ensureDefaultBadges() {
@@ -75,6 +99,10 @@ export async function giveBadgeToUser(userId: string, badgeSlug: string) {
       badgeId: badge.id,
     },
   });
+}
+
+export async function awardBadgeByKey(userId: string, badgeSlug: string) {
+  await giveBadgeToUser(userId, badgeSlug);
 }
 
 export async function removeBadgeFromUser(userId: string, badgeSlug: string) {

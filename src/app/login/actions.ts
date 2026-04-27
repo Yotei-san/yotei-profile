@@ -32,10 +32,10 @@ export async function loginUser(formData: FormData) {
   }
 
   if (user.status !== "active") {
-  throw new Error("Conta desativada.");
-}
+    throw new Error("Conta desativada.");
+  }
 
-  const passwordMatches = await bcryptjs.compare(password, user.password);
+  const passwordMatches = await bcrypt.compare(password, user.password);
 
   if (!passwordMatches) {
     throw new Error("Usuário ou senha inválidos.");

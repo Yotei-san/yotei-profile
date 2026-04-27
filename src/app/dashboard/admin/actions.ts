@@ -1,11 +1,14 @@
 "use server";
 
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/app/lib/auth";
 import { prisma } from "@/app/lib/prisma";
-import { requireAdminByUserId, createAdminAuditLog, getRequestIp } from "@/app/lib/admin-auth";
+import {
+  requireAdminByUserId,
+  createAdminAuditLog,
+  getRequestIp,
+} from "@/app/lib/admin-auth";
 
 function normalizeUsername(value: string) {
   return value.trim().toLowerCase();
@@ -14,8 +17,7 @@ function normalizeUsername(value: string) {
 export async function banUser(formData: FormData) {
   const sessionUser = await requireUser();
   const admin = await requireAdminByUserId(sessionUser.id);
-  const headerStore = await headers();
-  const ipAddress = getRequestIp(headerStore);
+  const ipAddress = await getRequestIp();
 
   const username = normalizeUsername(String(formData.get("username") ?? ""));
   const reason = String(formData.get("reason") ?? "").trim();
@@ -62,8 +64,7 @@ export async function banUser(formData: FormData) {
 export async function unbanUser(formData: FormData) {
   const sessionUser = await requireUser();
   const admin = await requireAdminByUserId(sessionUser.id);
-  const headerStore = await headers();
-  const ipAddress = getRequestIp(headerStore);
+  const ipAddress = await getRequestIp();
 
   const username = normalizeUsername(String(formData.get("username") ?? ""));
 
@@ -105,8 +106,7 @@ export async function unbanUser(formData: FormData) {
 export async function promoteAdmin(formData: FormData) {
   const sessionUser = await requireUser();
   const admin = await requireAdminByUserId(sessionUser.id);
-  const headerStore = await headers();
-  const ipAddress = getRequestIp(headerStore);
+  const ipAddress = await getRequestIp();
 
   const username = normalizeUsername(String(formData.get("username") ?? ""));
 
@@ -144,8 +144,7 @@ export async function promoteAdmin(formData: FormData) {
 export async function demoteAdmin(formData: FormData) {
   const sessionUser = await requireUser();
   const admin = await requireAdminByUserId(sessionUser.id);
-  const headerStore = await headers();
-  const ipAddress = getRequestIp(headerStore);
+  const ipAddress = await getRequestIp();
 
   const username = normalizeUsername(String(formData.get("username") ?? ""));
 

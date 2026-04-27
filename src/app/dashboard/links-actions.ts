@@ -49,17 +49,18 @@ export async function createLink(formData: FormData) {
 
   const lastLink = await prisma.link.findFirst({
     where: { userId: user.id },
-    orderBy: { sortOrder: "desc" },
+    orderBy: { position: "desc" },
+    select: { position: true },
   });
 
-  const nextSortOrder = lastLink ? lastLink.sortOrder + 1 : 1;
+  const nextPosition = lastLink ? lastLink.position + 1 : 0;
 
   await prisma.link.create({
     data: {
       userId: user.id,
       title: title || null,
       url,
-      sortOrder: nextSortOrder,
+      position: nextPosition,
     },
   });
 }
@@ -112,9 +113,9 @@ export async function moveLinkUp(formData: FormData) {
   const previousLink = await prisma.link.findFirst({
     where: {
       userId: user.id,
-      sortOrder: { lt: currentLink.sortOrder },
+      position: { lt: currentLink.position },
     },
-    orderBy: { sortOrder: "desc" },
+    orderBy: { position: "desc" },
   });
 
   if (!previousLink) {
@@ -124,11 +125,11 @@ export async function moveLinkUp(formData: FormData) {
   await prisma.$transaction([
     prisma.link.update({
       where: { id: currentLink.id },
-      data: { sortOrder: previousLink.sortOrder },
+      data: { position: previousLink.position },
     }),
     prisma.link.update({
       where: { id: previousLink.id },
-      data: { sortOrder: currentLink.sortOrder },
+      data: { position: currentLink.position },
     }),
   ]);
 }
@@ -156,9 +157,9 @@ export async function moveLinkDown(formData: FormData) {
   const nextLink = await prisma.link.findFirst({
     where: {
       userId: user.id,
-      sortOrder: { gt: currentLink.sortOrder },
+      position: { gt: currentLink.position },
     },
-    orderBy: { sortOrder: "asc" },
+    orderBy: { position: "asc" },
   });
 
   if (!nextLink) {
@@ -168,11 +169,11 @@ export async function moveLinkDown(formData: FormData) {
   await prisma.$transaction([
     prisma.link.update({
       where: { id: currentLink.id },
-      data: { sortOrder: nextLink.sortOrder },
+      data: { position: nextLink.position },
     }),
     prisma.link.update({
       where: { id: nextLink.id },
-      data: { sortOrder: currentLink.sortOrder },
+      data: { position: currentLink.position },
     }),
   ]);
 }

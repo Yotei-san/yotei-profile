@@ -29,9 +29,8 @@ export async function reportProfile(formData: FormData) {
   }
 
   await createReport({
-    reporterUserId: reporter.id,
+    createdByUserId: reporter.id,
     targetUserId: targetUser.id,
-    type: "profile",
     reason,
   });
 

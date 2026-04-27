@@ -38,7 +38,7 @@ export async function POST(request: Request) {
         const subscriptionId =
           typeof session.subscription === "string" ? session.subscription : null;
 
-        const userId = session.metadata?.userId;
+        const userId = session.metadata?.userId ?? null;
 
         if (userId) {
           await prisma.user.update({
@@ -110,7 +110,7 @@ export async function POST(request: Request) {
               plan: activeLikeStatuses.has(subscription.status) ? "premium" : "free",
               premiumBadge: activeLikeStatuses.has(subscription.status),
               stripeSubscriptionId: subscription.id,
-              stripePriceId,
+              stripePriceId: stripePriceId ?? undefined,
               subscriptionStatus: subscription.status,
               premiumUntil: currentPeriodEnd ?? undefined,
             },
@@ -127,37 +127,17 @@ export async function POST(request: Request) {
           typeof subscription.customer === "string" ? subscription.customer : null;
 
         if (customerId) {
-          const users = await prisma.user.findMany({
+          await prisma.user.updateMany({
             where: { stripeCustomerId: customerId },
-            select: { id: true },
+            data: {
+              plan: "free",
+              premiumUntil: null,
+              premiumBadge: false,
+              stripeSubscriptionId: null,
+              stripePriceId: null,
+              subscriptionStatus: subscription.status,
+            },
           });
-
-          for (const user of users) {
-            await prisma.user.update({
-              where: { id: user.id },
-              data: {
-                plan: "free",
-                premiumUntil: null,
-                premiumBadge: false,
-                stripeSubscriptionId: null,
-                stripePriceId: null,
-                subscriptionStatus: subscription.status,
-                videoBgUrl: null,
-                badge1: null,
-                badge2: null,
-                badge3: null,
-                gallery3: null,
-                gallery4: null,
-                gallery5: null,
-                gallery6: null,
-                presetTheme: "custom",
-                layoutStyle: "stacked",
-                containerWidth: "normal",
-                avatarPosition: "center",
-                linksStyle: "rounded",
-              },
-            });
-          }
         }
 
         break;

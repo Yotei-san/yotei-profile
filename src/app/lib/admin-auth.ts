@@ -57,13 +57,20 @@ export async function createAdminAuditLog(input: {
   details?: string;
   ipAddress?: string;
 }) {
+  const metadata =
+    input.ipAddress || input.details
+      ? JSON.stringify({
+          ipAddress: input.ipAddress ?? null,
+        })
+      : null;
+
   await prisma.adminAuditLog.create({
     data: {
       actorUserId: input.actorUserId,
       targetUserId: input.targetUserId ?? null,
       action: input.action,
-      details: input.details ?? null,
-      ipAddress: input.ipAddress ?? null,
+      reason: input.details ?? null,
+      metadata,
     },
   });
 }

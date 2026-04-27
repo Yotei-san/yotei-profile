@@ -34,7 +34,7 @@ export async function getBadgeMissionProgress(userId: string): Promise<BadgeMiss
   const [linkCount, profileViewsCount, totalClicks] = await Promise.all([
     prisma.link.count({ where: { userId } }),
     prisma.profileView.count({ where: { userId } }),
-    prisma.click.count({
+    prisma.linkClick.count({
       where: {
         link: {
           userId,

@@ -33,7 +33,7 @@ export async function POST(request: Request) {
     ids.map((id, index) =>
       prisma.link.update({
         where: { id },
-        data: { sortOrder: index + 1 },
+        data: { position: index },
       })
     )
   );

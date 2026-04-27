@@ -2,12 +2,15 @@
 
 import { useEffect, useRef, useState } from "react";
 
+type MyReaction = "like" | "dislike" | null;
+
 type Props = {
   username: string;
   initialViews: number;
   initialLikes: number;
   initialDislikes: number;
   themeColor: string;
+  initialMyReaction: MyReaction;
 };
 
 export default function ProfileHeroClient({
@@ -16,10 +19,12 @@ export default function ProfileHeroClient({
   initialLikes,
   initialDislikes,
   themeColor,
+  initialMyReaction,
 }: Props) {
   const [views, setViews] = useState(initialViews);
   const [likes, setLikes] = useState(initialLikes);
   const [dislikes, setDislikes] = useState(initialDislikes);
+  const [myReaction, setMyReaction] = useState<MyReaction>(initialMyReaction);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const hasTrackedView = useRef(false);
@@ -76,6 +81,16 @@ export default function ProfileHeroClient({
           setDislikes(data.dislikes);
         }
 
+        if (
+          data.myReaction === "like" ||
+          data.myReaction === "dislike" ||
+          data.myReaction === null
+        ) {
+          setMyReaction(data.myReaction);
+        } else {
+          setMyReaction(type);
+        }
+
         return;
       }
     } catch (error) {
@@ -112,7 +127,8 @@ export default function ProfileHeroClient({
           themeColor,
           "rgba(74, 222, 128, 0.18)",
           "rgba(74, 222, 128, 0.28)",
-          isSubmitting
+          isSubmitting,
+          myReaction === "like"
         )}
       >
         👍 {likes}
@@ -126,7 +142,8 @@ export default function ProfileHeroClient({
           themeColor,
           "rgba(248, 113, 113, 0.16)",
           "rgba(248, 113, 113, 0.28)",
-          isSubmitting
+          isSubmitting,
+          myReaction === "dislike"
         )}
       >
         👎 {dislikes}
@@ -171,7 +188,8 @@ function reactionButtonStyle(
   themeColor: string,
   bg: string,
   border: string,
-  isSubmitting: boolean
+  isSubmitting: boolean,
+  isActive: boolean
 ): React.CSSProperties {
   return {
     display: "inline-flex",
@@ -186,9 +204,11 @@ function reactionButtonStyle(
     fontWeight: 900,
     backdropFilter: "blur(10px)",
     cursor: isSubmitting ? "not-allowed" : "pointer",
-    boxShadow: `0 10px 24px ${themeColor}12`,
+    boxShadow: isActive
+      ? `0 0 0 1px ${themeColor}66, 0 10px 24px ${themeColor}22`
+      : `0 10px 24px ${themeColor}12`,
     opacity: isSubmitting ? 0.65 : 1,
     pointerEvents: isSubmitting ? "none" : "auto",
-    transition: "opacity 0.15s ease",
+    transition: "opacity 0.15s ease, box-shadow 0.15s ease",
   };
 }

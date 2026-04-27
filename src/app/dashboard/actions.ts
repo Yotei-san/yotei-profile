@@ -248,20 +248,23 @@ export async function createLink(formData: FormData) {
   }
 
   const lastLink = await prisma.link.findFirst({
-    where: { userId: user.id },
-    orderBy: { sortOrder: "desc" },
-  });
+  where: { userId: user.id },
+  orderBy: { position: "desc" },
+  select: {
+    position: true,
+  },
+});
 
-  const nextSortOrder = lastLink ? lastLink.sortOrder + 1 : 1;
+const nextPosition = lastLink ? lastLink.position + 1 : 0;
 
-  await prisma.link.create({
-    data: {
-      title: title || null,
-      url,
-      userId: user.id,
-      sortOrder: nextSortOrder,
-    },
-  });
+await prisma.link.create({
+  data: {
+    title: title || null,
+    url,
+    userId: user.id,
+    position: nextPosition,
+  },
+});
 
   revalidatePath("/dashboard");
   revalidatePath(`/${dbUser.username}`);

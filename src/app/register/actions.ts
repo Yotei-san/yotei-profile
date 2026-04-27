@@ -30,7 +30,7 @@ export async function registerUser(formData: FormData) {
     throw new Error("Email ou username já estão em uso.");
   }
 
-  const hashedPassword = await bcryptjs.hash(password, 10);
+  const hashedPassword = await bcrypt.hash(password, 10);
 
   const user = await prisma.user.create({
     data: {

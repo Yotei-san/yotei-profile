@@ -7,8 +7,11 @@ type LeaderboardPageProps = {
   }>;
 };
 
-function getCount(type: string, reactions: { type: string; count: number }[]) {
-  return reactions.find((item) => item.type === type)?.count ?? 0;
+function getCount(type: "like" | "dislike", reactions: { type: string }[]) {
+  return reactions.reduce(
+    (total, item) => (item.type === type ? total + 1 : total),
+    0
+  );
 }
 
 function normalizeTab(tab?: string) {
@@ -27,7 +30,11 @@ export default async function LeaderboardPage({
 
   const users = await prisma.user.findMany({
     include: {
-      reactions: true,
+      reactionsReceived: {
+        select: {
+          type: true,
+        },
+      },
       profileViews: true,
       links: {
         include: {
@@ -40,8 +47,8 @@ export default async function LeaderboardPage({
   });
 
   const mapped = users.map((user) => {
-    const likes = getCount("like", user.reactions);
-    const dislikes = getCount("dislike", user.reactions);
+    const likes = getCount("like", user.reactionsReceived);
+    const dislikes = getCount("dislike", user.reactionsReceived);
     const views = user.profileViews.length;
     const clicks = user.links.reduce((acc, link) => acc + link._count.clicks, 0);
 
