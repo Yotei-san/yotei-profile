@@ -2,7 +2,15 @@
 
 import Link from "next/link";
 import { motion, type Variants } from "framer-motion";
-import { useMemo } from "react";
+import { useMemo, type CSSProperties, type ReactNode } from "react";
+import {
+  FaCrown,
+  FaDiscord,
+  FaGithub,
+  FaInstagram,
+  FaXTwitter,
+} from "react-icons/fa6";
+import { LuExternalLink, LuEye, LuSparkles } from "react-icons/lu";
 
 const EASE_OUT = [0.16, 1, 0.3, 1] as const;
 const EASE_IN_OUT = [0.4, 0, 0.2, 1] as const;
@@ -32,44 +40,117 @@ function HeroMockLink({
   title,
   subtitle,
   accent,
+  icon,
 }: {
   title: string;
   subtitle: string;
   accent: string;
+  icon: ReactNode;
 }) {
   return (
-    <div
+    <motion.div
+      whileHover={{
+        y: -4,
+        scale: 1.015,
+        boxShadow: `0 18px 42px ${accent}22`,
+      }}
+      transition={{ duration: 0.18 }}
       style={{
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
-        gap: "12px",
+        gap: "14px",
         padding: "16px",
-        borderRadius: "18px",
-        background:
-          "linear-gradient(180deg, rgba(15,15,19,0.92), rgba(9,9,12,0.96))",
-        border: `1px solid ${accent}30`,
-        boxShadow: `0 10px 24px ${accent}12`,
+        borderRadius: "20px",
+        background: `
+          linear-gradient(180deg, rgba(15,15,20,0.94), rgba(7,7,12,0.98)),
+          radial-gradient(circle at left, ${accent}16, transparent 48%)
+        `,
+        border: `1px solid ${accent}34`,
+        boxShadow: `0 12px 28px ${accent}12`,
+        position: "relative",
+        overflow: "hidden",
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: "12px", minWidth: 0 }}>
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          backgroundImage:
+            "radial-gradient(rgba(255,255,255,0.055) 0.7px, transparent 0.7px)",
+          backgroundSize: "6px 6px",
+          opacity: 0.18,
+          pointerEvents: "none",
+        }}
+      />
+
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "13px",
+          minWidth: 0,
+          position: "relative",
+        }}
+      >
         <div
           style={{
-            width: "42px",
-            height: "42px",
-            borderRadius: "14px",
-            background: `${accent}20`,
-            border: `1px solid ${accent}40`,
+            width: "48px",
+            height: "48px",
+            borderRadius: "16px",
+            background: `linear-gradient(180deg, ${accent}22, rgba(255,255,255,0.02))`,
+            border: `1px solid ${accent}44`,
+            boxShadow: `0 10px 24px ${accent}18`,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: accent,
             flexShrink: 0,
           }}
-        />
+        >
+          {icon}
+        </div>
+
         <div style={{ minWidth: 0 }}>
-          <div style={{ fontWeight: 900, letterSpacing: "-0.02em" }}>{title}</div>
           <div
             style={{
-              marginTop: "4px",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              flexWrap: "wrap",
+            }}
+          >
+            <strong
+              style={{
+                fontSize: "16px",
+                fontWeight: 950,
+                letterSpacing: "-0.02em",
+                color: "#fff",
+              }}
+            >
+              {title}
+            </strong>
+
+            <span
+              style={{
+                fontSize: "10px",
+                fontWeight: 900,
+                padding: "4px 8px",
+                borderRadius: "999px",
+                color: accent,
+                backgroundColor: `${accent}18`,
+                border: `1px solid ${accent}34`,
+              }}
+            >
+              {title}
+            </span>
+          </div>
+
+          <div
+            style={{
+              marginTop: "6px",
               fontSize: "13px",
-              color: "#97a1b1",
+              color: "#9ca6b6",
               overflow: "hidden",
               textOverflow: "ellipsis",
               whiteSpace: "nowrap",
@@ -82,21 +163,22 @@ function HeroMockLink({
 
       <div
         style={{
-          width: "36px",
-          height: "36px",
-          borderRadius: "12px",
-          backgroundColor: "rgba(255,255,255,0.03)",
-          border: "1px solid rgba(255,255,255,0.05)",
+          width: "38px",
+          height: "38px",
+          borderRadius: "14px",
+          backgroundColor: "rgba(255,255,255,0.04)",
+          border: "1px solid rgba(255,255,255,0.07)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          color: "#dbe3ee",
+          color: "#e5e7eb",
           flexShrink: 0,
+          position: "relative",
         }}
       >
-        ↗
+        <LuExternalLink size={17} />
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -204,10 +286,30 @@ function StatCard({ label, value }: { label: string; value: string }) {
 export default function HomePage() {
   const mockLinks = useMemo(
     () => [
-      { title: "Discord", subtitle: "community / social identity", accent: "#5865F2" },
-      { title: "Instagram", subtitle: "visual presence / content", accent: "#E4405F" },
-      { title: "GitHub", subtitle: "projects / developer profile", accent: "#cbd5e1" },
-      { title: "X", subtitle: "updates / audience / reach", accent: "#60a5fa" },
+      {
+        title: "Discord",
+        subtitle: "community / social identity",
+        accent: "#5865F2",
+        icon: <FaDiscord size={22} />,
+      },
+      {
+        title: "Instagram",
+        subtitle: "visual presence / content",
+        accent: "#E4405F",
+        icon: <FaInstagram size={22} />,
+      },
+      {
+        title: "GitHub",
+        subtitle: "projects / developer profile",
+        accent: "#cbd5e1",
+        icon: <FaGithub size={22} />,
+      },
+      {
+        title: "X",
+        subtitle: "updates / audience / reach",
+        accent: "#60a5fa",
+        icon: <FaXTwitter size={20} />,
+      },
     ],
     []
   );
@@ -320,7 +422,13 @@ export default function HomePage() {
           scale: [1, 1.04, 0.98, 1],
         }}
         transition={{ duration: 22, repeat: Infinity, ease: EASE_IN_OUT }}
-        style={glowOrb("300px", "300px", "-70px", "40px", "rgba(244,114,182,0.18)")}
+        style={glowOrb(
+          "300px",
+          "300px",
+          "-70px",
+          "40px",
+          "rgba(244,114,182,0.18)"
+        )}
       />
       <motion.div
         animate={{
@@ -329,7 +437,14 @@ export default function HomePage() {
           scale: [1, 0.98, 1.03, 1],
         }}
         transition={{ duration: 24, repeat: Infinity, ease: EASE_IN_OUT }}
-        style={glowOrb("280px", "280px", undefined, "120px", "rgba(96,165,250,0.16)", "-50px")}
+        style={glowOrb(
+          "280px",
+          "280px",
+          undefined,
+          "120px",
+          "rgba(96,165,250,0.16)",
+          "-50px"
+        )}
       />
 
       <header
@@ -548,7 +663,11 @@ export default function HomePage() {
                 >
                   <motion.div
                     animate={{ rotate: [0, 360] }}
-                    transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
+                    transition={{
+                      duration: 18,
+                      repeat: Infinity,
+                      ease: "linear",
+                    }}
                     style={{
                       position: "absolute",
                       inset: "-14px",
@@ -557,6 +676,7 @@ export default function HomePage() {
                       boxShadow: "0 0 18px rgba(244,114,182,0.16)",
                     }}
                   />
+
                   <img
                     src="https://placehold.co/300x300"
                     alt="Mockup avatar"
@@ -574,6 +694,26 @@ export default function HomePage() {
                 </div>
 
                 <div style={{ textAlign: "center", marginTop: "16px" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "center",
+                      gap: "8px",
+                      flexWrap: "wrap",
+                      marginBottom: "12px",
+                    }}
+                  >
+                    <div style={mockupPill("#facc15")}>
+                      <FaCrown size={13} /> Owner
+                    </div>
+                    <div style={mockupPill("#4ade80")}>
+                      <LuSparkles size={13} /> Active
+                    </div>
+                    <div style={mockupPill("#cbd5e1")}>
+                      <LuEye size={13} /> 1.2k views
+                    </div>
+                  </div>
+
                   <div
                     style={{
                       fontSize: "32px",
@@ -611,20 +751,6 @@ export default function HomePage() {
 
                 <div
                   style={{
-                    marginTop: "16px",
-                    display: "flex",
-                    justifyContent: "center",
-                    gap: "10px",
-                    flexWrap: "wrap",
-                  }}
-                >
-                  <div style={mockupPill("#4ade80")}>👍 214</div>
-                  <div style={mockupPill("#f87171")}>👎 12</div>
-                  <div style={mockupPill("#cbd5e1")}>👁 1.2k views</div>
-                </div>
-
-                <div
-                  style={{
                     marginTop: "18px",
                     display: "grid",
                     gap: "12px",
@@ -636,6 +762,7 @@ export default function HomePage() {
                       title={item.title}
                       subtitle={item.subtitle}
                       accent={item.accent}
+                      icon={item.icon}
                     />
                   ))}
                 </div>
@@ -966,7 +1093,7 @@ function glowOrb(
   top: string,
   background: string,
   right?: string
-): React.CSSProperties {
+): CSSProperties {
   return {
     position: "absolute",
     width,
@@ -982,7 +1109,7 @@ function glowOrb(
   };
 }
 
-function showcasePanelStyle(): React.CSSProperties {
+function showcasePanelStyle(): CSSProperties {
   return {
     borderRadius: "30px",
     padding: "24px",
@@ -993,7 +1120,7 @@ function showcasePanelStyle(): React.CSSProperties {
   };
 }
 
-function pillStyle(accent: string): React.CSSProperties {
+function pillStyle(accent: string): CSSProperties {
   return {
     display: "inline-flex",
     alignItems: "center",
@@ -1008,7 +1135,7 @@ function pillStyle(accent: string): React.CSSProperties {
   };
 }
 
-const navLinkStyle: React.CSSProperties = {
+const navLinkStyle: CSSProperties = {
   color: "#d4dbe6",
   textDecoration: "none",
   padding: "10px 14px",
@@ -1017,7 +1144,7 @@ const navLinkStyle: React.CSSProperties = {
   backgroundColor: "rgba(255,255,255,0.02)",
 };
 
-const navPrimaryStyle: React.CSSProperties = {
+const navPrimaryStyle: CSSProperties = {
   color: "#ffffff",
   textDecoration: "none",
   padding: "10px 16px",
@@ -1029,7 +1156,7 @@ const navPrimaryStyle: React.CSSProperties = {
   fontWeight: 800,
 };
 
-const ctaMainStyle: React.CSSProperties = {
+const ctaMainStyle: CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
@@ -1045,7 +1172,7 @@ const ctaMainStyle: React.CSSProperties = {
   boxShadow: "0 16px 34px rgba(244,114,182,0.16)",
 };
 
-const ctaSecondaryStyle: React.CSSProperties = {
+const ctaSecondaryStyle: CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
@@ -1059,15 +1186,17 @@ const ctaSecondaryStyle: React.CSSProperties = {
   fontWeight: 800,
 };
 
-const mockupPill = (accent: string): React.CSSProperties => ({
+const mockupPill = (accent: string): CSSProperties => ({
   display: "inline-flex",
   alignItems: "center",
-  gap: "8px",
+  justifyContent: "center",
+  gap: "7px",
   padding: "10px 12px",
   borderRadius: "999px",
   backgroundColor: `${accent}16`,
-  border: `1px solid ${accent}26`,
+  border: `1px solid ${accent}30`,
   color: "#eef2f7",
-  fontWeight: 800,
+  fontWeight: 900,
   fontSize: "13px",
+  boxShadow: `0 10px 24px ${accent}10`,
 });
