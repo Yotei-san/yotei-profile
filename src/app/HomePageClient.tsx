@@ -197,6 +197,26 @@ export default function HomePageClient() {
           transform: translateY(0) scale(0.985);
         }
 
+        .mockup-identity-row {
+          display: grid;
+          grid-template-columns: auto minmax(0, 1fr);
+          gap: 18px;
+          align-items: start;
+        }
+
+        .mockup-badge-row {
+          display: flex;
+          gap: 8px;
+          flex-wrap: wrap;
+          margin-top: 14px;
+        }
+
+        .mockup-link-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 12px;
+        }
+
         .hero-gradient {
           background: linear-gradient(90deg, #ffffff 0%, #cdd8ff 28%, #88a9ff 58%, #ff77b7 100%);
           -webkit-background-clip: text;
@@ -274,6 +294,16 @@ export default function HomePageClient() {
 
           .yotei-stat-row,
           .yotei-feature-grid {
+            grid-template-columns: 1fr;
+          }
+
+          .mockup-link-grid {
+            grid-template-columns: 1fr;
+          }
+        }
+
+        @media (max-width: 560px) {
+          .mockup-identity-row {
             grid-template-columns: 1fr;
           }
         }
@@ -473,7 +503,7 @@ export default function HomePageClient() {
                 style={mockupGlowStyle}
               />
 
-              <div style={browserBarStyle}>
+              <div className="mockup-browser-bar" style={browserBarStyle}>
                 <div style={{ display: "flex", gap: "7px" }}>
                   <span style={browserDotStyle("#FF6C8A")} />
                   <span style={browserDotStyle("#FFC857")} />
@@ -493,29 +523,49 @@ export default function HomePageClient() {
                   <div style={bannerDepthLayerStyle} />
                   <div style={bannerGridStyle} />
                   <div style={bannerAccentStyle} />
+                  <div style={bannerAccentSecondaryStyle} />
 
                   <div style={bannerTopRowStyle}>
                     <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                      <span style={panelChipStyle("#10172E", "#7EA0FF")}>Verified</span>
-                      <span style={panelChipStyle("#162117", "#8EF4B0")}>Live</span>
+                      <span style={panelChipStyle("rgba(10, 19, 37, 0.78)", "#8FB0FF")}>
+                        Season 04
+                      </span>
+                      <span style={panelChipStyle("rgba(31, 18, 34, 0.78)", "#FF9FC6")}>
+                        Creator profile
+                      </span>
                     </div>
-                    <span style={panelChipStyle("#2A1220", "#FF7DB4")}>Premium</span>
-                  </div>
-
-                  <div style={bannerBottomRowStyle}>
                     <div style={presenceIndicatorStyle}>
                       <span style={presenceDotStyle} />
                       online now
                     </div>
-                    <div style={viewsChipStyle}>
-                      <FaRegStar size={12} />
-                      featured
+                  </div>
+
+                  <div style={bannerContentStyle}>
+                    <div style={bannerMessageCardStyle}>
+                      <div style={bannerMessageEyebrowStyle}>Featured launch</div>
+                      <div style={bannerMessageTitleStyle}>
+                        Neon identity, premium badges and a live social stack.
+                      </div>
+                      <div style={bannerMessageBodyStyle}>
+                        A profile mockup that feels active, curated and ready for clicks.
+                      </div>
+                    </div>
+
+                    <div style={bannerStatsRowStyle}>
+                      <div style={bannerStatCardStyle}>
+                        <strong>24.8k</strong>
+                        <span>monthly views</span>
+                      </div>
+                      <div style={bannerStatCardStyle}>
+                        <strong>4</strong>
+                        <span>live platforms</span>
+                      </div>
                     </div>
                   </div>
                 </div>
 
                 <div style={profileBodyStyle}>
-                  <div style={identityRowStyle}>
+                  <div className="mockup-identity-row" style={identityRowStyle}>
                     <motion.div
                       style={avatarShellStyle}
                       animate={shouldReduceMotion ? undefined : { y: [0, -2, 0] }}
@@ -524,9 +574,9 @@ export default function HomePageClient() {
                           ? undefined
                           : { duration: 5.6, repeat: Infinity, ease: EASE_IN_OUT }
                       }
-                    >
-                      <motion.div
-                        style={avatarGlowRingStyle}
+                      >
+                        <motion.div
+                          style={avatarGlowRingStyle}
                         animate={
                           shouldReduceMotion
                             ? undefined
@@ -558,29 +608,35 @@ export default function HomePageClient() {
                             : { duration: 4.8, repeat: Infinity, ease: EASE_IN_OUT }
                         }
                       >
-                        Y
+                        <div style={avatarShineStyle} />
+                        <span style={avatarLetterStyle}>Y</span>
                       </motion.div>
                     </motion.div>
 
-                    <div style={{ minWidth: 0, flex: 1 }}>
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "8px",
-                          flexWrap: "wrap",
-                        }}
-                      >
-                        <h2
-                          style={{
-                            margin: 0,
-                            fontSize: "28px",
-                            lineHeight: 1,
-                            letterSpacing: "-0.05em",
-                          }}
-                        >
-                          Yotei
-                        </h2>
+                    <div style={profileIntroStyle}>
+                      <div style={profileNameRowStyle}>
+                        <div>
+                          <h2 style={profileNameStyle}>Yotei</h2>
+                          <div style={profileHandleRowStyle}>
+                            <span>@yotei.profile</span>
+                            <span style={liveProfileChipStyle}>
+                              <span style={liveProfileDotStyle} />
+                              live right now
+                            </span>
+                          </div>
+                        </div>
+                        <div style={profileFeaturedPillStyle}>
+                          <FaRegStar size={12} />
+                          featured profile
+                        </div>
+                      </div>
+
+                      <p style={profileBioStyle}>
+                        Built for creators, indie launches and gamer brands that want a profile page with
+                        real presence instead of a plain list of links.
+                      </p>
+
+                      <div className="mockup-badge-row">
                         <span style={verifiedChipStyle}>
                           <LuBadgeCheck size={13} />
                           verified
@@ -589,29 +645,15 @@ export default function HomePageClient() {
                           <FaMedal size={12} />
                           premium
                         </span>
-                        <span style={liveProfileChipStyle}>
-                          <span style={liveProfileDotStyle} />
-                          live
+                        <span style={featuredChipStyle}>
+                          <FaRegStar size={12} />
+                          featured
                         </span>
                       </div>
-
-                      <div style={{ marginTop: "8px", color: "#9CA9C3", fontSize: "14px" }}>
-                        @yotei.profile
-                      </div>
-
-                      <p style={profileBioStyle}>
-                        Dark profile pages with premium presence, live platform links and a stronger first impression.
-                      </p>
                     </div>
                   </div>
 
-                  <div style={tagRowStyle}>
-                    <span style={profileTagStyle("#1A1530", "#B09CFF")}>Gamer SaaS</span>
-                    <span style={profileTagStyle("#1B1A29", "#7FD4FF")}>Reactive UI</span>
-                    <span style={profileTagStyle("#221420", "#FF8BC0")}>High intent</span>
-                  </div>
-
-                  <div style={{ display: "grid", gap: "12px" }}>
+                  <div className="mockup-link-grid" style={profileLinksGridStyle}>
                     {platformLinks.map((item, index) => (
                       <motion.button
                         key={item.label}
@@ -994,14 +1036,16 @@ const mockupGlowStyle: CSSProperties = {
 };
 
 const browserBarStyle: CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "auto 1fr auto",
+  display: "flex",
+  flexWrap: "wrap",
   gap: "12px",
   alignItems: "center",
   padding: "0 2px 14px",
 };
 
 const browserUrlStyle: CSSProperties = {
+  flex: "1 1 190px",
+  minWidth: 0,
   minHeight: "38px",
   borderRadius: "12px",
   border: "1px solid rgba(255,255,255,0.08)",
@@ -1044,7 +1088,7 @@ const profilePanelStyle: CSSProperties = {
   background:
     "linear-gradient(180deg, rgba(10, 13, 24, 0.98), rgba(7, 10, 18, 0.98))",
   border: "1px solid rgba(255,255,255,0.06)",
-  boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04)",
+  boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04), 0 24px 48px rgba(2, 6, 16, 0.32)",
 };
 
 const profilePanelEdgeStyle: CSSProperties = {
@@ -1057,17 +1101,22 @@ const profilePanelEdgeStyle: CSSProperties = {
 
 const bannerStyle: CSSProperties = {
   position: "relative",
-  minHeight: "220px",
-  padding: "18px",
+  minHeight: "192px",
+  padding: "18px 18px 24px",
   background:
-    "linear-gradient(135deg, rgba(21, 27, 46, 0.98) 0%, rgba(24, 16, 36, 0.96) 42%, rgba(11, 15, 26, 1) 100%)",
+    "linear-gradient(135deg, rgba(17, 25, 46, 0.98) 0%, rgba(27, 16, 41, 0.96) 46%, rgba(9, 14, 25, 1) 100%)",
+  display: "flex",
+  flexDirection: "column",
+  gap: "18px",
+  justifyContent: "space-between",
+  overflow: "hidden",
 };
 
 const bannerDepthLayerStyle: CSSProperties = {
   position: "absolute",
   inset: 0,
   background:
-    "radial-gradient(circle at 18% 24%, rgba(126, 160, 255, 0.24), transparent 22%), radial-gradient(circle at 78% 20%, rgba(255, 125, 180, 0.18), transparent 20%), linear-gradient(180deg, transparent 0%, rgba(5, 7, 12, 0.24) 100%)",
+    "radial-gradient(circle at 18% 24%, rgba(126, 160, 255, 0.28), transparent 24%), radial-gradient(circle at 82% 18%, rgba(255, 125, 180, 0.24), transparent 20%), radial-gradient(circle at 58% 72%, rgba(77, 164, 255, 0.16), transparent 24%), linear-gradient(180deg, transparent 0%, rgba(5, 7, 12, 0.28) 100%)",
   pointerEvents: "none",
 };
 
@@ -1075,24 +1124,39 @@ const bannerGridStyle: CSSProperties = {
   position: "absolute",
   inset: 0,
   backgroundImage:
-    "linear-gradient(rgba(126, 160, 255, 0.10) 1px, transparent 1px), linear-gradient(90deg, rgba(126, 160, 255, 0.10) 1px, transparent 1px)",
-  backgroundSize: "48px 48px",
+    "linear-gradient(rgba(126, 160, 255, 0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(126, 160, 255, 0.08) 1px, transparent 1px)",
+  backgroundSize: "42px 42px",
   maskImage: "linear-gradient(180deg, rgba(0,0,0,1), rgba(0,0,0,0.35))",
-  opacity: 0.34,
+  opacity: 0.28,
 };
 
 const bannerAccentStyle: CSSProperties = {
   position: "absolute",
-  right: "24px",
-  top: "26px",
-  width: "140px",
-  height: "140px",
-  borderRadius: "28px",
+  right: "-30px",
+  top: "-10px",
+  width: "180px",
+  height: "180px",
+  borderRadius: "999px",
   background:
-    "linear-gradient(135deg, rgba(126, 160, 255, 0.30), rgba(255, 125, 180, 0.20))",
+    "radial-gradient(circle, rgba(126, 160, 255, 0.32) 0%, rgba(126, 160, 255, 0.08) 40%, rgba(126, 160, 255, 0) 72%)",
+  filter: "blur(4px)",
+  pointerEvents: "none",
+};
+
+const bannerAccentSecondaryStyle: CSSProperties = {
+  position: "absolute",
+  right: "20px",
+  bottom: "24px",
+  width: "150px",
+  height: "78px",
+  borderRadius: "22px",
+  transform: "rotate(-11deg)",
   border: "1px solid rgba(255,255,255,0.08)",
-  transform: "rotate(16deg)",
-  boxShadow: "0 24px 36px rgba(0,0,0,0.18)",
+  background:
+    "linear-gradient(135deg, rgba(255,255,255,0.12), rgba(126, 160, 255, 0.10) 38%, rgba(255, 125, 180, 0.14) 100%)",
+  boxShadow: "0 20px 42px rgba(0,0,0,0.16)",
+  backdropFilter: "blur(8px)",
+  pointerEvents: "none",
 };
 
 const bannerTopRowStyle: CSSProperties = {
@@ -1105,87 +1169,188 @@ const bannerTopRowStyle: CSSProperties = {
   flexWrap: "wrap",
 };
 
-const bannerBottomRowStyle: CSSProperties = {
-  position: "absolute",
-  left: "18px",
-  right: "18px",
-  bottom: "18px",
+const bannerContentStyle: CSSProperties = {
+  position: "relative",
   zIndex: 1,
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "space-between",
+  display: "grid",
+  gap: "14px",
+  width: "min(100%, 360px)",
+};
+
+const bannerMessageCardStyle: CSSProperties = {
+  padding: "16px 16px 15px",
+  borderRadius: "20px",
+  border: "1px solid rgba(255,255,255,0.08)",
+  background:
+    "linear-gradient(180deg, rgba(12, 17, 31, 0.72), rgba(12, 16, 28, 0.48))",
+  boxShadow: "0 18px 30px rgba(3, 7, 19, 0.24)",
+  backdropFilter: "blur(10px)",
+};
+
+const bannerMessageEyebrowStyle: CSSProperties = {
+  color: "#A5B8FF",
+  fontSize: "11px",
+  fontWeight: 800,
+  textTransform: "uppercase",
+  letterSpacing: "0.14em",
+};
+
+const bannerMessageTitleStyle: CSSProperties = {
+  marginTop: "10px",
+  fontSize: "20px",
+  lineHeight: 1.15,
+  fontWeight: 900,
+  letterSpacing: "-0.04em",
+  maxWidth: "260px",
+};
+
+const bannerMessageBodyStyle: CSSProperties = {
+  marginTop: "8px",
+  color: "#CBD6EB",
+  fontSize: "13px",
+  lineHeight: 1.55,
+};
+
+const bannerStatsRowStyle: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
   gap: "10px",
-  flexWrap: "wrap",
+};
+
+const bannerStatCardStyle: CSSProperties = {
+  display: "grid",
+  gap: "4px",
+  padding: "12px 14px",
+  borderRadius: "18px",
+  border: "1px solid rgba(255,255,255,0.08)",
+  background: "rgba(7, 11, 20, 0.48)",
+  backdropFilter: "blur(10px)",
+  boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04)",
 };
 
 const profileBodyStyle: CSSProperties = {
   padding: "0 18px 18px",
-  marginTop: "-54px",
+  marginTop: "-38px",
   position: "relative",
   zIndex: 2,
+  display: "grid",
+  gap: "18px",
 };
 
 const identityRowStyle: CSSProperties = {
-  display: "flex",
-  alignItems: "end",
-  gap: "16px",
-  flexWrap: "wrap",
+  position: "relative",
 };
 
 const avatarShellStyle: CSSProperties = {
   position: "relative",
-  width: "110px",
-  height: "110px",
+  width: "108px",
+  height: "108px",
   flexShrink: 0,
 };
 
 const avatarGlowRingStyle: CSSProperties = {
   position: "absolute",
-  inset: "-10px",
+  inset: "-9px",
   borderRadius: "999px",
-  border: "1px solid rgba(126, 160, 255, 0.34)",
-  boxShadow: "0 0 0 8px rgba(10, 13, 22, 0.78)",
+  border: "1px solid rgba(144, 168, 255, 0.42)",
+  boxShadow:
+    "0 0 0 7px rgba(10, 13, 22, 0.88), 0 0 42px rgba(97, 118, 255, 0.18)",
 };
 
 const avatarAuraStyle: CSSProperties = {
   position: "absolute",
-  inset: "10px",
+  inset: "4px",
   borderRadius: "999px",
   background:
-    "radial-gradient(circle, rgba(255, 95, 155, 0.16) 0%, rgba(123, 108, 255, 0.08) 48%, rgba(123, 108, 255, 0) 72%)",
-  transform: "scale(1.18)",
+    "radial-gradient(circle, rgba(255, 95, 155, 0.22) 0%, rgba(123, 108, 255, 0.14) 44%, rgba(123, 108, 255, 0) 74%)",
+  transform: "scale(1.16)",
   pointerEvents: "none",
+  filter: "blur(8px)",
 };
 
 const avatarCoreStyle: CSSProperties = {
-  width: "110px",
-  height: "110px",
+  position: "relative",
+  width: "108px",
+  height: "108px",
   borderRadius: "999px",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  fontSize: "38px",
-  fontWeight: 900,
-  color: "#FFFFFF",
+  overflow: "hidden",
+  border: "1px solid rgba(255,255,255,0.18)",
   background:
-    "linear-gradient(135deg, rgba(255, 94, 156, 1) 0%, rgba(123, 108, 255, 1) 100%)",
+    "radial-gradient(circle at 26% 24%, rgba(255,255,255,0.34), transparent 22%), linear-gradient(145deg, rgba(255, 94, 156, 0.98) 0%, rgba(122, 111, 255, 1) 62%, rgba(67, 135, 255, 0.96) 100%)",
   boxShadow: "0 22px 40px rgba(94, 88, 255, 0.22)",
 };
 
-const profileBioStyle: CSSProperties = {
-  margin: "12px 0 0",
-  color: "#C5CFDF",
-  lineHeight: 1.7,
-  fontSize: "14px",
-  maxWidth: "420px",
+const avatarShineStyle: CSSProperties = {
+  position: "absolute",
+  inset: "8px",
+  borderRadius: "999px",
+  background:
+    "linear-gradient(180deg, rgba(255,255,255,0.24), rgba(255,255,255,0) 42%)",
+  opacity: 0.8,
 };
 
-const tagRowStyle: CSSProperties = {
+const avatarLetterStyle: CSSProperties = {
+  position: "relative",
+  zIndex: 1,
+  fontSize: "38px",
+  fontWeight: 900,
+  letterSpacing: "-0.06em",
+  color: "#FFFFFF",
+  textShadow: "0 10px 24px rgba(15, 19, 42, 0.28)",
+};
+
+const profileIntroStyle: CSSProperties = {
+  minWidth: 0,
+};
+
+const profileNameRowStyle: CSSProperties = {
   display: "flex",
+  alignItems: "flex-start",
+  justifyContent: "space-between",
+  gap: "12px",
+  flexWrap: "wrap",
+};
+
+const profileNameStyle: CSSProperties = {
+  margin: 0,
+  fontSize: "30px",
+  lineHeight: 0.95,
+  letterSpacing: "-0.05em",
+};
+
+const profileHandleRowStyle: CSSProperties = {
+  marginTop: "10px",
+  display: "flex",
+  alignItems: "center",
   gap: "10px",
   flexWrap: "wrap",
-  marginTop: "18px",
-  marginBottom: "18px",
+  color: "#9CA9C3",
+  fontSize: "13px",
+};
+
+const profileFeaturedPillStyle: CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  gap: "7px",
+  minHeight: "34px",
+  padding: "0 12px",
+  borderRadius: "999px",
+  border: "1px solid rgba(255,255,255,0.08)",
+  background: "rgba(255,255,255,0.04)",
+  color: "#E8EEF8",
+  fontSize: "12px",
+  fontWeight: 800,
+};
+
+const profileBioStyle: CSSProperties = {
+  margin: "14px 0 0",
+  color: "#C5CFDF",
+  lineHeight: 1.68,
+  fontSize: "14px",
+  maxWidth: "440px",
 };
 
 const verifiedChipStyle: CSSProperties = {
@@ -1219,10 +1384,24 @@ const liveProfileChipStyle: CSSProperties = {
   alignItems: "center",
   gap: "6px",
   borderRadius: "999px",
-  padding: "7px 10px",
+  minHeight: "28px",
+  padding: "0 10px",
   background: "rgba(69, 212, 131, 0.10)",
   border: "1px solid rgba(69, 212, 131, 0.18)",
   color: "#9CF5BE",
+  fontSize: "11px",
+  fontWeight: 800,
+};
+
+const featuredChipStyle: CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  gap: "6px",
+  borderRadius: "999px",
+  padding: "7px 10px",
+  background: "rgba(90, 178, 255, 0.12)",
+  border: "1px solid rgba(90, 178, 255, 0.20)",
+  color: "#9FD8FF",
   fontSize: "12px",
   fontWeight: 800,
 };
@@ -1232,6 +1411,10 @@ const liveProfileDotStyle: CSSProperties = {
   height: "7px",
   borderRadius: "999px",
   background: "#45D483",
+};
+
+const profileLinksGridStyle: CSSProperties = {
+  alignItems: "stretch",
 };
 
 const platformHandleStyle: CSSProperties = {
@@ -1367,6 +1550,8 @@ function platformButtonStyle(accent: string): CSSProperties {
   return {
     ...platformCardStyle(accent),
     width: "100%",
+    minHeight: "88px",
+    alignItems: "center",
     textAlign: "left",
     appearance: "none",
     cursor: "pointer",
