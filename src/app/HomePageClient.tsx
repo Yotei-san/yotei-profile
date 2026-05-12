@@ -9,12 +9,12 @@ import {
   FaInstagram,
   FaMedal,
   FaRegStar,
-  FaXTwitter,
 } from "react-icons/fa6";
 import {
   LuArrowRight,
   LuBadgeCheck,
   LuChartNoAxesCombined,
+  LuGlobe,
   LuLayoutTemplate,
   LuPalette,
   LuSparkles,
@@ -48,31 +48,31 @@ const fadeUp: Variants = {
 const platformLinks = [
   {
     label: "Discord",
-    handle: "discord.gg/yotei",
+    handle: "discord.gg/kazama",
     accent: "#5B6CFF",
     icon: <FaDiscord size={18} />,
-    meta: "community hub",
-  },
-  {
-    label: "Instagram",
-    handle: "@yotei.profile",
-    accent: "#FF5A8B",
-    icon: <FaInstagram size={18} />,
-    meta: "visual identity",
+    meta: "community",
   },
   {
     label: "GitHub",
-    handle: "github.com/yotei",
+    handle: "github.com/kazama-dev",
     accent: "#B8C3D9",
     icon: <FaGithub size={18} />,
-    meta: "projects and builds",
+    meta: "code",
   },
   {
-    label: "X",
-    handle: "@yoteiprofile",
+    label: "Instagram",
+    handle: "@kazama.dev",
+    accent: "#FF5A8B",
+    icon: <FaInstagram size={18} />,
+    meta: "behind the scenes",
+  },
+  {
+    label: "Portfolio",
+    handle: "kazama.dev/portfolio",
     accent: "#66B6FF",
-    icon: <FaXTwitter size={16} />,
-    meta: "launch updates",
+    icon: <LuGlobe size={18} />,
+    meta: "featured work",
   },
 ] as const;
 
@@ -217,6 +217,15 @@ export default function HomePageClient() {
           gap: 12px;
         }
 
+        .mockup-banner-scene {
+          position: absolute;
+          right: 18px;
+          bottom: 0;
+          width: min(46%, 220px);
+          height: 154px;
+          pointer-events: none;
+        }
+
         .hero-gradient {
           background: linear-gradient(90deg, #ffffff 0%, #cdd8ff 28%, #88a9ff 58%, #ff77b7 100%);
           -webkit-background-clip: text;
@@ -305,6 +314,12 @@ export default function HomePageClient() {
         @media (max-width: 560px) {
           .mockup-identity-row {
             grid-template-columns: 1fr;
+          }
+
+          .mockup-banner-scene {
+            width: 170px;
+            height: 120px;
+            opacity: 0.78;
           }
         }
       `}</style>
@@ -509,10 +524,10 @@ export default function HomePageClient() {
                   <span style={browserDotStyle("#FFC857")} />
                   <span style={browserDotStyle("#50D890")} />
                 </div>
-                <div style={browserUrlStyle}>yotei.app/yotei</div>
+                <div style={browserUrlStyle}>yotei.app/kazama</div>
                 <div style={liveBadgeStyle}>
                   <span style={liveDotStyle} />
-                  Live
+                  Live now
                 </div>
               </div>
 
@@ -527,38 +542,48 @@ export default function HomePageClient() {
 
                   <div style={bannerTopRowStyle}>
                     <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                      <span style={panelChipStyle("rgba(10, 19, 37, 0.78)", "#8FB0FF")}>
-                        Season 04
-                      </span>
                       <span style={panelChipStyle("rgba(31, 18, 34, 0.78)", "#FF9FC6")}>
                         Creator profile
+                      </span>
+                      <span style={panelChipStyle("rgba(10, 19, 37, 0.78)", "#8FB0FF")}>
+                        24.8k views
                       </span>
                     </div>
                     <div style={presenceIndicatorStyle}>
                       <span style={presenceDotStyle} />
-                      online now
+                      Live now
                     </div>
+                  </div>
+
+                  <div className="mockup-banner-scene" style={bannerSceneStyle}>
+                    <div style={bannerNeonFloorStyle} />
+                    <div style={bannerDeskStyle} />
+                    <div style={bannerMonitorPrimaryStyle} />
+                    <div style={bannerMonitorSecondaryStyle} />
+                    <div style={bannerVerticalLightStyle} />
+                    <div style={bannerSilhouetteStyle} />
+                    <div style={bannerChairStyle} />
                   </div>
 
                   <div style={bannerContentStyle}>
                     <div style={bannerMessageCardStyle}>
-                      <div style={bannerMessageEyebrowStyle}>Featured launch</div>
+                      <div style={bannerMessageEyebrowStyle}>Night build session</div>
                       <div style={bannerMessageTitleStyle}>
-                        Neon identity, premium badges and a live social stack.
+                        Creator setup, code on screen and socials ready to click.
                       </div>
                       <div style={bannerMessageBodyStyle}>
-                        A profile mockup that feels active, curated and ready for clicks.
+                        Premium profile preview for a gamer dev building with AI, design and code.
                       </div>
                     </div>
 
                     <div style={bannerStatsRowStyle}>
                       <div style={bannerStatCardStyle}>
                         <strong>24.8k</strong>
-                        <span>monthly views</span>
+                        <span>views</span>
                       </div>
                       <div style={bannerStatCardStyle}>
-                        <strong>4</strong>
-                        <span>live platforms</span>
+                        <strong>Live</strong>
+                        <span>creator status</span>
                       </div>
                     </div>
                   </div>
@@ -574,9 +599,9 @@ export default function HomePageClient() {
                           ? undefined
                           : { duration: 5.6, repeat: Infinity, ease: EASE_IN_OUT }
                       }
-                      >
-                        <motion.div
-                          style={avatarGlowRingStyle}
+                    >
+                      <motion.div
+                        style={avatarGlowRingStyle}
                         animate={
                           shouldReduceMotion
                             ? undefined
@@ -609,45 +634,48 @@ export default function HomePageClient() {
                         }
                       >
                         <div style={avatarShineStyle} />
-                        <span style={avatarLetterStyle}>Y</span>
+                        <div style={avatarMonogramRingStyle} />
+                        <span style={avatarLetterStyle}>KZ</span>
                       </motion.div>
+                      <div style={avatarOnlineBadgeStyle}>
+                        <span style={avatarOnlineDotStyle} />
+                      </div>
                     </motion.div>
 
                     <div style={profileIntroStyle}>
                       <div style={profileNameRowStyle}>
                         <div>
-                          <h2 style={profileNameStyle}>Yotei</h2>
+                          <h2 style={profileNameStyle}>Kazama</h2>
                           <div style={profileHandleRowStyle}>
-                            <span>@yotei.profile</span>
+                            <span>@kazama.dev</span>
                             <span style={liveProfileChipStyle}>
                               <span style={liveProfileDotStyle} />
-                              live right now
+                              online
                             </span>
                           </div>
                         </div>
                         <div style={profileFeaturedPillStyle}>
                           <FaRegStar size={12} />
-                          featured profile
+                          creator profile
                         </div>
                       </div>
 
                       <p style={profileBioStyle}>
-                        Built for creators, indie launches and gamer brands that want a profile page with
-                        real presence instead of a plain list of links.
+                        Developer, gamer e creator construindo projetos com IA, design e codigo.
                       </p>
 
                       <div className="mockup-badge-row">
                         <span style={verifiedChipStyle}>
                           <LuBadgeCheck size={13} />
-                          verified
+                          Verified
                         </span>
                         <span style={premiumChipStyle}>
                           <FaMedal size={12} />
-                          premium
+                          Premium
                         </span>
-                        <span style={featuredChipStyle}>
-                          <FaRegStar size={12} />
-                          featured
+                        <span style={onlineBadgeStyle}>
+                          <span style={liveProfileDotStyle} />
+                          Online
                         </span>
                       </div>
                     </div>
@@ -1101,10 +1129,10 @@ const profilePanelEdgeStyle: CSSProperties = {
 
 const bannerStyle: CSSProperties = {
   position: "relative",
-  minHeight: "192px",
+  minHeight: "214px",
   padding: "18px 18px 24px",
   background:
-    "linear-gradient(135deg, rgba(17, 25, 46, 0.98) 0%, rgba(27, 16, 41, 0.96) 46%, rgba(9, 14, 25, 1) 100%)",
+    "linear-gradient(180deg, rgba(18, 23, 38, 0.98) 0%, rgba(13, 16, 27, 1) 100%)",
   display: "flex",
   flexDirection: "column",
   gap: "18px",
@@ -1116,7 +1144,7 @@ const bannerDepthLayerStyle: CSSProperties = {
   position: "absolute",
   inset: 0,
   background:
-    "radial-gradient(circle at 18% 24%, rgba(126, 160, 255, 0.28), transparent 24%), radial-gradient(circle at 82% 18%, rgba(255, 125, 180, 0.24), transparent 20%), radial-gradient(circle at 58% 72%, rgba(77, 164, 255, 0.16), transparent 24%), linear-gradient(180deg, transparent 0%, rgba(5, 7, 12, 0.28) 100%)",
+    "radial-gradient(circle at 20% 20%, rgba(91, 108, 255, 0.32), transparent 26%), radial-gradient(circle at 84% 18%, rgba(255, 90, 139, 0.22), transparent 22%), linear-gradient(180deg, rgba(24, 30, 49, 0.28) 0%, rgba(7, 10, 19, 0.12) 48%, rgba(4, 6, 12, 0.64) 100%)",
   pointerEvents: "none",
 };
 
@@ -1124,38 +1152,35 @@ const bannerGridStyle: CSSProperties = {
   position: "absolute",
   inset: 0,
   backgroundImage:
-    "linear-gradient(rgba(126, 160, 255, 0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(126, 160, 255, 0.08) 1px, transparent 1px)",
-  backgroundSize: "42px 42px",
-  maskImage: "linear-gradient(180deg, rgba(0,0,0,1), rgba(0,0,0,0.35))",
-  opacity: 0.28,
+    "linear-gradient(rgba(86, 116, 255, 0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(86, 116, 255, 0.08) 1px, transparent 1px)",
+  backgroundSize: "38px 38px",
+  maskImage: "linear-gradient(180deg, rgba(0,0,0,0.78), rgba(0,0,0,0.12))",
+  opacity: 0.24,
 };
 
 const bannerAccentStyle: CSSProperties = {
   position: "absolute",
-  right: "-30px",
-  top: "-10px",
-  width: "180px",
-  height: "180px",
+  right: "-24px",
+  top: "-34px",
+  width: "210px",
+  height: "210px",
   borderRadius: "999px",
   background:
-    "radial-gradient(circle, rgba(126, 160, 255, 0.32) 0%, rgba(126, 160, 255, 0.08) 40%, rgba(126, 160, 255, 0) 72%)",
-  filter: "blur(4px)",
+    "radial-gradient(circle, rgba(112, 139, 255, 0.24) 0%, rgba(112, 139, 255, 0.08) 42%, rgba(112, 139, 255, 0) 72%)",
+  filter: "blur(12px)",
   pointerEvents: "none",
 };
 
 const bannerAccentSecondaryStyle: CSSProperties = {
   position: "absolute",
-  right: "20px",
-  bottom: "24px",
-  width: "150px",
-  height: "78px",
-  borderRadius: "22px",
-  transform: "rotate(-11deg)",
-  border: "1px solid rgba(255,255,255,0.08)",
+  left: "-34px",
+  bottom: "-60px",
+  width: "220px",
+  height: "160px",
+  borderRadius: "999px",
   background:
-    "linear-gradient(135deg, rgba(255,255,255,0.12), rgba(126, 160, 255, 0.10) 38%, rgba(255, 125, 180, 0.14) 100%)",
-  boxShadow: "0 20px 42px rgba(0,0,0,0.16)",
-  backdropFilter: "blur(8px)",
+    "radial-gradient(circle, rgba(255, 94, 156, 0.22) 0%, rgba(255, 94, 156, 0.06) 42%, rgba(255, 94, 156, 0) 74%)",
+  filter: "blur(18px)",
   pointerEvents: "none",
 };
 
@@ -1174,7 +1199,7 @@ const bannerContentStyle: CSSProperties = {
   zIndex: 1,
   display: "grid",
   gap: "14px",
-  width: "min(100%, 360px)",
+  width: "min(100%, 320px)",
 };
 
 const bannerMessageCardStyle: CSSProperties = {
@@ -1182,9 +1207,8 @@ const bannerMessageCardStyle: CSSProperties = {
   borderRadius: "20px",
   border: "1px solid rgba(255,255,255,0.08)",
   background:
-    "linear-gradient(180deg, rgba(12, 17, 31, 0.72), rgba(12, 16, 28, 0.48))",
+    "linear-gradient(180deg, rgba(9, 13, 24, 0.88), rgba(12, 16, 28, 0.68))",
   boxShadow: "0 18px 30px rgba(3, 7, 19, 0.24)",
-  backdropFilter: "blur(10px)",
 };
 
 const bannerMessageEyebrowStyle: CSSProperties = {
@@ -1223,9 +1247,96 @@ const bannerStatCardStyle: CSSProperties = {
   padding: "12px 14px",
   borderRadius: "18px",
   border: "1px solid rgba(255,255,255,0.08)",
-  background: "rgba(7, 11, 20, 0.48)",
-  backdropFilter: "blur(10px)",
+  background: "rgba(7, 11, 20, 0.76)",
   boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04)",
+};
+
+const bannerSceneStyle: CSSProperties = {
+  zIndex: 0,
+};
+
+const bannerNeonFloorStyle: CSSProperties = {
+  position: "absolute",
+  left: "10px",
+  right: "12px",
+  bottom: "0",
+  height: "42px",
+  borderRadius: "24px 24px 0 0",
+  background:
+    "linear-gradient(180deg, rgba(28, 36, 60, 0), rgba(14, 18, 31, 0.72) 36%, rgba(7, 10, 19, 0.96) 100%)",
+  boxShadow: "0 -1px 0 rgba(125, 143, 255, 0.10)",
+};
+
+const bannerDeskStyle: CSSProperties = {
+  position: "absolute",
+  left: "26px",
+  right: "8px",
+  bottom: "32px",
+  height: "14px",
+  borderRadius: "12px",
+  background:
+    "linear-gradient(90deg, rgba(45, 58, 96, 0.86), rgba(20, 24, 38, 0.96) 48%, rgba(255, 90, 139, 0.34) 100%)",
+  boxShadow: "0 0 18px rgba(91, 108, 255, 0.12)",
+};
+
+const bannerMonitorPrimaryStyle: CSSProperties = {
+  position: "absolute",
+  right: "34px",
+  bottom: "50px",
+  width: "92px",
+  height: "54px",
+  borderRadius: "14px",
+  border: "1px solid rgba(152, 172, 255, 0.26)",
+  background:
+    "linear-gradient(135deg, rgba(89, 114, 255, 0.44), rgba(18, 24, 42, 0.94) 52%, rgba(255, 89, 141, 0.28) 100%)",
+  boxShadow: "0 0 22px rgba(91, 108, 255, 0.18)",
+};
+
+const bannerMonitorSecondaryStyle: CSSProperties = {
+  position: "absolute",
+  right: "118px",
+  bottom: "58px",
+  width: "58px",
+  height: "42px",
+  borderRadius: "12px",
+  border: "1px solid rgba(255,255,255,0.10)",
+  background:
+    "linear-gradient(135deg, rgba(255, 90, 139, 0.24), rgba(14, 18, 32, 0.94) 60%, rgba(90, 178, 255, 0.20) 100%)",
+};
+
+const bannerVerticalLightStyle: CSSProperties = {
+  position: "absolute",
+  right: "14px",
+  bottom: "44px",
+  width: "6px",
+  height: "86px",
+  borderRadius: "999px",
+  background: "linear-gradient(180deg, rgba(91, 108, 255, 0.10), rgba(91, 108, 255, 0.82))",
+  boxShadow: "0 0 18px rgba(91, 108, 255, 0.34)",
+};
+
+const bannerSilhouetteStyle: CSSProperties = {
+  position: "absolute",
+  right: "88px",
+  bottom: "34px",
+  width: "34px",
+  height: "74px",
+  borderRadius: "20px 20px 14px 14px",
+  background:
+    "linear-gradient(180deg, rgba(10, 13, 24, 0.42) 0%, rgba(5, 7, 12, 0.96) 34%, rgba(7, 9, 15, 1) 100%)",
+  boxShadow: "0 0 24px rgba(255, 90, 139, 0.12)",
+};
+
+const bannerChairStyle: CSSProperties = {
+  position: "absolute",
+  right: "70px",
+  bottom: "24px",
+  width: "56px",
+  height: "72px",
+  borderRadius: "24px 24px 14px 14px",
+  background:
+    "linear-gradient(180deg, rgba(26, 33, 58, 0.94), rgba(13, 16, 27, 1) 74%)",
+  opacity: 0.9,
 };
 
 const profileBodyStyle: CSSProperties = {
@@ -1262,7 +1373,7 @@ const avatarAuraStyle: CSSProperties = {
   inset: "4px",
   borderRadius: "999px",
   background:
-    "radial-gradient(circle, rgba(255, 95, 155, 0.22) 0%, rgba(123, 108, 255, 0.14) 44%, rgba(123, 108, 255, 0) 74%)",
+    "radial-gradient(circle, rgba(255, 95, 155, 0.24) 0%, rgba(123, 108, 255, 0.16) 44%, rgba(123, 108, 255, 0) 74%)",
   transform: "scale(1.16)",
   pointerEvents: "none",
   filter: "blur(8px)",
@@ -1292,14 +1403,44 @@ const avatarShineStyle: CSSProperties = {
   opacity: 0.8,
 };
 
+const avatarMonogramRingStyle: CSSProperties = {
+  position: "absolute",
+  inset: "11px",
+  borderRadius: "999px",
+  border: "1px solid rgba(255,255,255,0.18)",
+};
+
 const avatarLetterStyle: CSSProperties = {
   position: "relative",
   zIndex: 1,
-  fontSize: "38px",
+  fontSize: "28px",
   fontWeight: 900,
-  letterSpacing: "-0.06em",
+  letterSpacing: "0.08em",
   color: "#FFFFFF",
   textShadow: "0 10px 24px rgba(15, 19, 42, 0.28)",
+};
+
+const avatarOnlineBadgeStyle: CSSProperties = {
+  position: "absolute",
+  right: "-2px",
+  bottom: "2px",
+  width: "24px",
+  height: "24px",
+  borderRadius: "999px",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  background: "#0B101B",
+  border: "1px solid rgba(255,255,255,0.10)",
+  boxShadow: "0 10px 18px rgba(0,0,0,0.24)",
+};
+
+const avatarOnlineDotStyle: CSSProperties = {
+  width: "10px",
+  height: "10px",
+  borderRadius: "999px",
+  background: "#45D483",
+  boxShadow: "0 0 0 4px rgba(69,212,131,0.12)",
 };
 
 const profileIntroStyle: CSSProperties = {
@@ -1339,7 +1480,7 @@ const profileFeaturedPillStyle: CSSProperties = {
   padding: "0 12px",
   borderRadius: "999px",
   border: "1px solid rgba(255,255,255,0.08)",
-  background: "rgba(255,255,255,0.04)",
+  background: "rgba(255,255,255,0.05)",
   color: "#E8EEF8",
   fontSize: "12px",
   fontWeight: 800,
@@ -1359,9 +1500,9 @@ const verifiedChipStyle: CSSProperties = {
   gap: "6px",
   borderRadius: "999px",
   padding: "7px 10px",
-  background: "rgba(69, 212, 131, 0.10)",
-  border: "1px solid rgba(69, 212, 131, 0.18)",
-  color: "#9CF5BE",
+  background: "rgba(90, 178, 255, 0.12)",
+  border: "1px solid rgba(90, 178, 255, 0.18)",
+  color: "#A9DBFF",
   fontSize: "12px",
   fontWeight: 800,
 };
@@ -1393,15 +1534,15 @@ const liveProfileChipStyle: CSSProperties = {
   fontWeight: 800,
 };
 
-const featuredChipStyle: CSSProperties = {
+const onlineBadgeStyle: CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
   gap: "6px",
   borderRadius: "999px",
   padding: "7px 10px",
-  background: "rgba(90, 178, 255, 0.12)",
-  border: "1px solid rgba(90, 178, 255, 0.20)",
-  color: "#9FD8FF",
+  background: "rgba(69, 212, 131, 0.10)",
+  border: "1px solid rgba(69, 212, 131, 0.18)",
+  color: "#9CF5BE",
   fontSize: "12px",
   fontWeight: 800,
 };
