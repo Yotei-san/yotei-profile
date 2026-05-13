@@ -110,6 +110,7 @@ model User {
   sessions           Session[]
   links              Link[]
   presets            Preset[]
+  createdTemplates   ProfileTemplate[]
   reactionsGiven     Reaction[] @relation("ReactionsGiven")
   reactionsReceived  Reaction[] @relation("ReactionsReceived")
   badges             UserBadge[]
@@ -225,6 +226,33 @@ model Preset {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
+}
+
+model ProfileTemplate {
+  id              String   @id @default(cuid())
+  name            String
+  description     String?
+  tags            String[]
+  previewImageUrl String?
+  isPremium       Boolean  @default(false)
+  isPublic        Boolean  @default(true)
+  usageCount      Int      @default(0)
+
+  createdByUserId String
+  createdByUser   User     @relation(fields: [createdByUserId], references: [id], onDelete: Cascade)
+
+  displayName     String?
+  bio             String?
+  avatarUrl       String?
+  bannerUrl       String?
+  themeColor      String?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([isPublic])
+  @@index([isPremium])
+  @@index([createdByUserId])
 }
 
 model Reaction {

@@ -25,7 +25,10 @@ type CropState = {
   offsetY: number;
 };
 
+type AvatarFitMode = "cover" | "contain";
+
 const AVATAR_SIZE = 512;
+const AVATAR_PREVIEW_SIZE = 190;
 const BANNER_WIDTH = 1600;
 const BANNER_HEIGHT = 500;
 
@@ -56,6 +59,7 @@ export default function ProfileMediaUploader({
     offsetX: 0,
     offsetY: 0,
   });
+  const [avatarFitMode, setAvatarFitMode] = useState<AvatarFitMode>("cover");
 
   const accent = themeColor || "#f472b6";
   const isAvatar = type === "avatar";
@@ -88,6 +92,7 @@ export default function ProfileMediaUploader({
       offsetX: 0,
       offsetY: 0,
     });
+    setAvatarFitMode("cover");
     setError(null);
   }
 
@@ -104,6 +109,7 @@ export default function ProfileMediaUploader({
       offsetX: 0,
       offsetY: 0,
     });
+    setAvatarFitMode("cover");
     setUploadProgress(0);
     setError(null);
   }
@@ -158,6 +164,7 @@ export default function ProfileMediaUploader({
       offsetX: 0,
       offsetY: 0,
     });
+    setAvatarFitMode("cover");
     setUploadProgress(0);
     setError(null);
   }
@@ -248,7 +255,7 @@ export default function ProfileMediaUploader({
         fileToUpload = sourceFile;
         setUploadProgress(28);
       } else {
-        const croppedBlob = await renderCroppedBlob(sourceUrl, type, crop);
+        const croppedBlob = await renderCroppedBlob(sourceUrl, type, crop, avatarFitMode);
         setUploadProgress(38);
 
         fileToUpload = new File([croppedBlob], `${type}-${Date.now()}.jpg`, {
@@ -309,6 +316,8 @@ export default function ProfileMediaUploader({
     : "PNG, JPG, WEBP, GIF, MP4, WebM e MOV";
   const uploadActionLabel = isAvatar ? "Salvar imagem" : "Salvar banner";
   const pickActionLabel = isAvatar ? "Escolher imagem" : "Escolher banner";
+  const zoomMin = isAvatar ? 0.35 : 1;
+  const positionLimit = isAvatar ? 320 : 240;
 
   return (
     <section
@@ -455,6 +464,7 @@ export default function ProfileMediaUploader({
             <AvatarEditorPreview
               imageUrl={activePreview}
               crop={crop}
+              fitMode={avatarFitMode}
               accent={accent}
               sourceMime={sourceMime}
               onPointerDown={onPointerDown}
@@ -477,11 +487,33 @@ export default function ProfileMediaUploader({
 
       {!isVideoBannerPreview ? (
         <div style={{ display: "grid", gap: "12px" }}>
+          {isAvatar ? (
+            <div style={{ display: "grid", gap: "8px" }}>
+              <div style={labelStyle}>Enquadramento</div>
+              <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                <button
+                  type="button"
+                  onClick={() => setAvatarFitMode("cover")}
+                  style={avatarFitMode === "cover" ? primaryButtonStyle : ghostButtonStyle}
+                >
+                  Preencher avatar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAvatarFitMode("contain")}
+                  style={avatarFitMode === "contain" ? primaryButtonStyle : ghostButtonStyle}
+                >
+                  Mostrar imagem inteira
+                </button>
+              </div>
+            </div>
+          ) : null}
+
           <label style={labelStyle}>
             Zoom: {crop.zoom.toFixed(2)}x
             <input
               type="range"
-              min="1"
+              min={String(zoomMin)}
               max="3"
               step="0.01"
               value={crop.zoom}
@@ -502,8 +534,8 @@ export default function ProfileMediaUploader({
               Posicao X
               <input
                 type="range"
-                min="-240"
-                max="240"
+                min={String(-positionLimit)}
+                max={String(positionLimit)}
                 step="1"
                 value={crop.offsetX}
                 onChange={(e) =>
@@ -519,8 +551,8 @@ export default function ProfileMediaUploader({
               Posicao Y
               <input
                 type="range"
-                min="-240"
-                max="240"
+                min={String(-positionLimit)}
+                max={String(positionLimit)}
                 step="1"
                 value={crop.offsetY}
                 onChange={(e) =>
@@ -553,6 +585,13 @@ export default function ProfileMediaUploader({
               {"v"}
             </button>
           </div>
+
+          {isAvatar ? (
+            <div style={{ color: "#a3a3a3", fontSize: "12px", lineHeight: 1.6 }}>
+              Use "Mostrar imagem inteira" para imagens largas. O arquivo salvo respeita o
+              mesmo zoom e deslocamento mostrados no preview.
+            </div>
+          ) : null}
         </div>
       ) : (
         <div
@@ -739,6 +778,7 @@ function BannerStaticPreview({
 function AvatarEditorPreview({
   imageUrl,
   crop,
+  fitMode,
   accent,
   sourceMime,
   onPointerDown,
@@ -747,6 +787,7 @@ function AvatarEditorPreview({
 }: {
   imageUrl: string;
   crop: CropState;
+  fitMode: AvatarFitMode;
   accent: string;
   sourceMime: string | null;
   onPointerDown: (e: PointerEvent<HTMLDivElement>) => void;
@@ -754,6 +795,19 @@ function AvatarEditorPreview({
   onPointerUp: () => void;
 }) {
   const isGif = sourceMime === "image/gif";
+  const dimensions = useImageDimensions(imageUrl);
+  const layout = dimensions
+    ? getImageLayout(
+        dimensions.width,
+        dimensions.height,
+        AVATAR_PREVIEW_SIZE,
+        AVATAR_PREVIEW_SIZE,
+        crop.zoom,
+        crop.offsetX,
+        crop.offsetY,
+        fitMode
+      )
+    : null;
 
   return (
     <div
@@ -768,8 +822,8 @@ function AvatarEditorPreview({
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         style={{
-          width: "190px",
-          height: "190px",
+          width: `${AVATAR_PREVIEW_SIZE}px`,
+          height: `${AVATAR_PREVIEW_SIZE}px`,
           borderRadius: "999px",
           overflow: "hidden",
           background:
@@ -782,17 +836,61 @@ function AvatarEditorPreview({
         }}
       >
         {imageUrl ? (
-          <img
-            src={imageUrl}
-            alt="Avatar preview"
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-              transform: `translate(${crop.offsetX}px, ${crop.offsetY}px) scale(${crop.zoom})`,
-              transformOrigin: "center center",
-            }}
-          />
+          <>
+            {fitMode === "contain" ? (
+              <>
+                <img
+                  src={imageUrl}
+                  alt=""
+                  aria-hidden="true"
+                  style={{
+                    position: "absolute",
+                    inset: "-12%",
+                    width: "124%",
+                    height: "124%",
+                    objectFit: "cover",
+                    filter: "blur(24px) brightness(0.42)",
+                    transform: "scale(1.08)",
+                  }}
+                />
+                <div
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    background:
+                      "radial-gradient(circle at top, rgba(255,255,255,0.12), transparent 58%), linear-gradient(180deg, rgba(4,6,10,0.14), rgba(4,6,10,0.58))",
+                  }}
+                />
+              </>
+            ) : null}
+
+            {layout ? (
+              <img
+                src={imageUrl}
+                alt="Avatar preview"
+                style={{
+                  position: "absolute",
+                  left: `${layout.x}px`,
+                  top: `${layout.y}px`,
+                  width: `${layout.width}px`,
+                  height: `${layout.height}px`,
+                }}
+              />
+            ) : (
+              <div
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  display: "grid",
+                  placeItems: "center",
+                  color: "#a3a3a3",
+                  fontSize: "12px",
+                }}
+              >
+                Carregando preview...
+              </div>
+            )}
+          </>
         ) : (
           <EmptyPlaceholder text="Escolha uma imagem" />
         )}
@@ -984,7 +1082,8 @@ function EmptyPlaceholder({ text }: { text: string }) {
 async function renderCroppedBlob(
   sourceUrl: string,
   type: "avatar" | "banner",
-  crop: CropState
+  crop: CropState,
+  avatarFitMode: AvatarFitMode
 ): Promise<Blob> {
   const image = await loadImage(sourceUrl);
   const canvas = document.createElement("canvas");
@@ -1000,17 +1099,21 @@ async function renderCroppedBlob(
   canvas.width = outWidth;
   canvas.height = outHeight;
 
-  ctx.fillStyle = "#000000";
-  ctx.fillRect(0, 0, outWidth, outHeight);
+  if (type === "avatar") {
+    renderAvatarToCanvas(ctx, image, crop, avatarFitMode, outWidth, outHeight);
+  } else {
+    ctx.fillStyle = "#000000";
+    ctx.fillRect(0, 0, outWidth, outHeight);
 
-  const scale = crop.zoom;
-  const drawWidth = image.width * scale;
-  const drawHeight = image.height * scale;
+    const scale = crop.zoom;
+    const drawWidth = image.width * scale;
+    const drawHeight = image.height * scale;
 
-  const x = (outWidth - drawWidth) / 2 + crop.offsetX;
-  const y = (outHeight - drawHeight) / 2 + crop.offsetY;
+    const x = (outWidth - drawWidth) / 2 + crop.offsetX;
+    const y = (outHeight - drawHeight) / 2 + crop.offsetY;
 
-  ctx.drawImage(image, x, y, drawWidth, drawHeight);
+    ctx.drawImage(image, x, y, drawWidth, drawHeight);
+  }
 
   const blob = await new Promise<Blob | null>((resolve) => {
     canvas.toBlob(resolve, "image/jpeg", 0.92);
@@ -1031,6 +1134,124 @@ function loadImage(src: string): Promise<HTMLImageElement> {
     image.crossOrigin = "anonymous";
     image.src = src;
   });
+}
+
+function useImageDimensions(src: string) {
+  const [dimensions, setDimensions] = useState<{ width: number; height: number } | null>(
+    null
+  );
+
+  useEffect(() => {
+    if (!src) {
+      setDimensions(null);
+      return;
+    }
+
+    let cancelled = false;
+    const image = new Image();
+
+    image.onload = () => {
+      if (!cancelled) {
+        setDimensions({
+          width: image.naturalWidth || image.width,
+          height: image.naturalHeight || image.height,
+        });
+      }
+    };
+
+    image.onerror = () => {
+      if (!cancelled) {
+        setDimensions(null);
+      }
+    };
+
+    image.src = src;
+
+    return () => {
+      cancelled = true;
+    };
+  }, [src]);
+
+  return dimensions;
+}
+
+function renderAvatarToCanvas(
+  ctx: CanvasRenderingContext2D,
+  image: HTMLImageElement,
+  crop: CropState,
+  fitMode: AvatarFitMode,
+  outWidth: number,
+  outHeight: number
+) {
+  ctx.fillStyle = "#05070c";
+  ctx.fillRect(0, 0, outWidth, outHeight);
+
+  if (fitMode === "contain") {
+    const backgroundLayout = getImageLayout(
+      image.width,
+      image.height,
+      outWidth,
+      outHeight,
+      1.08,
+      0,
+      0,
+      "cover"
+    );
+
+    ctx.save();
+    ctx.filter = "blur(26px) brightness(0.4)";
+    ctx.drawImage(
+      image,
+      backgroundLayout.x,
+      backgroundLayout.y,
+      backgroundLayout.width,
+      backgroundLayout.height
+    );
+    ctx.restore();
+
+    ctx.fillStyle = "rgba(4, 6, 10, 0.42)";
+    ctx.fillRect(0, 0, outWidth, outHeight);
+  }
+
+  const avatarOffsetScale = outWidth / AVATAR_PREVIEW_SIZE;
+  const layout = getImageLayout(
+    image.width,
+    image.height,
+    outWidth,
+    outHeight,
+    crop.zoom,
+    crop.offsetX * avatarOffsetScale,
+    crop.offsetY * avatarOffsetScale,
+    fitMode
+  );
+
+  ctx.drawImage(image, layout.x, layout.y, layout.width, layout.height);
+}
+
+function getImageLayout(
+  imageWidth: number,
+  imageHeight: number,
+  frameWidth: number,
+  frameHeight: number,
+  zoom: number,
+  offsetX: number,
+  offsetY: number,
+  fitMode: AvatarFitMode
+) {
+  const fitScale =
+    fitMode === "contain"
+      ? Math.min(frameWidth / imageWidth, frameHeight / imageHeight)
+      : Math.max(frameWidth / imageWidth, frameHeight / imageHeight);
+  const scale = fitScale * zoom;
+  const width = imageWidth * scale;
+  const height = imageHeight * scale;
+
+  return {
+    width,
+    height,
+    x: (frameWidth - width) / 2 + offsetX,
+    y: (frameHeight - height) / 2 + offsetY,
+  };
 }
 
 function uploadWithProgress(
