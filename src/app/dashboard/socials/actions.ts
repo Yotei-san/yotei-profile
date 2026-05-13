@@ -8,6 +8,7 @@ import { prisma } from "@/app/lib/prisma";
 
 const DISCORD_PLATFORM = "discord";
 const GITHUB_PLATFORM = "github";
+const SPOTIFY_PLATFORM = "spotify";
 
 export async function upsertDiscordBlock(formData: FormData) {
   const sessionUser = await requireUser();
@@ -117,6 +118,63 @@ export async function upsertGitHubBlock(formData: FormData) {
   redirect(buildSocialsPath(GITHUB_PLATFORM, "success", "github-saved"));
 }
 
+export async function upsertSpotifyBlock(formData: FormData) {
+  const sessionUser = await requireUser();
+  const spotifyUsername = normalizeOptionalText(formData.get("username"));
+  const spotifyUrl = normalizeOptionalUrl(formData.get("url"));
+  const trackName = normalizeOptionalText(formData.get("trackName"));
+  const artistName = normalizeOptionalText(formData.get("artistName"));
+  const statusText = normalizeOptionalText(formData.get("status"));
+  const isEnabled = parseBoolean(formData.get("isEnabled"));
+
+  if (!spotifyUsername) {
+    redirect(buildSocialsPath(SPOTIFY_PLATFORM, "error", "spotify-username-required"));
+  }
+
+  if (typeof spotifyUrl === "undefined") {
+    redirect(buildSocialsPath(SPOTIFY_PLATFORM, "error", "spotify-url-invalid"));
+  }
+
+  await prisma.socialBlock.upsert({
+    where: {
+      userId_platform: {
+        userId: sessionUser.id,
+        platform: SPOTIFY_PLATFORM,
+      },
+    },
+    update: {
+      title: "Spotify",
+      username: spotifyUsername,
+      url: spotifyUrl,
+      metadata: buildSpotifyMetadata({
+        trackName,
+        artistName,
+        statusText,
+      }),
+      isEnabled,
+      sortOrder: 2,
+    },
+    create: {
+      userId: sessionUser.id,
+      platform: SPOTIFY_PLATFORM,
+      title: "Spotify",
+      username: spotifyUsername,
+      url: spotifyUrl,
+      metadata: buildSpotifyMetadata({
+        trackName,
+        artistName,
+        statusText,
+      }),
+      isEnabled,
+      sortOrder: 2,
+    },
+  });
+
+  revalidatePath("/dashboard/socials");
+  revalidatePath(`/${sessionUser.username}`);
+  redirect(buildSocialsPath(SPOTIFY_PLATFORM, "success", "spotify-saved"));
+}
+
 export async function toggleSocialBlock(blockId: string) {
   const sessionUser = await requireUser();
 
@@ -155,6 +213,10 @@ export async function toggleSocialBlock(blockId: string) {
         ? block.isEnabled
           ? "github-disabled"
           : "github-enabled"
+        : block.platform === SPOTIFY_PLATFORM
+          ? block.isEnabled
+            ? "spotify-disabled"
+            : "spotify-enabled"
         : block.isEnabled
           ? "discord-disabled"
           : "discord-enabled"
@@ -192,7 +254,11 @@ export async function deleteSocialBlock(blockId: string) {
     buildSocialsPath(
       block.platform,
       "success",
-      block.platform === GITHUB_PLATFORM ? "github-deleted" : "discord-deleted"
+      block.platform === GITHUB_PLATFORM
+        ? "github-deleted"
+        : block.platform === SPOTIFY_PLATFORM
+          ? "spotify-deleted"
+          : "discord-deleted"
     )
   );
 }
@@ -230,6 +296,27 @@ function buildGitHubMetadata({
     statusText,
     featuredRepo,
     profileReady: false,
+  };
+}
+
+function buildSpotifyMetadata({
+  trackName,
+  artistName,
+  statusText,
+}: {
+  trackName: string | null;
+  artistName: string | null;
+  statusText: string | null;
+}) {
+  if (!trackName && !artistName && !statusText) {
+    return Prisma.JsonNull;
+  }
+
+  return {
+    trackName,
+    artistName,
+    statusText,
+    nowPlayingReady: false,
   };
 }
 
@@ -293,6 +380,11 @@ function buildSocialsPath(
   param: "success" | "error",
   value: string
 ) {
-  const active = platform === GITHUB_PLATFORM ? GITHUB_PLATFORM : DISCORD_PLATFORM;
+  const active =
+    platform === GITHUB_PLATFORM
+      ? GITHUB_PLATFORM
+      : platform === SPOTIFY_PLATFORM
+        ? SPOTIFY_PLATFORM
+        : DISCORD_PLATFORM;
   return `/dashboard/socials?active=${active}&${param}=${value}`;
 }

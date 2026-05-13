@@ -214,10 +214,12 @@ export default async function ProfilePage({ params }: Props) {
       username: block.username,
       url: block.url,
       statusText:
-        block.platform === "github"
+        block.platform === "github" || block.platform === "spotify"
           ? readMetadataValue(metadata, "statusText")
           : readMetadataValue(metadata, "shortStatus"),
       featuredRepo: readMetadataValue(metadata, "featuredRepo"),
+      trackName: readMetadataValue(metadata, "trackName"),
+      artistName: readMetadataValue(metadata, "artistName"),
       isEnabled: block.isEnabled,
     };
   });

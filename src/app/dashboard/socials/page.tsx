@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { CSSProperties } from "react";
 import DiscordBlockPreview from "@/app/dashboard/components/DiscordBlockPreview";
 import GitHubBlockPreview from "@/app/dashboard/components/GitHubBlockPreview";
+import SpotifyBlockPreview from "@/app/dashboard/components/SpotifyBlockPreview";
 import SocialBrandIcon from "@/app/dashboard/components/SocialBrandIcon";
 import SocialIntegrationCard, {
   type SocialIntegrationItem,
@@ -13,6 +14,7 @@ import {
   toggleSocialBlock,
   upsertDiscordBlock,
   upsertGitHubBlock,
+  upsertSpotifyBlock,
 } from "./actions";
 
 type PageProps = {
@@ -38,6 +40,16 @@ type GitHubBlockState = {
   url: string | null;
   statusText: string | null;
   featuredRepo: string | null;
+  isEnabled: boolean;
+};
+
+type SpotifyBlockState = {
+  id: string;
+  username: string | null;
+  url: string | null;
+  trackName: string | null;
+  artistName: string | null;
+  statusText: string | null;
   isEnabled: boolean;
 };
 
@@ -207,22 +219,33 @@ export default async function SocialsPage({ searchParams }: PageProps) {
 
   const discordBlock = getDiscordBlock(user.socialBlocks);
   const githubBlock = getGitHubBlock(user.socialBlocks);
+  const spotifyBlock = getSpotifyBlock(user.socialBlocks);
   const configuredCount = user.socialBlocks.length;
   const enabledCount = user.socialBlocks.filter((block) => block.isEnabled).length;
   const successMessage = getSuccessMessage(params.success);
   const errorMessage = getErrorMessage(params.error);
   const discordCardHref = "/dashboard/socials?active=discord#discord-block-form";
   const githubCardHref = "/dashboard/socials?active=github#github-block-form";
+  const spotifyCardHref = "/dashboard/socials?active=spotify#spotify-block-form";
   const selectedIsDiscord = selectedKey === "discord";
   const selectedIsGitHub = selectedKey === "github";
-  const heroPrimaryHref = selectedIsGitHub ? githubCardHref : discordCardHref;
+  const selectedIsSpotify = selectedKey === "spotify";
+  const heroPrimaryHref = selectedIsGitHub
+    ? githubCardHref
+    : selectedIsSpotify
+      ? spotifyCardHref
+      : discordCardHref;
   const heroPrimaryLabel = selectedIsGitHub
     ? githubBlock
       ? "Edit GitHub Block"
       : "Configure GitHub"
-    : discordBlock
-      ? "Edit Discord Block"
-      : "Configure Discord";
+    : selectedIsSpotify
+      ? spotifyBlock
+        ? "Edit Spotify Block"
+        : "Configure Spotify"
+      : discordBlock
+        ? "Edit Discord Block"
+        : "Configure Discord";
 
   return (
     <main style={pageStyle}>
@@ -231,7 +254,7 @@ export default async function SocialsPage({ searchParams }: PageProps) {
           <div style={eyebrowStyle}>Social Blocks Phase 1</div>
           <h1 style={heroTitleStyle}>Social Integrations</h1>
           <p style={heroDescriptionStyle}>
-            Discord and GitHub are now real blocks you can configure, save, and publish
+            Discord, GitHub and Spotify are now real blocks you can configure, save, and publish
             on your public profile. The remaining integrations stay as visual previews
             while the block system expands safely.
           </p>
@@ -253,6 +276,10 @@ export default async function SocialsPage({ searchParams }: PageProps) {
                 ? githubBlock?.isEnabled
                   ? enabledBadgeStyle
                   : mutedBadgeStyle
+                : selectedIsSpotify
+                  ? spotifyBlock?.isEnabled
+                    ? enabledBadgeStyle
+                    : mutedBadgeStyle
                 : discordBlock?.isEnabled
                   ? enabledBadgeStyle
                   : mutedBadgeStyle
@@ -264,6 +291,12 @@ export default async function SocialsPage({ searchParams }: PageProps) {
                 : githubBlock
                   ? "Saved draft"
                   : "Not configured"
+              : selectedIsSpotify
+                ? spotifyBlock?.isEnabled
+                  ? "Spotify live"
+                  : spotifyBlock
+                    ? "Saved draft"
+                    : "Not configured"
               : discordBlock?.isEnabled
                 ? "Discord live"
                 : discordBlock
@@ -286,6 +319,15 @@ export default async function SocialsPage({ searchParams }: PageProps) {
               url={githubBlock?.url ?? null}
               enabled={githubBlock?.isEnabled ?? false}
             />
+          ) : selectedIsSpotify ? (
+            <SpotifyBlockPreview
+              username={spotifyBlock?.username ?? null}
+              trackName={spotifyBlock?.trackName ?? null}
+              artistName={spotifyBlock?.artistName ?? null}
+              statusText={spotifyBlock?.statusText ?? null}
+              url={spotifyBlock?.url ?? null}
+              enabled={spotifyBlock?.isEnabled ?? false}
+            />
           ) : (
             <div style={previewPanelStyle}>
               <div style={previewLabelStyle}>Current preview</div>
@@ -297,7 +339,7 @@ export default async function SocialsPage({ searchParams }: PageProps) {
               </div>
               <p style={previewTextStyle}>{selectedItem.description}</p>
               <div style={previewHintPanelStyle}>
-                Discord and GitHub are live social blocks in this phase. The other cards stay
+                Discord, GitHub and Spotify are live social blocks in this phase. The other cards stay
                 in design preview mode for now.
               </div>
             </div>
@@ -313,7 +355,7 @@ export default async function SocialsPage({ searchParams }: PageProps) {
               <div style={statLabelStyle}>Enabled publicly</div>
             </div>
             <div style={statCardStyle}>
-              <div style={statValueStyle}>2</div>
+              <div style={statValueStyle}>3</div>
               <div style={statLabelStyle}>Live platforms</div>
             </div>
           </div>
@@ -329,7 +371,7 @@ export default async function SocialsPage({ searchParams }: PageProps) {
           <h2 style={sectionTitleStyle}>Choose what your public profile can show</h2>
         </div>
         <div style={sectionHintStyle}>
-          Discord and GitHub are functional now. The remaining integrations stay lightweight
+          Discord, GitHub and Spotify are functional now. The remaining integrations stay lightweight
           and visual until each block gets its own safe backend phase.
         </div>
       </section>
@@ -338,15 +380,20 @@ export default async function SocialsPage({ searchParams }: PageProps) {
         {integrations.map((item) => {
           const isDiscord = item.key === "discord";
           const isGitHub = item.key === "github";
+          const isSpotify = item.key === "spotify";
           const isConfigured = isDiscord
             ? Boolean(discordBlock?.username)
             : isGitHub
               ? Boolean(githubBlock?.username)
+              : isSpotify
+                ? Boolean(spotifyBlock?.username)
               : false;
           const isEnabled = isDiscord
             ? Boolean(discordBlock?.isEnabled)
             : isGitHub
               ? Boolean(githubBlock?.isEnabled)
+              : isSpotify
+                ? Boolean(spotifyBlock?.isEnabled)
               : false;
 
           return (
@@ -359,10 +406,12 @@ export default async function SocialsPage({ searchParams }: PageProps) {
                   ? discordCardHref
                   : isGitHub
                     ? githubCardHref
+                    : isSpotify
+                      ? spotifyCardHref
                     : `/dashboard/socials?active=${item.key}`
               }
               stateLabel={
-                isDiscord || isGitHub
+                isDiscord || isGitHub || isSpotify
                   ? isConfigured
                     ? isEnabled
                       ? "Configured"
@@ -373,14 +422,18 @@ export default async function SocialsPage({ searchParams }: PageProps) {
                     : "Preview"
               }
               footerLabel={
-                isDiscord || isGitHub
+                isDiscord || isGitHub || isSpotify
                   ? isConfigured
                     ? "Live block available on profile"
                     : "Real social block"
                   : "Design preview only in this phase"
               }
               actionLabel={
-                isDiscord || isGitHub ? (isConfigured ? "Edit" : "Configure") : "Preview"
+                isDiscord || isGitHub || isSpotify
+                  ? isConfigured
+                    ? "Edit"
+                    : "Configure"
+                  : "Preview"
               }
             />
           );
@@ -632,12 +685,151 @@ export default async function SocialsPage({ searchParams }: PageProps) {
         </div>
       </section>
 
+      <section id="spotify-block-form" style={discordSectionStyle}>
+        <div style={discordFormColumnStyle}>
+          <div style={{ display: "grid", gap: "8px" }}>
+            <div style={sectionEyebrowStyle}>Spotify Block</div>
+            <h2 style={sectionTitleStyle}>Configure your Spotify music block</h2>
+            <p style={sectionDescriptionStyle}>
+              This saves a manual Spotify block for now. Live listening, OAuth and richer music
+              signals can plug into the same structure later without breaking your profile.
+            </p>
+          </div>
+
+          <form action={upsertSpotifyBlock} style={formGridStyle}>
+            <label style={labelStyle}>
+              Spotify username or display name
+              <input
+                type="text"
+                name="username"
+                required
+                maxLength={64}
+                placeholder="ex: Yotei"
+                defaultValue={spotifyBlock?.username ?? ""}
+                style={inputStyle}
+              />
+            </label>
+
+            <label style={labelStyle}>
+              Spotify URL
+              <input
+                type="url"
+                name="url"
+                placeholder="https://open.spotify.com/..."
+                defaultValue={spotifyBlock?.url ?? ""}
+                style={inputStyle}
+              />
+            </label>
+
+            <label style={labelStyle}>
+              Track name
+              <input
+                type="text"
+                name="trackName"
+                maxLength={120}
+                placeholder="ex: Nightcall"
+                defaultValue={spotifyBlock?.trackName ?? ""}
+                style={inputStyle}
+              />
+            </label>
+
+            <label style={labelStyle}>
+              Artist name
+              <input
+                type="text"
+                name="artistName"
+                maxLength={120}
+                placeholder="ex: Kavinsky"
+                defaultValue={spotifyBlock?.artistName ?? ""}
+                style={inputStyle}
+              />
+            </label>
+
+            <label style={{ ...labelStyle, gridColumn: "1 / -1" }}>
+              Short status
+              <textarea
+                name="status"
+                rows={4}
+                maxLength={120}
+                placeholder="Short line for your music taste, current mood, or favorite listening era."
+                defaultValue={spotifyBlock?.statusText ?? ""}
+                style={textareaStyle}
+              />
+            </label>
+
+            <label style={checkboxLabelStyle}>
+              <input
+                type="checkbox"
+                name="isEnabled"
+                defaultChecked={spotifyBlock?.isEnabled ?? true}
+              />
+              <span>Show this block on my public profile</span>
+            </label>
+
+            <div style={hintBoxStyle}>
+              Future Spotify integrations will plug into metadata later. This phase only stores
+              manual music data safely.
+            </div>
+
+            <div style={actionRowStyle}>
+              <button type="submit" style={submitButtonStyle}>
+                {spotifyBlock ? "Save Spotify Block" : "Create Spotify Block"}
+              </button>
+
+              {spotifyBlock ? (
+                <>
+                  <button
+                    type="submit"
+                    formAction={toggleSocialBlock.bind(null, spotifyBlock.id)}
+                    style={secondaryButtonStyle}
+                  >
+                    {spotifyBlock.isEnabled ? "Disable Block" : "Enable Block"}
+                  </button>
+
+                  <button
+                    type="submit"
+                    formAction={deleteSocialBlock.bind(null, spotifyBlock.id)}
+                    style={dangerButtonStyle}
+                  >
+                    Delete Block
+                  </button>
+                </>
+              ) : null}
+            </div>
+          </form>
+        </div>
+
+        <div style={discordPreviewColumnStyle}>
+          <div style={previewLabelStyle}>Saved preview</div>
+          <SpotifyBlockPreview
+            username={spotifyBlock?.username ?? null}
+            trackName={spotifyBlock?.trackName ?? null}
+            artistName={spotifyBlock?.artistName ?? null}
+            statusText={spotifyBlock?.statusText ?? null}
+            url={spotifyBlock?.url ?? null}
+            enabled={spotifyBlock?.isEnabled ?? false}
+            compact
+          />
+
+          <div style={previewMetaPanelStyle}>
+            <div style={previewMetaTitleStyle}>Public rendering</div>
+            <p style={previewMetaTextStyle}>
+              When enabled, this block appears alongside Discord and GitHub inside the Social
+              Presence section on your public profile.
+            </p>
+          </div>
+        </div>
+      </section>
+
       <section style={footerNoteStyle}>
         <div style={footerIconWrapStyle} aria-hidden="true">
-          <SocialBrandIcon name={selectedIsGitHub ? "github" : "discord"} size={18} />
+          <SocialBrandIcon
+            name={selectedIsGitHub ? "github" : selectedIsSpotify ? "spotify" : "discord"}
+            size={18}
+          />
         </div>
         <p style={footerTextStyle}>
-          Discord and GitHub now write to the database and render on the public profile.
+          Discord, GitHub and Spotify now write to the database and render on the public profile.
           Other social cards remain lightweight previews until their backend phases start.
         </p>
       </section>
@@ -669,6 +861,35 @@ function getDiscordBlock(
     discordUserId: readMetadataValue(metadata, "discordUserId"),
     url: block.url,
     statusText: readMetadataValue(metadata, "shortStatus"),
+    isEnabled: block.isEnabled,
+  };
+}
+
+function getSpotifyBlock(
+  blocks: Array<{
+    id: string;
+    platform: string;
+    username: string | null;
+    url: string | null;
+    metadata: unknown;
+    isEnabled: boolean;
+  }>
+): SpotifyBlockState | null {
+  const block = blocks.find((item) => item.platform === "spotify");
+
+  if (!block) {
+    return null;
+  }
+
+  const metadata = getMetadataObject(block.metadata);
+
+  return {
+    id: block.id,
+    username: block.username,
+    url: block.url,
+    trackName: readMetadataValue(metadata, "trackName"),
+    artistName: readMetadataValue(metadata, "artistName"),
+    statusText: readMetadataValue(metadata, "statusText"),
     isEnabled: block.isEnabled,
   };
 }
@@ -730,6 +951,10 @@ function getSuccessMessage(code?: string) {
   if (code === "github-enabled") return "GitHub block ativado no perfil publico.";
   if (code === "github-disabled") return "GitHub block desativado no perfil publico.";
   if (code === "github-deleted") return "GitHub block removido com sucesso.";
+  if (code === "spotify-saved") return "Spotify block salvo com sucesso.";
+  if (code === "spotify-enabled") return "Spotify block ativado no perfil publico.";
+  if (code === "spotify-disabled") return "Spotify block desativado no perfil publico.";
+  if (code === "spotify-deleted") return "Spotify block removido com sucesso.";
   return "";
 }
 
@@ -738,6 +963,8 @@ function getErrorMessage(code?: string) {
   if (code === "discord-url-invalid") return "URL invalida. Use um endereco http ou https.";
   if (code === "github-username-required") return "Digite um username do GitHub.";
   if (code === "github-url-invalid") return "URL invalida. Use um endereco http ou https.";
+  if (code === "spotify-username-required") return "Digite um nome de usuario do Spotify.";
+  if (code === "spotify-url-invalid") return "URL invalida. Use um endereco http ou https.";
   if (code === "social-block-not-found") return "Bloco social nao encontrado.";
   return "";
 }
