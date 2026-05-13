@@ -5,6 +5,13 @@ import { revalidatePath } from "next/cache";
 import { requireUser } from "@/app/lib/auth";
 import { prisma } from "@/app/lib/prisma";
 
+const VALID_PROFILE_LAYOUTS = new Set([
+  "default",
+  "modern",
+  "simplistic",
+  "portfolio",
+]);
+
 export async function saveProfileSettings(formData: FormData) {
   const sessionUser = await requireUser();
 
@@ -12,6 +19,10 @@ export async function saveProfileSettings(formData: FormData) {
   const bio = String(formData.get("bio") || "").trim();
   const themeColor =
     String(formData.get("themeColor") || "").trim() || "#f472b6";
+  const requestedProfileLayout = String(formData.get("profileLayout") || "").trim();
+  const profileLayout = VALID_PROFILE_LAYOUTS.has(requestedProfileLayout)
+    ? requestedProfileLayout
+    : "modern";
 
   await prisma.user.update({
     where: { id: sessionUser.id },
@@ -19,6 +30,7 @@ export async function saveProfileSettings(formData: FormData) {
       displayName: displayName || null,
       bio: bio || null,
       themeColor,
+      profileLayout,
     },
   });
 

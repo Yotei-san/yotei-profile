@@ -11,6 +11,9 @@ import { getCurrentUser } from "@/app/lib/auth";
 import { getLinkPlatform } from "@/app/lib/link-icons";
 import { getMediaKind } from "@/app/lib/profile-media";
 import { prisma } from "@/app/lib/prisma";
+import ProfileLayoutVariants, {
+  type PublicProfileLayout,
+} from "./ProfileLayoutVariants";
 import ProfileHeroClient from "./ProfileHeroClient";
 
 type Props = {
@@ -50,6 +53,19 @@ function getLinkHostname(url: string) {
   }
 }
 
+function normalizeProfileLayout(value: string | null | undefined): PublicProfileLayout {
+  if (
+    value === "default" ||
+    value === "modern" ||
+    value === "simplistic" ||
+    value === "portfolio"
+  ) {
+    return value;
+  }
+
+  return "modern";
+}
+
 export default async function ProfilePage({ params }: Props) {
   const { username } = await params;
   const currentUser = await getCurrentUser();
@@ -64,6 +80,7 @@ export default async function ProfilePage({ params }: Props) {
       avatarUrl: true,
       bannerUrl: true,
       themeColor: true,
+      profileLayout: true,
       status: true,
       role: true,
       selectedDecorationScale: true,
@@ -129,6 +146,7 @@ export default async function ProfilePage({ params }: Props) {
   }
 
   const themeColor = user.themeColor || "#f472b6";
+  const profileLayout = normalizeProfileLayout(user.profileLayout);
   const displayName = user.displayName || user.username;
   const bannerUrl = user.bannerUrl?.trim() || null;
   const avatarUrl = user.avatarUrl?.trim() || null;
@@ -197,6 +215,28 @@ export default async function ProfilePage({ params }: Props) {
       color: user.status === "active" ? "#51d88a" : "#b4bed2",
     },
   ];
+
+  if (profileLayout !== "modern") {
+    return (
+      <ProfileLayoutVariants
+        layout={profileLayout}
+        user={user}
+        displayName={displayName}
+        themeColor={themeColor}
+        bannerKind={bannerKind}
+        avatarInitials={avatarInitials}
+        decorationScale={decorationScale}
+        decorationOffsetX={decorationOffsetX}
+        decorationOffsetY={decorationOffsetY}
+        premiumBadges={premiumBadges}
+        heroPills={heroPills}
+        likes={likes}
+        dislikes={dislikes}
+        views={views}
+        initialMyReaction={initialMyReaction}
+      />
+    );
+  }
 
   return (
     <main

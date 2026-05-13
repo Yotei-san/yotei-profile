@@ -5,6 +5,29 @@ import { getMediaKind } from "@/app/lib/profile-media";
 import { saveProfileSettings } from "./actions";
 import ProfileMediaUploader from "./ProfileMediaUploader";
 
+const PROFILE_LAYOUT_OPTIONS = [
+  {
+    key: "default",
+    name: "Default",
+    description: "Banner no topo, avatar em destaque e links em lista premium simples.",
+  },
+  {
+    key: "modern",
+    name: "Modern",
+    description: "Visual cinematografico e premium. Continua como layout principal.",
+  },
+  {
+    key: "simplistic",
+    name: "Simplistic",
+    description: "Minimalista, limpo e focado em leitura com menos brilho visual.",
+  },
+  {
+    key: "portfolio",
+    name: "Portfolio",
+    description: "Mais profissional, ideal para devs, criadores e projetos.",
+  },
+] as const;
+
 type PageProps = {
   searchParams?: Promise<{
     success?: string;
@@ -24,6 +47,7 @@ export default async function ProfileSettingsPage({ searchParams }: PageProps) {
       avatarUrl: true,
       bannerUrl: true,
       themeColor: true,
+      profileLayout: true,
     },
   });
 
@@ -32,6 +56,7 @@ export default async function ProfileSettingsPage({ searchParams }: PageProps) {
   }
 
   const bannerKind = getMediaKind(user.bannerUrl || "");
+  const selectedProfileLayout = normalizeProfileLayout(user.profileLayout);
 
   return (
     <main
@@ -168,6 +193,103 @@ export default async function ProfileSettingsPage({ searchParams }: PageProps) {
               />
             </label>
 
+            <div style={{ display: "grid", gap: "10px" }}>
+              <div style={{ display: "grid", gap: "6px" }}>
+                <div style={sectionTitleMiniStyle}>Profile Layout</div>
+                <div style={sectionDescriptionMiniStyle}>
+                  Escolha como seu perfil publico sera apresentado.
+                </div>
+              </div>
+
+              <div style={layoutGridStyle}>
+                {PROFILE_LAYOUT_OPTIONS.map((layout) => {
+                  const isSelected = selectedProfileLayout === layout.key;
+
+                  return (
+                    <label
+                      key={layout.key}
+                      style={{
+                        ...layoutCardStyle,
+                        ...(isSelected ? layoutCardSelectedStyle : null),
+                      }}
+                    >
+                      <input
+                        type="radio"
+                        name="profileLayout"
+                        value={layout.key}
+                        defaultChecked={isSelected}
+                        style={{ display: "none" }}
+                      />
+
+                      <div
+                        style={{
+                          ...layoutPreviewStyle,
+                          ...(layout.key === "default"
+                            ? defaultPreviewStyle
+                            : layout.key === "modern"
+                              ? modernPreviewStyle
+                              : layout.key === "simplistic"
+                                ? simplisticPreviewStyle
+                                : portfolioPreviewStyle),
+                        }}
+                      >
+                        <div style={previewBannerStyle} />
+                        <div
+                          style={{
+                            ...previewAvatarStyle,
+                            ...(layout.key === "simplistic"
+                              ? previewAvatarSmallStyle
+                              : layout.key === "portfolio"
+                                ? previewAvatarSquareStyle
+                                : null),
+                          }}
+                        />
+                        <div
+                          style={{
+                            ...previewLineStyle,
+                            marginTop: layout.key === "portfolio" ? "18px" : "24px",
+                            width: layout.key === "simplistic" ? "46%" : "56%",
+                          }}
+                        />
+                        <div
+                          style={{
+                            ...previewLineStyle,
+                            width: layout.key === "portfolio" ? "78%" : "68%",
+                            opacity: 0.72,
+                          }}
+                        />
+                        <div style={previewLinksColumnStyle}>
+                          <div style={previewLinkPillStyle} />
+                          <div style={previewLinkPillStyle} />
+                          <div
+                            style={{
+                              ...previewLinkPillStyle,
+                              width: layout.key === "simplistic" ? "62%" : "78%",
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      <div style={{ display: "grid", gap: "6px" }}>
+                        <div style={layoutCardHeaderStyle}>
+                          <span>{layout.name}</span>
+                          <span
+                            style={{
+                              ...layoutCheckStyle,
+                              ...(isSelected ? layoutCheckSelectedStyle : null),
+                            }}
+                          >
+                            {isSelected ? "Selected" : "Select"}
+                          </span>
+                        </div>
+                        <div style={layoutCardDescriptionStyle}>{layout.description}</div>
+                      </div>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+
             <button type="submit" style={primaryButtonStyle}>
               Salvar texto e tema
             </button>
@@ -266,6 +388,10 @@ export default async function ProfileSettingsPage({ searchParams }: PageProps) {
                 @{user.username}
               </div>
 
+              <div style={{ color: "#f9a8d4", marginTop: "10px", fontWeight: 700 }}>
+                Layout atual: {selectedProfileLayout}
+              </div>
+
               <div
                 style={{
                   marginTop: "14px",
@@ -355,3 +481,166 @@ const successBoxStyle: React.CSSProperties = {
   padding: "14px 16px",
   marginBottom: "18px",
 };
+
+const sectionTitleMiniStyle: React.CSSProperties = {
+  fontSize: "18px",
+  fontWeight: 900,
+  color: "#ffffff",
+};
+
+const sectionDescriptionMiniStyle: React.CSSProperties = {
+  color: "#a3a3a3",
+  fontSize: "14px",
+  lineHeight: 1.6,
+};
+
+const layoutGridStyle: React.CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+  gap: "12px",
+};
+
+const layoutCardStyle: React.CSSProperties = {
+  display: "grid",
+  gap: "12px",
+  padding: "14px",
+  borderRadius: "18px",
+  border: "1px solid rgba(255,255,255,0.08)",
+  background:
+    "linear-gradient(180deg, rgba(20,20,24,0.96), rgba(12,12,16,0.96))",
+  cursor: "pointer",
+  boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03)",
+};
+
+const layoutCardSelectedStyle: React.CSSProperties = {
+  border: "1px solid rgba(244,114,182,0.28)",
+  boxShadow: "0 0 0 1px rgba(244,114,182,0.10), 0 18px 36px rgba(244,114,182,0.10)",
+};
+
+const layoutPreviewStyle: React.CSSProperties = {
+  minHeight: "116px",
+  borderRadius: "16px",
+  padding: "12px",
+  border: "1px solid rgba(255,255,255,0.08)",
+  overflow: "hidden",
+  position: "relative",
+  display: "grid",
+  alignContent: "start",
+  gap: "8px",
+};
+
+const defaultPreviewStyle: React.CSSProperties = {
+  background:
+    "linear-gradient(180deg, rgba(25,18,28,0.96), rgba(8,8,12,0.96))",
+};
+
+const modernPreviewStyle: React.CSSProperties = {
+  background:
+    "radial-gradient(circle at top left, rgba(244,114,182,0.20), transparent 28%), linear-gradient(180deg, rgba(18,18,26,0.96), rgba(8,8,12,0.96))",
+};
+
+const simplisticPreviewStyle: React.CSSProperties = {
+  background:
+    "linear-gradient(180deg, rgba(16,16,18,0.98), rgba(10,10,12,0.98))",
+};
+
+const portfolioPreviewStyle: React.CSSProperties = {
+  background:
+    "linear-gradient(180deg, rgba(17,24,39,0.98), rgba(7,10,16,0.98))",
+};
+
+const previewBannerStyle: React.CSSProperties = {
+  height: "24px",
+  borderRadius: "10px",
+  background:
+    "linear-gradient(90deg, rgba(244,114,182,0.52), rgba(96,165,250,0.28))",
+};
+
+const previewAvatarStyle: React.CSSProperties = {
+  width: "34px",
+  height: "34px",
+  borderRadius: "999px",
+  background: "rgba(255,255,255,0.85)",
+  border: "2px solid rgba(8,8,12,0.6)",
+  marginTop: "-10px",
+};
+
+const previewAvatarSmallStyle: React.CSSProperties = {
+  width: "22px",
+  height: "22px",
+  marginTop: "2px",
+};
+
+const previewAvatarSquareStyle: React.CSSProperties = {
+  width: "28px",
+  height: "28px",
+  borderRadius: "10px",
+  marginTop: "2px",
+};
+
+const previewLineStyle: React.CSSProperties = {
+  height: "7px",
+  borderRadius: "999px",
+  background: "rgba(255,255,255,0.16)",
+};
+
+const previewLinksColumnStyle: React.CSSProperties = {
+  display: "grid",
+  gap: "6px",
+  marginTop: "4px",
+};
+
+const previewLinkPillStyle: React.CSSProperties = {
+  height: "18px",
+  borderRadius: "999px",
+  background: "rgba(255,255,255,0.08)",
+  width: "100%",
+};
+
+const layoutCardHeaderStyle: React.CSSProperties = {
+  display: "flex",
+  justifyContent: "space-between",
+  gap: "8px",
+  alignItems: "center",
+  fontWeight: 800,
+  color: "#ffffff",
+};
+
+const layoutCardDescriptionStyle: React.CSSProperties = {
+  color: "#a3a3a3",
+  fontSize: "13px",
+  lineHeight: 1.6,
+};
+
+const layoutCheckStyle: React.CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  minHeight: "26px",
+  padding: "0 10px",
+  borderRadius: "999px",
+  border: "1px solid rgba(255,255,255,0.08)",
+  color: "#d4d4d8",
+  fontSize: "11px",
+  fontWeight: 800,
+  textTransform: "uppercase",
+  letterSpacing: "0.04em",
+};
+
+const layoutCheckSelectedStyle: React.CSSProperties = {
+  border: "1px solid rgba(244,114,182,0.20)",
+  backgroundColor: "rgba(236,72,153,0.12)",
+  color: "#f9a8d4",
+};
+
+function normalizeProfileLayout(value: string | null | undefined) {
+  if (
+    value === "default" ||
+    value === "modern" ||
+    value === "simplistic" ||
+    value === "portfolio"
+  ) {
+    return value;
+  }
+
+  return "modern";
+}

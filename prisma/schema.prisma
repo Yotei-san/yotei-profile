@@ -26,6 +26,7 @@ model User {
   videoBgUrl                String?
 
   themeColor                String?  @default("#f472b6")
+  profileLayout             String   @default("modern")
   textColor                 String?
   cardOpacity               Int?     @default(72)
   cardBlur                  Int?     @default(16)
