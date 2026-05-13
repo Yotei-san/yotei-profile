@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { CSSProperties, ReactNode } from "react";
 import { requireUser } from "@/app/lib/auth";
 import { prisma } from "@/app/lib/prisma";
-import TemplateCard from "@/app/dashboard/components/TemplateCard";
+import TemplateGallery from "@/app/dashboard/components/TemplateGallery";
 import { applyTemplate, createTemplate } from "./actions";
 
 type PageProps = {
@@ -209,16 +209,13 @@ export default async function TemplatesPage({ searchParams }: PageProps) {
 
       <section style={gridStyle}>
         {templates.length > 0 ? (
-          templates.map((template) => (
-            <TemplateCard
-              key={template.id}
-              template={template}
-              currentUserId={user.id}
-              currentTab={currentTab}
-              canUsePremium={canUsePremium}
-              applyAction={applyTemplate}
-            />
-          ))
+          <TemplateGallery
+            templates={templates}
+            currentUserId={user.id}
+            currentTab={currentTab}
+            canUsePremium={canUsePremium}
+            applyAction={applyTemplate}
+          />
         ) : (
           <div style={emptyStateStyle}>
             <div style={emptyStateEyebrowStyle}>No templates yet</div>

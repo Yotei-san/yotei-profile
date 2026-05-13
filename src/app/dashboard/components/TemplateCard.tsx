@@ -1,28 +1,35 @@
-import type { CSSProperties } from "react";
+"use client";
+
+import type { CSSProperties, KeyboardEvent, MouseEvent } from "react";
+
+export type TemplateCardData = {
+  id: string;
+  name: string;
+  description: string | null;
+  tags: string[];
+  previewImageUrl: string | null;
+  isPremium: boolean;
+  isPublic: boolean;
+  usageCount: number;
+  displayName: string | null;
+  bio: string | null;
+  avatarUrl: string | null;
+  bannerUrl: string | null;
+  themeColor: string | null;
+  createdByUserId: string;
+  createdByUser: {
+    username: string;
+    displayName: string | null;
+  };
+};
 
 type TemplateCardProps = {
-  template: {
-    id: string;
-    name: string;
-    description: string | null;
-    tags: string[];
-    previewImageUrl: string | null;
-    isPremium: boolean;
-    isPublic: boolean;
-    usageCount: number;
-    avatarUrl: string | null;
-    bannerUrl: string | null;
-    themeColor: string | null;
-    createdByUserId: string;
-    createdByUser: {
-      username: string;
-      displayName: string | null;
-    };
-  };
+  template: TemplateCardData;
   currentUserId: string;
   currentTab: "all" | "mine" | "premium";
   canUsePremium: boolean;
   applyAction: (formData: FormData) => Promise<void>;
+  onOpenPreview?: () => void;
 };
 
 export default function TemplateCard({
@@ -31,6 +38,7 @@ export default function TemplateCard({
   currentTab,
   canUsePremium,
   applyAction,
+  onOpenPreview,
 }: TemplateCardProps) {
   const previewUrl =
     template.previewImageUrl || template.bannerUrl || template.avatarUrl || null;
@@ -39,9 +47,35 @@ export default function TemplateCard({
   const authorName = template.createdByUser.displayName || template.createdByUser.username;
   const accent = template.themeColor || "#f472b6";
 
+  const openPreview = () => {
+    onOpenPreview?.();
+  };
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLElement>) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      openPreview();
+    }
+  };
+
+  const stopCardPreview = (event: MouseEvent<HTMLElement>) => {
+    event.stopPropagation();
+  };
+
   return (
-    <article style={cardStyle}>
-      <div style={{ ...previewStyle, background: buildPreviewBackground(accent) }}>
+    <article
+      className="template-card"
+      style={cardStyle}
+      onClick={openPreview}
+      onKeyDown={handleKeyDown}
+      role="button"
+      tabIndex={0}
+      aria-label={`Abrir preview do template ${template.name}`}
+    >
+      <div
+        className="template-card__preview"
+        style={{ ...previewStyle, background: buildPreviewBackground(accent) }}
+      >
         {previewUrl ? (
           <img
             src={previewUrl}
@@ -52,11 +86,14 @@ export default function TemplateCard({
           <div style={fallbackPreviewStyle}>
             <div style={fallbackBadgeStyle}>Yotei</div>
             <div style={{ fontSize: "26px", fontWeight: 900 }}>{template.name}</div>
-            <div style={{ color: "#d4d4d8", fontSize: "13px" }}>Template sem imagem de preview</div>
+            <div style={{ color: "#d4d4d8", fontSize: "13px" }}>
+              Template sem imagem de preview
+            </div>
           </div>
         )}
 
         <div style={previewOverlayStyle} />
+        <div className="template-card__sheen" style={previewSheenStyle} />
 
         <div style={chipRowStyle}>
           <span style={template.isPremium ? premiumChipStyle : freeChipStyle}>
@@ -66,6 +103,8 @@ export default function TemplateCard({
             {template.isPublic ? "Public" : "Private"}
           </span>
         </div>
+
+        <div style={previewHintStyle}>Click for live preview</div>
       </div>
 
       <div style={contentStyle}>
@@ -80,7 +119,7 @@ export default function TemplateCard({
           </div>
 
           <p style={descriptionStyle}>
-            {template.description || "Template básico do perfil, pronto para aplicar em um clique."}
+            {template.description || "Template basico do perfil, pronto para aplicar em um clique."}
           </p>
         </div>
 
@@ -101,24 +140,72 @@ export default function TemplateCard({
           <span>{template.isPremium ? "Premium only" : "Ready to use"}</span>
         </div>
 
-        <div style={actionRowStyle}>
+        <div style={actionRowStyle} onClick={stopCardPreview}>
           <form action={applyAction} style={{ display: "contents" }}>
             <input type="hidden" name="templateId" value={template.id} />
             <input type="hidden" name="tab" value={currentTab} />
             <button
               type="submit"
               disabled={isLockedPremium}
+              className="template-card__action"
               style={isLockedPremium ? lockedButtonStyle : useButtonStyle}
             >
               {isLockedPremium ? "Premium Only" : "Use Template"}
             </button>
           </form>
 
-          <a href="#create-template-form" style={createButtonStyle}>
+          <a
+            href="#create-template-form"
+            style={createButtonStyle}
+            className="template-card__ghost"
+            onClick={stopCardPreview}
+          >
             Create Template
           </a>
         </div>
       </div>
+
+      <style jsx>{`
+        .template-card {
+          cursor: pointer;
+          transition:
+            transform 180ms ease,
+            border-color 180ms ease,
+            box-shadow 180ms ease,
+            background 180ms ease;
+        }
+
+        .template-card:hover,
+        .template-card:focus-visible {
+          transform: translateY(-4px) scale(1.01);
+          border-color: rgba(244, 114, 182, 0.18);
+          box-shadow:
+            0 30px 68px rgba(0, 0, 0, 0.36),
+            0 0 0 1px rgba(244, 114, 182, 0.1);
+        }
+
+        .template-card:hover .template-card__preview,
+        .template-card:focus-visible .template-card__preview {
+          box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+        }
+
+        .template-card:hover .template-card__sheen,
+        .template-card:focus-visible .template-card__sheen {
+          opacity: 1;
+          transform: translate3d(0, 0, 0);
+        }
+
+        .template-card:hover .template-card__action,
+        .template-card:focus-visible .template-card__action {
+          filter: brightness(1.05);
+        }
+
+        .template-card:hover .template-card__ghost,
+        .template-card:focus-visible .template-card__ghost {
+          border-color: rgba(255, 255, 255, 0.14);
+          background-color: rgba(255, 255, 255, 0.06);
+        }
+      `}</style>
     </article>
   );
 }
@@ -136,6 +223,7 @@ const cardStyle: CSSProperties = {
   background:
     "linear-gradient(180deg, rgba(14,14,18,0.98), rgba(8,8,12,0.98))",
   boxShadow: "0 22px 52px rgba(0,0,0,0.26)",
+  outline: "none",
 };
 
 const previewStyle: CSSProperties = {
@@ -182,6 +270,17 @@ const previewOverlayStyle: CSSProperties = {
   pointerEvents: "none",
 };
 
+const previewSheenStyle: CSSProperties = {
+  position: "absolute",
+  inset: "-20%",
+  opacity: 0,
+  pointerEvents: "none",
+  background:
+    "linear-gradient(120deg, transparent 24%, rgba(255,255,255,0.12) 42%, transparent 58%)",
+  transform: "translate3d(-12%, 0, 0)",
+  transition: "opacity 180ms ease, transform 180ms ease",
+};
+
 const chipRowStyle: CSSProperties = {
   position: "absolute",
   top: "16px",
@@ -191,6 +290,25 @@ const chipRowStyle: CSSProperties = {
   justifyContent: "space-between",
   gap: "8px",
   zIndex: 1,
+};
+
+const previewHintStyle: CSSProperties = {
+  position: "absolute",
+  left: "16px",
+  bottom: "16px",
+  zIndex: 1,
+  display: "inline-flex",
+  alignItems: "center",
+  padding: "8px 12px",
+  borderRadius: "999px",
+  backgroundColor: "rgba(8,8,12,0.44)",
+  border: "1px solid rgba(255,255,255,0.12)",
+  color: "#ffffff",
+  fontSize: "12px",
+  fontWeight: 800,
+  letterSpacing: "0.05em",
+  textTransform: "uppercase",
+  backdropFilter: "blur(10px)",
 };
 
 const chipBaseStyle: CSSProperties = {
@@ -318,6 +436,7 @@ const buttonBaseStyle: CSSProperties = {
   fontSize: "14px",
   textDecoration: "none",
   textAlign: "center",
+  transition: "filter 160ms ease, background-color 160ms ease, border-color 160ms ease",
 };
 
 const useButtonStyle: CSSProperties = {
