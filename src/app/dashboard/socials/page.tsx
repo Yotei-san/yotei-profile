@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { CSSProperties } from "react";
+import SocialBrandIcon from "@/app/dashboard/components/SocialBrandIcon";
 import SocialIntegrationCard, {
   type SocialIntegrationItem,
 } from "@/app/dashboard/components/SocialIntegrationCard";
@@ -16,126 +17,126 @@ const integrations: SocialIntegrationItem[] = [
     name: "Discord",
     description: "Show your server, presence, or community block with fast-call action.",
     accent: "#5865F2",
-    emoji: "💬",
+    icon: "discord",
   },
   {
     key: "github",
     name: "GitHub",
     description: "Highlight repos, streaks, and developer identity inside your public profile.",
     accent: "#93C5FD",
-    emoji: "💻",
+    icon: "github",
   },
   {
     key: "roblox",
     name: "Roblox",
     description: "Feature your universe, avatar links, and creator presence in one block.",
     accent: "#FF4757",
-    emoji: "🧱",
+    icon: "roblox",
   },
   {
     key: "telegram",
     name: "Telegram",
     description: "Add direct message access and channel visibility with a cleaner CTA.",
     accent: "#27A7E7",
-    emoji: "✈️",
+    icon: "telegram",
   },
   {
     key: "lastfm",
     name: "Last.fm",
     description: "Surface listening habits, scrobbles, and taste signals with a music-first card.",
     accent: "#D51007",
-    emoji: "🎵",
+    icon: "lastfm",
   },
   {
     key: "statsfm",
     name: "Stats.fm",
     description: "Preview a richer analytics block for top artists, tracks, and listening trends.",
     accent: "#F472B6",
-    emoji: "📊",
+    icon: "statsfm",
   },
   {
     key: "valorant",
     name: "Valorant",
     description: "Show rank, agent flair, and competitive identity in a bold hero module.",
     accent: "#FF4655",
-    emoji: "🎯",
+    icon: "valorant",
   },
   {
     key: "chess",
     name: "Chess",
     description: "Add a smart profile block for rating, rapid stats, and daily puzzle flex.",
     accent: "#7DD3FC",
-    emoji: "♟️",
+    icon: "chess",
   },
   {
     key: "tiktok",
     name: "TikTok",
     description: "Pull attention to short-form content with a punchy creator-focused card.",
     accent: "#E5E7EB",
-    emoji: "🎬",
+    icon: "tiktok",
   },
   {
     key: "instagram",
     name: "Instagram",
     description: "Spotlight reels, feed identity, and visual social proof in a premium block.",
     accent: "#FF5EA8",
-    emoji: "📸",
+    icon: "instagram",
   },
   {
     key: "x",
     name: "X / Twitter",
     description: "Feature your handle and audience touchpoint with a sharp monochrome panel.",
     accent: "#E2E8F0",
-    emoji: "🗞️",
+    icon: "x",
   },
   {
     key: "steam",
     name: "Steam",
     description: "Expose game library identity, wishlist hooks, and profile presence cleanly.",
     accent: "#66C0F4",
-    emoji: "🎮",
+    icon: "steam",
   },
   {
     key: "spotify",
     name: "Spotify",
     description: "Promote now-playing energy, playlists, and audio taste with Yotei polish.",
     accent: "#1ED760",
-    emoji: "🟢",
+    icon: "spotify",
   },
   {
     key: "youtube",
     name: "YouTube",
     description: "Create a channel-forward block for uploads, premieres, and long-form content.",
     accent: "#FF3131",
-    emoji: "▶️",
+    icon: "youtube",
   },
   {
     key: "twitch",
     name: "Twitch",
     description: "Give livestream identity a dedicated slot with room for status and CTA later.",
     accent: "#A970FF",
-    emoji: "🟣",
+    icon: "twitch",
   },
   {
     key: "minecraft",
     name: "Minecraft",
     description: "Reserve a custom block for username, realm presence, or server showcase.",
     accent: "#34D399",
-    emoji: "⛏️",
+    icon: "minecraft",
   },
   {
     key: "weather",
     name: "Weather",
     description: "Blend ambient location vibes into the profile with a stylish live-info module.",
     accent: "#38BDF8",
-    emoji: "☁️",
+    icon: "weather",
   },
   {
     key: "brawl-stars",
     name: "Brawl Stars",
     description: "Make space for trophies, favorite brawler, and mobile-gamer identity.",
     accent: "#F59E0B",
-    emoji: "⭐",
+    icon: "brawl-stars",
   },
 ];
 
@@ -181,8 +182,8 @@ export default async function SocialsPage({ searchParams }: PageProps) {
           <div style={previewPanelStyle}>
             <div style={previewLabelStyle}>Current preview</div>
             <div style={previewTitleStyle}>
-              <span aria-hidden="true" style={{ marginRight: "10px" }}>
-                {selectedItem.emoji}
+              <span aria-hidden="true" style={previewIconWrapStyle}>
+                <SocialBrandIcon name={selectedItem.icon} size={20} />
               </span>
               {selectedItem.name}
             </div>
@@ -223,7 +224,7 @@ export default async function SocialsPage({ searchParams }: PageProps) {
 
       <section style={footerNoteStyle}>
         <div style={footerIconWrapStyle} aria-hidden="true">
-          🎮
+          <SocialBrandIcon name="steam" size={18} />
         </div>
         <p style={footerTextStyle}>
           This screen stays UI-only: no schema changes, no writes, and no public
@@ -359,6 +360,20 @@ const previewTitleStyle: CSSProperties = {
   marginBottom: "10px",
 };
 
+const previewIconWrapStyle: CSSProperties = {
+  width: "34px",
+  height: "34px",
+  marginRight: "10px",
+  borderRadius: "12px",
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  color: "#ffffff",
+  backgroundColor: "rgba(255,255,255,0.06)",
+  border: "1px solid rgba(255,255,255,0.08)",
+  flexShrink: 0,
+};
+
 const previewTextStyle: CSSProperties = {
   margin: 0,
   color: "#b7c0d4",
@@ -448,6 +463,7 @@ const footerIconWrapStyle: CSSProperties = {
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
+  color: "#66C0F4",
   backgroundColor: "rgba(59,130,246,0.10)",
   border: "1px solid rgba(59,130,246,0.18)",
   flexShrink: 0,

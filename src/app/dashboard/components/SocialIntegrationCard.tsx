@@ -1,12 +1,15 @@
 import Link from "next/link";
 import type { CSSProperties } from "react";
+import SocialBrandIcon, {
+  type SocialBrandIconName,
+} from "@/app/dashboard/components/SocialBrandIcon";
 
 export type SocialIntegrationItem = {
   key: string;
   name: string;
   description: string;
   accent: string;
-  emoji: string;
+  icon: SocialBrandIconName;
 };
 
 type Props = {
@@ -34,7 +37,7 @@ export default function SocialIntegrationCard({
       : "linear-gradient(180deg, rgba(14,14,18,0.96), rgba(7,7,10,0.96))",
     boxShadow: selected
       ? `0 22px 48px ${toRgba(item.accent, 0.16)}`
-      : "0 18px 40px rgba(0,0,0,0.24)",
+      : `0 18px 40px rgba(0,0,0,0.24), 0 0 0 1px ${toRgba(item.accent, 0.08)}`,
   };
 
   const iconWrapStyle: CSSProperties = {
@@ -44,9 +47,11 @@ export default function SocialIntegrationCard({
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontSize: "24px",
+    color: item.accent,
     backgroundColor: selected ? toRgba(item.accent, 0.16) : "rgba(255,255,255,0.05)",
     border: `1px solid ${selected ? toRgba(item.accent, 0.42) : "rgba(255,255,255,0.08)"}`,
+    boxShadow: selected ? `0 0 22px ${toRgba(item.accent, 0.18)}` : "none",
+    flexShrink: 0,
   };
 
   const stateStyle: CSSProperties = {
@@ -84,7 +89,7 @@ export default function SocialIntegrationCard({
         }}
       >
         <div style={iconWrapStyle} aria-hidden="true">
-          <span>{item.emoji}</span>
+          <SocialBrandIcon name={item.icon} size={24} />
         </div>
         <div style={stateStyle}>{selected ? "Selected" : "Preview"}</div>
       </div>
@@ -127,6 +132,7 @@ export default function SocialIntegrationCard({
         <span style={dotStyle} />
         <span>{selected ? "Enabled in layout preview" : "Click to preview block"}</span>
       </div>
+
     </Link>
   );
 }
