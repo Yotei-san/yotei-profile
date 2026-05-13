@@ -1,6 +1,9 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import { useEffect, useRef, useState } from "react";
+import { LuEye, LuThumbsDown, LuThumbsUp } from "react-icons/lu";
+import type { ReactNode } from "react";
 
 type MyReaction = "like" | "dislike" | null;
 
@@ -103,112 +106,225 @@ export default function ProfileHeroClient({
   }
 
   return (
-    <div
-      style={{
-        marginTop: "16px",
-        display: "flex",
-        justifyContent: "center",
-        gap: "10px",
-        flexWrap: "wrap",
-      }}
-    >
-      <MetricPill
-        text={`👁 ${views} views`}
-        color="#cbd5e1"
-        bg="rgba(255,255,255,0.04)"
-        border="rgba(255,255,255,0.08)"
-      />
+    <div style={{ marginTop: "20px" }}>
+      <style>{`
+        .profile-hero-metrics {
+          display: flex;
+          gap: 12px;
+          flex-wrap: wrap;
+        }
 
-      <button
-        type="button"
-        onClick={() => sendReaction("like")}
-        disabled={isSubmitting}
-        style={reactionButtonStyle(
-          themeColor,
-          "rgba(74, 222, 128, 0.18)",
-          "rgba(74, 222, 128, 0.28)",
-          isSubmitting,
-          myReaction === "like"
-        )}
-      >
-        👍 {likes}
-      </button>
+        .profile-hero-chip,
+        .profile-hero-reaction {
+          transition:
+            transform 180ms ease,
+            box-shadow 180ms ease,
+            border-color 180ms ease,
+            background 180ms ease,
+            opacity 160ms ease;
+        }
 
-      <button
-        type="button"
-        onClick={() => sendReaction("dislike")}
-        disabled={isSubmitting}
-        style={reactionButtonStyle(
-          themeColor,
-          "rgba(248, 113, 113, 0.16)",
-          "rgba(248, 113, 113, 0.28)",
-          isSubmitting,
-          myReaction === "dislike"
-        )}
-      >
-        👎 {dislikes}
-      </button>
+        .profile-hero-chip {
+          background: rgba(255, 255, 255, 0.035);
+        }
+
+        .profile-hero-reaction:hover:not(:disabled) {
+          transform: translateY(-2px);
+        }
+
+        @media (max-width: 820px) {
+          .profile-hero-metrics {
+            justify-content: center;
+          }
+        }
+
+        @media (max-width: 640px) {
+          .profile-hero-metrics {
+            display: grid;
+            grid-template-columns: 1fr;
+          }
+        }
+      `}</style>
+
+      <div className="profile-hero-metrics">
+        <MetricChip
+          label="Views"
+          value={views}
+          icon={<LuEye size={15} />}
+          color="#dbe4f5"
+          background="rgba(255,255,255,0.035)"
+          border="rgba(255,255,255,0.07)"
+        />
+
+        <ReactionButton
+          label="Like"
+          value={likes}
+          icon={<LuThumbsUp size={15} />}
+          onClick={() => sendReaction("like")}
+          disabled={isSubmitting}
+          isActive={myReaction === "like"}
+          accentColor={themeColor}
+          background="rgba(69, 212, 131, 0.09)"
+          border="rgba(69, 212, 131, 0.18)"
+        />
+
+        <ReactionButton
+          label="Dislike"
+          value={dislikes}
+          icon={<LuThumbsDown size={15} />}
+          onClick={() => sendReaction("dislike")}
+          disabled={isSubmitting}
+          isActive={myReaction === "dislike"}
+          accentColor={themeColor}
+          background="rgba(248, 113, 113, 0.08)"
+          border="rgba(248, 113, 113, 0.16)"
+        />
+      </div>
     </div>
   );
 }
 
-function MetricPill({
-  text,
+function MetricChip({
+  label,
+  value,
+  icon,
   color,
-  bg,
+  background,
   border,
 }: {
-  text: string;
+  label: string;
+  value: number;
+  icon: ReactNode;
   color: string;
-  bg: string;
+  background: string;
   border: string;
 }) {
   return (
     <div
+      className="profile-hero-chip"
       style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: "8px",
-        padding: "10px 12px",
-        borderRadius: "999px",
-        backgroundColor: bg,
-        border: `1px solid ${border}`,
+        ...chipBaseStyle,
         color,
-        fontSize: "13px",
-        fontWeight: 900,
-        backdropFilter: "blur(10px)",
+        background,
+        border: `1px solid ${border}`,
       }}
     >
-      {text}
+      <span style={iconWrapStyle}>{icon}</span>
+      <span style={copyWrapStyle}>
+        <strong style={valueStyle}>{value}</strong>
+        <span style={labelStyle}>{label}</span>
+      </span>
     </div>
   );
 }
 
+function ReactionButton({
+  label,
+  value,
+  icon,
+  onClick,
+  disabled,
+  isActive,
+  accentColor,
+  background,
+  border,
+}: {
+  label: string;
+  value: number;
+  icon: ReactNode;
+  onClick: () => void;
+  disabled: boolean;
+  isActive: boolean;
+  accentColor: string;
+  background: string;
+  border: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-pressed={isActive}
+      className="profile-hero-reaction"
+      style={reactionButtonStyle(
+        accentColor,
+        background,
+        border,
+        disabled,
+        isActive,
+      )}
+    >
+      <span style={iconWrapStyle}>{icon}</span>
+      <span style={copyWrapStyle}>
+        <strong style={valueStyle}>{value}</strong>
+        <span style={labelStyle}>{label}</span>
+      </span>
+    </button>
+  );
+}
+
 function reactionButtonStyle(
-  themeColor: string,
-  bg: string,
+  accentColor: string,
+  background: string,
   border: string,
-  isSubmitting: boolean,
-  isActive: boolean
-): React.CSSProperties {
+  disabled: boolean,
+  isActive: boolean,
+): CSSProperties {
   return {
-    display: "inline-flex",
-    alignItems: "center",
-    gap: "8px",
-    padding: "10px 12px",
-    borderRadius: "999px",
-    backgroundColor: bg,
-    border: `1px solid ${border}`,
-    color: "#ffffff",
-    fontSize: "13px",
-    fontWeight: 900,
-    backdropFilter: "blur(10px)",
-    cursor: isSubmitting ? "not-allowed" : "pointer",
+    ...chipBaseStyle,
+    cursor: disabled ? "not-allowed" : "pointer",
+    color: "#f7f9ff",
+    background,
+    border: `1px solid ${isActive ? `${accentColor}66` : border}`,
     boxShadow: isActive
-      ? `0 0 0 1px ${themeColor}66, 0 10px 24px ${themeColor}22`
-      : `0 10px 24px ${themeColor}12`,
-    opacity: isSubmitting ? 0.65 : 1,
-    pointerEvents: isSubmitting ? "none" : "auto",
-    transition: "opacity 0.15s ease, box-shadow 0.15s ease",
+      ? `0 0 0 1px ${accentColor}36, 0 12px 26px ${accentColor}16`
+      : `0 10px 24px ${accentColor}0d`,
+    opacity: disabled ? 0.7 : 1,
+    pointerEvents: disabled ? "none" : "auto",
+    paddingRight: "18px",
+    fontFamily: "inherit",
   };
 }
+
+const chipBaseStyle: CSSProperties = {
+  minHeight: "52px",
+  padding: "0 15px",
+  borderRadius: "18px",
+  display: "inline-flex",
+  alignItems: "center",
+  gap: "12px",
+  backdropFilter: "blur(12px)",
+  boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04)",
+};
+
+const iconWrapStyle: CSSProperties = {
+  width: "32px",
+  height: "32px",
+  borderRadius: "12px",
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  background: "rgba(255,255,255,0.04)",
+  border: "1px solid rgba(255,255,255,0.06)",
+  flexShrink: 0,
+};
+
+const copyWrapStyle: CSSProperties = {
+  display: "grid",
+  textAlign: "left",
+};
+
+const valueStyle: CSSProperties = {
+  fontSize: "15px",
+  lineHeight: 1,
+  letterSpacing: "-0.03em",
+};
+
+const labelStyle: CSSProperties = {
+  marginTop: "5px",
+  color: "#9dabc6",
+  fontSize: "11px",
+  fontWeight: 800,
+  letterSpacing: "0.04em",
+  textTransform: "uppercase",
+};

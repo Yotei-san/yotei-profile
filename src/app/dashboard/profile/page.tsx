@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireUser } from "@/app/lib/auth";
 import { prisma } from "@/app/lib/prisma";
+import { getMediaKind } from "@/app/lib/profile-media";
 import { saveProfileSettings } from "./actions";
 import ProfileMediaUploader from "./ProfileMediaUploader";
 
@@ -29,6 +30,8 @@ export default async function ProfileSettingsPage({ searchParams }: PageProps) {
   if (!user) {
     throw new Error("Usuário não encontrado.");
   }
+
+  const bannerKind = getMediaKind(user.bannerUrl || "");
 
   return (
     <main
@@ -186,11 +189,55 @@ export default async function ProfileSettingsPage({ searchParams }: PageProps) {
             <div
               style={{
                 height: "180px",
-                background: user.bannerUrl
-                  ? `url(${user.bannerUrl}) center/cover no-repeat`
-                  : `linear-gradient(135deg, ${user.themeColor || "#f472b6"}, rgba(0,0,0,0.2))`,
+                position: "relative",
+                overflow: "hidden",
+                background: `linear-gradient(135deg, ${user.themeColor || "#f472b6"}, rgba(0,0,0,0.2))`,
               }}
-            />
+            >
+              {user.bannerUrl ? (
+                bannerKind === "video" ? (
+                  <video
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    preload="metadata"
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                      pointerEvents: "none",
+                    }}
+                  >
+                    <source src={user.bannerUrl} />
+                  </video>
+                ) : (
+                  <img
+                    src={user.bannerUrl}
+                    alt="Banner preview"
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                    }}
+                  />
+                )
+              ) : null}
+
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  background:
+                    "linear-gradient(180deg, rgba(0,0,0,0.08), rgba(0,0,0,0.32) 52%, rgba(0,0,0,0.56) 100%)",
+                  pointerEvents: "none",
+                }}
+              />
+            </div>
 
             <div
               style={{

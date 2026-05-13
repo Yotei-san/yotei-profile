@@ -1,164 +1,207 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion, useReducedMotion, type Variants } from "framer-motion";
-import type { CSSProperties, ReactNode } from "react";
+import { type CSSProperties, type FormEvent, type ReactNode, useState } from "react";
 import {
   FaDiscord,
   FaGithub,
-  FaInstagram,
-  FaMedal,
-  FaRegStar,
+  FaTiktok,
+  FaXTwitter,
 } from "react-icons/fa6";
 import {
   LuArrowRight,
   LuBadgeCheck,
   LuChartNoAxesCombined,
-  LuGlobe,
   LuLayoutTemplate,
-  LuPalette,
   LuSparkles,
-  LuZap,
 } from "react-icons/lu";
 
 const EASE_OUT = [0.16, 1, 0.3, 1] as const;
-const EASE_IN_OUT = [0.4, 0, 0.2, 1] as const;
-
-const revealContainer: Variants = {
-  hidden: {},
-  show: {
-    transition: {
-      staggerChildren: 0.08,
-    },
-  },
-};
 
 const fadeUp: Variants = {
-  hidden: { opacity: 0, y: 18 },
+  hidden: { opacity: 0, y: 20 },
   show: {
     opacity: 1,
     y: 0,
     transition: {
-      duration: 0.55,
+      duration: 0.58,
       ease: EASE_OUT,
     },
   },
 };
 
-const platformLinks = [
+const stagger: Variants = {
+  hidden: {},
+  show: {
+    transition: {
+      staggerChildren: 0.1,
+    },
+  },
+};
+
+const navLinks = [
+  { label: "Discord", href: "#community" },
+  { label: "Leaderboard", href: "/leaderboard" },
+  { label: "Help", href: "#support" },
+  { label: "Pricing", href: "/pricing" },
+] as const;
+
+const profileBadges = [
+  { label: "Owner", className: "badge-owner" },
+  { label: "Premium", className: "badge-premium" },
+  { label: "Online", className: "badge-online" },
+] as const;
+
+const socialLinks = [
   {
     label: "Discord",
-    handle: "discord.gg/kazama",
-    accent: "#5B6CFF",
-    icon: <FaDiscord size={18} />,
-    meta: "community",
+    icon: <FaDiscord size={16} />,
+    accent: "#8995FF",
+  },
+  {
+    label: "X",
+    icon: <FaXTwitter size={14} />,
+    accent: "#8FD3FF",
   },
   {
     label: "GitHub",
-    handle: "github.com/kazama-dev",
-    accent: "#B8C3D9",
-    icon: <FaGithub size={18} />,
-    meta: "code",
+    icon: <FaGithub size={16} />,
+    accent: "#D0D8E8",
   },
   {
-    label: "Instagram",
-    handle: "@kazama.dev",
-    accent: "#FF5A8B",
-    icon: <FaInstagram size={18} />,
-    meta: "behind the scenes",
-  },
-  {
-    label: "Portfolio",
-    handle: "kazama.dev/portfolio",
-    accent: "#66B6FF",
-    icon: <LuGlobe size={18} />,
-    meta: "featured work",
+    label: "TikTok",
+    icon: <FaTiktok size={15} />,
+    accent: "#FF89BA",
   },
 ] as const;
 
 const featureCards = [
   {
-    title: "Profile presence",
-    text: "Banner, avatar, badges and status combine into a profile that looks curated from the first glance.",
-    accent: "#7C6BFF",
-    icon: <LuLayoutTemplate size={22} />,
+    title: "Animated profiles",
+    body: "Create motion-rich pages that feel alive without turning into visual noise.",
+    icon: <LuSparkles size={18} />,
+    accent: "#8A7CFF",
   },
   {
-    title: "Premium link stack",
-    text: "Each platform card feels like part of the brand instead of a plain list of generic buttons.",
-    accent: "#FF5A8B",
-    icon: <LuZap size={22} />,
+    title: "Video banners",
+    body: "Lead with cinematic headers that give your profile an instant premium mood.",
+    icon: <LuLayoutTemplate size={18} />,
+    accent: "#FF77B3",
   },
   {
-    title: "Visual control",
-    text: "Strong colors, glow accents and composition options create a rare gamer SaaS identity without noise.",
-    accent: "#45D483",
-    icon: <LuPalette size={22} />,
+    title: "Premium links",
+    body: "Turn every destination into part of a polished identity system, not a plain list.",
+    icon: <LuBadgeCheck size={18} />,
+    accent: "#8EC5FF",
   },
   {
-    title: "Growth ready",
-    text: "The layout already communicates value for reactions, analytics and premium plans later on.",
-    accent: "#5AB2FF",
-    icon: <LuChartNoAxesCombined size={22} />,
+    title: "Smart analytics",
+    body: "Understand what people click, what converts and what earns a second look.",
+    icon: <LuChartNoAxesCombined size={18} />,
+    accent: "#B58CFF",
   },
-] as const;
-
-const featureChecks = [
-  "Premium first-screen impact",
-  "Real platform icon treatment",
-  "Responsive dark SaaS layout",
-  "Lightweight motion only where it matters",
 ] as const;
 
 export default function HomePageClient() {
+  const [username, setUsername] = useState("");
+  const router = useRouter();
   const shouldReduceMotion = useReducedMotion();
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const cleanUsername = username
+      .trim()
+      .replace(/^@+/, "")
+      .replace(/\s+/g, "")
+      .toLowerCase();
+
+    router.push(
+      cleanUsername
+        ? `/register?username=${encodeURIComponent(cleanUsername)}`
+        : "/register",
+    );
+  }
 
   return (
     <main style={pageStyle}>
       <style>{`
-        .yotei-shell {
-          width: min(1240px, calc(100% - 32px));
+        .home-shell {
+          width: min(1180px, calc(100% - 32px));
           margin: 0 auto;
         }
 
-        .yotei-header {
-          position: sticky;
-          top: 0;
-          z-index: 20;
-          background: rgba(6, 8, 14, 0.82);
-          border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        .page-orb-a,
+        .page-orb-b,
+        .page-grid,
+        .page-vignette {
+          position: absolute;
+          pointer-events: none;
         }
 
-        .yotei-hero-grid {
-          display: grid;
-          grid-template-columns: minmax(0, 1.06fr) minmax(420px, 0.94fr);
-          gap: 34px;
+        .page-orb-a {
+          top: -180px;
+          left: -120px;
+          width: 520px;
+          height: 520px;
+          border-radius: 999px;
+          background: radial-gradient(circle, rgba(123, 108, 255, 0.26) 0%, rgba(123, 108, 255, 0) 72%);
+          filter: blur(18px);
+        }
+
+        .page-orb-b {
+          right: -140px;
+          top: 90px;
+          width: 500px;
+          height: 500px;
+          border-radius: 999px;
+          background: radial-gradient(circle, rgba(255, 110, 168, 0.18) 0%, rgba(255, 110, 168, 0) 72%);
+          filter: blur(22px);
+        }
+
+        .page-grid {
+          inset: 0;
+          background-image:
+            linear-gradient(rgba(255, 255, 255, 0.028) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 255, 255, 0.028) 1px, transparent 1px);
+          background-size: 80px 80px;
+          opacity: 0.18;
+          mask-image: linear-gradient(180deg, rgba(0, 0, 0, 1), rgba(0, 0, 0, 0.18));
+        }
+
+        .page-vignette {
+          inset: 0;
+          background:
+            radial-gradient(circle at top, rgba(68, 28, 48, 0.18), transparent 20%),
+            linear-gradient(180deg, rgba(5, 5, 10, 0) 0%, rgba(5, 5, 10, 0.32) 100%);
+        }
+
+        .home-header {
+          position: relative;
+          z-index: 10;
+          padding: 24px 0 0;
+        }
+
+        .home-nav {
+          display: flex;
           align-items: center;
-        }
-
-        .yotei-stat-row {
-          display: grid;
-          grid-template-columns: repeat(3, minmax(0, 1fr));
-          gap: 14px;
-        }
-
-        .yotei-feature-grid {
-          display: grid;
-          grid-template-columns: repeat(4, minmax(0, 1fr));
+          justify-content: space-between;
           gap: 18px;
+          padding: 16px 18px;
+          border-radius: 999px;
+          background: rgba(16, 11, 20, 0.84);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          box-shadow: 0 24px 48px rgba(0, 0, 0, 0.28);
+          backdrop-filter: blur(16px);
         }
 
-        .yotei-bottom-grid {
-          display: grid;
-          grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
-          gap: 20px;
-        }
-
-        .hover-lift,
-        .nav-chip,
-        .cta-main,
-        .cta-secondary,
-        .mock-link-card {
+        .brand-link,
+        .nav-link,
+        .nav-cta,
+        .claim-button,
+        .support-link {
           transition:
             transform 180ms ease,
             border-color 180ms ease,
@@ -167,564 +210,1153 @@ export default function HomePageClient() {
             color 180ms ease;
         }
 
-        .hover-lift:hover,
-        .cta-main:hover,
-        .cta-secondary:hover,
-        .nav-chip:hover,
-        .mock-link-card:hover {
-          transform: translateY(-3px);
+        .brand-link:hover,
+        .nav-link:hover,
+        .nav-cta:hover,
+        .claim-button:hover,
+        .support-link:hover {
+          transform: translateY(-2px);
         }
 
-        .cta-main:hover,
-        .cta-secondary:hover,
-        .nav-chip:hover {
-          box-shadow: 0 18px 36px rgba(86, 100, 255, 0.16);
-        }
-
-        .cta-main:hover {
-          transform: translateY(-3px) scale(1.015);
-        }
-
-        .cta-secondary:hover,
-        .nav-chip:hover {
-          transform: translateY(-2px) scale(1.01);
-        }
-
-        .cta-main:active,
-        .cta-secondary:active,
-        .nav-chip:active,
-        .mock-link-card:active {
-          transform: translateY(0) scale(0.985);
-        }
-
-        .mockup-identity-row {
-          display: grid;
-          grid-template-columns: auto minmax(0, 1fr);
-          gap: 18px;
-          align-items: start;
-        }
-
-        .mockup-badge-row {
-          display: flex;
-          gap: 8px;
-          flex-wrap: wrap;
-          margin-top: 14px;
-        }
-
-        .mockup-link-grid {
-          display: grid;
-          grid-template-columns: repeat(2, minmax(0, 1fr));
+        .brand-link {
+          display: inline-flex;
+          align-items: center;
           gap: 12px;
+          text-decoration: none;
+          color: #ffffff;
+          flex-shrink: 0;
         }
 
-        .mockup-banner-scene {
-          position: absolute;
-          right: 18px;
-          bottom: 0;
-          width: min(46%, 220px);
-          height: 154px;
-          pointer-events: none;
+        .brand-mark {
+          width: 42px;
+          height: 42px;
+          border-radius: 14px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #ffffff;
+          font-size: 17px;
+          font-weight: 900;
+          background:
+            radial-gradient(circle at 28% 24%, rgba(255, 255, 255, 0.38), transparent 24%),
+            linear-gradient(145deg, #8a76ff 0%, #ff6ea8 54%, #5aa9ff 100%);
+          box-shadow: 0 16px 32px rgba(110, 93, 255, 0.28);
+        }
+
+        .brand-copy {
+          display: grid;
+          gap: 2px;
+        }
+
+        .brand-copy strong {
+          font-size: 15px;
+          letter-spacing: -0.04em;
+        }
+
+        .brand-copy span {
+          font-size: 12px;
+          color: #99a3bb;
+        }
+
+        .nav-center,
+        .nav-actions {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          flex-wrap: wrap;
+        }
+
+        .nav-center {
+          justify-content: center;
+          flex: 1;
+        }
+
+        .nav-link,
+        .nav-ghost,
+        .nav-cta {
+          min-height: 42px;
+          padding: 0 14px;
+          border-radius: 999px;
+          text-decoration: none;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 14px;
+          font-weight: 700;
+          border: 1px solid transparent;
+        }
+
+        .nav-link,
+        .nav-ghost {
+          color: #d7def0;
+        }
+
+        .nav-link:hover,
+        .nav-ghost:hover {
+          background: rgba(255, 255, 255, 0.04);
+          border-color: rgba(255, 255, 255, 0.08);
+        }
+
+        .nav-cta {
+          color: #ffffff;
+          background: linear-gradient(135deg, rgba(124, 108, 255, 0.96), rgba(255, 110, 168, 0.92));
+          box-shadow: 0 14px 28px rgba(117, 95, 255, 0.26);
+        }
+
+        .hero-section {
+          position: relative;
+          padding: 34px 0 88px;
+        }
+
+        .hero-grid {
+          display: grid;
+          grid-template-columns: minmax(0, 1.02fr) minmax(360px, 0.98fr);
+          gap: 48px;
+          align-items: center;
+          min-height: calc(100vh - 132px);
+        }
+
+        .hero-copy {
+          position: relative;
+          z-index: 1;
+        }
+
+        .eyebrow {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          min-height: 38px;
+          padding: 0 14px;
+          border-radius: 999px;
+          color: #ffd4e8;
+          background: rgba(255, 110, 168, 0.1);
+          border: 1px solid rgba(255, 110, 168, 0.16);
+          font-size: 13px;
+          font-weight: 800;
+          letter-spacing: 0.02em;
+        }
+
+        .hero-title {
+          margin: 24px 0 0;
+          max-width: 720px;
+          font-size: clamp(56px, 8vw, 96px);
+          line-height: 0.92;
+          letter-spacing: -0.08em;
+          font-weight: 950;
         }
 
         .hero-gradient {
-          background: linear-gradient(90deg, #ffffff 0%, #cdd8ff 28%, #88a9ff 58%, #ff77b7 100%);
+          background: linear-gradient(90deg, #ffffff 0%, #ddd4ff 30%, #95b6ff 62%, #ff8fc3 100%);
           -webkit-background-clip: text;
           background-clip: text;
           color: transparent;
         }
 
-        .yotei-cinematic-light {
-          position: absolute;
-          inset: -12%;
+        .hero-body {
+          margin: 24px 0 0;
+          max-width: 620px;
+          color: #c5cde0;
+          font-size: 18px;
+          line-height: 1.75;
+        }
+
+        .claim-form {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) auto;
+          gap: 12px;
+          margin-top: 30px;
+          max-width: 660px;
+          padding: 12px;
+          border-radius: 28px;
+          background: rgba(15, 11, 22, 0.92);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          box-shadow: 0 28px 46px rgba(0, 0, 0, 0.24);
+        }
+
+        .claim-field {
+          min-height: 62px;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 0 18px;
+          border-radius: 18px;
+          background: rgba(255, 255, 255, 0.04);
+          border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .claim-prefix {
+          color: #97a2bc;
+          font-size: 15px;
+          font-weight: 700;
+          white-space: nowrap;
+        }
+
+        .claim-input {
+          width: 100%;
+          border: 0;
+          outline: 0;
+          background: transparent;
+          color: #f8f9ff;
+          font-size: 16px;
+          font-weight: 700;
+          font-family: inherit;
+        }
+
+        .claim-input::placeholder {
+          color: #6d7892;
+        }
+
+        .claim-button {
+          min-height: 62px;
+          padding: 0 22px;
+          border: 0;
+          border-radius: 20px;
+          cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+          color: #ffffff;
+          background: linear-gradient(135deg, rgba(124, 108, 255, 0.98), rgba(255, 110, 168, 0.94));
+          box-shadow: 0 18px 34px rgba(110, 92, 255, 0.3);
+          font-size: 15px;
+          font-weight: 900;
+          font-family: inherit;
+        }
+
+        .hero-trust {
+          margin: 18px 0 0;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          flex-wrap: wrap;
+          color: #dfe6f4;
+          font-size: 13px;
+          font-weight: 700;
+        }
+
+        .hero-trust span {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .hero-trust-dot {
+          width: 4px;
+          height: 4px;
+          border-radius: 999px;
+          background: rgba(255, 255, 255, 0.32);
+        }
+
+        .preview-wrap {
+          position: relative;
+          perspective: 1600px;
+        }
+
+        .preview-shell {
+          position: relative;
+          padding: 22px;
+          border-radius: 40px;
           background:
-            radial-gradient(circle at 18% 22%, rgba(95, 118, 255, 0.24), transparent 24%),
-            radial-gradient(circle at 78% 16%, rgba(255, 95, 155, 0.18), transparent 20%),
-            radial-gradient(circle at 52% 58%, rgba(76, 156, 255, 0.10), transparent 26%);
-          background-size: 140% 140%;
-          animation: yotei-light-shift 24s ease-in-out infinite;
-          opacity: 0.9;
+            radial-gradient(circle at top, rgba(124, 108, 255, 0.12), transparent 26%),
+            linear-gradient(180deg, rgba(16, 11, 21, 0.98), rgba(8, 8, 14, 1));
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          box-shadow: 0 36px 72px rgba(0, 0, 0, 0.34);
+          overflow: hidden;
+        }
+
+        .preview-shell::after {
+          content: "";
+          position: absolute;
+          inset: 12px;
+          border-radius: 30px;
+          border: 1px solid rgba(255, 255, 255, 0.04);
           pointer-events: none;
         }
 
-        .yotei-grid-noise {
+        .preview-stage {
+          position: relative;
+          z-index: 1;
+          border-radius: 30px;
+          overflow: hidden;
+          border: 1px solid rgba(255, 255, 255, 0.06);
+          background: linear-gradient(180deg, rgba(11, 12, 20, 0.96), rgba(7, 8, 14, 1));
+          box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.04),
+            0 24px 40px rgba(0, 0, 0, 0.22);
+        }
+
+        .preview-topbar {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 14px 16px;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+          background: rgba(255, 255, 255, 0.02);
+        }
+
+        .preview-dots {
+          display: flex;
+          gap: 6px;
+        }
+
+        .preview-dots span {
+          width: 8px;
+          height: 8px;
+          border-radius: 999px;
+          background: rgba(255, 255, 255, 0.18);
+        }
+
+        .preview-url {
+          min-height: 32px;
+          padding: 0 12px;
+          border-radius: 999px;
+          display: inline-flex;
+          align-items: center;
+          color: #a6b0c6;
+          background: rgba(255, 255, 255, 0.03);
+          border: 1px solid rgba(255, 255, 255, 0.06);
+          font-size: 12px;
+          font-weight: 700;
+          letter-spacing: 0.01em;
+        }
+
+        .profile-preview {
+          position: relative;
+          background: linear-gradient(180deg, rgba(11, 12, 20, 0.98), rgba(7, 8, 14, 1));
+        }
+
+        .profile-banner {
+          position: relative;
+          min-height: 270px;
+          padding: 24px;
+          overflow: hidden;
+          background:
+            radial-gradient(circle at 18% 26%, rgba(127, 111, 255, 0.26), transparent 24%),
+            radial-gradient(circle at 82% 18%, rgba(255, 110, 168, 0.18), transparent 22%),
+            linear-gradient(155deg, #1b1120 0%, #11131d 50%, #0a0d15 100%);
+        }
+
+        .profile-banner::before {
+          content: "";
           position: absolute;
           inset: 0;
-          background-image:
-            linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
-          background-size: 72px 72px;
-          mask-image: linear-gradient(180deg, rgba(0,0,0,1), rgba(0,0,0,0.2));
+          background:
+            linear-gradient(120deg, rgba(255, 255, 255, 0.08), transparent 22%),
+            linear-gradient(180deg, rgba(8, 10, 18, 0.02) 0%, rgba(8, 10, 18, 0.56) 100%);
           pointer-events: none;
-          opacity: 0.26;
         }
 
-        .yotei-film-noise {
+        .banner-chip {
+          position: relative;
+          z-index: 1;
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          min-height: 34px;
+          padding: 0 14px;
+          border-radius: 999px;
+          color: #dce4f5;
+          background: rgba(8, 11, 18, 0.42);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          backdrop-filter: blur(14px);
+          font-size: 12px;
+          font-weight: 800;
+          letter-spacing: 0.02em;
+        }
+
+        .banner-chip i,
+        .status-pill i {
+          width: 8px;
+          height: 8px;
+          border-radius: 999px;
+          background: #45d483;
+          box-shadow: 0 0 0 4px rgba(69, 212, 131, 0.12);
+          display: inline-block;
+          flex-shrink: 0;
+        }
+
+        .banner-copy {
+          position: relative;
+          z-index: 1;
+          margin-top: 126px;
+          max-width: 320px;
+        }
+
+        .banner-copy strong {
+          display: block;
+          font-size: 32px;
+          line-height: 0.92;
+          letter-spacing: -0.06em;
+        }
+
+        .banner-copy span {
+          display: block;
+          margin-top: 10px;
+          color: #a8b4ce;
+          font-size: 13px;
+          line-height: 1.65;
+        }
+
+        .banner-wordmark {
           position: absolute;
-          inset: 0;
+          right: 24px;
+          bottom: 20px;
+          font-size: clamp(76px, 9vw, 108px);
+          line-height: 0.8;
+          font-weight: 950;
+          letter-spacing: -0.08em;
+          color: rgba(255, 255, 255, 0.08);
           pointer-events: none;
-          opacity: 0.06;
-          background-image: radial-gradient(rgba(255,255,255,0.8) 0.6px, transparent 0.6px);
-          background-size: 7px 7px;
-          mix-blend-mode: soft-light;
+          user-select: none;
         }
 
-        .yotei-panel-noise {
+        .profile-body {
+          padding: 0 28px 28px;
+          margin-top: -66px;
+        }
+
+        .profile-card {
+          position: relative;
+          padding: 0 24px 24px;
+          border-radius: 28px;
+          background: linear-gradient(180deg, rgba(11, 13, 21, 0.96), rgba(8, 9, 16, 0.98));
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          box-shadow: 0 24px 34px rgba(0, 0, 0, 0.18);
+        }
+
+        .avatar-shell {
+          position: relative;
+          width: 118px;
+          height: 118px;
+          margin-top: -36px;
+        }
+
+        .avatar-ring {
           position: absolute;
-          inset: 0;
-          pointer-events: none;
-          opacity: 0.08;
-          background-image:
-            radial-gradient(rgba(255,255,255,0.7) 0.7px, transparent 0.7px),
-            linear-gradient(180deg, rgba(255,255,255,0.05), transparent 35%);
-          background-size: 9px 9px, 100% 100%;
+          inset: -8px;
+          border-radius: 999px;
+          border: 1px solid rgba(145, 162, 255, 0.34);
+          box-shadow:
+            0 0 0 8px rgba(8, 10, 17, 0.92),
+            0 0 30px rgba(112, 128, 255, 0.12);
         }
 
-        @keyframes yotei-light-shift {
-          0% { transform: translate3d(0, 0, 0) scale(1); }
-          50% { transform: translate3d(-2%, 2%, 0) scale(1.03); }
-          100% { transform: translate3d(0, 0, 0) scale(1); }
+        .avatar-core {
+          position: relative;
+          width: 118px;
+          height: 118px;
+          border-radius: 999px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          overflow: hidden;
+          border: 1px solid rgba(255, 255, 255, 0.14);
+          background:
+            radial-gradient(circle at 28% 22%, rgba(255, 255, 255, 0.36), transparent 18%),
+            linear-gradient(145deg, #ff6ea8 0%, #7a6dff 56%, #57a7ff 100%);
+          box-shadow: 0 20px 34px rgba(95, 86, 255, 0.2);
         }
 
-        @media (max-width: 1080px) {
-          .yotei-hero-grid,
-          .yotei-bottom-grid {
+        .avatar-core::after {
+          content: "";
+          position: absolute;
+          inset: 10px;
+          border-radius: 999px;
+          border: 1px solid rgba(255, 255, 255, 0.14);
+        }
+
+        .avatar-core strong {
+          position: relative;
+          z-index: 1;
+          color: #ffffff;
+          font-size: 40px;
+          font-weight: 950;
+          letter-spacing: -0.05em;
+          text-shadow: 0 10px 24px rgba(13, 18, 34, 0.34);
+        }
+
+        .profile-name {
+          margin: 18px 0 0;
+          font-size: clamp(34px, 4vw, 42px);
+          line-height: 0.92;
+          letter-spacing: -0.06em;
+        }
+
+        .profile-username {
+          margin-top: 10px;
+          color: #90a0bc;
+          font-size: 14px;
+          font-weight: 700;
+        }
+
+        .badge-row {
+          display: flex;
+          gap: 8px;
+          flex-wrap: wrap;
+          margin-top: 16px;
+        }
+
+        .profile-badge {
+          min-height: 30px;
+          padding: 0 11px;
+          border-radius: 999px;
+          display: inline-flex;
+          align-items: center;
+          gap: 7px;
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          font-size: 11px;
+          font-weight: 800;
+          letter-spacing: 0.03em;
+        }
+
+        .badge-owner {
+          color: #f5d89c;
+          background: rgba(245, 216, 156, 0.12);
+          border-color: rgba(245, 216, 156, 0.18);
+        }
+
+        .badge-owner::before {
+          content: "";
+          width: 8px;
+          height: 8px;
+          border-radius: 999px;
+          background: #f5d89c;
+          box-shadow: 0 0 0 4px rgba(245, 216, 156, 0.12);
+          display: inline-block;
+          flex-shrink: 0;
+        }
+
+        .badge-premium {
+          color: #ffacd0;
+          background: rgba(255, 110, 168, 0.12);
+          border-color: rgba(255, 110, 168, 0.18);
+        }
+
+        .badge-premium::before {
+          content: "";
+          width: 8px;
+          height: 8px;
+          border-radius: 999px;
+          background: #ff89ba;
+          box-shadow: 0 0 0 4px rgba(255, 137, 186, 0.12);
+          display: inline-block;
+          flex-shrink: 0;
+        }
+
+        .badge-online {
+          color: #99e6b8;
+          background: rgba(69, 212, 131, 0.12);
+          border-color: rgba(69, 212, 131, 0.18);
+        }
+
+        .badge-online::before {
+          content: "";
+          width: 8px;
+          height: 8px;
+          border-radius: 999px;
+          background: #45d483;
+          box-shadow: 0 0 0 4px rgba(69, 212, 131, 0.12);
+          display: inline-block;
+          flex-shrink: 0;
+        }
+
+        .profile-bio {
+          margin: 18px 0 0;
+          max-width: 460px;
+          color: #bec8dc;
+          font-size: 14px;
+          line-height: 1.75;
+        }
+
+        .social-row {
+          display: flex;
+          gap: 10px;
+          flex-wrap: wrap;
+          margin-top: 20px;
+        }
+
+        .social-chip {
+          width: 44px;
+          height: 44px;
+          border-radius: 16px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          background: rgba(255, 255, 255, 0.04);
+          box-shadow: 0 10px 24px rgba(0, 0, 0, 0.16);
+        }
+
+        .social-chip span {
+          width: 36px;
+          height: 36px;
+          border-radius: 13px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .profile-links {
+          display: grid;
+          gap: 10px;
+          margin-top: 22px;
+        }
+
+        .profile-link {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+          padding: 14px 16px;
+          border-radius: 18px;
+          background: rgba(255, 255, 255, 0.03);
+          border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .profile-link strong {
+          display: block;
+          font-size: 14px;
+          letter-spacing: -0.02em;
+        }
+
+        .profile-link span {
+          display: block;
+          margin-top: 5px;
+          color: #8e9ab6;
+          font-size: 12px;
+          line-height: 1.45;
+        }
+
+        .profile-link-mark {
+          width: 38px;
+          height: 38px;
+          border-radius: 14px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          color: #ffffff;
+          background: linear-gradient(135deg, rgba(124, 108, 255, 0.24), rgba(255, 110, 168, 0.24));
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          flex-shrink: 0;
+          font-size: 14px;
+          font-weight: 800;
+        }
+
+        .status-row {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          flex-wrap: wrap;
+          margin-top: 18px;
+        }
+
+        .status-pill {
+          min-height: 34px;
+          padding: 0 12px;
+          border-radius: 999px;
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          color: #dfe7f6;
+          background: rgba(255, 255, 255, 0.04);
+          border: 1px solid rgba(255, 255, 255, 0.07);
+          font-size: 12px;
+          font-weight: 800;
+        }
+
+        .status-copy {
+          color: #93a0bb;
+          font-size: 12px;
+          font-weight: 700;
+        }
+
+        .features-section {
+          position: relative;
+          padding: 0 0 90px;
+        }
+
+        .section-intro {
+          max-width: 680px;
+        }
+
+        .section-intro h2 {
+          margin: 20px 0 0;
+          font-size: clamp(34px, 4vw, 54px);
+          line-height: 0.98;
+          letter-spacing: -0.06em;
+        }
+
+        .section-intro p {
+          margin: 18px 0 0;
+          color: #bcc7db;
+          font-size: 17px;
+          line-height: 1.75;
+        }
+
+        .feature-grid {
+          display: grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 18px;
+          margin-top: 32px;
+        }
+
+        .feature-card {
+          height: 100%;
+          padding: 24px;
+          border-radius: 28px;
+          background: linear-gradient(180deg, rgba(15, 17, 28, 0.96), rgba(9, 11, 18, 0.98));
+          border: 1px solid rgba(255, 255, 255, 0.07);
+          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.18);
+        }
+
+        .feature-icon {
+          width: 46px;
+          height: 46px;
+          border-radius: 16px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+        }
+
+        .feature-card h3 {
+          margin: 18px 0 0;
+          font-size: 20px;
+          letter-spacing: -0.04em;
+        }
+
+        .feature-card p {
+          margin: 12px 0 0;
+          color: #9eabc7;
+          font-size: 14px;
+          line-height: 1.7;
+        }
+
+        .support-panel {
+          display: grid;
+          grid-template-columns: minmax(0, 1.2fr) auto;
+          gap: 24px;
+          align-items: center;
+          margin-top: 28px;
+          padding: 26px 28px;
+          border-radius: 30px;
+          background:
+            radial-gradient(circle at top right, rgba(124, 108, 255, 0.16), transparent 26%),
+            linear-gradient(180deg, rgba(17, 18, 30, 0.96), rgba(11, 12, 20, 0.98));
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          box-shadow: 0 26px 48px rgba(0, 0, 0, 0.2);
+        }
+
+        .support-panel h3 {
+          margin: 16px 0 0;
+          font-size: clamp(28px, 3vw, 36px);
+          line-height: 1.02;
+          letter-spacing: -0.05em;
+        }
+
+        .support-panel p {
+          margin: 14px 0 0;
+          max-width: 620px;
+          color: #b7c3d9;
+          font-size: 15px;
+          line-height: 1.75;
+        }
+
+        .support-actions {
+          display: flex;
+          gap: 12px;
+          flex-wrap: wrap;
+          justify-content: flex-end;
+        }
+
+        .support-link {
+          min-height: 46px;
+          padding: 0 16px;
+          border-radius: 999px;
+          text-decoration: none;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          color: #e8edf8;
+          background: rgba(255, 255, 255, 0.04);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          font-size: 14px;
+          font-weight: 800;
+        }
+
+        .support-link.primary {
+          color: #ffffff;
+          background: linear-gradient(135deg, rgba(124, 108, 255, 0.9), rgba(255, 110, 168, 0.86));
+          box-shadow: 0 16px 30px rgba(110, 92, 255, 0.24);
+        }
+
+        @media (max-width: 1120px) {
+          .hero-grid,
+          .feature-grid,
+          .support-panel {
             grid-template-columns: 1fr;
           }
 
-          .yotei-feature-grid {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
+          .preview-wrap {
+            max-width: 720px;
+            width: 100%;
+            margin: 0 auto;
+          }
+
+          .support-actions {
+            justify-content: flex-start;
           }
         }
 
-        @media (max-width: 760px) {
-          .yotei-shell {
-            width: min(100% - 24px, 1240px);
+        @media (max-width: 920px) {
+          .home-nav {
+            justify-content: center;
+            border-radius: 28px;
+            text-align: center;
           }
 
-          .yotei-stat-row,
-          .yotei-feature-grid {
+          .brand-link {
+            width: 100%;
+            justify-content: center;
+          }
+
+          .nav-center,
+          .nav-actions {
+            justify-content: center;
+          }
+
+          .claim-form {
             grid-template-columns: 1fr;
           }
 
-          .mockup-link-grid {
-            grid-template-columns: 1fr;
-          }
         }
 
-        @media (max-width: 560px) {
-          .mockup-identity-row {
-            grid-template-columns: 1fr;
+        @media (max-width: 640px) {
+          .home-shell {
+            width: min(100% - 22px, 1180px);
           }
 
-          .mockup-banner-scene {
-            width: 170px;
-            height: 120px;
-            opacity: 0.78;
+          .hero-section {
+            padding: 24px 0 72px;
+          }
+
+          .hero-title {
+            font-size: clamp(44px, 14vw, 66px);
+          }
+
+          .hero-body,
+          .section-intro p {
+            font-size: 16px;
+          }
+
+          .preview-shell,
+          .preview-stage {
+            border-radius: 28px;
+          }
+
+          .preview-shell {
+            padding: 16px;
+          }
+
+          .profile-banner {
+            min-height: 232px;
+            padding: 18px;
+          }
+
+          .banner-copy {
+            margin-top: 110px;
+            max-width: 220px;
+          }
+
+          .banner-copy strong {
+            font-size: 26px;
+          }
+
+          .banner-wordmark {
+            right: 16px;
+            bottom: 12px;
+            font-size: 66px;
+          }
+
+          .profile-body {
+            padding: 0 16px 18px;
+            margin-top: -52px;
+          }
+
+          .profile-card {
+            padding: 0 18px 18px;
+            border-radius: 24px;
+          }
+
+          .avatar-shell,
+          .avatar-core {
+            width: 102px;
+            height: 102px;
+          }
+
+          .avatar-core strong {
+            font-size: 32px;
+          }
+
+          .profile-name {
+            font-size: 32px;
+          }
+
+          .feature-card,
+          .support-panel {
+            padding: 20px;
           }
         }
       `}</style>
 
-      <div className="yotei-cinematic-light" />
-      <div className="yotei-grid-noise" />
-      <div className="yotei-film-noise" />
-      <motion.div
-        aria-hidden
-        animate={
-          shouldReduceMotion ? undefined : { x: [0, 10, 0], y: [0, 14, 0] }
-        }
-        transition={
-          shouldReduceMotion
-            ? undefined
-            : { duration: 18, repeat: Infinity, ease: EASE_IN_OUT }
-        }
-        style={orbStyle({
-          width: "420px",
-          height: "420px",
-          top: "-120px",
-          left: "-120px",
-          background:
-            "radial-gradient(circle, rgba(98, 114, 255, 0.26) 0%, rgba(98, 114, 255, 0) 68%)",
-        })}
-      />
-      <motion.div
-        aria-hidden
-        animate={
-          shouldReduceMotion ? undefined : { x: [0, -12, 0], y: [0, -8, 0] }
-        }
-        transition={
-          shouldReduceMotion
-            ? undefined
-            : { duration: 22, repeat: Infinity, ease: EASE_IN_OUT }
-        }
-        style={orbStyle({
-          width: "360px",
-          height: "360px",
-          top: "160px",
-          right: "-100px",
-          background:
-            "radial-gradient(circle, rgba(255, 98, 163, 0.22) 0%, rgba(255, 98, 163, 0) 70%)",
-        })}
-      />
+      <div className="page-orb-a" />
+      <div className="page-orb-b" />
+      <div className="page-grid" />
+      <div className="page-vignette" />
 
-      <header className="yotei-header">
-        <div
-          className="yotei-shell"
-          style={{
-            minHeight: "78px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: "16px",
-            flexWrap: "wrap",
-          }}
-        >
+      <header className="home-header">
+        <div className="home-shell">
           <motion.div
-            initial={{ opacity: 0, y: -8 }}
+            className="home-nav"
+            initial={{ opacity: 0, y: -12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.45 }}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "12px",
-            }}
+            transition={{ duration: 0.45, ease: EASE_OUT }}
           >
-            <div style={logoBadgeStyle}>
-              <span style={{ position: "relative", zIndex: 1 }}>Y</span>
-            </div>
-            <div>
-              <div style={{ fontSize: "18px", fontWeight: 900, letterSpacing: "-0.04em" }}>
-                Yotei Profile
+            <Link href="/" className="brand-link">
+              <div className="brand-mark">Y</div>
+              <div className="brand-copy">
+                <strong>Yotei</strong>
+                <span>Premium digital identity</span>
               </div>
-              <div style={{ color: "#8E9AB4", fontSize: "12px" }}>
-                Premium identity layer
-              </div>
+            </Link>
+
+            <nav className="nav-center" aria-label="Main navigation">
+              {navLinks.map((item) => (
+                <Link key={item.label} href={item.href} className="nav-link">
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
+
+            <div className="nav-actions">
+              <Link href="/login" className="nav-ghost">
+                Login
+              </Link>
+              <Link href="/register" className="nav-cta">
+                Sign Up
+              </Link>
             </div>
           </motion.div>
-
-          <motion.nav
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.45, delay: 0.05 }}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "10px",
-              flexWrap: "wrap",
-            }}
-          >
-            <Link href="/login" className="nav-chip" style={navGhostStyle}>
-              Login
-            </Link>
-            <Link href="/register" className="cta-main" style={navPrimaryStyle}>
-              Criar conta
-            </Link>
-          </motion.nav>
         </div>
       </header>
 
-      <section style={{ position: "relative", padding: "56px 0 32px" }}>
-        <div className="yotei-shell yotei-hero-grid">
+      <section className="hero-section">
+        <div className="home-shell hero-grid">
           <motion.div
-            variants={revealContainer}
+            className="hero-copy"
+            variants={stagger}
             initial="hidden"
             animate="show"
-            style={{ position: "relative", zIndex: 1 }}
           >
-            <motion.div variants={fadeUp} style={eyebrowStyle("#7C6BFF")}>
+            <motion.div className="eyebrow" variants={fadeUp}>
               <LuSparkles size={14} />
-              Landing premium para o Yotei
+              Premium profile platform for creators, gamers and devs
             </motion.div>
 
-            <motion.h1 variants={fadeUp} style={heroTitleStyle}>
-              A homepage que faz o
+            <motion.h1 className="hero-title" variants={fadeUp}>
+              Your Digital Identity,
               <br />
-              <span className="hero-gradient">Yotei parecer grande</span>
-              <br />
-              no primeiro scroll.
+              <span className="hero-gradient">On Your Terms</span>
             </motion.h1>
 
-            <motion.p variants={fadeUp} style={heroBodyStyle}>
-              Uma identidade dark, viva e moderna para apresentar perfis com cara de produto premium.
-              Gamer na atitude, SaaS no acabamento, sem pesar a experiencia.
+            <motion.p className="hero-body" variants={fadeUp}>
+              Create a premium profile that brings your links, identity, visuals and
+              social presence into one beautiful page.
             </motion.p>
 
-            <motion.div
+            <motion.form
+              className="claim-form"
+              onSubmit={handleSubmit}
               variants={fadeUp}
-              style={{
-                display: "flex",
-                gap: "14px",
-                flexWrap: "wrap",
-                marginTop: "28px",
-              }}
             >
-              <Link href="/register" className="cta-main" style={ctaMainStyle}>
-                Criar meu perfil
-                <LuArrowRight size={18} />
-              </Link>
-              <a href="#showcase" className="cta-secondary" style={ctaSecondaryStyle}>
-                Ver preview
-              </a>
+              <label className="claim-field">
+                <span className="claim-prefix">yotei.app/</span>
+                <input
+                  aria-label="Claim username"
+                  className="claim-input"
+                  value={username}
+                  onChange={(event) => setUsername(event.target.value)}
+                  placeholder="username"
+                  autoComplete="off"
+                  spellCheck={false}
+                />
+              </label>
+
+              <button type="submit" className="claim-button">
+                Claim Username
+                <LuArrowRight size={17} />
+              </button>
+            </motion.form>
+
+            <motion.div className="hero-trust" variants={fadeUp}>
+              <span>
+                <LuBadgeCheck size={14} />
+                100% free to get started
+              </span>
+              <span className="hero-trust-dot" aria-hidden />
+              <span>No credit card required</span>
             </motion.div>
 
-            <motion.div
-              variants={fadeUp}
-              style={{
-                display: "flex",
-                gap: "10px",
-                flexWrap: "wrap",
-                marginTop: "24px",
-              }}
-            >
-              {featureChecks.map((item) => (
-                <span key={item} style={microChipStyle}>
-                  <LuBadgeCheck size={14} />
-                  {item}
-                </span>
-              ))}
-            </motion.div>
-
-            <motion.div
-              variants={fadeUp}
-              className="yotei-stat-row"
-              style={{ marginTop: "30px" }}
-            >
-              <MetricCard value="01" label="hero com identidade forte" />
-              <MetricCard value="04" label="plataformas com icones reais" />
-              <MetricCard value="100%" label="responsivo para Vercel" />
-            </motion.div>
           </motion.div>
 
           <motion.div
-            id="showcase"
-            initial={{ opacity: 0, y: 22, scale: 0.985 }}
+            className="preview-wrap"
+            initial={{ opacity: 0, y: 18, scale: 0.99 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ duration: 0.7, delay: 0.08, ease: EASE_OUT }}
+            transition={{ duration: 0.72, delay: 0.08, ease: EASE_OUT }}
+            whileHover={
+              shouldReduceMotion
+                ? undefined
+                : { y: -4, rotateX: 1.5, rotateY: -2.5 }
+            }
           >
-            <div style={mockupFrameStyle}>
-              <div style={mockupInnerFrameStyle} />
-              <div className="yotei-panel-noise" />
+            <div className="preview-shell">
               <motion.div
                 aria-hidden
                 animate={
                   shouldReduceMotion
                     ? undefined
-                    : { opacity: [0.26, 0.4, 0.26], scale: [1, 1.015, 1] }
+                    : { opacity: [0.3, 0.42, 0.3], scale: [1, 1.02, 1] }
                 }
                 transition={
                   shouldReduceMotion
                     ? undefined
-                    : { duration: 6, repeat: Infinity, ease: EASE_IN_OUT }
+                    : { duration: 7, repeat: Infinity, ease: "easeInOut" }
                 }
-                style={mockupGlowStyle}
+                style={previewGlowStyle}
               />
 
-              <div className="mockup-browser-bar" style={browserBarStyle}>
-                <div style={{ display: "flex", gap: "7px" }}>
-                  <span style={browserDotStyle("#FF6C8A")} />
-                  <span style={browserDotStyle("#FFC857")} />
-                  <span style={browserDotStyle("#50D890")} />
+              <div className="preview-stage">
+                <div className="preview-topbar">
+                  <div className="preview-dots" aria-hidden>
+                    <span />
+                    <span />
+                    <span />
+                  </div>
+                  <div className="preview-url">yotei.app/yotei-san</div>
                 </div>
-                <div style={browserUrlStyle}>yotei.app/kazama</div>
-                <div style={liveBadgeStyle}>
-                  <span style={liveDotStyle} />
-                  Live now
-                </div>
-              </div>
 
-              <div style={profilePanelStyle}>
-                <div style={profilePanelEdgeStyle} />
-                <div className="yotei-panel-noise" />
-                <div style={bannerStyle}>
-                  <div style={bannerDepthLayerStyle} />
-                  <div style={bannerGridStyle} />
-                  <div style={bannerAccentStyle} />
-                  <div style={bannerAccentSecondaryStyle} />
+                <div className="profile-preview">
+                  <div className="profile-banner">
+                    <div className="banner-chip">
+                      <i />
+                      Live profile
+                    </div>
 
-                  <div style={bannerTopRowStyle}>
-                    <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                      <span style={panelChipStyle("rgba(31, 18, 34, 0.78)", "#FF9FC6")}>
-                        Creator profile
-                      </span>
-                      <span style={panelChipStyle("rgba(10, 19, 37, 0.78)", "#8FB0FF")}>
-                        24.8k views
+                    <div className="banner-copy">
+                      <strong>Yotei</strong>
+                      <span>
+                        Premium identity for links, drops, socials and a stronger first
+                        impression.
                       </span>
                     </div>
-                    <div style={presenceIndicatorStyle}>
-                      <span style={presenceDotStyle} />
-                      Live now
+
+                    <div className="banner-wordmark" aria-hidden>
+                      Y
                     </div>
                   </div>
 
-                  <div className="mockup-banner-scene" style={bannerSceneStyle}>
-                    <div style={bannerNeonFloorStyle} />
-                    <div style={bannerDeskStyle} />
-                    <div style={bannerMonitorPrimaryStyle} />
-                    <div style={bannerMonitorSecondaryStyle} />
-                    <div style={bannerVerticalLightStyle} />
-                    <div style={bannerSilhouetteStyle} />
-                    <div style={bannerChairStyle} />
-                  </div>
-
-                  <div style={bannerContentStyle}>
-                    <div style={bannerMessageCardStyle}>
-                      <div style={bannerMessageEyebrowStyle}>Night build session</div>
-                      <div style={bannerMessageTitleStyle}>
-                        Creator setup, code on screen and socials ready to click.
-                      </div>
-                      <div style={bannerMessageBodyStyle}>
-                        Premium profile preview for a gamer dev building with AI, design and code.
-                      </div>
-                    </div>
-
-                    <div style={bannerStatsRowStyle}>
-                      <div style={bannerStatCardStyle}>
-                        <strong>24.8k</strong>
-                        <span>views</span>
-                      </div>
-                      <div style={bannerStatCardStyle}>
-                        <strong>Live</strong>
-                        <span>creator status</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div style={profileBodyStyle}>
-                  <div className="mockup-identity-row" style={identityRowStyle}>
-                    <motion.div
-                      style={avatarShellStyle}
-                      animate={shouldReduceMotion ? undefined : { y: [0, -2, 0] }}
-                      transition={
-                        shouldReduceMotion
-                          ? undefined
-                          : { duration: 5.6, repeat: Infinity, ease: EASE_IN_OUT }
-                      }
-                    >
+                  <div className="profile-body">
+                    <div className="profile-card">
                       <motion.div
-                        style={avatarGlowRingStyle}
-                        animate={
-                          shouldReduceMotion
-                            ? undefined
-                            : { scale: [1, 1.04, 1], opacity: [0.9, 1, 0.9] }
-                        }
+                        className="avatar-shell"
+                        animate={shouldReduceMotion ? undefined : { y: [0, -2, 0] }}
                         transition={
-                          shouldReduceMotion
-                            ? undefined
-                            : { duration: 4.8, repeat: Infinity, ease: EASE_IN_OUT }
-                        }
-                      />
-                      <div style={avatarAuraStyle} />
-                      <motion.div
-                        style={avatarCoreStyle}
-                        animate={
                           shouldReduceMotion
                             ? undefined
                             : {
-                                boxShadow: [
-                                  "0 22px 40px rgba(94, 88, 255, 0.22)",
-                                  "0 26px 48px rgba(94, 88, 255, 0.30)",
-                                  "0 22px 40px rgba(94, 88, 255, 0.22)",
-                                ],
+                                duration: 5.4,
+                                repeat: Infinity,
+                                ease: "easeInOut",
                               }
                         }
-                        transition={
-                          shouldReduceMotion
-                            ? undefined
-                            : { duration: 4.8, repeat: Infinity, ease: EASE_IN_OUT }
-                        }
                       >
-                        <div style={avatarShineStyle} />
-                        <div style={avatarMonogramRingStyle} />
-                        <span style={avatarLetterStyle}>KZ</span>
+                        <div className="avatar-ring" />
+                        <div className="avatar-core">
+                          <strong>Y</strong>
+                        </div>
                       </motion.div>
-                      <div style={avatarOnlineBadgeStyle}>
-                        <span style={avatarOnlineDotStyle} />
-                      </div>
-                    </motion.div>
 
-                    <div style={profileIntroStyle}>
-                      <div style={profileNameRowStyle}>
-                        <div>
-                          <h2 style={profileNameStyle}>Kazama</h2>
-                          <div style={profileHandleRowStyle}>
-                            <span>@kazama.dev</span>
-                            <span style={liveProfileChipStyle}>
-                              <span style={liveProfileDotStyle} />
-                              online
-                            </span>
-                          </div>
-                        </div>
-                        <div style={profileFeaturedPillStyle}>
-                          <FaRegStar size={12} />
-                          creator profile
-                        </div>
+                      <h2 className="profile-name">Yotei</h2>
+                      <div className="profile-username">@yotei-san</div>
+
+                      <div className="badge-row">
+                        {profileBadges.map((badge) => (
+                          <span
+                            key={badge.label}
+                            className={`profile-badge ${badge.className}`}
+                          >
+                            {badge.label}
+                          </span>
+                        ))}
                       </div>
 
-                      <p style={profileBioStyle}>
-                        Developer, gamer e creator construindo projetos com IA, design e codigo.
+                      <p className="profile-bio">
+                        Building profile pages with stronger aesthetics, sharper identity
+                        and clean social presence.
                       </p>
 
-                      <div className="mockup-badge-row">
-                        <span style={verifiedChipStyle}>
-                          <LuBadgeCheck size={13} />
-                          Verified
-                        </span>
-                        <span style={premiumChipStyle}>
-                          <FaMedal size={12} />
-                          Premium
-                        </span>
-                        <span style={onlineBadgeStyle}>
-                          <span style={liveProfileDotStyle} />
-                          Online
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mockup-link-grid" style={profileLinksGridStyle}>
-                    {platformLinks.map((item, index) => (
-                      <motion.button
-                        key={item.label}
-                        type="button"
-                        className="mock-link-card"
-                        initial={{ opacity: 0, y: 10 }}
-                        animate="rest"
-                        whileHover={shouldReduceMotion ? undefined : "hover"}
-                        whileTap="press"
-                        variants={linkCardVariants(item.accent)}
-                        transition={{ delay: 0.16 + index * 0.06, duration: 0.36 }}
-                        style={platformButtonStyle(item.accent)}
-                      >
-                        <motion.div
-                          variants={linkIconVariants(item.accent)}
-                          style={platformIconWrapStyle(item.accent)}
-                        >
-                          {item.icon}
-                        </motion.div>
-
-                        <div style={{ minWidth: 0, flex: 1 }}>
-                          <div
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "space-between",
-                              gap: "12px",
-                              flexWrap: "wrap",
-                            }}
+                      <div className="social-row">
+                        {socialLinks.map((social) => (
+                          <motion.div
+                            key={social.label}
+                            className="social-chip"
+                            whileHover={shouldReduceMotion ? undefined : { y: -3 }}
+                            whileTap={shouldReduceMotion ? undefined : { scale: 0.98 }}
+                            aria-label={social.label}
+                            title={social.label}
                           >
-                            <strong style={{ fontSize: "15px", letterSpacing: "-0.02em" }}>
-                              {item.label}
-                            </strong>
-                            <span style={platformMetaStyle(item.accent)}>{item.meta}</span>
+                            <span
+                              style={{
+                                color: social.accent,
+                                background: `${social.accent}14`,
+                              }}
+                            >
+                              {social.icon}
+                            </span>
+                          </motion.div>
+                        ))}
+                      </div>
+
+                      <div className="profile-links">
+                        <div className="profile-link">
+                          <div>
+                            <strong>Featured drop</strong>
+                            <span>Launches, content and creator updates in one place.</span>
                           </div>
-                          <div style={platformHandleStyle}>{item.handle}</div>
+                          <div className="profile-link-mark">01</div>
                         </div>
 
-                        <motion.div variants={linkArrowVariants} style={platformArrowStyle}>
-                          <LuArrowRight size={16} />
-                        </motion.div>
-                      </motion.button>
-                    ))}
+                        <div className="profile-link">
+                          <div>
+                            <strong>Community hub</strong>
+                            <span>One premium page for Discord, socials and signature links.</span>
+                          </div>
+                          <div className="profile-link-mark">02</div>
+                        </div>
+                      </div>
+
+                      <div className="status-row">
+                        <div className="status-pill">
+                          <i />
+                          Online
+                        </div>
+                        <div className="status-copy">Clean, premium and ready to share.</div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -733,34 +1365,32 @@ export default function HomePageClient() {
         </div>
       </section>
 
-      <section style={{ padding: "24px 0 36px" }}>
-        <div className="yotei-shell">
+      <section className="features-section">
+        <div className="home-shell">
           <motion.div
+            className="section-intro"
             initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 0.5 }}
-            style={{ textAlign: "center", marginBottom: "24px" }}
+            viewport={{ once: true, amount: 0.25 }}
+            transition={{ duration: 0.5, ease: EASE_OUT }}
           >
-            <div style={eyebrowStyle("#5AB2FF")}>
+            <div className="eyebrow">
               <LuSparkles size={14} />
-              O que melhora na homepage
+              Built for standout online presence
             </div>
-            <h2 style={sectionTitleStyle}>
-              Visual premium, sem parecer template.
-            </h2>
-            <p style={sectionBodyStyle}>
-              O layout posiciona o Yotei como produto serio e desejavel logo no topo, com uma linguagem
-              escura, nitida e orientada a conversao.
+            <h2>Everything your profile needs, without the clutter.</h2>
+            <p>
+              Yotei is made for people who want one beautiful destination for their
+              identity, content and community.
             </p>
           </motion.div>
 
           <motion.div
-            className="yotei-feature-grid"
-            variants={revealContainer}
+            className="feature-grid"
+            variants={stagger}
             initial="hidden"
             whileInView="show"
-            viewport={{ once: true, amount: 0.18 }}
+            viewport={{ once: true, amount: 0.2 }}
           >
             {featureCards.map((card) => (
               <motion.div key={card.title} variants={fadeUp}>
@@ -768,121 +1398,35 @@ export default function HomePageClient() {
               </motion.div>
             ))}
           </motion.div>
-        </div>
-      </section>
-
-      <section style={{ padding: "8px 0 44px" }}>
-        <div className="yotei-shell yotei-bottom-grid">
-          <motion.div
-            initial={{ opacity: 0, x: -18 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 0.52 }}
-            style={secondaryPanelStyle}
-            className="hover-lift"
-          >
-            <div style={eyebrowStyle("#FF5A8B")}>
-              <LuSparkles size={14} />
-              Primeira impressao que converte
-            </div>
-            <h3 style={{ margin: "18px 0 0", fontSize: "40px", lineHeight: 1, letterSpacing: "-0.05em" }}>
-              Hero com mais valor percebido.
-            </h3>
-            <p style={panelTextStyle}>
-              A combinacao de headline forte, mockup crivel e microdetalhes premium deixa claro que o
-              Yotei nao e so mais uma link page.
-            </p>
-
-            <div style={{ display: "grid", gap: "12px", marginTop: "20px" }}>
-              {[
-                "Header mais premium com logo Y destacado",
-                "Mockup com banner, avatar, status e plataformas",
-                "Glow sutil para profundidade sem lag",
-                "CTAs com hierarquia mais forte",
-              ].map((item) => (
-                <div key={item} style={listRowStyle}>
-                  <span style={listBulletStyle}>+</span>
-                  <span>{item}</span>
-                </div>
-              ))}
-            </div>
-          </motion.div>
 
           <motion.div
-            initial={{ opacity: 0, x: 18 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 0.52, delay: 0.04 }}
-            style={secondaryPanelStyle}
-            className="hover-lift"
+            className="support-panel"
+            id="community"
+            initial={{ opacity: 0, y: 18 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.25 }}
+            transition={{ duration: 0.55, ease: EASE_OUT }}
           >
-            <div style={eyebrowStyle("#45D483")}>
-              <LuSparkles size={14} />
-              Preparada para escalar
+            <div>
+              <div className="eyebrow">
+                <LuBadgeCheck size={14} />
+                Community, help and pricing
+              </div>
+              <h3>Launch fast, learn fast and keep the page feeling premium.</h3>
+              <p>
+                Join the Discord community, study the leaderboard and explore pricing
+                when you are ready. <span id="support">Yotei keeps the path simple from
+                first claim to public profile.</span>
+              </p>
             </div>
-            <div style={{ display: "grid", gap: "14px", marginTop: "18px" }}>
-              {[
-                {
-                  title: "Features mais vendaveis",
-                  text: "As secoes explicam valor sem poluir a tela e sem exigir assets externos.",
-                },
-                {
-                  title: "Responsividade segura",
-                  text: "A composicao quebra bem em tablet e mobile mantendo impacto visual e leitura.",
-                },
-                {
-                  title: "Motion controlado",
-                  text: "Framer Motion fica presente com vida e elegancia, mas sem cursor effects ou parallax pesado.",
-                },
-              ].map((item) => (
-                <div key={item.title} style={stackCardStyle}>
-                  <strong style={{ fontSize: "17px", letterSpacing: "-0.02em" }}>{item.title}</strong>
-                  <p style={{ margin: "8px 0 0", color: "#AAB6CE", lineHeight: 1.7 }}>{item.text}</p>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-        </div>
-      </section>
 
-      <section style={{ padding: "0 0 82px" }}>
-        <div className="yotei-shell">
-          <motion.div
-            initial={{ opacity: 0, y: 18, scale: 0.99 }}
-            whileInView={{ opacity: 1, y: 0, scale: 1 }}
-            viewport={{ once: true, amount: 0.32 }}
-            transition={{ duration: 0.55 }}
-            style={finalCtaStyle}
-          >
-            <div style={finalGlowStyle} />
-            <div style={eyebrowStyle("#7C6BFF")}>
-              <LuSparkles size={14} />
-              Homepage refeita para impressionar
-            </div>
-            <h2 style={{ margin: "18px 0 0", fontSize: "clamp(34px, 6vw, 58px)", lineHeight: 0.98, letterSpacing: "-0.06em" }}>
-              Transforme a primeira tela do Yotei em um pitch visual.
-            </h2>
-            <p style={{ margin: "16px auto 0", maxWidth: "720px", color: "#C8D1E2", lineHeight: 1.8, fontSize: "17px" }}>
-              Premium, moderna, viva e com identidade propria. A homepage agora pode vender o produto antes mesmo do login.
-            </p>
-
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "center",
-                gap: "14px",
-                flexWrap: "wrap",
-                marginTop: "26px",
-                position: "relative",
-                zIndex: 1,
-              }}
-            >
-              <Link href="/register" className="cta-main" style={ctaMainStyle}>
-                Comecar agora
-                <LuArrowRight size={18} />
+            <div className="support-actions">
+              <Link href="/register" className="support-link primary">
+                Start Free
+                <LuArrowRight size={16} />
               </Link>
-              <Link href="/login" className="cta-secondary" style={ctaSecondaryStyle}>
-                Entrar
+              <Link href="/pricing" className="support-link">
+                View Pricing
               </Link>
             </div>
           </motion.div>
@@ -892,31 +1436,31 @@ export default function HomePageClient() {
   );
 }
 
-function MetricCard({ value, label }: { value: string; label: string }) {
-  return (
-    <div style={metricCardStyle}>
-      <div style={{ fontSize: "26px", fontWeight: 900, letterSpacing: "-0.05em" }}>{value}</div>
-      <div style={{ color: "#95A2BD", marginTop: "8px", fontSize: "13px", lineHeight: 1.5 }}>{label}</div>
-    </div>
-  );
-}
-
 function FeatureCard({
   accent,
+  body,
   icon,
-  text,
   title,
 }: {
   accent: string;
+  body: string;
   icon: ReactNode;
-  text: string;
   title: string;
 }) {
   return (
-    <div style={featureCardStyle(accent)} className="hover-lift">
-      <div style={featureIconStyle(accent)}>{icon}</div>
-      <h3 style={{ margin: "18px 0 0", fontSize: "20px", letterSpacing: "-0.03em" }}>{title}</h3>
-      <p style={{ margin: "12px 0 0", color: "#AEB9D0", lineHeight: 1.75, fontSize: "15px" }}>{text}</p>
+    <div className="feature-card">
+      <div
+        className="feature-icon"
+        style={{
+          color: accent,
+          background: `${accent}14`,
+          border: `1px solid ${accent}24`,
+        }}
+      >
+        {icon}
+      </div>
+      <h3>{title}</h3>
+      <p>{body}</p>
     </div>
   );
 }
@@ -925,995 +1469,15 @@ const pageStyle: CSSProperties = {
   minHeight: "100vh",
   position: "relative",
   overflow: "hidden",
-  color: "#F7F9FC",
+  color: "#f7f8ff",
   background:
-    "radial-gradient(circle at top, rgba(32, 42, 92, 0.42), transparent 26%), radial-gradient(circle at 86% 18%, rgba(255, 91, 147, 0.18), transparent 18%), linear-gradient(180deg, #06080E 0%, #090B12 48%, #06070D 100%)",
-  fontFamily: '"Space Grotesk", "Aptos", "Segoe UI", sans-serif',
+    "radial-gradient(circle at top, rgba(46, 20, 38, 0.34), transparent 22%), radial-gradient(circle at 84% 16%, rgba(124, 108, 255, 0.12), transparent 18%), linear-gradient(180deg, #07060B 0%, #09060D 22%, #06070B 100%)",
 };
 
-const logoBadgeStyle: CSSProperties = {
-  width: "44px",
-  height: "44px",
-  borderRadius: "14px",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  fontWeight: 900,
-  fontSize: "18px",
-  color: "#FFFFFF",
-  background:
-    "linear-gradient(135deg, rgba(122, 110, 255, 0.98), rgba(255, 93, 156, 0.96))",
-  boxShadow: "0 14px 30px rgba(91, 108, 255, 0.24)",
-  position: "relative",
-};
-
-const navGhostStyle: CSSProperties = {
-  textDecoration: "none",
-  color: "#D5DDF0",
-  padding: "10px 14px",
-  borderRadius: "14px",
-  border: "1px solid rgba(255,255,255,0.08)",
-  background: "rgba(255,255,255,0.03)",
-};
-
-const navPrimaryStyle: CSSProperties = {
-  ...navGhostStyle,
-  color: "#FFFFFF",
-  border: "1px solid rgba(123, 108, 255, 0.34)",
-  background:
-    "linear-gradient(135deg, rgba(123, 108, 255, 0.24), rgba(255, 93, 156, 0.20))",
-  boxShadow: "0 16px 28px rgba(103, 102, 255, 0.18)",
-  fontWeight: 800,
-};
-
-const heroTitleStyle: CSSProperties = {
-  margin: "18px 0 0",
-  fontSize: "clamp(44px, 7vw, 84px)",
-  lineHeight: 0.92,
-  letterSpacing: "-0.07em",
-  fontWeight: 950,
-  maxWidth: "780px",
-};
-
-const heroBodyStyle: CSSProperties = {
-  marginTop: "22px",
-  maxWidth: "640px",
-  color: "#B9C5D9",
-  fontSize: "18px",
-  lineHeight: 1.85,
-};
-
-const ctaMainStyle: CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  gap: "10px",
-  minHeight: "56px",
-  padding: "0 22px",
-  textDecoration: "none",
-  borderRadius: "16px",
-  color: "#FFFFFF",
-  fontWeight: 900,
-  border: "1px solid rgba(123, 108, 255, 0.36)",
-  background:
-    "linear-gradient(135deg, rgba(123, 108, 255, 0.34), rgba(255, 93, 156, 0.30))",
-  boxShadow: "0 18px 34px rgba(103, 102, 255, 0.22)",
-};
-
-const ctaSecondaryStyle: CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  minHeight: "56px",
-  padding: "0 22px",
-  textDecoration: "none",
-  borderRadius: "16px",
-  color: "#DCE4F4",
-  fontWeight: 800,
-  border: "1px solid rgba(255,255,255,0.10)",
-  background: "rgba(255,255,255,0.03)",
-};
-
-const microChipStyle: CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  gap: "8px",
-  padding: "10px 12px",
-  borderRadius: "999px",
-  border: "1px solid rgba(255,255,255,0.08)",
-  background: "rgba(255,255,255,0.03)",
-  color: "#D3DDEE",
-  fontSize: "13px",
-  fontWeight: 700,
-};
-
-const metricCardStyle: CSSProperties = {
-  borderRadius: "20px",
-  padding: "18px",
-  background: "linear-gradient(180deg, rgba(15, 18, 29, 0.96), rgba(11, 13, 22, 0.98))",
-  border: "1px solid rgba(255,255,255,0.07)",
-  boxShadow: "0 18px 34px rgba(0,0,0,0.18)",
-};
-
-const mockupFrameStyle: CSSProperties = {
-  position: "relative",
-  padding: "18px",
-  borderRadius: "32px",
-  background:
-    "linear-gradient(180deg, rgba(14, 17, 28, 0.96), rgba(9, 11, 19, 0.98))",
-  border: "1px solid rgba(255,255,255,0.08)",
-  boxShadow: "0 34px 70px rgba(0,0,0,0.34)",
-  overflow: "hidden",
-};
-
-const mockupInnerFrameStyle: CSSProperties = {
+const previewGlowStyle: CSSProperties = {
   position: "absolute",
-  inset: "10px",
-  borderRadius: "24px",
-  border: "1px solid rgba(255,255,255,0.05)",
-  boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04)",
+  inset: "-24px",
+  background:
+    "radial-gradient(circle at 18% 18%, rgba(124, 108, 255, 0.28), transparent 32%), radial-gradient(circle at 84% 20%, rgba(255, 110, 168, 0.16), transparent 28%)",
   pointerEvents: "none",
-};
-
-const mockupGlowStyle: CSSProperties = {
-  position: "absolute",
-  inset: "-30px",
-  background:
-    "radial-gradient(circle at 18% 20%, rgba(122, 110, 255, 0.26), transparent 34%), radial-gradient(circle at 82% 16%, rgba(255, 93, 156, 0.18), transparent 28%)",
-  pointerEvents: "none",
-};
-
-const browserBarStyle: CSSProperties = {
-  display: "flex",
-  flexWrap: "wrap",
-  gap: "12px",
-  alignItems: "center",
-  padding: "0 2px 14px",
-};
-
-const browserUrlStyle: CSSProperties = {
-  flex: "1 1 190px",
-  minWidth: 0,
-  minHeight: "38px",
-  borderRadius: "12px",
-  border: "1px solid rgba(255,255,255,0.08)",
-  background: "rgba(255,255,255,0.03)",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  color: "#8F9CB7",
-  fontSize: "13px",
-  padding: "0 12px",
-  textAlign: "center",
-};
-
-const liveBadgeStyle: CSSProperties = {
-  minHeight: "38px",
-  borderRadius: "12px",
-  border: "1px solid rgba(69, 212, 131, 0.18)",
-  background: "rgba(69, 212, 131, 0.08)",
-  color: "#9CF5BE",
-  padding: "0 12px",
-  display: "inline-flex",
-  alignItems: "center",
-  gap: "8px",
-  fontSize: "13px",
-  fontWeight: 700,
-};
-
-const liveDotStyle: CSSProperties = {
-  width: "8px",
-  height: "8px",
-  borderRadius: "999px",
-  background: "#45D483",
-  boxShadow: "0 0 0 4px rgba(69,212,131,0.14)",
-};
-
-const profilePanelStyle: CSSProperties = {
-  position: "relative",
-  borderRadius: "24px",
-  overflow: "hidden",
-  background:
-    "linear-gradient(180deg, rgba(10, 13, 24, 0.98), rgba(7, 10, 18, 0.98))",
-  border: "1px solid rgba(255,255,255,0.06)",
-  boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04), 0 24px 48px rgba(2, 6, 16, 0.32)",
-};
-
-const profilePanelEdgeStyle: CSSProperties = {
-  position: "absolute",
-  inset: 0,
-  background:
-    "radial-gradient(circle at top, rgba(126, 160, 255, 0.12), transparent 28%), linear-gradient(180deg, rgba(255,255,255,0.04), transparent 18%)",
-  pointerEvents: "none",
-};
-
-const bannerStyle: CSSProperties = {
-  position: "relative",
-  minHeight: "214px",
-  padding: "18px 18px 24px",
-  background:
-    "linear-gradient(180deg, rgba(18, 23, 38, 0.98) 0%, rgba(13, 16, 27, 1) 100%)",
-  display: "flex",
-  flexDirection: "column",
-  gap: "18px",
-  justifyContent: "space-between",
-  overflow: "hidden",
-};
-
-const bannerDepthLayerStyle: CSSProperties = {
-  position: "absolute",
-  inset: 0,
-  background:
-    "radial-gradient(circle at 20% 20%, rgba(91, 108, 255, 0.32), transparent 26%), radial-gradient(circle at 84% 18%, rgba(255, 90, 139, 0.22), transparent 22%), linear-gradient(180deg, rgba(24, 30, 49, 0.28) 0%, rgba(7, 10, 19, 0.12) 48%, rgba(4, 6, 12, 0.64) 100%)",
-  pointerEvents: "none",
-};
-
-const bannerGridStyle: CSSProperties = {
-  position: "absolute",
-  inset: 0,
-  backgroundImage:
-    "linear-gradient(rgba(86, 116, 255, 0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(86, 116, 255, 0.08) 1px, transparent 1px)",
-  backgroundSize: "38px 38px",
-  maskImage: "linear-gradient(180deg, rgba(0,0,0,0.78), rgba(0,0,0,0.12))",
-  opacity: 0.24,
-};
-
-const bannerAccentStyle: CSSProperties = {
-  position: "absolute",
-  right: "-24px",
-  top: "-34px",
-  width: "210px",
-  height: "210px",
-  borderRadius: "999px",
-  background:
-    "radial-gradient(circle, rgba(112, 139, 255, 0.24) 0%, rgba(112, 139, 255, 0.08) 42%, rgba(112, 139, 255, 0) 72%)",
-  filter: "blur(12px)",
-  pointerEvents: "none",
-};
-
-const bannerAccentSecondaryStyle: CSSProperties = {
-  position: "absolute",
-  left: "-34px",
-  bottom: "-60px",
-  width: "220px",
-  height: "160px",
-  borderRadius: "999px",
-  background:
-    "radial-gradient(circle, rgba(255, 94, 156, 0.22) 0%, rgba(255, 94, 156, 0.06) 42%, rgba(255, 94, 156, 0) 74%)",
-  filter: "blur(18px)",
-  pointerEvents: "none",
-};
-
-const bannerTopRowStyle: CSSProperties = {
-  position: "relative",
-  zIndex: 1,
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "space-between",
-  gap: "10px",
-  flexWrap: "wrap",
-};
-
-const bannerContentStyle: CSSProperties = {
-  position: "relative",
-  zIndex: 1,
-  display: "grid",
-  gap: "14px",
-  width: "min(100%, 320px)",
-};
-
-const bannerMessageCardStyle: CSSProperties = {
-  padding: "16px 16px 15px",
-  borderRadius: "20px",
-  border: "1px solid rgba(255,255,255,0.08)",
-  background:
-    "linear-gradient(180deg, rgba(9, 13, 24, 0.88), rgba(12, 16, 28, 0.68))",
-  boxShadow: "0 18px 30px rgba(3, 7, 19, 0.24)",
-};
-
-const bannerMessageEyebrowStyle: CSSProperties = {
-  color: "#A5B8FF",
-  fontSize: "11px",
-  fontWeight: 800,
-  textTransform: "uppercase",
-  letterSpacing: "0.14em",
-};
-
-const bannerMessageTitleStyle: CSSProperties = {
-  marginTop: "10px",
-  fontSize: "20px",
-  lineHeight: 1.15,
-  fontWeight: 900,
-  letterSpacing: "-0.04em",
-  maxWidth: "260px",
-};
-
-const bannerMessageBodyStyle: CSSProperties = {
-  marginTop: "8px",
-  color: "#CBD6EB",
-  fontSize: "13px",
-  lineHeight: 1.55,
-};
-
-const bannerStatsRowStyle: CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-  gap: "10px",
-};
-
-const bannerStatCardStyle: CSSProperties = {
-  display: "grid",
-  gap: "4px",
-  padding: "12px 14px",
-  borderRadius: "18px",
-  border: "1px solid rgba(255,255,255,0.08)",
-  background: "rgba(7, 11, 20, 0.76)",
-  boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04)",
-};
-
-const bannerSceneStyle: CSSProperties = {
-  zIndex: 0,
-};
-
-const bannerNeonFloorStyle: CSSProperties = {
-  position: "absolute",
-  left: "10px",
-  right: "12px",
-  bottom: "0",
-  height: "42px",
-  borderRadius: "24px 24px 0 0",
-  background:
-    "linear-gradient(180deg, rgba(28, 36, 60, 0), rgba(14, 18, 31, 0.72) 36%, rgba(7, 10, 19, 0.96) 100%)",
-  boxShadow: "0 -1px 0 rgba(125, 143, 255, 0.10)",
-};
-
-const bannerDeskStyle: CSSProperties = {
-  position: "absolute",
-  left: "26px",
-  right: "8px",
-  bottom: "32px",
-  height: "14px",
-  borderRadius: "12px",
-  background:
-    "linear-gradient(90deg, rgba(45, 58, 96, 0.86), rgba(20, 24, 38, 0.96) 48%, rgba(255, 90, 139, 0.34) 100%)",
-  boxShadow: "0 0 18px rgba(91, 108, 255, 0.12)",
-};
-
-const bannerMonitorPrimaryStyle: CSSProperties = {
-  position: "absolute",
-  right: "34px",
-  bottom: "50px",
-  width: "92px",
-  height: "54px",
-  borderRadius: "14px",
-  border: "1px solid rgba(152, 172, 255, 0.26)",
-  background:
-    "linear-gradient(135deg, rgba(89, 114, 255, 0.44), rgba(18, 24, 42, 0.94) 52%, rgba(255, 89, 141, 0.28) 100%)",
-  boxShadow: "0 0 22px rgba(91, 108, 255, 0.18)",
-};
-
-const bannerMonitorSecondaryStyle: CSSProperties = {
-  position: "absolute",
-  right: "118px",
-  bottom: "58px",
-  width: "58px",
-  height: "42px",
-  borderRadius: "12px",
-  border: "1px solid rgba(255,255,255,0.10)",
-  background:
-    "linear-gradient(135deg, rgba(255, 90, 139, 0.24), rgba(14, 18, 32, 0.94) 60%, rgba(90, 178, 255, 0.20) 100%)",
-};
-
-const bannerVerticalLightStyle: CSSProperties = {
-  position: "absolute",
-  right: "14px",
-  bottom: "44px",
-  width: "6px",
-  height: "86px",
-  borderRadius: "999px",
-  background: "linear-gradient(180deg, rgba(91, 108, 255, 0.10), rgba(91, 108, 255, 0.82))",
-  boxShadow: "0 0 18px rgba(91, 108, 255, 0.34)",
-};
-
-const bannerSilhouetteStyle: CSSProperties = {
-  position: "absolute",
-  right: "88px",
-  bottom: "34px",
-  width: "34px",
-  height: "74px",
-  borderRadius: "20px 20px 14px 14px",
-  background:
-    "linear-gradient(180deg, rgba(10, 13, 24, 0.42) 0%, rgba(5, 7, 12, 0.96) 34%, rgba(7, 9, 15, 1) 100%)",
-  boxShadow: "0 0 24px rgba(255, 90, 139, 0.12)",
-};
-
-const bannerChairStyle: CSSProperties = {
-  position: "absolute",
-  right: "70px",
-  bottom: "24px",
-  width: "56px",
-  height: "72px",
-  borderRadius: "24px 24px 14px 14px",
-  background:
-    "linear-gradient(180deg, rgba(26, 33, 58, 0.94), rgba(13, 16, 27, 1) 74%)",
-  opacity: 0.9,
-};
-
-const profileBodyStyle: CSSProperties = {
-  padding: "0 18px 18px",
-  marginTop: "-38px",
-  position: "relative",
-  zIndex: 2,
-  display: "grid",
-  gap: "18px",
-};
-
-const identityRowStyle: CSSProperties = {
-  position: "relative",
-};
-
-const avatarShellStyle: CSSProperties = {
-  position: "relative",
-  width: "108px",
-  height: "108px",
-  flexShrink: 0,
-};
-
-const avatarGlowRingStyle: CSSProperties = {
-  position: "absolute",
-  inset: "-9px",
-  borderRadius: "999px",
-  border: "1px solid rgba(144, 168, 255, 0.42)",
-  boxShadow:
-    "0 0 0 7px rgba(10, 13, 22, 0.88), 0 0 42px rgba(97, 118, 255, 0.18)",
-};
-
-const avatarAuraStyle: CSSProperties = {
-  position: "absolute",
-  inset: "4px",
-  borderRadius: "999px",
-  background:
-    "radial-gradient(circle, rgba(255, 95, 155, 0.24) 0%, rgba(123, 108, 255, 0.16) 44%, rgba(123, 108, 255, 0) 74%)",
-  transform: "scale(1.16)",
-  pointerEvents: "none",
-  filter: "blur(8px)",
-};
-
-const avatarCoreStyle: CSSProperties = {
-  position: "relative",
-  width: "108px",
-  height: "108px",
-  borderRadius: "999px",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  overflow: "hidden",
-  border: "1px solid rgba(255,255,255,0.18)",
-  background:
-    "radial-gradient(circle at 26% 24%, rgba(255,255,255,0.34), transparent 22%), linear-gradient(145deg, rgba(255, 94, 156, 0.98) 0%, rgba(122, 111, 255, 1) 62%, rgba(67, 135, 255, 0.96) 100%)",
-  boxShadow: "0 22px 40px rgba(94, 88, 255, 0.22)",
-};
-
-const avatarShineStyle: CSSProperties = {
-  position: "absolute",
-  inset: "8px",
-  borderRadius: "999px",
-  background:
-    "linear-gradient(180deg, rgba(255,255,255,0.24), rgba(255,255,255,0) 42%)",
-  opacity: 0.8,
-};
-
-const avatarMonogramRingStyle: CSSProperties = {
-  position: "absolute",
-  inset: "11px",
-  borderRadius: "999px",
-  border: "1px solid rgba(255,255,255,0.18)",
-};
-
-const avatarLetterStyle: CSSProperties = {
-  position: "relative",
-  zIndex: 1,
-  fontSize: "28px",
-  fontWeight: 900,
-  letterSpacing: "0.08em",
-  color: "#FFFFFF",
-  textShadow: "0 10px 24px rgba(15, 19, 42, 0.28)",
-};
-
-const avatarOnlineBadgeStyle: CSSProperties = {
-  position: "absolute",
-  right: "-2px",
-  bottom: "2px",
-  width: "24px",
-  height: "24px",
-  borderRadius: "999px",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  background: "#0B101B",
-  border: "1px solid rgba(255,255,255,0.10)",
-  boxShadow: "0 10px 18px rgba(0,0,0,0.24)",
-};
-
-const avatarOnlineDotStyle: CSSProperties = {
-  width: "10px",
-  height: "10px",
-  borderRadius: "999px",
-  background: "#45D483",
-  boxShadow: "0 0 0 4px rgba(69,212,131,0.12)",
-};
-
-const profileIntroStyle: CSSProperties = {
-  minWidth: 0,
-};
-
-const profileNameRowStyle: CSSProperties = {
-  display: "flex",
-  alignItems: "flex-start",
-  justifyContent: "space-between",
-  gap: "12px",
-  flexWrap: "wrap",
-};
-
-const profileNameStyle: CSSProperties = {
-  margin: 0,
-  fontSize: "30px",
-  lineHeight: 0.95,
-  letterSpacing: "-0.05em",
-};
-
-const profileHandleRowStyle: CSSProperties = {
-  marginTop: "10px",
-  display: "flex",
-  alignItems: "center",
-  gap: "10px",
-  flexWrap: "wrap",
-  color: "#9CA9C3",
-  fontSize: "13px",
-};
-
-const profileFeaturedPillStyle: CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  gap: "7px",
-  minHeight: "34px",
-  padding: "0 12px",
-  borderRadius: "999px",
-  border: "1px solid rgba(255,255,255,0.08)",
-  background: "rgba(255,255,255,0.05)",
-  color: "#E8EEF8",
-  fontSize: "12px",
-  fontWeight: 800,
-};
-
-const profileBioStyle: CSSProperties = {
-  margin: "14px 0 0",
-  color: "#C5CFDF",
-  lineHeight: 1.68,
-  fontSize: "14px",
-  maxWidth: "440px",
-};
-
-const verifiedChipStyle: CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  gap: "6px",
-  borderRadius: "999px",
-  padding: "7px 10px",
-  background: "rgba(90, 178, 255, 0.12)",
-  border: "1px solid rgba(90, 178, 255, 0.18)",
-  color: "#A9DBFF",
-  fontSize: "12px",
-  fontWeight: 800,
-};
-
-const premiumChipStyle: CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  gap: "6px",
-  borderRadius: "999px",
-  padding: "7px 10px",
-  background: "rgba(255, 197, 82, 0.10)",
-  border: "1px solid rgba(255, 197, 82, 0.18)",
-  color: "#FFD979",
-  fontSize: "12px",
-  fontWeight: 800,
-};
-
-const liveProfileChipStyle: CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  gap: "6px",
-  borderRadius: "999px",
-  minHeight: "28px",
-  padding: "0 10px",
-  background: "rgba(69, 212, 131, 0.10)",
-  border: "1px solid rgba(69, 212, 131, 0.18)",
-  color: "#9CF5BE",
-  fontSize: "11px",
-  fontWeight: 800,
-};
-
-const onlineBadgeStyle: CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  gap: "6px",
-  borderRadius: "999px",
-  padding: "7px 10px",
-  background: "rgba(69, 212, 131, 0.10)",
-  border: "1px solid rgba(69, 212, 131, 0.18)",
-  color: "#9CF5BE",
-  fontSize: "12px",
-  fontWeight: 800,
-};
-
-const liveProfileDotStyle: CSSProperties = {
-  width: "7px",
-  height: "7px",
-  borderRadius: "999px",
-  background: "#45D483",
-};
-
-const profileLinksGridStyle: CSSProperties = {
-  alignItems: "stretch",
-};
-
-const platformHandleStyle: CSSProperties = {
-  marginTop: "6px",
-  color: "#8B98B4",
-  fontSize: "13px",
-  overflow: "hidden",
-  textOverflow: "ellipsis",
-  whiteSpace: "nowrap",
-};
-
-const platformArrowStyle: CSSProperties = {
-  width: "34px",
-  height: "34px",
-  borderRadius: "12px",
-  border: "1px solid rgba(255,255,255,0.08)",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  color: "#E8EDF7",
-  background: "rgba(255,255,255,0.03)",
-  flexShrink: 0,
-};
-
-const sectionTitleStyle: CSSProperties = {
-  margin: "16px 0 0",
-  fontSize: "clamp(32px, 5vw, 56px)",
-  lineHeight: 1,
-  letterSpacing: "-0.05em",
-};
-
-const sectionBodyStyle: CSSProperties = {
-  margin: "14px auto 0",
-  maxWidth: "760px",
-  color: "#B5C0D6",
-  fontSize: "17px",
-  lineHeight: 1.8,
-};
-
-const secondaryPanelStyle: CSSProperties = {
-  borderRadius: "28px",
-  padding: "24px",
-  background: "linear-gradient(180deg, rgba(15, 18, 29, 0.96), rgba(10, 12, 21, 0.98))",
-  border: "1px solid rgba(255,255,255,0.07)",
-  boxShadow: "0 24px 46px rgba(0,0,0,0.24)",
-};
-
-const panelTextStyle: CSSProperties = {
-  marginTop: "16px",
-  color: "#BAC6DA",
-  lineHeight: 1.8,
-  fontSize: "16px",
-};
-
-const listRowStyle: CSSProperties = {
-  display: "flex",
-  alignItems: "center",
-  gap: "12px",
-  color: "#E7EDF7",
-};
-
-const listBulletStyle: CSSProperties = {
-  width: "26px",
-  height: "26px",
-  borderRadius: "999px",
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  background: "rgba(255, 93, 156, 0.10)",
-  border: "1px solid rgba(255, 93, 156, 0.16)",
-  color: "#FF91C2",
-  fontWeight: 900,
-  flexShrink: 0,
-};
-
-const stackCardStyle: CSSProperties = {
-  borderRadius: "18px",
-  padding: "18px",
-  background: "rgba(255,255,255,0.03)",
-  border: "1px solid rgba(255,255,255,0.06)",
-};
-
-const finalCtaStyle: CSSProperties = {
-  position: "relative",
-  overflow: "hidden",
-  borderRadius: "32px",
-  padding: "36px 26px",
-  textAlign: "center",
-  background:
-    "linear-gradient(135deg, rgba(17, 21, 34, 0.98), rgba(18, 14, 29, 0.96) 54%, rgba(11, 14, 24, 0.98) 100%)",
-  border: "1px solid rgba(255,255,255,0.08)",
-  boxShadow: "0 28px 56px rgba(0,0,0,0.28)",
-};
-
-const finalGlowStyle: CSSProperties = {
-  position: "absolute",
-  inset: 0,
-  background:
-    "radial-gradient(circle at 18% 18%, rgba(123, 108, 255, 0.22), transparent 28%), radial-gradient(circle at 84% 24%, rgba(255, 93, 156, 0.18), transparent 24%)",
-  pointerEvents: "none",
-};
-
-function eyebrowStyle(accent: string): CSSProperties {
-  return {
-    display: "inline-flex",
-    alignItems: "center",
-    gap: "8px",
-    padding: "10px 14px",
-    borderRadius: "999px",
-    color: accent,
-    background: `${accent}14`,
-    border: `1px solid ${accent}24`,
-    fontWeight: 800,
-    fontSize: "13px",
-  };
-}
-
-function platformCardStyle(accent: string): CSSProperties {
-  return {
-    display: "flex",
-    alignItems: "center",
-    gap: "14px",
-    padding: "14px",
-    borderRadius: "18px",
-    background:
-      "linear-gradient(180deg, rgba(18, 22, 34, 0.98), rgba(12, 15, 24, 1))",
-    border: `1px solid ${accent}22`,
-    boxShadow: `0 18px 26px ${accent}10`,
-  };
-}
-
-function platformButtonStyle(accent: string): CSSProperties {
-  return {
-    ...platformCardStyle(accent),
-    width: "100%",
-    minHeight: "88px",
-    alignItems: "center",
-    textAlign: "left",
-    appearance: "none",
-    cursor: "pointer",
-  };
-}
-
-function platformIconWrapStyle(accent: string): CSSProperties {
-  return {
-    width: "44px",
-    height: "44px",
-    borderRadius: "14px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    color: accent,
-    background: `${accent}14`,
-    border: `1px solid ${accent}2A`,
-    flexShrink: 0,
-  };
-}
-
-function platformMetaStyle(accent: string): CSSProperties {
-  return {
-    display: "inline-flex",
-    alignItems: "center",
-    borderRadius: "999px",
-    padding: "5px 9px",
-    background: `${accent}12`,
-    border: `1px solid ${accent}22`,
-    color: accent,
-    fontSize: "11px",
-    fontWeight: 800,
-    textTransform: "uppercase",
-    letterSpacing: "0.04em",
-  };
-}
-
-function panelChipStyle(background: string, color: string): CSSProperties {
-  return {
-    display: "inline-flex",
-    alignItems: "center",
-    minHeight: "30px",
-    padding: "0 12px",
-    borderRadius: "999px",
-    background,
-    color,
-    border: "1px solid rgba(255,255,255,0.08)",
-    fontSize: "12px",
-    fontWeight: 800,
-    letterSpacing: "0.03em",
-  };
-}
-
-function profileTagStyle(background: string, color: string): CSSProperties {
-  return {
-    display: "inline-flex",
-    alignItems: "center",
-    minHeight: "34px",
-    padding: "0 12px",
-    borderRadius: "999px",
-    background,
-    color,
-    border: "1px solid rgba(255,255,255,0.06)",
-    fontSize: "12px",
-    fontWeight: 800,
-  };
-}
-
-function featureCardStyle(accent: string): CSSProperties {
-  return {
-    height: "100%",
-    borderRadius: "26px",
-    padding: "22px",
-    background:
-      "linear-gradient(180deg, rgba(14, 17, 28, 0.96), rgba(9, 11, 18, 0.98))",
-    border: `1px solid ${accent}24`,
-    boxShadow: `0 18px 34px ${accent}0D`,
-    position: "relative",
-    overflow: "hidden",
-  };
-}
-
-function featureIconStyle(accent: string): CSSProperties {
-  return {
-    width: "48px",
-    height: "48px",
-    borderRadius: "16px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    color: accent,
-    background: `${accent}16`,
-    border: `1px solid ${accent}2A`,
-    boxShadow: `0 12px 24px ${accent}14`,
-  };
-}
-
-function browserDotStyle(color: string): CSSProperties {
-  return {
-    width: "10px",
-    height: "10px",
-    borderRadius: "999px",
-    background: color,
-    display: "inline-block",
-  };
-}
-
-function orbStyle(style: CSSProperties): CSSProperties {
-  return {
-    position: "absolute",
-    pointerEvents: "none",
-    filter: "blur(22px)",
-    opacity: 0.9,
-    ...style,
-  };
-}
-
-function linkCardVariants(accent: string): Variants {
-  return {
-    rest: {
-      y: 0,
-      scale: 1,
-      boxShadow: `0 18px 26px ${accent}10`,
-      borderColor: `${accent}22`,
-    },
-    hover: {
-      y: -4,
-      scale: 1.01,
-      boxShadow: `0 22px 34px ${accent}18`,
-      borderColor: `${accent}3A`,
-      transition: {
-        duration: 0.18,
-      },
-    },
-    press: {
-      y: 0,
-      scale: 0.988,
-      boxShadow: `0 12px 20px ${accent}10`,
-      transition: {
-        duration: 0.12,
-      },
-    },
-  };
-}
-
-function linkIconVariants(accent: string): Variants {
-  return {
-    rest: {
-      scale: 1,
-      rotate: 0,
-      boxShadow: `0 0 0 ${accent}00`,
-    },
-    hover: {
-      scale: 1.08,
-      rotate: -6,
-      boxShadow: `0 12px 24px ${accent}16`,
-      transition: {
-        duration: 0.18,
-      },
-    },
-    press: {
-      scale: 0.96,
-      rotate: 0,
-      transition: {
-        duration: 0.12,
-      },
-    },
-  };
-}
-
-const linkArrowVariants: Variants = {
-  rest: {
-    x: 0,
-    opacity: 0.8,
-  },
-  hover: {
-    x: 3,
-    opacity: 1,
-    transition: {
-      duration: 0.18,
-    },
-  },
-  press: {
-    x: 1,
-    transition: {
-      duration: 0.12,
-    },
-  },
-};
-
-const presenceIndicatorStyle: CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  gap: "8px",
-  minHeight: "34px",
-  padding: "0 12px",
-  borderRadius: "999px",
-  background: "rgba(6, 9, 17, 0.54)",
-  border: "1px solid rgba(255,255,255,0.08)",
-  color: "#D9E5F7",
-  fontSize: "12px",
-  fontWeight: 700,
-};
-
-const presenceDotStyle: CSSProperties = {
-  width: "8px",
-  height: "8px",
-  borderRadius: "999px",
-  background: "#45D483",
-};
-
-const viewsChipStyle: CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  gap: "7px",
-  minHeight: "34px",
-  padding: "0 12px",
-  borderRadius: "999px",
-  background: "rgba(255, 255, 255, 0.05)",
-  border: "1px solid rgba(255,255,255,0.08)",
-  color: "#E8EDF7",
-  fontSize: "12px",
-  fontWeight: 700,
 };

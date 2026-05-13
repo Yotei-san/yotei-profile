@@ -1,6 +1,17 @@
 "use client";
 
+import type { CSSProperties, DragEvent, PointerEvent, ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
+import {
+  PROFILE_BANNER_ACCEPT,
+  PROFILE_BANNER_VIDEO_MAX_BYTES,
+  PROFILE_BANNER_VIDEO_MIME_TYPES,
+  PROFILE_IMAGE_ACCEPT,
+  PROFILE_IMAGE_MAX_BYTES,
+  PROFILE_IMAGE_MIME_TYPES,
+  formatBytes,
+  getMediaKind,
+} from "@/app/lib/profile-media";
 
 type Props = {
   type: "avatar" | "banner";
@@ -33,6 +44,7 @@ export default function ProfileMediaUploader({
 
   const [sourceUrl, setSourceUrl] = useState<string | null>(null);
   const [sourceMime, setSourceMime] = useState<string | null>(null);
+  const [sourceFile, setSourceFile] = useState<File | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isDraggingFile, setIsDraggingFile] = useState(false);
@@ -45,10 +57,19 @@ export default function ProfileMediaUploader({
     offsetY: 0,
   });
 
-  const activePreview = sourceUrl || currentUrl || "";
   const accent = themeColor || "#f472b6";
   const isAvatar = type === "avatar";
-
+  const activePreview = sourceUrl || currentUrl || "";
+  const currentKind = getMediaKind(currentUrl || "");
+  const sourceKind = sourceMime
+    ? sourceMime.startsWith("video/")
+      ? "video"
+      : "image"
+    : sourceUrl
+      ? getMediaKind(sourceUrl)
+      : "unknown";
+  const activePreviewKind = sourceUrl ? sourceKind : currentKind;
+  const isVideoBannerPreview = !isAvatar && activePreviewKind === "video";
   useEffect(() => {
     return () => {
       if (sourceUrl?.startsWith("blob:")) {
@@ -74,8 +95,10 @@ export default function ProfileMediaUploader({
     if (sourceUrl?.startsWith("blob:")) {
       URL.revokeObjectURL(sourceUrl);
     }
+
     setSourceUrl(null);
     setSourceMime(null);
+    setSourceFile(null);
     setCrop({
       zoom: 1,
       offsetX: 0,
@@ -88,8 +111,37 @@ export default function ProfileMediaUploader({
   async function onPickFile(file: File | null) {
     if (!file) return;
 
-    if (!file.type.startsWith("image/")) {
-      setError("Escolha uma imagem válida.");
+    const mimeType = file.type.toLowerCase();
+    const isImage = PROFILE_IMAGE_MIME_TYPES.includes(
+      mimeType as (typeof PROFILE_IMAGE_MIME_TYPES)[number]
+    );
+    const isVideo =
+      !isAvatar &&
+      PROFILE_BANNER_VIDEO_MIME_TYPES.includes(
+        mimeType as (typeof PROFILE_BANNER_VIDEO_MIME_TYPES)[number]
+      );
+
+    if (!isImage && !isVideo) {
+      setError(
+        isAvatar
+          ? "Avatar aceita apenas PNG, JPG, WEBP ou GIF."
+          : "Banner aceita imagem, GIF ou video MP4/WebM/MOV."
+      );
+      return;
+    }
+
+    const maxSize = isVideo ? PROFILE_BANNER_VIDEO_MAX_BYTES : PROFILE_IMAGE_MAX_BYTES;
+
+    if (file.size > maxSize) {
+      setError(
+        isVideo
+          ? `Video muito grande. O limite do banner em video e ${formatBytes(
+              PROFILE_BANNER_VIDEO_MAX_BYTES
+            )}.`
+          : `Arquivo muito grande. O limite para imagem e ${formatBytes(
+              PROFILE_IMAGE_MAX_BYTES
+            )}.`
+      );
       return;
     }
 
@@ -100,6 +152,7 @@ export default function ProfileMediaUploader({
     const localUrl = URL.createObjectURL(file);
     setSourceUrl(localUrl);
     setSourceMime(file.type);
+    setSourceFile(file);
     setCrop({
       zoom: 1,
       offsetX: 0,
@@ -109,24 +162,26 @@ export default function ProfileMediaUploader({
     setError(null);
   }
 
-  function onDropzoneDragOver(e: React.DragEvent<HTMLDivElement>) {
+  function onDropzoneDragOver(e: DragEvent<HTMLDivElement>) {
     e.preventDefault();
     setIsDraggingFile(true);
   }
 
-  function onDropzoneDragLeave(e: React.DragEvent<HTMLDivElement>) {
+  function onDropzoneDragLeave(e: DragEvent<HTMLDivElement>) {
     e.preventDefault();
     setIsDraggingFile(false);
   }
 
-  async function onDropzoneDrop(e: React.DragEvent<HTMLDivElement>) {
+  async function onDropzoneDrop(e: DragEvent<HTMLDivElement>) {
     e.preventDefault();
     setIsDraggingFile(false);
     const file = e.dataTransfer.files?.[0] ?? null;
     await onPickFile(file);
   }
 
-  function onPointerDown(e: React.PointerEvent<HTMLDivElement>) {
+  function onPointerDown(e: PointerEvent<HTMLDivElement>) {
+    if (isVideoBannerPreview) return;
+
     dragRef.current = {
       startX: e.clientX,
       startY: e.clientY,
@@ -136,8 +191,8 @@ export default function ProfileMediaUploader({
     e.currentTarget.setPointerCapture(e.pointerId);
   }
 
-  function onPointerMove(e: React.PointerEvent<HTMLDivElement>) {
-    if (!dragRef.current) return;
+  function onPointerMove(e: PointerEvent<HTMLDivElement>) {
+    if (!dragRef.current || isVideoBannerPreview) return;
 
     const dx = e.clientX - dragRef.current.startX;
     const dy = e.clientY - dragRef.current.startY;
@@ -167,19 +222,19 @@ export default function ProfileMediaUploader({
       });
 
       if (!res.ok) {
-        throw new Error("Falha ao remover mídia.");
+        throw new Error("Falha ao remover media.");
       }
 
       window.location.reload();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Falha ao remover mídia.");
+      setError(err instanceof Error ? err.message : "Falha ao remover media.");
     } finally {
       setIsSaving(false);
     }
   }
 
   async function uploadEdited() {
-    if (!sourceUrl) return;
+    if (!sourceUrl || !sourceFile) return;
 
     setIsUploading(true);
     setUploadProgress(8);
@@ -187,17 +242,11 @@ export default function ProfileMediaUploader({
 
     try {
       let fileToUpload: File;
+      const isVideo = sourceFile.type.startsWith("video/");
 
-      const sourceResponse = await fetch(sourceUrl);
-      const originalBlob = await sourceResponse.blob();
-      const isGif = originalBlob.type === "image/gif";
-
-      setUploadProgress(18);
-
-      if (isGif) {
-        fileToUpload = new File([originalBlob], `${type}-${Date.now()}.gif`, {
-          type: "image/gif",
-        });
+      if (isVideo || sourceFile.type === "image/gif") {
+        fileToUpload = sourceFile;
+        setUploadProgress(28);
       } else {
         const croppedBlob = await renderCroppedBlob(sourceUrl, type, crop);
         setUploadProgress(38);
@@ -209,6 +258,7 @@ export default function ProfileMediaUploader({
 
       const uploadForm = new FormData();
       uploadForm.append("file", fileToUpload);
+      uploadForm.append("purpose", isAvatar ? "avatar" : "banner");
 
       const uploadJson = await uploadWithProgress("/api/upload", uploadForm, (progress) => {
         const mapped = 40 + Math.round(progress * 0.45);
@@ -253,7 +303,12 @@ export default function ProfileMediaUploader({
     }));
   }
 
-  const isGif = sourceMime === "image/gif";
+  const accept = isAvatar ? PROFILE_IMAGE_ACCEPT : PROFILE_BANNER_ACCEPT;
+  const dropzoneFormats = isAvatar
+    ? "PNG, JPG, WEBP e GIF"
+    : "PNG, JPG, WEBP, GIF, MP4, WebM e MOV";
+  const uploadActionLabel = isAvatar ? "Salvar imagem" : "Salvar banner";
+  const pickActionLabel = isAvatar ? "Escolher imagem" : "Escolher banner";
 
   return (
     <section
@@ -273,8 +328,13 @@ export default function ProfileMediaUploader({
         <p style={{ color: "#a3a3a3", marginTop: "8px", marginBottom: 0 }}>
           {isAvatar
             ? "Arraste arquivo, enquadre e compare antes e depois."
-            : "Arraste arquivo, ajuste o enquadramento e compare antes e depois."}
+            : "Banners aceitam imagem, GIF ou video MP4/WebM/MOV."}
         </p>
+        {!isAvatar ? (
+          <p style={{ color: "#71717a", marginTop: "8px", marginBottom: 0, fontSize: "13px" }}>
+            Recomendado: video curto, 5-10s, horizontal, ate 30MB.
+          </p>
+        ) : null}
       </div>
 
       <div
@@ -316,20 +376,18 @@ export default function ProfileMediaUploader({
               fontSize: "22px",
             }}
           >
-            ⤴
+            ^
           </div>
 
           <div style={{ fontWeight: 800, fontSize: "16px" }}>
-            Arraste e solte sua imagem aqui
+            {isAvatar ? "Arraste e solte seu avatar aqui" : "Arraste e solte seu banner aqui"}
           </div>
 
           <div style={{ color: "#a3a3a3", fontSize: "14px" }}>
             ou clique para escolher do seu PC
           </div>
 
-          <div style={{ color: "#71717a", fontSize: "12px" }}>
-            PNG, JPG, WEBP e GIF
-          </div>
+          <div style={{ color: "#71717a", fontSize: "12px" }}>{dropzoneFormats}</div>
         </div>
       </div>
 
@@ -352,7 +410,7 @@ export default function ProfileMediaUploader({
               fontWeight: 700,
             }}
           >
-            <span>Enviando imagem</span>
+            <span>{isAvatar ? "Enviando imagem" : "Enviando banner"}</span>
             <span>{uploadProgress}%</span>
           </div>
 
@@ -388,7 +446,7 @@ export default function ProfileMediaUploader({
           {isAvatar ? (
             <AvatarStaticPreview imageUrl={currentUrl || ""} accent={accent} />
           ) : (
-            <BannerStaticPreview imageUrl={currentUrl || ""} accent={accent} />
+            <BannerStaticPreview mediaUrl={currentUrl || ""} accent={accent} />
           )}
         </CompareCard>
 
@@ -405,7 +463,7 @@ export default function ProfileMediaUploader({
             />
           ) : (
             <BannerEditorPreview
-              imageUrl={activePreview}
+              mediaUrl={activePreview}
               crop={crop}
               accent={accent}
               sourceMime={sourceMime}
@@ -417,88 +475,105 @@ export default function ProfileMediaUploader({
         </CompareCard>
       </div>
 
-      <div style={{ display: "grid", gap: "12px" }}>
-        <label style={labelStyle}>
-          Zoom: {crop.zoom.toFixed(2)}x
-          <input
-            type="range"
-            min="1"
-            max="3"
-            step="0.01"
-            value={crop.zoom}
-            onChange={(e) =>
-              setCrop((prev) => ({ ...prev, zoom: Number(e.target.value) }))
-            }
-          />
-        </label>
-
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: "12px",
-          }}
-        >
+      {!isVideoBannerPreview ? (
+        <div style={{ display: "grid", gap: "12px" }}>
           <label style={labelStyle}>
-            Posição X
+            Zoom: {crop.zoom.toFixed(2)}x
             <input
               type="range"
-              min="-240"
-              max="240"
-              step="1"
-              value={crop.offsetX}
+              min="1"
+              max="3"
+              step="0.01"
+              value={crop.zoom}
               onChange={(e) =>
-                setCrop((prev) => ({
-                  ...prev,
-                  offsetX: Number(e.target.value),
-                }))
+                setCrop((prev) => ({ ...prev, zoom: Number(e.target.value) }))
               }
             />
           </label>
 
-          <label style={labelStyle}>
-            Posição Y
-            <input
-              type="range"
-              min="-240"
-              max="240"
-              step="1"
-              value={crop.offsetY}
-              onChange={(e) =>
-                setCrop((prev) => ({
-                  ...prev,
-                  offsetY: Number(e.target.value),
-                }))
-              }
-            />
-          </label>
-        </div>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: "12px",
+            }}
+          >
+            <label style={labelStyle}>
+              Posicao X
+              <input
+                type="range"
+                min="-240"
+                max="240"
+                step="1"
+                value={crop.offsetX}
+                onChange={(e) =>
+                  setCrop((prev) => ({
+                    ...prev,
+                    offsetX: Number(e.target.value),
+                  }))
+                }
+              />
+            </label>
 
+            <label style={labelStyle}>
+              Posicao Y
+              <input
+                type="range"
+                min="-240"
+                max="240"
+                step="1"
+                value={crop.offsetY}
+                onChange={(e) =>
+                  setCrop((prev) => ({
+                    ...prev,
+                    offsetY: Number(e.target.value),
+                  }))
+                }
+              />
+            </label>
+          </div>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+              gap: "10px",
+            }}
+          >
+            <button type="button" onClick={() => nudge(-10, 0)} style={ghostButtonStyle}>
+              {"<-"}
+            </button>
+            <button type="button" onClick={() => nudge(10, 0)} style={ghostButtonStyle}>
+              {"->"}
+            </button>
+            <button type="button" onClick={() => nudge(0, -10)} style={ghostButtonStyle}>
+              {"^"}
+            </button>
+            <button type="button" onClick={() => nudge(0, 10)} style={ghostButtonStyle}>
+              {"v"}
+            </button>
+          </div>
+        </div>
+      ) : (
         <div
           style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
-            gap: "10px",
+            borderRadius: "16px",
+            backgroundColor: "rgba(255,255,255,0.03)",
+            border: "1px solid rgba(255,255,255,0.06)",
+            padding: "14px 16px",
+            color: "#cbd5e1",
+            fontSize: "13px",
+            lineHeight: 1.65,
           }}
         >
-          <button type="button" onClick={() => nudge(-10, 0)} style={ghostButtonStyle}>
-            ←
-          </button>
-          <button type="button" onClick={() => nudge(10, 0)} style={ghostButtonStyle}>
-            →
-          </button>
-          <button type="button" onClick={() => nudge(0, -10)} style={ghostButtonStyle}>
-            ↑
-          </button>
-          <button type="button" onClick={() => nudge(0, 10)} style={ghostButtonStyle}>
-            ↓
-          </button>
+          Video detectado: o banner sera enviado sem recorte e reproduzido com autoplay,
+          muted, loop e playsInline no perfil publico.
         </div>
-      </div>
+      )}
 
       <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
         <button type="button" onClick={openPicker} style={primaryButtonStyle}>
-          Escolher imagem
+          {pickActionLabel}
         </button>
 
         <button
@@ -507,13 +582,13 @@ export default function ProfileMediaUploader({
           disabled={!sourceUrl || isUploading}
           style={primaryButtonStyle}
         >
-          {isUploading ? "Salvando..." : "Salvar imagem"}
+          {isUploading ? "Salvando..." : uploadActionLabel}
         </button>
 
         <button
           type="button"
           onClick={resetEditor}
-          disabled={!sourceUrl}
+          disabled={!sourceUrl || isVideoBannerPreview}
           style={ghostButtonStyle}
         >
           Resetar ajuste
@@ -555,7 +630,7 @@ export default function ProfileMediaUploader({
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/png,image/jpeg,image/jpg,image/webp,image/gif"
+        accept={accept}
         style={{ display: "none" }}
         onChange={(e) => onPickFile(e.target.files?.[0] ?? null)}
       />
@@ -568,7 +643,7 @@ function CompareCard({
   children,
 }: {
   title: string;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <div
@@ -642,10 +717,10 @@ function AvatarStaticPreview({
 }
 
 function BannerStaticPreview({
-  imageUrl,
+  mediaUrl,
   accent,
 }: {
-  imageUrl: string;
+  mediaUrl: string;
   accent: string;
 }) {
   return (
@@ -656,32 +731,7 @@ function BannerStaticPreview({
         placeItems: "center",
       }}
     >
-      <div
-        style={{
-          width: "100%",
-          maxWidth: "620px",
-          height: "200px",
-          borderRadius: "20px",
-          overflow: "hidden",
-          background: `linear-gradient(135deg, ${accent}, rgba(17,24,39,0.72), rgba(0,0,0,0.35))`,
-          border: "1px solid rgba(255,255,255,0.08)",
-          position: "relative",
-        }}
-      >
-        {imageUrl ? (
-          <img
-            src={imageUrl}
-            alt="Banner atual"
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-            }}
-          />
-        ) : (
-          <EmptyPlaceholder text="Sem banner atual" />
-        )}
-      </div>
+      <BannerFrame mediaUrl={mediaUrl} accent={accent} />
     </div>
   );
 }
@@ -699,8 +749,8 @@ function AvatarEditorPreview({
   crop: CropState;
   accent: string;
   sourceMime: string | null;
-  onPointerDown: (e: React.PointerEvent<HTMLDivElement>) => void;
-  onPointerMove: (e: React.PointerEvent<HTMLDivElement>) => void;
+  onPointerDown: (e: PointerEvent<HTMLDivElement>) => void;
+  onPointerMove: (e: PointerEvent<HTMLDivElement>) => void;
   onPointerUp: () => void;
 }) {
   const isGif = sourceMime === "image/gif";
@@ -750,7 +800,7 @@ function AvatarEditorPreview({
 
       {isGif ? (
         <div style={{ marginTop: "12px", color: "#a3a3a3", fontSize: "12px" }}>
-          GIF detectado: animação será preservada.
+          GIF detectado: a animacao sera preservada.
         </div>
       ) : null}
     </div>
@@ -758,7 +808,7 @@ function AvatarEditorPreview({
 }
 
 function BannerEditorPreview({
-  imageUrl,
+  mediaUrl,
   crop,
   accent,
   sourceMime,
@@ -766,15 +816,19 @@ function BannerEditorPreview({
   onPointerMove,
   onPointerUp,
 }: {
-  imageUrl: string;
+  mediaUrl: string;
   crop: CropState;
   accent: string;
   sourceMime: string | null;
-  onPointerDown: (e: React.PointerEvent<HTMLDivElement>) => void;
-  onPointerMove: (e: React.PointerEvent<HTMLDivElement>) => void;
+  onPointerDown: (e: PointerEvent<HTMLDivElement>) => void;
+  onPointerMove: (e: PointerEvent<HTMLDivElement>) => void;
   onPointerUp: () => void;
 }) {
-  const isGif = sourceMime === "image/gif";
+  const mediaKind = sourceMime
+    ? sourceMime.startsWith("video/")
+      ? "video"
+      : "image"
+    : getMediaKind(mediaUrl);
 
   return (
     <div
@@ -784,45 +838,126 @@ function BannerEditorPreview({
         placeItems: "center",
       }}
     >
-      <div
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        style={{
-          width: "100%",
-          maxWidth: "620px",
-          height: "200px",
-          borderRadius: "20px",
-          overflow: "hidden",
-          background: `linear-gradient(135deg, ${accent}, rgba(17,24,39,0.72), rgba(0,0,0,0.35))`,
-          border: "1px solid rgba(255,255,255,0.08)",
-          position: "relative",
-          cursor: "grab",
-          touchAction: "none",
-        }}
-      >
-        {imageUrl ? (
-          <img
-            src={imageUrl}
-            alt="Banner preview"
+      {mediaKind === "video" ? (
+        <>
+          <BannerFrame mediaUrl={mediaUrl} accent={accent} mediaKind="video" />
+          <div style={{ marginTop: "12px", color: "#a3a3a3", fontSize: "12px" }}>
+            Video detectado: sera enviado sem recorte.
+          </div>
+        </>
+      ) : (
+        <>
+          <div
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerUp}
+            style={{
+              width: "100%",
+              maxWidth: "620px",
+              height: "200px",
+              borderRadius: "20px",
+              overflow: "hidden",
+              background: `linear-gradient(135deg, ${accent}, rgba(17,24,39,0.72), rgba(0,0,0,0.35))`,
+              border: "1px solid rgba(255,255,255,0.08)",
+              position: "relative",
+              cursor: "grab",
+              touchAction: "none",
+            }}
+          >
+            {mediaUrl ? (
+              <img
+                src={mediaUrl}
+                alt="Banner preview"
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  transform: `translate(${crop.offsetX}px, ${crop.offsetY}px) scale(${crop.zoom})`,
+                  transformOrigin: "center center",
+                }}
+              />
+            ) : (
+              <EmptyPlaceholder text="Escolha uma imagem" />
+            )}
+          </div>
+
+          {sourceMime === "image/gif" ? (
+            <div style={{ marginTop: "12px", color: "#a3a3a3", fontSize: "12px" }}>
+              GIF detectado: a animacao sera preservada.
+            </div>
+          ) : null}
+        </>
+      )}
+    </div>
+  );
+}
+
+function BannerFrame({
+  mediaUrl,
+  accent,
+  mediaKind,
+}: {
+  mediaUrl: string;
+  accent: string;
+  mediaKind?: "video" | "image" | "unknown";
+}) {
+  const resolvedMediaKind = mediaKind || getMediaKind(mediaUrl);
+
+  return (
+    <div
+      style={{
+        width: "100%",
+        maxWidth: "620px",
+        height: "200px",
+        borderRadius: "20px",
+        overflow: "hidden",
+        background: `linear-gradient(135deg, ${accent}, rgba(17,24,39,0.72), rgba(0,0,0,0.35))`,
+        border: "1px solid rgba(255,255,255,0.08)",
+        position: "relative",
+      }}
+    >
+      {mediaUrl ? (
+        resolvedMediaKind === "video" ? (
+          <video
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="metadata"
             style={{
               width: "100%",
               height: "100%",
               objectFit: "cover",
-              transform: `translate(${crop.offsetX}px, ${crop.offsetY}px) scale(${crop.zoom})`,
-              transformOrigin: "center center",
+              display: "block",
+              backgroundColor: "#000",
+            }}
+          >
+            <source src={mediaUrl} />
+          </video>
+        ) : (
+          <img
+            src={mediaUrl}
+            alt="Banner atual"
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
             }}
           />
-        ) : (
-          <EmptyPlaceholder text="Escolha uma imagem" />
-        )}
-      </div>
+        )
+      ) : (
+        <EmptyPlaceholder text="Sem banner atual" />
+      )}
 
-      {isGif ? (
-        <div style={{ marginTop: "12px", color: "#a3a3a3", fontSize: "12px" }}>
-          GIF detectado: animação será preservada.
-        </div>
-      ) : null}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          background:
+            "linear-gradient(180deg, rgba(10,10,14,0.10), rgba(10,10,14,0.42) 54%, rgba(10,10,14,0.72) 100%)",
+          pointerEvents: "none",
+        }}
+      />
     </div>
   );
 }
@@ -856,7 +991,7 @@ async function renderCroppedBlob(
   const ctx = canvas.getContext("2d");
 
   if (!ctx) {
-    throw new Error("Canvas não disponível.");
+    throw new Error("Canvas nao disponivel.");
   }
 
   const outWidth = type === "avatar" ? AVATAR_SIZE : BANNER_WIDTH;
@@ -922,7 +1057,7 @@ function uploadWithProgress(
           reject(new Error(json?.error || "Falha no upload."));
         }
       } catch {
-        reject(new Error("Resposta inválida do upload."));
+        reject(new Error("Resposta invalida do upload."));
       }
     };
 
@@ -931,7 +1066,7 @@ function uploadWithProgress(
   });
 }
 
-const labelStyle: React.CSSProperties = {
+const labelStyle: CSSProperties = {
   display: "grid",
   gap: "8px",
   color: "#d4d4d8",
@@ -939,7 +1074,7 @@ const labelStyle: React.CSSProperties = {
   fontWeight: 700,
 };
 
-const primaryButtonStyle: React.CSSProperties = {
+const primaryButtonStyle: CSSProperties = {
   padding: "14px 16px",
   borderRadius: "14px",
   border: "1px solid rgba(244,114,182,0.20)",
@@ -949,7 +1084,7 @@ const primaryButtonStyle: React.CSSProperties = {
   fontWeight: "bold",
 };
 
-const ghostButtonStyle: React.CSSProperties = {
+const ghostButtonStyle: CSSProperties = {
   padding: "14px 16px",
   borderRadius: "14px",
   border: "1px solid #2a2a2a",
@@ -959,7 +1094,7 @@ const ghostButtonStyle: React.CSSProperties = {
   fontWeight: "bold",
 };
 
-const dangerButtonStyle: React.CSSProperties = {
+const dangerButtonStyle: CSSProperties = {
   padding: "14px 16px",
   borderRadius: "14px",
   border: "1px solid rgba(239,68,68,0.18)",
