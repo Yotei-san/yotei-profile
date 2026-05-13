@@ -16,12 +16,18 @@ type Props = {
   item: SocialIntegrationItem;
   selected: boolean;
   href: string;
+  stateLabel?: string;
+  footerLabel?: string;
+  actionLabel?: string;
 };
 
 export default function SocialIntegrationCard({
   item,
   selected,
   href,
+  stateLabel,
+  footerLabel,
+  actionLabel,
 }: Props) {
   const cardStyle: CSSProperties = {
     display: "grid",
@@ -91,7 +97,7 @@ export default function SocialIntegrationCard({
         <div style={iconWrapStyle} aria-hidden="true">
           <SocialBrandIcon name={item.icon} size={24} />
         </div>
-        <div style={stateStyle}>{selected ? "Selected" : "Preview"}</div>
+        <div style={stateStyle}>{stateLabel || (selected ? "Selected" : "Preview")}</div>
       </div>
 
       <div style={{ display: "grid", gap: "10px" }}>
@@ -121,16 +127,37 @@ export default function SocialIntegrationCard({
       <div
         style={{
           marginTop: "auto",
-          display: "inline-flex",
+          display: "flex",
           alignItems: "center",
+          justifyContent: "space-between",
           gap: "10px",
+          flexWrap: "wrap",
           color: "#d8deef",
           fontSize: "13px",
           fontWeight: 700,
         }}
       >
-        <span style={dotStyle} />
-        <span>{selected ? "Enabled in layout preview" : "Click to preview block"}</span>
+        <span style={{ display: "inline-flex", alignItems: "center", gap: "10px" }}>
+          <span style={dotStyle} />
+          <span>{footerLabel || (selected ? "Enabled in layout preview" : "Click to preview block")}</span>
+        </span>
+        <span
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            minHeight: "30px",
+            padding: "0 12px",
+            borderRadius: "999px",
+            border: "1px solid rgba(255,255,255,0.08)",
+            backgroundColor: "rgba(255,255,255,0.05)",
+            color: "#ffffff",
+            fontSize: "12px",
+            fontWeight: 800,
+            letterSpacing: "0.02em",
+          }}
+        >
+          {actionLabel || "Preview"}
+        </span>
       </div>
 
     </Link>

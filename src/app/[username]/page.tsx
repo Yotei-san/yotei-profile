@@ -15,6 +15,9 @@ import ProfileLayoutVariants, {
   type PublicProfileLayout,
 } from "./ProfileLayoutVariants";
 import ProfileHeroClient from "./ProfileHeroClient";
+import SocialPresenceSection, {
+  type PublicSocialBlock,
+} from "./SocialPresenceSection";
 
 type Props = {
   params: Promise<{ username: string }>;
@@ -66,6 +69,26 @@ function normalizeProfileLayout(value: string | null | undefined): PublicProfile
   return "modern";
 }
 
+function getMetadataObject(value: unknown) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return null;
+  }
+
+  return value as Record<string, unknown>;
+}
+
+function readMetadataValue(
+  metadata: Record<string, unknown> | null,
+  key: string
+) {
+  if (!metadata) {
+    return null;
+  }
+
+  const value = metadata[key];
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
 export default async function ProfilePage({ params }: Props) {
   const { username } = await params;
   const currentUser = await getCurrentUser();
@@ -108,6 +131,21 @@ export default async function ProfilePage({ params }: Props) {
           id: true,
           title: true,
           url: true,
+        },
+      },
+      socialBlocks: {
+        where: {
+          isEnabled: true,
+        },
+        orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+        select: {
+          id: true,
+          platform: true,
+          title: true,
+          username: true,
+          url: true,
+          metadata: true,
+          isEnabled: true,
         },
       },
       reactionsReceived: {
@@ -166,6 +204,19 @@ export default async function ProfilePage({ params }: Props) {
   );
   const views = user.profileViews.length;
   const statusLabel = getStatusLabel(user.status);
+  const socialBlocks: PublicSocialBlock[] = user.socialBlocks.map((block) => {
+    const metadata = getMetadataObject(block.metadata);
+
+    return {
+      id: block.id,
+      platform: block.platform,
+      title: block.title,
+      username: block.username,
+      url: block.url,
+      statusText: readMetadataValue(metadata, "shortStatus"),
+      isEnabled: block.isEnabled,
+    };
+  });
   const hasPremiumState =
     premiumBadges.length > 0 ||
     Boolean(user.selectedDecoration) ||
@@ -233,6 +284,7 @@ export default async function ProfilePage({ params }: Props) {
         likes={likes}
         dislikes={dislikes}
         views={views}
+        socialBlocks={socialBlocks}
         initialMyReaction={initialMyReaction}
       />
     );
@@ -1115,6 +1167,8 @@ export default async function ProfilePage({ params }: Props) {
               </div>
 
               <div className="links-list">
+                <SocialPresenceSection blocks={socialBlocks} themeColor={themeColor} compact />
+
                 {user.links.length > 0 ? (
                   user.links.map((link) => {
                     const platform = getLinkPlatform(link.url, link.title);

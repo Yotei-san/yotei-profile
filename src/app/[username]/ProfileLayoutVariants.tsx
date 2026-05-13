@@ -2,6 +2,9 @@ import type { CSSProperties, ReactNode } from "react";
 import { LuArrowUpRight, LuSparkles } from "react-icons/lu";
 import { getLinkPlatform } from "@/app/lib/link-icons";
 import ProfileHeroClient from "./ProfileHeroClient";
+import SocialPresenceSection, {
+  type PublicSocialBlock,
+} from "./SocialPresenceSection";
 
 export type PublicProfileLayout = "default" | "modern" | "simplistic" | "portfolio";
 
@@ -59,6 +62,7 @@ type Props = {
   likes: number;
   dislikes: number;
   views: number;
+  socialBlocks: PublicSocialBlock[];
   initialMyReaction: "like" | "dislike" | null;
 };
 
@@ -119,6 +123,7 @@ function DefaultLayout(props: Props) {
           />
 
           <BadgeRail badges={props.premiumBadges} themeColor={props.themeColor} />
+          <SocialPresenceSection blocks={props.socialBlocks} themeColor={props.themeColor} compact />
           <LinksSection
             layout="default"
             links={props.user.links}
@@ -177,6 +182,7 @@ function SimplisticLayout(props: Props) {
         />
 
         <BadgeRail badges={props.premiumBadges} themeColor={props.themeColor} minimal />
+        <SocialPresenceSection blocks={props.socialBlocks} themeColor={props.themeColor} compact />
         <LinksSection
           layout="simplistic"
           links={props.user.links}
@@ -244,6 +250,7 @@ function PortfolioLayout(props: Props) {
             </p>
           </div>
 
+          <SocialPresenceSection blocks={props.socialBlocks} themeColor={props.themeColor} />
           <LinksSection
             layout="portfolio"
             links={props.user.links}

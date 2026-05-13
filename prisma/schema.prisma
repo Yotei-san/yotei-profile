@@ -110,6 +110,7 @@ model User {
 
   sessions           Session[]
   links              Link[]
+  socialBlocks       SocialBlock[]
   presets            Preset[]
   createdTemplates   ProfileTemplate[]
   reactionsGiven     Reaction[] @relation("ReactionsGiven")
@@ -254,6 +255,28 @@ model ProfileTemplate {
   @@index([isPublic])
   @@index([isPremium])
   @@index([createdByUserId])
+}
+
+model SocialBlock {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  platform  String
+  title     String?
+  username  String?
+  url       String?
+  metadata  Json?
+  isEnabled Boolean  @default(true)
+  sortOrder Int      @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, platform])
+  @@index([userId])
+  @@index([platform])
+  @@index([isEnabled])
 }
 
 model Reaction {

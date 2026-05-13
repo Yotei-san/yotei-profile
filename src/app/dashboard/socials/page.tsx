@@ -1,21 +1,40 @@
 import Link from "next/link";
 import type { CSSProperties } from "react";
+import DiscordBlockPreview from "@/app/dashboard/components/DiscordBlockPreview";
 import SocialBrandIcon from "@/app/dashboard/components/SocialBrandIcon";
 import SocialIntegrationCard, {
   type SocialIntegrationItem,
 } from "@/app/dashboard/components/SocialIntegrationCard";
+import { requireUser } from "@/app/lib/auth";
+import { prisma } from "@/app/lib/prisma";
+import {
+  deleteSocialBlock,
+  toggleSocialBlock,
+  upsertDiscordBlock,
+} from "./actions";
 
 type PageProps = {
   searchParams?: Promise<{
     active?: string;
+    success?: string;
+    error?: string;
   }>;
+};
+
+type DiscordBlockState = {
+  id: string;
+  username: string | null;
+  discordUserId: string | null;
+  url: string | null;
+  statusText: string | null;
+  isEnabled: boolean;
 };
 
 const integrations: SocialIntegrationItem[] = [
   {
     key: "discord",
     name: "Discord",
-    description: "Show your server, presence, or community block with fast-call action.",
+    description: "Show your server, identity, and future live presence in a premium block.",
     accent: "#5865F2",
     icon: "discord",
   },
@@ -140,13 +159,8 @@ const integrations: SocialIntegrationItem[] = [
   },
 ];
 
-const previewStats = [
-  { label: "Blocks ready", value: "18" },
-  { label: "Preview mode", value: "Static UI" },
-  { label: "Layout state", value: "Enabled" },
-];
-
 export default async function SocialsPage({ searchParams }: PageProps) {
+  const sessionUser = await requireUser();
   const params = (await searchParams) ?? {};
   const selectedKey = integrations.some((item) => item.key === params.active)
     ? String(params.active)
@@ -154,52 +168,109 @@ export default async function SocialsPage({ searchParams }: PageProps) {
   const selectedItem =
     integrations.find((item) => item.key === selectedKey) ?? integrations[0];
 
+  const user = await prisma.user.findUnique({
+    where: {
+      id: sessionUser.id,
+    },
+    select: {
+      username: true,
+      socialBlocks: {
+        orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+        select: {
+          id: true,
+          platform: true,
+          title: true,
+          username: true,
+          url: true,
+          metadata: true,
+          isEnabled: true,
+          sortOrder: true,
+        },
+      },
+    },
+  });
+
+  if (!user) {
+    throw new Error("Usuario nao encontrado.");
+  }
+
+  const discordBlock = getDiscordBlock(user.socialBlocks);
+  const configuredCount = user.socialBlocks.length;
+  const enabledCount = user.socialBlocks.filter((block) => block.isEnabled).length;
+  const successMessage = getSuccessMessage(params.success);
+  const errorMessage = getErrorMessage(params.error);
+  const discordCardHref = "/dashboard/socials?active=discord#discord-block-form";
+
   return (
     <main style={pageStyle}>
       <section style={heroPanelStyle}>
         <div style={heroCopyStyle}>
-          <div style={eyebrowStyle}>Social Integration Layout Blocks</div>
+          <div style={eyebrowStyle}>Social Blocks Phase 1</div>
           <h1 style={heroTitleStyle}>Social Integrations</h1>
           <p style={heroDescriptionStyle}>
-            Build a more expressive public profile with modular social blocks.
-            This dashboard preview stays UI-only for now, keeping the route
-            cheap to build while the design direction evolves.
+            Discord is now the first real block you can configure, save, and publish
+            on your public profile. The rest of the integrations stay as visual previews
+            while the block system grows safely.
           </p>
 
           <div style={heroActionsStyle}>
-            <Link href={`?active=${selectedItem.key}`} style={primaryActionStyle}>
-              Keep {selectedItem.name} selected
+            <Link href={discordCardHref} style={primaryActionStyle}>
+              {discordBlock ? "Edit Discord Block" : "Configure Discord"}
             </Link>
-            <Link href="/dashboard/links" style={secondaryActionStyle}>
-              Open Links Manager
+            <Link href={`/${user.username}`} style={secondaryActionStyle} target="_blank">
+              Open Public Profile
             </Link>
           </div>
         </div>
 
         <div style={heroRailStyle}>
-          <div style={enabledBadgeStyle}>Enabled</div>
-
-          <div style={previewPanelStyle}>
-            <div style={previewLabelStyle}>Current preview</div>
-            <div style={previewTitleStyle}>
-              <span aria-hidden="true" style={previewIconWrapStyle}>
-                <SocialBrandIcon name={selectedItem.icon} size={20} />
-              </span>
-              {selectedItem.name}
-            </div>
-            <p style={previewTextStyle}>{selectedItem.description}</p>
+          <div style={discordBlock?.isEnabled ? enabledBadgeStyle : mutedBadgeStyle}>
+            {discordBlock?.isEnabled ? "Discord live" : discordBlock ? "Saved draft" : "Not configured"}
           </div>
 
-          <div style={statGridStyle}>
-            {previewStats.map((stat) => (
-              <div key={stat.label} style={statCardStyle}>
-                <div style={statValueStyle}>{stat.value}</div>
-                <div style={statLabelStyle}>{stat.label}</div>
+          {selectedKey === "discord" ? (
+            <DiscordBlockPreview
+              username={discordBlock?.username ?? null}
+              statusText={discordBlock?.statusText ?? null}
+              url={discordBlock?.url ?? null}
+              enabled={discordBlock?.isEnabled ?? false}
+            />
+          ) : (
+            <div style={previewPanelStyle}>
+              <div style={previewLabelStyle}>Current preview</div>
+              <div style={previewTitleStyle}>
+                <span aria-hidden="true" style={previewIconWrapStyle}>
+                  <SocialBrandIcon name={selectedItem.icon} size={20} />
+                </span>
+                {selectedItem.name}
               </div>
-            ))}
+              <p style={previewTextStyle}>{selectedItem.description}</p>
+              <div style={previewHintPanelStyle}>
+                Discord is the only live social block in this phase. The other cards stay in
+                design preview mode for now.
+              </div>
+            </div>
+          )}
+
+          <div style={statGridStyle}>
+            <div style={statCardStyle}>
+              <div style={statValueStyle}>{configuredCount}</div>
+              <div style={statLabelStyle}>Configured blocks</div>
+            </div>
+            <div style={statCardStyle}>
+              <div style={statValueStyle}>{enabledCount}</div>
+              <div style={statLabelStyle}>Enabled publicly</div>
+            </div>
+            <div style={statCardStyle}>
+              <div style={statValueStyle}>1</div>
+              <div style={statLabelStyle}>Live platform</div>
+            </div>
           </div>
         </div>
       </section>
+
+      {successMessage ? <div style={successBoxStyle}>{successMessage}</div> : null}
+      {errorMessage ? <div style={errorBoxStyle}>{errorMessage}</div> : null}
 
       <section style={subPanelStyle}>
         <div>
@@ -207,32 +278,244 @@ export default async function SocialsPage({ searchParams }: PageProps) {
           <h2 style={sectionTitleStyle}>Choose what your public profile can show</h2>
         </div>
         <div style={sectionHintStyle}>
-          Select a card to update the preview state without touching database or APIs.
+          Discord is functional now. The remaining integrations stay lightweight and visual
+          until each block gets its own safe backend phase.
         </div>
       </section>
 
       <section style={gridStyle}>
-        {integrations.map((item) => (
-          <SocialIntegrationCard
-            key={item.key}
-            item={item}
-            selected={item.key === selectedKey}
-            href={`/dashboard/socials?active=${item.key}`}
+        {integrations.map((item) => {
+          const isDiscord = item.key === "discord";
+          const isConfigured = Boolean(discordBlock?.username);
+
+          return (
+            <SocialIntegrationCard
+              key={item.key}
+              item={item}
+              selected={item.key === selectedKey}
+              href={isDiscord ? discordCardHref : `/dashboard/socials?active=${item.key}`}
+              stateLabel={
+                isDiscord
+                  ? isConfigured
+                    ? discordBlock?.isEnabled
+                      ? "Configured"
+                      : "Saved"
+                    : "Setup"
+                  : item.key === selectedKey
+                    ? "Selected"
+                    : "Preview"
+              }
+              footerLabel={
+                isDiscord
+                  ? isConfigured
+                    ? "Live block available on profile"
+                    : "First real social block"
+                  : "Design preview only in this phase"
+              }
+              actionLabel={
+                isDiscord ? (isConfigured ? "Edit" : "Configure") : "Preview"
+              }
+            />
+          );
+        })}
+      </section>
+
+      <section id="discord-block-form" style={discordSectionStyle}>
+        <div style={discordFormColumnStyle}>
+          <div style={{ display: "grid", gap: "8px" }}>
+            <div style={sectionEyebrowStyle}>Discord Block</div>
+            <h2 style={sectionTitleStyle}>Configure your Discord profile block</h2>
+            <p style={sectionDescriptionStyle}>
+              This saves a manual Discord block for now. Real-time presence can plug into the
+              same structure later without breaking your profile.
+            </p>
+          </div>
+
+          <form action={upsertDiscordBlock} style={formGridStyle}>
+            <label style={labelStyle}>
+              Discord username
+              <input
+                type="text"
+                name="username"
+                required
+                maxLength={64}
+                placeholder="ex: yotei"
+                defaultValue={discordBlock?.username ?? ""}
+                style={inputStyle}
+              />
+            </label>
+
+            <label style={labelStyle}>
+              Discord user ID
+              <input
+                type="text"
+                name="discordUserId"
+                inputMode="numeric"
+                placeholder="optional numeric ID"
+                defaultValue={discordBlock?.discordUserId ?? ""}
+                style={inputStyle}
+              />
+            </label>
+
+            <label style={{ ...labelStyle, gridColumn: "1 / -1" }}>
+              Discord invite or profile URL
+              <input
+                type="url"
+                name="url"
+                placeholder="https://discord.gg/..."
+                defaultValue={discordBlock?.url ?? ""}
+                style={inputStyle}
+              />
+            </label>
+
+            <label style={{ ...labelStyle, gridColumn: "1 / -1" }}>
+              Short status
+              <textarea
+                name="status"
+                rows={4}
+                maxLength={120}
+                placeholder="Short line for your community vibe, role, or current status."
+                defaultValue={discordBlock?.statusText ?? ""}
+                style={textareaStyle}
+              />
+            </label>
+
+            <label style={checkboxLabelStyle}>
+              <input
+                type="checkbox"
+                name="isEnabled"
+                defaultChecked={discordBlock?.isEnabled ?? true}
+              />
+              <span>Show this block on my public profile</span>
+            </label>
+
+            <div style={hintBoxStyle}>
+              Future presence fields will plug into metadata later. This phase only stores
+              manual profile data safely.
+            </div>
+
+            <div style={actionRowStyle}>
+              <button type="submit" style={submitButtonStyle}>
+                {discordBlock ? "Save Discord Block" : "Create Discord Block"}
+              </button>
+
+              {discordBlock ? (
+                <>
+                  <button
+                    type="submit"
+                    formAction={toggleSocialBlock.bind(null, discordBlock.id)}
+                    style={secondaryButtonStyle}
+                  >
+                    {discordBlock.isEnabled ? "Disable Block" : "Enable Block"}
+                  </button>
+
+                  <button
+                    type="submit"
+                    formAction={deleteSocialBlock.bind(null, discordBlock.id)}
+                    style={dangerButtonStyle}
+                  >
+                    Delete Block
+                  </button>
+                </>
+              ) : null}
+            </div>
+          </form>
+        </div>
+
+        <div style={discordPreviewColumnStyle}>
+          <div style={previewLabelStyle}>Saved preview</div>
+          <DiscordBlockPreview
+            username={discordBlock?.username ?? null}
+            statusText={discordBlock?.statusText ?? null}
+            url={discordBlock?.url ?? null}
+            enabled={discordBlock?.isEnabled ?? false}
+            compact
           />
-        ))}
+
+          <div style={previewMetaPanelStyle}>
+            <div style={previewMetaTitleStyle}>Public rendering</div>
+            <p style={previewMetaTextStyle}>
+              When enabled, this block appears in a new Social Presence section on your public
+              profile before the links list.
+            </p>
+          </div>
+        </div>
       </section>
 
       <section style={footerNoteStyle}>
         <div style={footerIconWrapStyle} aria-hidden="true">
-          <SocialBrandIcon name="steam" size={18} />
+          <SocialBrandIcon name="discord" size={18} />
         </div>
         <p style={footerTextStyle}>
-          This screen stays UI-only: no schema changes, no writes, and no public
-          rendering side effects were introduced here.
+          Discord now writes to the database and renders on the public profile. Other
+          social cards remain lightweight previews until their backend phases start.
         </p>
       </section>
     </main>
   );
+}
+
+function getDiscordBlock(
+  blocks: Array<{
+    id: string;
+    platform: string;
+    username: string | null;
+    url: string | null;
+    metadata: unknown;
+    isEnabled: boolean;
+  }>
+): DiscordBlockState | null {
+  const block = blocks.find((item) => item.platform === "discord");
+
+  if (!block) {
+    return null;
+  }
+
+  const metadata = getMetadataObject(block.metadata);
+
+  return {
+    id: block.id,
+    username: block.username,
+    discordUserId: readMetadataValue(metadata, "discordUserId"),
+    url: block.url,
+    statusText: readMetadataValue(metadata, "shortStatus"),
+    isEnabled: block.isEnabled,
+  };
+}
+
+function getMetadataObject(value: unknown) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return null;
+  }
+
+  return value as Record<string, unknown>;
+}
+
+function readMetadataValue(
+  metadata: Record<string, unknown> | null,
+  key: string
+) {
+  if (!metadata) {
+    return null;
+  }
+
+  const value = metadata[key];
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function getSuccessMessage(code?: string) {
+  if (code === "discord-saved") return "Discord block salvo com sucesso.";
+  if (code === "discord-enabled") return "Discord block ativado no perfil publico.";
+  if (code === "discord-disabled") return "Discord block desativado no perfil publico.";
+  if (code === "discord-deleted") return "Discord block removido com sucesso.";
+  return "";
+}
+
+function getErrorMessage(code?: string) {
+  if (code === "discord-username-required") return "Digite um username do Discord.";
+  if (code === "discord-url-invalid") return "URL invalida. Use um endereco http ou https.";
+  if (code === "social-block-not-found") return "Bloco social nao encontrado.";
+  return "";
 }
 
 const pageStyle: CSSProperties = {
@@ -265,9 +548,9 @@ const eyebrowStyle: CSSProperties = {
   width: "fit-content",
   padding: "8px 12px",
   borderRadius: "999px",
-  border: "1px solid rgba(244,114,182,0.18)",
-  backgroundColor: "rgba(244,114,182,0.08)",
-  color: "#f9a8d4",
+  border: "1px solid rgba(88,101,242,0.24)",
+  backgroundColor: "rgba(88,101,242,0.12)",
+  color: "#c7d2fe",
   fontSize: "12px",
   fontWeight: 800,
   letterSpacing: "0.08em",
@@ -283,7 +566,7 @@ const heroTitleStyle: CSSProperties = {
 
 const heroDescriptionStyle: CSSProperties = {
   margin: 0,
-  maxWidth: "58ch",
+  maxWidth: "62ch",
   color: "#b4bdd1",
   fontSize: "16px",
   lineHeight: 1.7,
@@ -302,7 +585,7 @@ const primaryActionStyle: CSSProperties = {
   color: "#ffffff",
   fontWeight: 800,
   background:
-    "linear-gradient(135deg, rgba(236,72,153,0.92), rgba(124,58,237,0.92))",
+    "linear-gradient(135deg, rgba(88,101,242,0.96), rgba(124,58,237,0.92))",
 };
 
 const secondaryActionStyle: CSSProperties = {
@@ -327,13 +610,20 @@ const enabledBadgeStyle: CSSProperties = {
   alignItems: "center",
   padding: "10px 14px",
   borderRadius: "999px",
-  backgroundColor: "rgba(96,165,250,0.12)",
-  border: "1px solid rgba(96,165,250,0.22)",
-  color: "#c4b5fd",
+  backgroundColor: "rgba(88,101,242,0.14)",
+  border: "1px solid rgba(129,140,248,0.28)",
+  color: "#c7d2fe",
   fontWeight: 900,
   letterSpacing: "0.06em",
   textTransform: "uppercase",
   fontSize: "12px",
+};
+
+const mutedBadgeStyle: CSSProperties = {
+  ...enabledBadgeStyle,
+  backgroundColor: "rgba(255,255,255,0.05)",
+  border: "1px solid rgba(255,255,255,0.08)",
+  color: "#d4d4d8",
 };
 
 const previewPanelStyle: CSSProperties = {
@@ -381,6 +671,17 @@ const previewTextStyle: CSSProperties = {
   fontSize: "14px",
 };
 
+const previewHintPanelStyle: CSSProperties = {
+  marginTop: "16px",
+  padding: "14px 16px",
+  borderRadius: "18px",
+  border: "1px solid rgba(255,255,255,0.08)",
+  backgroundColor: "rgba(255,255,255,0.03)",
+  color: "#c4cde2",
+  fontSize: "13px",
+  lineHeight: 1.65,
+};
+
 const statGridStyle: CSSProperties = {
   display: "grid",
   gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))",
@@ -404,6 +705,24 @@ const statLabelStyle: CSSProperties = {
   marginTop: "6px",
   color: "#96a0b8",
   fontSize: "13px",
+};
+
+const successBoxStyle: CSSProperties = {
+  borderRadius: "18px",
+  padding: "14px 16px",
+  backgroundColor: "rgba(34,197,94,0.10)",
+  border: "1px solid rgba(34,197,94,0.22)",
+  color: "#86efac",
+  fontWeight: 700,
+};
+
+const errorBoxStyle: CSSProperties = {
+  borderRadius: "18px",
+  padding: "14px 16px",
+  backgroundColor: "rgba(239,68,68,0.10)",
+  border: "1px solid rgba(239,68,68,0.22)",
+  color: "#fca5a5",
+  fontWeight: 700,
 };
 
 const subPanelStyle: CSSProperties = {
@@ -433,8 +752,16 @@ const sectionTitleStyle: CSSProperties = {
   lineHeight: 1.1,
 };
 
+const sectionDescriptionStyle: CSSProperties = {
+  margin: 0,
+  color: "#aab4c8",
+  lineHeight: 1.7,
+  fontSize: "14px",
+  maxWidth: "60ch",
+};
+
 const sectionHintStyle: CSSProperties = {
-  maxWidth: "34ch",
+  maxWidth: "36ch",
   color: "#9da7bf",
   fontSize: "14px",
   lineHeight: 1.6,
@@ -444,6 +771,137 @@ const gridStyle: CSSProperties = {
   display: "grid",
   gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
   gap: "18px",
+};
+
+const discordSectionStyle: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "minmax(0, 1.15fr) minmax(300px, 0.85fr)",
+  gap: "18px",
+  padding: "26px",
+  borderRadius: "28px",
+  border: "1px solid rgba(255,255,255,0.08)",
+  background:
+    "linear-gradient(180deg, rgba(16,16,20,0.98), rgba(9,9,13,0.98))",
+};
+
+const discordFormColumnStyle: CSSProperties = {
+  display: "grid",
+  gap: "18px",
+};
+
+const discordPreviewColumnStyle: CSSProperties = {
+  display: "grid",
+  alignContent: "start",
+  gap: "14px",
+};
+
+const formGridStyle: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+  gap: "14px",
+};
+
+const labelStyle: CSSProperties = {
+  display: "grid",
+  gap: "8px",
+  color: "#e4e4e7",
+  fontSize: "14px",
+  fontWeight: 700,
+};
+
+const inputStyle: CSSProperties = {
+  width: "100%",
+  padding: "14px 16px",
+  borderRadius: "14px",
+  border: "1px solid rgba(255,255,255,0.08)",
+  backgroundColor: "rgba(255,255,255,0.04)",
+  color: "#ffffff",
+  outline: "none",
+};
+
+const textareaStyle: CSSProperties = {
+  ...inputStyle,
+  resize: "vertical",
+  minHeight: "120px",
+};
+
+const checkboxLabelStyle: CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  gap: "10px",
+  minHeight: "48px",
+  padding: "0 2px",
+  color: "#e4e4e7",
+  fontSize: "14px",
+  fontWeight: 700,
+};
+
+const hintBoxStyle: CSSProperties = {
+  display: "grid",
+  alignItems: "center",
+  minHeight: "48px",
+  color: "#a1a1aa",
+  fontSize: "13px",
+  lineHeight: 1.6,
+};
+
+const actionRowStyle: CSSProperties = {
+  gridColumn: "1 / -1",
+  display: "flex",
+  gap: "12px",
+  flexWrap: "wrap",
+};
+
+const buttonBaseStyle: CSSProperties = {
+  minHeight: "48px",
+  padding: "0 18px",
+  borderRadius: "16px",
+  fontWeight: 800,
+  fontSize: "14px",
+  cursor: "pointer",
+};
+
+const submitButtonStyle: CSSProperties = {
+  ...buttonBaseStyle,
+  border: "1px solid rgba(88,101,242,0.28)",
+  background:
+    "linear-gradient(135deg, rgba(88,101,242,0.96), rgba(124,58,237,0.92))",
+  color: "#ffffff",
+};
+
+const secondaryButtonStyle: CSSProperties = {
+  ...buttonBaseStyle,
+  border: "1px solid rgba(255,255,255,0.08)",
+  backgroundColor: "rgba(255,255,255,0.04)",
+  color: "#ffffff",
+};
+
+const dangerButtonStyle: CSSProperties = {
+  ...buttonBaseStyle,
+  border: "1px solid rgba(239,68,68,0.20)",
+  backgroundColor: "rgba(239,68,68,0.10)",
+  color: "#fca5a5",
+};
+
+const previewMetaPanelStyle: CSSProperties = {
+  borderRadius: "20px",
+  padding: "18px",
+  border: "1px solid rgba(255,255,255,0.08)",
+  backgroundColor: "rgba(255,255,255,0.03)",
+};
+
+const previewMetaTitleStyle: CSSProperties = {
+  color: "#ffffff",
+  fontSize: "18px",
+  fontWeight: 800,
+  marginBottom: "8px",
+};
+
+const previewMetaTextStyle: CSSProperties = {
+  margin: 0,
+  color: "#aab4c8",
+  fontSize: "14px",
+  lineHeight: 1.65,
 };
 
 const footerNoteStyle: CSSProperties = {
@@ -463,9 +921,9 @@ const footerIconWrapStyle: CSSProperties = {
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  color: "#66C0F4",
-  backgroundColor: "rgba(59,130,246,0.10)",
-  border: "1px solid rgba(59,130,246,0.18)",
+  color: "#c7d2fe",
+  backgroundColor: "rgba(88,101,242,0.12)",
+  border: "1px solid rgba(129,140,248,0.18)",
   flexShrink: 0,
 };
 
