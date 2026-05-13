@@ -7,6 +7,7 @@ import { requireUser } from "@/app/lib/auth";
 import { prisma } from "@/app/lib/prisma";
 
 const DISCORD_PLATFORM = "discord";
+const GITHUB_PLATFORM = "github";
 
 export async function upsertDiscordBlock(formData: FormData) {
   const sessionUser = await requireUser();
@@ -17,11 +18,11 @@ export async function upsertDiscordBlock(formData: FormData) {
   const isEnabled = parseBoolean(formData.get("isEnabled"));
 
   if (!discordUsername) {
-    redirect(buildSocialsPath("error", "discord-username-required"));
+    redirect(buildSocialsPath(DISCORD_PLATFORM, "error", "discord-username-required"));
   }
 
   if (typeof inviteUrl === "undefined") {
-    redirect(buildSocialsPath("error", "discord-url-invalid"));
+    redirect(buildSocialsPath(DISCORD_PLATFORM, "error", "discord-url-invalid"));
   }
 
   await prisma.socialBlock.upsert({
@@ -59,7 +60,61 @@ export async function upsertDiscordBlock(formData: FormData) {
 
   revalidatePath("/dashboard/socials");
   revalidatePath(`/${sessionUser.username}`);
-  redirect(buildSocialsPath("success", "discord-saved"));
+  redirect(buildSocialsPath(DISCORD_PLATFORM, "success", "discord-saved"));
+}
+
+export async function upsertGitHubBlock(formData: FormData) {
+  const sessionUser = await requireUser();
+  const githubUsername = normalizeOptionalText(formData.get("username"));
+  const profileUrl = normalizeOptionalUrl(formData.get("url"));
+  const statusText = normalizeOptionalText(formData.get("status"));
+  const featuredRepo = normalizeOptionalText(formData.get("featuredRepo"));
+  const isEnabled = parseBoolean(formData.get("isEnabled"));
+
+  if (!githubUsername) {
+    redirect(buildSocialsPath(GITHUB_PLATFORM, "error", "github-username-required"));
+  }
+
+  if (typeof profileUrl === "undefined") {
+    redirect(buildSocialsPath(GITHUB_PLATFORM, "error", "github-url-invalid"));
+  }
+
+  await prisma.socialBlock.upsert({
+    where: {
+      userId_platform: {
+        userId: sessionUser.id,
+        platform: GITHUB_PLATFORM,
+      },
+    },
+    update: {
+      title: "GitHub",
+      username: githubUsername,
+      url: profileUrl,
+      metadata: buildGitHubMetadata({
+        statusText,
+        featuredRepo,
+      }),
+      isEnabled,
+      sortOrder: 1,
+    },
+    create: {
+      userId: sessionUser.id,
+      platform: GITHUB_PLATFORM,
+      title: "GitHub",
+      username: githubUsername,
+      url: profileUrl,
+      metadata: buildGitHubMetadata({
+        statusText,
+        featuredRepo,
+      }),
+      isEnabled,
+      sortOrder: 1,
+    },
+  });
+
+  revalidatePath("/dashboard/socials");
+  revalidatePath(`/${sessionUser.username}`);
+  redirect(buildSocialsPath(GITHUB_PLATFORM, "success", "github-saved"));
 }
 
 export async function toggleSocialBlock(blockId: string) {
@@ -73,11 +128,12 @@ export async function toggleSocialBlock(blockId: string) {
     select: {
       id: true,
       isEnabled: true,
+      platform: true,
     },
   });
 
   if (!block) {
-    redirect(buildSocialsPath("error", "social-block-not-found"));
+    redirect(buildSocialsPath(DISCORD_PLATFORM, "error", "social-block-not-found"));
   }
 
   await prisma.socialBlock.update({
@@ -91,7 +147,19 @@ export async function toggleSocialBlock(blockId: string) {
 
   revalidatePath("/dashboard/socials");
   revalidatePath(`/${sessionUser.username}`);
-  redirect(buildSocialsPath("success", block.isEnabled ? "discord-disabled" : "discord-enabled"));
+  redirect(
+    buildSocialsPath(
+      block.platform,
+      "success",
+      block.platform === GITHUB_PLATFORM
+        ? block.isEnabled
+          ? "github-disabled"
+          : "github-enabled"
+        : block.isEnabled
+          ? "discord-disabled"
+          : "discord-enabled"
+    )
+  );
 }
 
 export async function deleteSocialBlock(blockId: string) {
@@ -104,11 +172,12 @@ export async function deleteSocialBlock(blockId: string) {
     },
     select: {
       id: true,
+      platform: true,
     },
   });
 
   if (!block) {
-    redirect(buildSocialsPath("error", "social-block-not-found"));
+    redirect(buildSocialsPath(DISCORD_PLATFORM, "error", "social-block-not-found"));
   }
 
   await prisma.socialBlock.delete({
@@ -119,7 +188,13 @@ export async function deleteSocialBlock(blockId: string) {
 
   revalidatePath("/dashboard/socials");
   revalidatePath(`/${sessionUser.username}`);
-  redirect(buildSocialsPath("success", "discord-deleted"));
+  redirect(
+    buildSocialsPath(
+      block.platform,
+      "success",
+      block.platform === GITHUB_PLATFORM ? "github-deleted" : "discord-deleted"
+    )
+  );
 }
 
 function buildDiscordMetadata({
@@ -137,6 +212,24 @@ function buildDiscordMetadata({
     discordUserId,
     shortStatus,
     presenceReady: false,
+  };
+}
+
+function buildGitHubMetadata({
+  statusText,
+  featuredRepo,
+}: {
+  statusText: string | null;
+  featuredRepo: string | null;
+}) {
+  if (!statusText && !featuredRepo) {
+    return Prisma.JsonNull;
+  }
+
+  return {
+    statusText,
+    featuredRepo,
+    profileReady: false,
   };
 }
 
@@ -195,6 +288,11 @@ function parseBoolean(value: FormDataEntryValue | null) {
   return value === "true" || value === "on" || value === "1";
 }
 
-function buildSocialsPath(param: "success" | "error", value: string) {
-  return `/dashboard/socials?active=discord&${param}=${value}`;
+function buildSocialsPath(
+  platform: string,
+  param: "success" | "error",
+  value: string
+) {
+  const active = platform === GITHUB_PLATFORM ? GITHUB_PLATFORM : DISCORD_PLATFORM;
+  return `/dashboard/socials?active=${active}&${param}=${value}`;
 }

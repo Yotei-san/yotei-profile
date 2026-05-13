@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 import { LuSparkles } from "react-icons/lu";
 import DiscordSocialBlock from "./DiscordSocialBlock";
+import GitHubSocialBlock from "./GitHubSocialBlock";
 
 export type PublicSocialBlock = {
   id: string;
@@ -9,6 +10,7 @@ export type PublicSocialBlock = {
   username: string | null;
   url: string | null;
   statusText: string | null;
+  featuredRepo: string | null;
   isEnabled: boolean;
 };
 
@@ -38,26 +40,40 @@ export default function SocialPresenceSection({
         </div>
         <h2 style={titleStyle}>Connected blocks that add more context to the profile.</h2>
         <p style={copyStyle}>
-          Premium-looking modules for communities and identity, starting with Discord.
+          Premium-looking modules for communities and identity, starting with Discord and GitHub.
         </p>
       </div>
 
       <div style={gridStyle}>
         {visibleBlocks.map((block) => {
-          if (block.platform !== "discord") {
-            return null;
+          if (block.platform === "discord") {
+            return (
+              <DiscordSocialBlock
+                key={block.id}
+                username={block.username}
+                statusText={block.statusText}
+                url={block.url}
+                themeColor={themeColor}
+                compact={compact}
+              />
+            );
           }
 
-          return (
-            <DiscordSocialBlock
-              key={block.id}
-              username={block.username}
-              statusText={block.statusText}
-              url={block.url}
-              themeColor={themeColor}
-              compact={compact}
-            />
-          );
+          if (block.platform === "github") {
+            return (
+              <GitHubSocialBlock
+                key={block.id}
+                username={block.username}
+                statusText={block.statusText}
+                featuredRepo={block.featuredRepo}
+                url={block.url}
+                themeColor={themeColor}
+                compact={compact}
+              />
+            );
+          }
+
+          return null;
         })}
       </div>
     </section>

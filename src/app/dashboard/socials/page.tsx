@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { CSSProperties } from "react";
 import DiscordBlockPreview from "@/app/dashboard/components/DiscordBlockPreview";
+import GitHubBlockPreview from "@/app/dashboard/components/GitHubBlockPreview";
 import SocialBrandIcon from "@/app/dashboard/components/SocialBrandIcon";
 import SocialIntegrationCard, {
   type SocialIntegrationItem,
@@ -11,6 +12,7 @@ import {
   deleteSocialBlock,
   toggleSocialBlock,
   upsertDiscordBlock,
+  upsertGitHubBlock,
 } from "./actions";
 
 type PageProps = {
@@ -27,6 +29,15 @@ type DiscordBlockState = {
   discordUserId: string | null;
   url: string | null;
   statusText: string | null;
+  isEnabled: boolean;
+};
+
+type GitHubBlockState = {
+  id: string;
+  username: string | null;
+  url: string | null;
+  statusText: string | null;
+  featuredRepo: string | null;
   isEnabled: boolean;
 };
 
@@ -195,11 +206,23 @@ export default async function SocialsPage({ searchParams }: PageProps) {
   }
 
   const discordBlock = getDiscordBlock(user.socialBlocks);
+  const githubBlock = getGitHubBlock(user.socialBlocks);
   const configuredCount = user.socialBlocks.length;
   const enabledCount = user.socialBlocks.filter((block) => block.isEnabled).length;
   const successMessage = getSuccessMessage(params.success);
   const errorMessage = getErrorMessage(params.error);
   const discordCardHref = "/dashboard/socials?active=discord#discord-block-form";
+  const githubCardHref = "/dashboard/socials?active=github#github-block-form";
+  const selectedIsDiscord = selectedKey === "discord";
+  const selectedIsGitHub = selectedKey === "github";
+  const heroPrimaryHref = selectedIsGitHub ? githubCardHref : discordCardHref;
+  const heroPrimaryLabel = selectedIsGitHub
+    ? githubBlock
+      ? "Edit GitHub Block"
+      : "Configure GitHub"
+    : discordBlock
+      ? "Edit Discord Block"
+      : "Configure Discord";
 
   return (
     <main style={pageStyle}>
@@ -208,14 +231,14 @@ export default async function SocialsPage({ searchParams }: PageProps) {
           <div style={eyebrowStyle}>Social Blocks Phase 1</div>
           <h1 style={heroTitleStyle}>Social Integrations</h1>
           <p style={heroDescriptionStyle}>
-            Discord is now the first real block you can configure, save, and publish
-            on your public profile. The rest of the integrations stay as visual previews
-            while the block system grows safely.
+            Discord and GitHub are now real blocks you can configure, save, and publish
+            on your public profile. The remaining integrations stay as visual previews
+            while the block system expands safely.
           </p>
 
           <div style={heroActionsStyle}>
-            <Link href={discordCardHref} style={primaryActionStyle}>
-              {discordBlock ? "Edit Discord Block" : "Configure Discord"}
+            <Link href={heroPrimaryHref} style={primaryActionStyle}>
+              {heroPrimaryLabel}
             </Link>
             <Link href={`/${user.username}`} style={secondaryActionStyle} target="_blank">
               Open Public Profile
@@ -224,16 +247,44 @@ export default async function SocialsPage({ searchParams }: PageProps) {
         </div>
 
         <div style={heroRailStyle}>
-          <div style={discordBlock?.isEnabled ? enabledBadgeStyle : mutedBadgeStyle}>
-            {discordBlock?.isEnabled ? "Discord live" : discordBlock ? "Saved draft" : "Not configured"}
+          <div
+            style={
+              selectedIsGitHub
+                ? githubBlock?.isEnabled
+                  ? enabledBadgeStyle
+                  : mutedBadgeStyle
+                : discordBlock?.isEnabled
+                  ? enabledBadgeStyle
+                  : mutedBadgeStyle
+            }
+          >
+            {selectedIsGitHub
+              ? githubBlock?.isEnabled
+                ? "GitHub live"
+                : githubBlock
+                  ? "Saved draft"
+                  : "Not configured"
+              : discordBlock?.isEnabled
+                ? "Discord live"
+                : discordBlock
+                  ? "Saved draft"
+                  : "Not configured"}
           </div>
 
-          {selectedKey === "discord" ? (
+          {selectedIsDiscord ? (
             <DiscordBlockPreview
               username={discordBlock?.username ?? null}
               statusText={discordBlock?.statusText ?? null}
               url={discordBlock?.url ?? null}
               enabled={discordBlock?.isEnabled ?? false}
+            />
+          ) : selectedIsGitHub ? (
+            <GitHubBlockPreview
+              username={githubBlock?.username ?? null}
+              statusText={githubBlock?.statusText ?? null}
+              featuredRepo={githubBlock?.featuredRepo ?? null}
+              url={githubBlock?.url ?? null}
+              enabled={githubBlock?.isEnabled ?? false}
             />
           ) : (
             <div style={previewPanelStyle}>
@@ -246,8 +297,8 @@ export default async function SocialsPage({ searchParams }: PageProps) {
               </div>
               <p style={previewTextStyle}>{selectedItem.description}</p>
               <div style={previewHintPanelStyle}>
-                Discord is the only live social block in this phase. The other cards stay in
-                design preview mode for now.
+                Discord and GitHub are live social blocks in this phase. The other cards stay
+                in design preview mode for now.
               </div>
             </div>
           )}
@@ -262,8 +313,8 @@ export default async function SocialsPage({ searchParams }: PageProps) {
               <div style={statLabelStyle}>Enabled publicly</div>
             </div>
             <div style={statCardStyle}>
-              <div style={statValueStyle}>1</div>
-              <div style={statLabelStyle}>Live platform</div>
+              <div style={statValueStyle}>2</div>
+              <div style={statLabelStyle}>Live platforms</div>
             </div>
           </div>
         </div>
@@ -278,26 +329,42 @@ export default async function SocialsPage({ searchParams }: PageProps) {
           <h2 style={sectionTitleStyle}>Choose what your public profile can show</h2>
         </div>
         <div style={sectionHintStyle}>
-          Discord is functional now. The remaining integrations stay lightweight and visual
-          until each block gets its own safe backend phase.
+          Discord and GitHub are functional now. The remaining integrations stay lightweight
+          and visual until each block gets its own safe backend phase.
         </div>
       </section>
 
       <section style={gridStyle}>
         {integrations.map((item) => {
           const isDiscord = item.key === "discord";
-          const isConfigured = Boolean(discordBlock?.username);
+          const isGitHub = item.key === "github";
+          const isConfigured = isDiscord
+            ? Boolean(discordBlock?.username)
+            : isGitHub
+              ? Boolean(githubBlock?.username)
+              : false;
+          const isEnabled = isDiscord
+            ? Boolean(discordBlock?.isEnabled)
+            : isGitHub
+              ? Boolean(githubBlock?.isEnabled)
+              : false;
 
           return (
             <SocialIntegrationCard
               key={item.key}
               item={item}
               selected={item.key === selectedKey}
-              href={isDiscord ? discordCardHref : `/dashboard/socials?active=${item.key}`}
-              stateLabel={
+              href={
                 isDiscord
+                  ? discordCardHref
+                  : isGitHub
+                    ? githubCardHref
+                    : `/dashboard/socials?active=${item.key}`
+              }
+              stateLabel={
+                isDiscord || isGitHub
                   ? isConfigured
-                    ? discordBlock?.isEnabled
+                    ? isEnabled
                       ? "Configured"
                       : "Saved"
                     : "Setup"
@@ -306,14 +373,14 @@ export default async function SocialsPage({ searchParams }: PageProps) {
                     : "Preview"
               }
               footerLabel={
-                isDiscord
+                isDiscord || isGitHub
                   ? isConfigured
                     ? "Live block available on profile"
-                    : "First real social block"
+                    : "Real social block"
                   : "Design preview only in this phase"
               }
               actionLabel={
-                isDiscord ? (isConfigured ? "Edit" : "Configure") : "Preview"
+                isDiscord || isGitHub ? (isConfigured ? "Edit" : "Configure") : "Preview"
               }
             />
           );
@@ -442,13 +509,136 @@ export default async function SocialsPage({ searchParams }: PageProps) {
         </div>
       </section>
 
+      <section id="github-block-form" style={discordSectionStyle}>
+        <div style={discordFormColumnStyle}>
+          <div style={{ display: "grid", gap: "8px" }}>
+            <div style={sectionEyebrowStyle}>GitHub Block</div>
+            <h2 style={sectionTitleStyle}>Configure your GitHub profile block</h2>
+            <p style={sectionDescriptionStyle}>
+              This saves a manual GitHub block for now. Real repositories, stats, and contribution
+              signals can plug into the same structure later without breaking your profile.
+            </p>
+          </div>
+
+          <form action={upsertGitHubBlock} style={formGridStyle}>
+            <label style={labelStyle}>
+              GitHub username
+              <input
+                type="text"
+                name="username"
+                required
+                maxLength={64}
+                placeholder="ex: octocat"
+                defaultValue={githubBlock?.username ?? ""}
+                style={inputStyle}
+              />
+            </label>
+
+            <label style={labelStyle}>
+              GitHub profile URL
+              <input
+                type="url"
+                name="url"
+                placeholder="https://github.com/..."
+                defaultValue={githubBlock?.url ?? ""}
+                style={inputStyle}
+              />
+            </label>
+
+            <label style={{ ...labelStyle, gridColumn: "1 / -1" }}>
+              Short status
+              <textarea
+                name="status"
+                rows={4}
+                maxLength={120}
+                placeholder="Short line for your dev focus, stack, or current momentum."
+                defaultValue={githubBlock?.statusText ?? ""}
+                style={textareaStyle}
+              />
+            </label>
+
+            <label style={{ ...labelStyle, gridColumn: "1 / -1" }}>
+              Featured repository
+              <input
+                type="text"
+                name="featuredRepo"
+                maxLength={120}
+                placeholder="ex: andre/yotei-profile"
+                defaultValue={githubBlock?.featuredRepo ?? ""}
+                style={inputStyle}
+              />
+            </label>
+
+            <label style={checkboxLabelStyle}>
+              <input
+                type="checkbox"
+                name="isEnabled"
+                defaultChecked={githubBlock?.isEnabled ?? true}
+              />
+              <span>Show this block on my public profile</span>
+            </label>
+
+            <div style={hintBoxStyle}>
+              Future GitHub signals will plug into metadata later. This phase only stores
+              manual profile data safely.
+            </div>
+
+            <div style={actionRowStyle}>
+              <button type="submit" style={submitButtonStyle}>
+                {githubBlock ? "Save GitHub Block" : "Create GitHub Block"}
+              </button>
+
+              {githubBlock ? (
+                <>
+                  <button
+                    type="submit"
+                    formAction={toggleSocialBlock.bind(null, githubBlock.id)}
+                    style={secondaryButtonStyle}
+                  >
+                    {githubBlock.isEnabled ? "Disable Block" : "Enable Block"}
+                  </button>
+
+                  <button
+                    type="submit"
+                    formAction={deleteSocialBlock.bind(null, githubBlock.id)}
+                    style={dangerButtonStyle}
+                  >
+                    Delete Block
+                  </button>
+                </>
+              ) : null}
+            </div>
+          </form>
+        </div>
+
+        <div style={discordPreviewColumnStyle}>
+          <div style={previewLabelStyle}>Saved preview</div>
+          <GitHubBlockPreview
+            username={githubBlock?.username ?? null}
+            statusText={githubBlock?.statusText ?? null}
+            featuredRepo={githubBlock?.featuredRepo ?? null}
+            url={githubBlock?.url ?? null}
+            enabled={githubBlock?.isEnabled ?? false}
+            compact
+          />
+
+          <div style={previewMetaPanelStyle}>
+            <div style={previewMetaTitleStyle}>Public rendering</div>
+            <p style={previewMetaTextStyle}>
+              When enabled, this block appears alongside Discord inside the Social Presence
+              section on your public profile.
+            </p>
+          </div>
+        </div>
+      </section>
+
       <section style={footerNoteStyle}>
         <div style={footerIconWrapStyle} aria-hidden="true">
-          <SocialBrandIcon name="discord" size={18} />
+          <SocialBrandIcon name={selectedIsGitHub ? "github" : "discord"} size={18} />
         </div>
         <p style={footerTextStyle}>
-          Discord now writes to the database and renders on the public profile. Other
-          social cards remain lightweight previews until their backend phases start.
+          Discord and GitHub now write to the database and render on the public profile.
+          Other social cards remain lightweight previews until their backend phases start.
         </p>
       </section>
     </main>
@@ -483,6 +673,34 @@ function getDiscordBlock(
   };
 }
 
+function getGitHubBlock(
+  blocks: Array<{
+    id: string;
+    platform: string;
+    username: string | null;
+    url: string | null;
+    metadata: unknown;
+    isEnabled: boolean;
+  }>
+): GitHubBlockState | null {
+  const block = blocks.find((item) => item.platform === "github");
+
+  if (!block) {
+    return null;
+  }
+
+  const metadata = getMetadataObject(block.metadata);
+
+  return {
+    id: block.id,
+    username: block.username,
+    url: block.url,
+    statusText: readMetadataValue(metadata, "statusText"),
+    featuredRepo: readMetadataValue(metadata, "featuredRepo"),
+    isEnabled: block.isEnabled,
+  };
+}
+
 function getMetadataObject(value: unknown) {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     return null;
@@ -508,12 +726,18 @@ function getSuccessMessage(code?: string) {
   if (code === "discord-enabled") return "Discord block ativado no perfil publico.";
   if (code === "discord-disabled") return "Discord block desativado no perfil publico.";
   if (code === "discord-deleted") return "Discord block removido com sucesso.";
+  if (code === "github-saved") return "GitHub block salvo com sucesso.";
+  if (code === "github-enabled") return "GitHub block ativado no perfil publico.";
+  if (code === "github-disabled") return "GitHub block desativado no perfil publico.";
+  if (code === "github-deleted") return "GitHub block removido com sucesso.";
   return "";
 }
 
 function getErrorMessage(code?: string) {
   if (code === "discord-username-required") return "Digite um username do Discord.";
   if (code === "discord-url-invalid") return "URL invalida. Use um endereco http ou https.";
+  if (code === "github-username-required") return "Digite um username do GitHub.";
+  if (code === "github-url-invalid") return "URL invalida. Use um endereco http ou https.";
   if (code === "social-block-not-found") return "Bloco social nao encontrado.";
   return "";
 }
