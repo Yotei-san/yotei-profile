@@ -9,6 +9,8 @@ import { prisma } from "@/app/lib/prisma";
 const DISCORD_PLATFORM = "discord";
 const GITHUB_PLATFORM = "github";
 const SPOTIFY_PLATFORM = "spotify";
+const YOUTUBE_PLATFORM = "youtube";
+const TWITCH_PLATFORM = "twitch";
 
 export async function upsertDiscordBlock(formData: FormData) {
   const sessionUser = await requireUser();
@@ -175,6 +177,81 @@ export async function upsertSpotifyBlock(formData: FormData) {
   redirect(buildSocialsPath(SPOTIFY_PLATFORM, "success", "spotify-saved"));
 }
 
+export async function upsertCreatorVideoBlock(formData: FormData) {
+  const sessionUser = await requireUser();
+  const platformType = normalizeCreatorPlatform(formData.get("platformType"));
+  const channelName = normalizeOptionalText(formData.get("username"));
+  const channelUrl = normalizeOptionalUrl(formData.get("url"));
+  const headline = normalizeOptionalText(formData.get("headline"));
+  const featuredVideoTitle = normalizeOptionalText(formData.get("featuredVideoTitle"));
+  const isEnabled = parseBoolean(formData.get("isEnabled"));
+
+  if (!channelName) {
+    redirect(
+      buildSocialsPath(
+        platformType,
+        "error",
+        platformType === TWITCH_PLATFORM
+          ? "twitch-channel-required"
+          : "youtube-channel-required"
+      )
+    );
+  }
+
+  if (typeof channelUrl === "undefined") {
+    redirect(
+      buildSocialsPath(
+        platformType,
+        "error",
+        platformType === TWITCH_PLATFORM ? "twitch-url-invalid" : "youtube-url-invalid"
+      )
+    );
+  }
+
+  await prisma.socialBlock.upsert({
+    where: {
+      userId_platform: {
+        userId: sessionUser.id,
+        platform: platformType,
+      },
+    },
+    update: {
+      title: platformType === TWITCH_PLATFORM ? "Twitch" : "YouTube",
+      username: channelName,
+      url: channelUrl,
+      metadata: buildCreatorVideoMetadata({
+        headline,
+        featuredVideoTitle,
+      }),
+      isEnabled,
+      sortOrder: platformType === TWITCH_PLATFORM ? 4 : 3,
+    },
+    create: {
+      userId: sessionUser.id,
+      platform: platformType,
+      title: platformType === TWITCH_PLATFORM ? "Twitch" : "YouTube",
+      username: channelName,
+      url: channelUrl,
+      metadata: buildCreatorVideoMetadata({
+        headline,
+        featuredVideoTitle,
+      }),
+      isEnabled,
+      sortOrder: platformType === TWITCH_PLATFORM ? 4 : 3,
+    },
+  });
+
+  revalidatePath("/dashboard/socials");
+  revalidatePath(`/${sessionUser.username}`);
+  redirect(
+    buildSocialsPath(
+      platformType,
+      "success",
+      platformType === TWITCH_PLATFORM ? "twitch-saved" : "youtube-saved"
+    )
+  );
+}
+
 export async function toggleSocialBlock(blockId: string) {
   const sessionUser = await requireUser();
 
@@ -217,6 +294,14 @@ export async function toggleSocialBlock(blockId: string) {
           ? block.isEnabled
             ? "spotify-disabled"
             : "spotify-enabled"
+        : block.platform === YOUTUBE_PLATFORM
+          ? block.isEnabled
+            ? "youtube-disabled"
+            : "youtube-enabled"
+        : block.platform === TWITCH_PLATFORM
+          ? block.isEnabled
+            ? "twitch-disabled"
+            : "twitch-enabled"
         : block.isEnabled
           ? "discord-disabled"
           : "discord-enabled"
@@ -258,6 +343,10 @@ export async function deleteSocialBlock(blockId: string) {
         ? "github-deleted"
         : block.platform === SPOTIFY_PLATFORM
           ? "spotify-deleted"
+          : block.platform === YOUTUBE_PLATFORM
+            ? "youtube-deleted"
+            : block.platform === TWITCH_PLATFORM
+              ? "twitch-deleted"
           : "discord-deleted"
     )
   );
@@ -320,6 +409,24 @@ function buildSpotifyMetadata({
   };
 }
 
+function buildCreatorVideoMetadata({
+  headline,
+  featuredVideoTitle,
+}: {
+  headline: string | null;
+  featuredVideoTitle: string | null;
+}) {
+  if (!headline && !featuredVideoTitle) {
+    return Prisma.JsonNull;
+  }
+
+  return {
+    headline,
+    featuredVideoTitle,
+    creatorReady: false,
+  };
+}
+
 function normalizeDiscordUserId(value: FormDataEntryValue | null) {
   if (typeof value !== "string") {
     return null;
@@ -332,6 +439,10 @@ function normalizeDiscordUserId(value: FormDataEntryValue | null) {
   }
 
   return /^[0-9]{5,32}$/.test(normalized) ? normalized : null;
+}
+
+function normalizeCreatorPlatform(value: FormDataEntryValue | null) {
+  return value === TWITCH_PLATFORM ? TWITCH_PLATFORM : YOUTUBE_PLATFORM;
 }
 
 function normalizeOptionalText(value: FormDataEntryValue | null) {
@@ -385,6 +496,10 @@ function buildSocialsPath(
       ? GITHUB_PLATFORM
       : platform === SPOTIFY_PLATFORM
         ? SPOTIFY_PLATFORM
+        : platform === YOUTUBE_PLATFORM
+          ? YOUTUBE_PLATFORM
+          : platform === TWITCH_PLATFORM
+            ? TWITCH_PLATFORM
         : DISCORD_PLATFORM;
   return `/dashboard/socials?active=${active}&${param}=${value}`;
 }

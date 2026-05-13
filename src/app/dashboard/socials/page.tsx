@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { CSSProperties } from "react";
 import DiscordBlockPreview from "@/app/dashboard/components/DiscordBlockPreview";
 import GitHubBlockPreview from "@/app/dashboard/components/GitHubBlockPreview";
+import CreatorVideoBlockPreview from "@/app/dashboard/components/CreatorVideoBlockPreview";
 import SpotifyBlockPreview from "@/app/dashboard/components/SpotifyBlockPreview";
 import SocialBrandIcon from "@/app/dashboard/components/SocialBrandIcon";
 import SocialIntegrationCard, {
@@ -15,6 +16,7 @@ import {
   upsertDiscordBlock,
   upsertGitHubBlock,
   upsertSpotifyBlock,
+  upsertCreatorVideoBlock,
 } from "./actions";
 
 type PageProps = {
@@ -50,6 +52,15 @@ type SpotifyBlockState = {
   trackName: string | null;
   artistName: string | null;
   statusText: string | null;
+  isEnabled: boolean;
+};
+
+type CreatorVideoBlockState = {
+  id: string;
+  username: string | null;
+  url: string | null;
+  headline: string | null;
+  featuredVideoTitle: string | null;
   isEnabled: boolean;
 };
 
@@ -220,6 +231,8 @@ export default async function SocialsPage({ searchParams }: PageProps) {
   const discordBlock = getDiscordBlock(user.socialBlocks);
   const githubBlock = getGitHubBlock(user.socialBlocks);
   const spotifyBlock = getSpotifyBlock(user.socialBlocks);
+  const youtubeBlock = getCreatorVideoBlock(user.socialBlocks, "youtube");
+  const twitchBlock = getCreatorVideoBlock(user.socialBlocks, "twitch");
   const configuredCount = user.socialBlocks.length;
   const enabledCount = user.socialBlocks.filter((block) => block.isEnabled).length;
   const successMessage = getSuccessMessage(params.success);
@@ -227,13 +240,21 @@ export default async function SocialsPage({ searchParams }: PageProps) {
   const discordCardHref = "/dashboard/socials?active=discord#discord-block-form";
   const githubCardHref = "/dashboard/socials?active=github#github-block-form";
   const spotifyCardHref = "/dashboard/socials?active=spotify#spotify-block-form";
+  const youtubeCardHref = "/dashboard/socials?active=youtube#youtube-block-form";
+  const twitchCardHref = "/dashboard/socials?active=twitch#twitch-block-form";
   const selectedIsDiscord = selectedKey === "discord";
   const selectedIsGitHub = selectedKey === "github";
   const selectedIsSpotify = selectedKey === "spotify";
+  const selectedIsYouTube = selectedKey === "youtube";
+  const selectedIsTwitch = selectedKey === "twitch";
   const heroPrimaryHref = selectedIsGitHub
     ? githubCardHref
     : selectedIsSpotify
       ? spotifyCardHref
+      : selectedIsYouTube
+        ? youtubeCardHref
+        : selectedIsTwitch
+          ? twitchCardHref
       : discordCardHref;
   const heroPrimaryLabel = selectedIsGitHub
     ? githubBlock
@@ -243,6 +264,14 @@ export default async function SocialsPage({ searchParams }: PageProps) {
       ? spotifyBlock
         ? "Edit Spotify Block"
         : "Configure Spotify"
+      : selectedIsYouTube
+        ? youtubeBlock
+          ? "Edit YouTube Block"
+          : "Configure YouTube"
+        : selectedIsTwitch
+          ? twitchBlock
+            ? "Edit Twitch Block"
+            : "Configure Twitch"
       : discordBlock
         ? "Edit Discord Block"
         : "Configure Discord";
@@ -254,7 +283,7 @@ export default async function SocialsPage({ searchParams }: PageProps) {
           <div style={eyebrowStyle}>Social Blocks Phase 1</div>
           <h1 style={heroTitleStyle}>Social Integrations</h1>
           <p style={heroDescriptionStyle}>
-            Discord, GitHub and Spotify are now real blocks you can configure, save, and publish
+            Discord, GitHub, Spotify, YouTube and Twitch are now real blocks you can configure, save, and publish
             on your public profile. The remaining integrations stay as visual previews
             while the block system expands safely.
           </p>
@@ -280,6 +309,14 @@ export default async function SocialsPage({ searchParams }: PageProps) {
                   ? spotifyBlock?.isEnabled
                     ? enabledBadgeStyle
                     : mutedBadgeStyle
+                  : selectedIsYouTube
+                    ? youtubeBlock?.isEnabled
+                      ? enabledBadgeStyle
+                      : mutedBadgeStyle
+                    : selectedIsTwitch
+                      ? twitchBlock?.isEnabled
+                        ? enabledBadgeStyle
+                        : mutedBadgeStyle
                 : discordBlock?.isEnabled
                   ? enabledBadgeStyle
                   : mutedBadgeStyle
@@ -297,6 +334,18 @@ export default async function SocialsPage({ searchParams }: PageProps) {
                   : spotifyBlock
                     ? "Saved draft"
                     : "Not configured"
+                : selectedIsYouTube
+                  ? youtubeBlock?.isEnabled
+                    ? "YouTube live"
+                    : youtubeBlock
+                      ? "Saved draft"
+                      : "Not configured"
+                  : selectedIsTwitch
+                    ? twitchBlock?.isEnabled
+                      ? "Twitch live"
+                      : twitchBlock
+                        ? "Saved draft"
+                        : "Not configured"
               : discordBlock?.isEnabled
                 ? "Discord live"
                 : discordBlock
@@ -328,6 +377,24 @@ export default async function SocialsPage({ searchParams }: PageProps) {
               url={spotifyBlock?.url ?? null}
               enabled={spotifyBlock?.isEnabled ?? false}
             />
+          ) : selectedIsYouTube ? (
+            <CreatorVideoBlockPreview
+              platform="youtube"
+              channelName={youtubeBlock?.username ?? null}
+              headline={youtubeBlock?.headline ?? null}
+              featuredVideoTitle={youtubeBlock?.featuredVideoTitle ?? null}
+              url={youtubeBlock?.url ?? null}
+              enabled={youtubeBlock?.isEnabled ?? false}
+            />
+          ) : selectedIsTwitch ? (
+            <CreatorVideoBlockPreview
+              platform="twitch"
+              channelName={twitchBlock?.username ?? null}
+              headline={twitchBlock?.headline ?? null}
+              featuredVideoTitle={twitchBlock?.featuredVideoTitle ?? null}
+              url={twitchBlock?.url ?? null}
+              enabled={twitchBlock?.isEnabled ?? false}
+            />
           ) : (
             <div style={previewPanelStyle}>
               <div style={previewLabelStyle}>Current preview</div>
@@ -339,7 +406,7 @@ export default async function SocialsPage({ searchParams }: PageProps) {
               </div>
               <p style={previewTextStyle}>{selectedItem.description}</p>
               <div style={previewHintPanelStyle}>
-                Discord, GitHub and Spotify are live social blocks in this phase. The other cards stay
+                Discord, GitHub, Spotify, YouTube and Twitch are live social blocks in this phase. The other cards stay
                 in design preview mode for now.
               </div>
             </div>
@@ -355,7 +422,7 @@ export default async function SocialsPage({ searchParams }: PageProps) {
               <div style={statLabelStyle}>Enabled publicly</div>
             </div>
             <div style={statCardStyle}>
-              <div style={statValueStyle}>3</div>
+              <div style={statValueStyle}>5</div>
               <div style={statLabelStyle}>Live platforms</div>
             </div>
           </div>
@@ -371,7 +438,7 @@ export default async function SocialsPage({ searchParams }: PageProps) {
           <h2 style={sectionTitleStyle}>Choose what your public profile can show</h2>
         </div>
         <div style={sectionHintStyle}>
-          Discord, GitHub and Spotify are functional now. The remaining integrations stay lightweight
+          Discord, GitHub, Spotify, YouTube and Twitch are functional now. The remaining integrations stay lightweight
           and visual until each block gets its own safe backend phase.
         </div>
       </section>
@@ -381,12 +448,18 @@ export default async function SocialsPage({ searchParams }: PageProps) {
           const isDiscord = item.key === "discord";
           const isGitHub = item.key === "github";
           const isSpotify = item.key === "spotify";
+          const isYouTube = item.key === "youtube";
+          const isTwitch = item.key === "twitch";
           const isConfigured = isDiscord
             ? Boolean(discordBlock?.username)
             : isGitHub
               ? Boolean(githubBlock?.username)
               : isSpotify
                 ? Boolean(spotifyBlock?.username)
+                : isYouTube
+                  ? Boolean(youtubeBlock?.username)
+                  : isTwitch
+                    ? Boolean(twitchBlock?.username)
               : false;
           const isEnabled = isDiscord
             ? Boolean(discordBlock?.isEnabled)
@@ -394,6 +467,10 @@ export default async function SocialsPage({ searchParams }: PageProps) {
               ? Boolean(githubBlock?.isEnabled)
               : isSpotify
                 ? Boolean(spotifyBlock?.isEnabled)
+                : isYouTube
+                  ? Boolean(youtubeBlock?.isEnabled)
+                  : isTwitch
+                    ? Boolean(twitchBlock?.isEnabled)
               : false;
 
           return (
@@ -408,10 +485,14 @@ export default async function SocialsPage({ searchParams }: PageProps) {
                     ? githubCardHref
                     : isSpotify
                       ? spotifyCardHref
+                      : isYouTube
+                        ? youtubeCardHref
+                        : isTwitch
+                          ? twitchCardHref
                     : `/dashboard/socials?active=${item.key}`
               }
               stateLabel={
-                isDiscord || isGitHub || isSpotify
+                isDiscord || isGitHub || isSpotify || isYouTube || isTwitch
                   ? isConfigured
                     ? isEnabled
                       ? "Configured"
@@ -422,14 +503,14 @@ export default async function SocialsPage({ searchParams }: PageProps) {
                     : "Preview"
               }
               footerLabel={
-                isDiscord || isGitHub || isSpotify
+                isDiscord || isGitHub || isSpotify || isYouTube || isTwitch
                   ? isConfigured
                     ? "Live block available on profile"
                     : "Real social block"
                   : "Design preview only in this phase"
               }
               actionLabel={
-                isDiscord || isGitHub || isSpotify
+                isDiscord || isGitHub || isSpotify || isYouTube || isTwitch
                   ? isConfigured
                     ? "Edit"
                     : "Configure"
@@ -438,6 +519,256 @@ export default async function SocialsPage({ searchParams }: PageProps) {
             />
           );
         })}
+      </section>
+
+      <section id="youtube-block-form" style={discordSectionStyle}>
+        <div style={discordFormColumnStyle}>
+          <div style={{ display: "grid", gap: "8px" }}>
+            <div style={sectionEyebrowStyle}>YouTube Block</div>
+            <h2 style={sectionTitleStyle}>Configure your YouTube creator block</h2>
+            <p style={sectionDescriptionStyle}>
+              This saves a manual YouTube channel block for now. Real channel data and richer video
+              signals can plug into the same structure later without breaking your profile.
+            </p>
+          </div>
+
+          <form action={upsertCreatorVideoBlock} style={formGridStyle}>
+            <input type="hidden" name="platformType" value="youtube" />
+
+            <label style={labelStyle}>
+              Channel name
+              <input
+                type="text"
+                name="username"
+                required
+                maxLength={64}
+                placeholder="ex: Yotei Channel"
+                defaultValue={youtubeBlock?.username ?? ""}
+                style={inputStyle}
+              />
+            </label>
+
+            <label style={labelStyle}>
+              Channel URL
+              <input
+                type="url"
+                name="url"
+                placeholder="https://youtube.com/..."
+                defaultValue={youtubeBlock?.url ?? ""}
+                style={inputStyle}
+              />
+            </label>
+
+            <label style={{ ...labelStyle, gridColumn: "1 / -1" }}>
+              Headline
+              <textarea
+                name="headline"
+                rows={4}
+                maxLength={120}
+                placeholder="Short creator headline, upload vibe, or channel positioning."
+                defaultValue={youtubeBlock?.headline ?? ""}
+                style={textareaStyle}
+              />
+            </label>
+
+            <label style={{ ...labelStyle, gridColumn: "1 / -1" }}>
+              Featured video title
+              <input
+                type="text"
+                name="featuredVideoTitle"
+                maxLength={120}
+                placeholder="ex: Building the ultimate Yotei profile"
+                defaultValue={youtubeBlock?.featuredVideoTitle ?? ""}
+                style={inputStyle}
+              />
+            </label>
+
+            <label style={checkboxLabelStyle}>
+              <input
+                type="checkbox"
+                name="isEnabled"
+                defaultChecked={youtubeBlock?.isEnabled ?? true}
+              />
+              <span>Show this block on my public profile</span>
+            </label>
+
+            <div style={hintBoxStyle}>
+              Future YouTube integrations will plug into metadata later. This phase only stores
+              manual creator data safely.
+            </div>
+
+            <div style={actionRowStyle}>
+              <button type="submit" style={submitButtonStyle}>
+                {youtubeBlock ? "Save YouTube Block" : "Create YouTube Block"}
+              </button>
+
+              {youtubeBlock ? (
+                <>
+                  <button
+                    type="submit"
+                    formAction={toggleSocialBlock.bind(null, youtubeBlock.id)}
+                    style={secondaryButtonStyle}
+                  >
+                    {youtubeBlock.isEnabled ? "Disable Block" : "Enable Block"}
+                  </button>
+
+                  <button
+                    type="submit"
+                    formAction={deleteSocialBlock.bind(null, youtubeBlock.id)}
+                    style={dangerButtonStyle}
+                  >
+                    Delete Block
+                  </button>
+                </>
+              ) : null}
+            </div>
+          </form>
+        </div>
+
+        <div style={discordPreviewColumnStyle}>
+          <div style={previewLabelStyle}>Saved preview</div>
+          <CreatorVideoBlockPreview
+            platform="youtube"
+            channelName={youtubeBlock?.username ?? null}
+            headline={youtubeBlock?.headline ?? null}
+            featuredVideoTitle={youtubeBlock?.featuredVideoTitle ?? null}
+            url={youtubeBlock?.url ?? null}
+            enabled={youtubeBlock?.isEnabled ?? false}
+            compact
+          />
+
+          <div style={previewMetaPanelStyle}>
+            <div style={previewMetaTitleStyle}>Public rendering</div>
+            <p style={previewMetaTextStyle}>
+              When enabled, this block appears with the other Social Presence cards on your public profile.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section id="twitch-block-form" style={discordSectionStyle}>
+        <div style={discordFormColumnStyle}>
+          <div style={{ display: "grid", gap: "8px" }}>
+            <div style={sectionEyebrowStyle}>Twitch Block</div>
+            <h2 style={sectionTitleStyle}>Configure your Twitch creator block</h2>
+            <p style={sectionDescriptionStyle}>
+              This saves a manual Twitch channel block for now. Real livestream and viewer signals
+              can plug into the same structure later without breaking your profile.
+            </p>
+          </div>
+
+          <form action={upsertCreatorVideoBlock} style={formGridStyle}>
+            <input type="hidden" name="platformType" value="twitch" />
+
+            <label style={labelStyle}>
+              Channel name
+              <input
+                type="text"
+                name="username"
+                required
+                maxLength={64}
+                placeholder="ex: YoteiLive"
+                defaultValue={twitchBlock?.username ?? ""}
+                style={inputStyle}
+              />
+            </label>
+
+            <label style={labelStyle}>
+              Channel URL
+              <input
+                type="url"
+                name="url"
+                placeholder="https://twitch.tv/..."
+                defaultValue={twitchBlock?.url ?? ""}
+                style={inputStyle}
+              />
+            </label>
+
+            <label style={{ ...labelStyle, gridColumn: "1 / -1" }}>
+              Headline
+              <textarea
+                name="headline"
+                rows={4}
+                maxLength={120}
+                placeholder="Short creator headline, stream vibe, or channel positioning."
+                defaultValue={twitchBlock?.headline ?? ""}
+                style={textareaStyle}
+              />
+            </label>
+
+            <label style={{ ...labelStyle, gridColumn: "1 / -1" }}>
+              Featured stream or video title
+              <input
+                type="text"
+                name="featuredVideoTitle"
+                maxLength={120}
+                placeholder="ex: Late night ranked grind"
+                defaultValue={twitchBlock?.featuredVideoTitle ?? ""}
+                style={inputStyle}
+              />
+            </label>
+
+            <label style={checkboxLabelStyle}>
+              <input
+                type="checkbox"
+                name="isEnabled"
+                defaultChecked={twitchBlock?.isEnabled ?? true}
+              />
+              <span>Show this block on my public profile</span>
+            </label>
+
+            <div style={hintBoxStyle}>
+              Future Twitch integrations will plug into metadata later. This phase only stores
+              manual creator data safely.
+            </div>
+
+            <div style={actionRowStyle}>
+              <button type="submit" style={submitButtonStyle}>
+                {twitchBlock ? "Save Twitch Block" : "Create Twitch Block"}
+              </button>
+
+              {twitchBlock ? (
+                <>
+                  <button
+                    type="submit"
+                    formAction={toggleSocialBlock.bind(null, twitchBlock.id)}
+                    style={secondaryButtonStyle}
+                  >
+                    {twitchBlock.isEnabled ? "Disable Block" : "Enable Block"}
+                  </button>
+
+                  <button
+                    type="submit"
+                    formAction={deleteSocialBlock.bind(null, twitchBlock.id)}
+                    style={dangerButtonStyle}
+                  >
+                    Delete Block
+                  </button>
+                </>
+              ) : null}
+            </div>
+          </form>
+        </div>
+
+        <div style={discordPreviewColumnStyle}>
+          <div style={previewLabelStyle}>Saved preview</div>
+          <CreatorVideoBlockPreview
+            platform="twitch"
+            channelName={twitchBlock?.username ?? null}
+            headline={twitchBlock?.headline ?? null}
+            featuredVideoTitle={twitchBlock?.featuredVideoTitle ?? null}
+            url={twitchBlock?.url ?? null}
+            enabled={twitchBlock?.isEnabled ?? false}
+            compact
+          />
+
+          <div style={previewMetaPanelStyle}>
+            <div style={previewMetaTitleStyle}>Public rendering</div>
+            <p style={previewMetaTextStyle}>
+              When enabled, this block appears with the other Social Presence cards on your public profile.
+            </p>
+          </div>
+        </div>
       </section>
 
       <section id="discord-block-form" style={discordSectionStyle}>
@@ -824,12 +1155,22 @@ export default async function SocialsPage({ searchParams }: PageProps) {
       <section style={footerNoteStyle}>
         <div style={footerIconWrapStyle} aria-hidden="true">
           <SocialBrandIcon
-            name={selectedIsGitHub ? "github" : selectedIsSpotify ? "spotify" : "discord"}
+            name={
+              selectedIsGitHub
+                ? "github"
+                : selectedIsSpotify
+                  ? "spotify"
+                  : selectedIsYouTube
+                    ? "youtube"
+                    : selectedIsTwitch
+                      ? "twitch"
+                      : "discord"
+            }
             size={18}
           />
         </div>
         <p style={footerTextStyle}>
-          Discord, GitHub and Spotify now write to the database and render on the public profile.
+          Discord, GitHub, Spotify, YouTube and Twitch now write to the database and render on the public profile.
           Other social cards remain lightweight previews until their backend phases start.
         </p>
       </section>
@@ -890,6 +1231,35 @@ function getSpotifyBlock(
     trackName: readMetadataValue(metadata, "trackName"),
     artistName: readMetadataValue(metadata, "artistName"),
     statusText: readMetadataValue(metadata, "statusText"),
+    isEnabled: block.isEnabled,
+  };
+}
+
+function getCreatorVideoBlock(
+  blocks: Array<{
+    id: string;
+    platform: string;
+    username: string | null;
+    url: string | null;
+    metadata: unknown;
+    isEnabled: boolean;
+  }>,
+  platform: "youtube" | "twitch"
+): CreatorVideoBlockState | null {
+  const block = blocks.find((item) => item.platform === platform);
+
+  if (!block) {
+    return null;
+  }
+
+  const metadata = getMetadataObject(block.metadata);
+
+  return {
+    id: block.id,
+    username: block.username,
+    url: block.url,
+    headline: readMetadataValue(metadata, "headline"),
+    featuredVideoTitle: readMetadataValue(metadata, "featuredVideoTitle"),
     isEnabled: block.isEnabled,
   };
 }
@@ -955,6 +1325,14 @@ function getSuccessMessage(code?: string) {
   if (code === "spotify-enabled") return "Spotify block ativado no perfil publico.";
   if (code === "spotify-disabled") return "Spotify block desativado no perfil publico.";
   if (code === "spotify-deleted") return "Spotify block removido com sucesso.";
+  if (code === "youtube-saved") return "YouTube block salvo com sucesso.";
+  if (code === "youtube-enabled") return "YouTube block ativado no perfil publico.";
+  if (code === "youtube-disabled") return "YouTube block desativado no perfil publico.";
+  if (code === "youtube-deleted") return "YouTube block removido com sucesso.";
+  if (code === "twitch-saved") return "Twitch block salvo com sucesso.";
+  if (code === "twitch-enabled") return "Twitch block ativado no perfil publico.";
+  if (code === "twitch-disabled") return "Twitch block desativado no perfil publico.";
+  if (code === "twitch-deleted") return "Twitch block removido com sucesso.";
   return "";
 }
 
@@ -965,6 +1343,10 @@ function getErrorMessage(code?: string) {
   if (code === "github-url-invalid") return "URL invalida. Use um endereco http ou https.";
   if (code === "spotify-username-required") return "Digite um nome de usuario do Spotify.";
   if (code === "spotify-url-invalid") return "URL invalida. Use um endereco http ou https.";
+  if (code === "youtube-channel-required") return "Digite o nome do canal do YouTube.";
+  if (code === "youtube-url-invalid") return "URL invalida. Use um endereco http ou https.";
+  if (code === "twitch-channel-required") return "Digite o nome do canal da Twitch.";
+  if (code === "twitch-url-invalid") return "URL invalida. Use um endereco http ou https.";
   if (code === "social-block-not-found") return "Bloco social nao encontrado.";
   return "";
 }

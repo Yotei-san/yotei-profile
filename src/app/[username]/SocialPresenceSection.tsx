@@ -3,6 +3,7 @@ import { LuSparkles } from "react-icons/lu";
 import DiscordSocialBlock from "./DiscordSocialBlock";
 import GitHubSocialBlock from "./GitHubSocialBlock";
 import SpotifySocialBlock from "./SpotifySocialBlock";
+import CreatorVideoSocialBlock from "./CreatorVideoSocialBlock";
 
 export type PublicSocialBlock = {
   id: string;
@@ -14,6 +15,8 @@ export type PublicSocialBlock = {
   featuredRepo: string | null;
   trackName: string | null;
   artistName: string | null;
+  headline: string | null;
+  featuredVideoTitle: string | null;
   isEnabled: boolean;
 };
 
@@ -43,7 +46,7 @@ export default function SocialPresenceSection({
         </div>
         <h2 style={titleStyle}>Connected blocks that add more context to the profile.</h2>
         <p style={copyStyle}>
-          Premium-looking modules for communities, code and music, starting with Discord, GitHub and Spotify.
+          Premium-looking modules for communities, code, music and creator channels.
         </p>
       </div>
 
@@ -84,6 +87,21 @@ export default function SocialPresenceSection({
                 trackName={block.trackName}
                 artistName={block.artistName}
                 statusText={block.statusText}
+                url={block.url}
+                themeColor={themeColor}
+                compact={compact}
+              />
+            );
+          }
+
+          if (block.platform === "youtube" || block.platform === "twitch") {
+            return (
+              <CreatorVideoSocialBlock
+                key={block.id}
+                platform={block.platform}
+                channelName={block.username}
+                headline={block.headline}
+                featuredVideoTitle={block.featuredVideoTitle}
                 url={block.url}
                 themeColor={themeColor}
                 compact={compact}

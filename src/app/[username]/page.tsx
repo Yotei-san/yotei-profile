@@ -220,6 +220,8 @@ export default async function ProfilePage({ params }: Props) {
       featuredRepo: readMetadataValue(metadata, "featuredRepo"),
       trackName: readMetadataValue(metadata, "trackName"),
       artistName: readMetadataValue(metadata, "artistName"),
+      headline: readMetadataValue(metadata, "headline"),
+      featuredVideoTitle: readMetadataValue(metadata, "featuredVideoTitle"),
       isEnabled: block.isEnabled,
     };
   });
