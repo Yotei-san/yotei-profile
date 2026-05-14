@@ -2,6 +2,37 @@ import Stripe from "stripe";
 import { stripe } from "@/app/lib/stripe";
 import { prisma } from "@/app/lib/prisma";
 
+const ACTIVE_PREMIUM_STATUSES = new Set(["active", "trialing", "past_due"]);
+
+function isPremiumSubscriptionStatus(status: string) {
+  return ACTIVE_PREMIUM_STATUSES.has(status);
+}
+
+async function syncPremiumByCustomerId(input: {
+  customerId: string | null;
+  subscriptionId?: string | null;
+  stripePriceId?: string | null;
+  subscriptionStatus: string;
+  premiumUntil?: Date | null;
+}) {
+  if (!input.customerId) {
+    return;
+  }
+
+  await prisma.user.updateMany({
+    where: { stripeCustomerId: input.customerId },
+    data: {
+      plan: isPremiumSubscriptionStatus(input.subscriptionStatus) ? "premium" : "free",
+      premiumBadge: isPremiumSubscriptionStatus(input.subscriptionStatus),
+      stripeSubscriptionId:
+        input.subscriptionId === undefined ? undefined : input.subscriptionId,
+      stripePriceId: input.stripePriceId === undefined ? undefined : input.stripePriceId,
+      subscriptionStatus: input.subscriptionStatus,
+      premiumUntil: input.premiumUntil === undefined ? undefined : input.premiumUntil,
+    },
+  });
+}
+
 export async function POST(request: Request) {
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
@@ -71,21 +102,16 @@ export async function POST(request: Request) {
           premiumUntil = new Date(firstLine.period.end * 1000);
         }
 
-        if (customerId) {
-          await prisma.user.updateMany({
-            where: { stripeCustomerId: customerId },
-            data: {
-              plan: "premium",
-              premiumBadge: true,
-              premiumUntil: premiumUntil ?? undefined,
-              subscriptionStatus: "active",
-            },
-          });
-        }
+        await syncPremiumByCustomerId({
+          customerId,
+          subscriptionStatus: "active",
+          premiumUntil,
+        });
 
         break;
       }
 
+      case "customer.subscription.created":
       case "customer.subscription.updated": {
         const subscription = event.data.object as Stripe.Subscription;
 
@@ -101,21 +127,13 @@ export async function POST(request: Request) {
         const firstItem = subscription.items.data[0];
         const stripePriceId = firstItem?.price?.id ?? null;
 
-        if (customerId) {
-          const activeLikeStatuses = new Set(["active", "trialing", "past_due"]);
-
-          await prisma.user.updateMany({
-            where: { stripeCustomerId: customerId },
-            data: {
-              plan: activeLikeStatuses.has(subscription.status) ? "premium" : "free",
-              premiumBadge: activeLikeStatuses.has(subscription.status),
-              stripeSubscriptionId: subscription.id,
-              stripePriceId: stripePriceId ?? undefined,
-              subscriptionStatus: subscription.status,
-              premiumUntil: currentPeriodEnd ?? undefined,
-            },
-          });
-        }
+        await syncPremiumByCustomerId({
+          customerId,
+          subscriptionId: subscription.id,
+          stripePriceId,
+          subscriptionStatus: subscription.status,
+          premiumUntil: currentPeriodEnd,
+        });
 
         break;
       }
@@ -126,19 +144,13 @@ export async function POST(request: Request) {
         const customerId =
           typeof subscription.customer === "string" ? subscription.customer : null;
 
-        if (customerId) {
-          await prisma.user.updateMany({
-            where: { stripeCustomerId: customerId },
-            data: {
-              plan: "free",
-              premiumUntil: null,
-              premiumBadge: false,
-              stripeSubscriptionId: null,
-              stripePriceId: null,
-              subscriptionStatus: subscription.status,
-            },
-          });
-        }
+        await syncPremiumByCustomerId({
+          customerId,
+          subscriptionId: null,
+          stripePriceId: null,
+          subscriptionStatus: subscription.status,
+          premiumUntil: null,
+        });
 
         break;
       }

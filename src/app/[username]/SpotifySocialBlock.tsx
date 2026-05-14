@@ -77,6 +77,10 @@ const cardStyle: CSSProperties = {
   overflow: "hidden",
   display: "grid",
   gap: "16px",
+  width: "100%",
+  maxWidth: "100%",
+  minWidth: 0,
+  boxSizing: "border-box",
   borderRadius: "24px",
   border: "1px solid rgba(30,215,96,0.24)",
   background:
@@ -159,6 +163,7 @@ const playerShellStyle: CSSProperties = {
   gridTemplateColumns: "86px minmax(0, 1fr)",
   gap: "14px",
   alignItems: "center",
+  minWidth: 0,
 };
 
 const coverArtStyle: CSSProperties = {
@@ -195,12 +200,15 @@ const artistStyle: CSSProperties = {
   fontSize: "14px",
   fontWeight: 700,
   lineHeight: 1.5,
+  overflowWrap: "anywhere",
+  wordBreak: "break-word",
 };
 
 const usernameStyle: CSSProperties = {
   color: "#9fb3a8",
   fontSize: "13px",
   fontWeight: 700,
+  overflowWrap: "anywhere",
 };
 
 const copyStyle: CSSProperties = {
@@ -208,6 +216,8 @@ const copyStyle: CSSProperties = {
   color: "#d0e5d7",
   fontSize: "14px",
   lineHeight: 1.7,
+  overflowWrap: "anywhere",
+  wordBreak: "break-word",
 };
 
 const footerRowStyle: CSSProperties = {
@@ -257,4 +267,5 @@ const hintStyle: CSSProperties = {
   color: "#98b5a5",
   fontSize: "13px",
   fontWeight: 700,
+  overflowWrap: "anywhere",
 };

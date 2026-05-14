@@ -4,6 +4,30 @@ import { prisma } from "@/app/lib/prisma";
 import DashboardSidebar from "@/app/components/DashboardSidebar";
 import { dashboardNavItems } from "@/app/lib/dashboard-nav";
 
+const ACTIVE_PREMIUM_STATUSES = new Set(["active", "trialing", "past_due"]);
+
+function isPremiumUser(user: {
+  role: string;
+  plan: string;
+  premiumBadge: boolean;
+  premiumUntil: Date | null;
+  subscriptionStatus: string | null;
+}) {
+  if (user.role === "owner" || user.role === "admin") {
+    return true;
+  }
+
+  const hasPremiumPlan =
+    user.plan === "premium" &&
+    (!user.premiumUntil || new Date(user.premiumUntil) > new Date());
+
+  return (
+    hasPremiumPlan ||
+    user.premiumBadge ||
+    ACTIVE_PREMIUM_STATUSES.has(user.subscriptionStatus || "")
+  );
+}
+
 export default async function DashboardLayout({
   children,
 }: {
@@ -18,6 +42,10 @@ export default async function DashboardLayout({
       displayName: true,
       avatarUrl: true,
       role: true,
+      plan: true,
+      premiumBadge: true,
+      premiumUntil: true,
+      subscriptionStatus: true,
     },
   });
 
@@ -48,7 +76,7 @@ export default async function DashboardLayout({
         <DashboardSidebar
           user={{
             ...user,
-            plan: "free",
+            plan: isPremiumUser(user) ? "premium" : "free",
           }}
           items={dashboardNavItems}
         />

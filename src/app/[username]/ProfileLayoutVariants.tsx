@@ -695,6 +695,7 @@ const defaultPageStyle = (themeColor: string): CSSProperties => ({
 
 const defaultShellStyle: CSSProperties = {
   width: "min(1040px, 100%)",
+  maxWidth: "1040px",
   margin: "0 auto",
   borderRadius: "30px",
   overflow: "hidden",
@@ -708,6 +709,7 @@ const defaultContentStyle: CSSProperties = {
   gap: "22px",
   padding: "0 26px 28px",
   marginTop: "-54px",
+  minWidth: 0,
 };
 
 const defaultIdentityStyle: CSSProperties = {
@@ -715,6 +717,7 @@ const defaultIdentityStyle: CSSProperties = {
   gridTemplateColumns: "auto minmax(0, 1fr)",
   gap: "18px",
   alignItems: "end",
+  minWidth: 0,
 };
 
 const defaultNameStyle: CSSProperties = {
@@ -748,9 +751,11 @@ const simplisticPageStyle: CSSProperties = {
 
 const simplisticShellStyle: CSSProperties = {
   width: "min(820px, 100%)",
+  maxWidth: "820px",
   margin: "0 auto",
   display: "grid",
   gap: "18px",
+  minWidth: 0,
 };
 
 const simplisticHeaderStyle: CSSProperties = {
@@ -759,6 +764,7 @@ const simplisticHeaderStyle: CSSProperties = {
   gap: "18px",
   alignItems: "center",
   padding: "22px 0 4px",
+  minWidth: 0,
 };
 
 const simplisticNameStyle: CSSProperties = {
@@ -790,15 +796,18 @@ const portfolioPageStyle: CSSProperties = {
 
 const portfolioBannerWrapStyle: CSSProperties = {
   width: "min(1160px, 100%)",
+  maxWidth: "1160px",
   margin: "0 auto 18px",
 };
 
 const portfolioShellStyle: CSSProperties = {
   width: "min(1160px, 100%)",
+  maxWidth: "1160px",
   margin: "0 auto",
   display: "grid",
-  gridTemplateColumns: "320px minmax(0, 1fr)",
+  gridTemplateColumns: "minmax(0, 320px) minmax(0, 1fr)",
   gap: "18px",
+  minWidth: 0,
 };
 
 const portfolioSidebarStyle: CSSProperties = {
@@ -809,6 +818,8 @@ const portfolioSidebarStyle: CSSProperties = {
   borderRadius: "28px",
   border: "1px solid rgba(255,255,255,0.08)",
   background: "linear-gradient(180deg, rgba(10,14,22,0.98), rgba(8,10,16,0.98))",
+  minWidth: 0,
+  overflow: "hidden",
 };
 
 const portfolioMainStyle: CSSProperties = {
@@ -818,6 +829,8 @@ const portfolioMainStyle: CSSProperties = {
   borderRadius: "28px",
   border: "1px solid rgba(255,255,255,0.08)",
   background: "linear-gradient(180deg, rgba(10,14,22,0.98), rgba(8,10,16,0.98))",
+  minWidth: 0,
+  overflow: "hidden",
 };
 
 const portfolioHeadingStyle: CSSProperties = {
@@ -894,6 +907,11 @@ const linkCardBaseStyle: CSSProperties = {
   alignItems: "center",
   gap: "14px",
   borderRadius: "22px",
+  width: "100%",
+  maxWidth: "100%",
+  minWidth: 0,
+  overflow: "hidden",
+  boxSizing: "border-box",
 };
 
 const defaultLinkCardStyle: CSSProperties = {

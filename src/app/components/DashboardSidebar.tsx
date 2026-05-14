@@ -10,6 +10,7 @@ type SidebarUser = {
   role: string;
   plan?: string;
   avatarUrl?: string | null;
+  isPremium?: boolean;
 };
 
 type Props = {
@@ -43,7 +44,7 @@ export default function DashboardSidebar({ user, items }: Props) {
   const customizationItems = visibleItems.filter((item) => item.section === "customization");
   const adminItems = visibleItems.filter((item) => item.section === "admin");
 
-  const plan = user.plan || "free";
+  const isPremium = user.isPremium ?? user.plan === "premium";
 
   return (
     <aside
@@ -142,19 +143,19 @@ export default function DashboardSidebar({ user, items }: Props) {
               padding: "4px 8px",
               borderRadius: "999px",
               backgroundColor:
-                plan === "premium"
+                isPremium
                   ? "rgba(236,72,153,0.12)"
                   : "rgba(255,255,255,0.06)",
               border:
-                plan === "premium"
+                isPremium
                   ? "1px solid rgba(236,72,153,0.22)"
                   : "1px solid rgba(255,255,255,0.08)",
-              color: plan === "premium" ? "#f9a8d4" : "#d1d5db",
+              color: isPremium ? "#f9a8d4" : "#d1d5db",
               fontSize: "11px",
               fontWeight: 800,
             }}
           >
-            {plan === "premium" ? "PREMIUM" : "FREE"}
+            {isPremium ? "PREMIUM" : "FREE"}
           </div>
         </div>
       </div>

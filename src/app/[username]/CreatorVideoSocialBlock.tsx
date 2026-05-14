@@ -116,6 +116,10 @@ const cardStyle: CSSProperties = {
   overflow: "hidden",
   display: "grid",
   gap: "16px",
+  width: "100%",
+  maxWidth: "100%",
+  minWidth: 0,
+  boxSizing: "border-box",
   borderRadius: "24px",
   boxShadow: "0 22px 48px rgba(0,0,0,0.28)",
 };
@@ -192,6 +196,7 @@ const videoShellStyle: CSSProperties = {
   gridTemplateColumns: "118px minmax(0, 1fr)",
   gap: "14px",
   alignItems: "center",
+  minWidth: 0,
 };
 
 const thumbnailStyle = (background: string): CSSProperties => ({
@@ -232,6 +237,8 @@ const headlineStyle: CSSProperties = {
   color: "#d4d4d8",
   fontSize: "14px",
   lineHeight: 1.65,
+  overflowWrap: "anywhere",
+  wordBreak: "break-word",
 };
 
 const featuredVideoStyle: CSSProperties = {
@@ -239,6 +246,8 @@ const featuredVideoStyle: CSSProperties = {
   fontSize: "13px",
   fontWeight: 700,
   lineHeight: 1.5,
+  overflowWrap: "anywhere",
+  wordBreak: "break-word",
 };
 
 const footerRowStyle: CSSProperties = {
@@ -288,4 +297,5 @@ const hintStyle: CSSProperties = {
   color: "#a1a1aa",
   fontSize: "13px",
   fontWeight: 700,
+  overflowWrap: "anywhere",
 };

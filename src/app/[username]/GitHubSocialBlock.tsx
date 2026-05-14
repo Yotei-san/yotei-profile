@@ -72,6 +72,10 @@ const cardStyle: CSSProperties = {
   overflow: "hidden",
   display: "grid",
   gap: "16px",
+  width: "100%",
+  maxWidth: "100%",
+  minWidth: 0,
+  boxSizing: "border-box",
   borderRadius: "24px",
   border: "1px solid rgba(148,163,184,0.22)",
   background:
@@ -152,6 +156,8 @@ const copyStyle: CSSProperties = {
   color: "#cdd6e6",
   fontSize: "14px",
   lineHeight: 1.7,
+  overflowWrap: "anywhere",
+  wordBreak: "break-word",
 };
 
 const repoCardStyle: CSSProperties = {
@@ -178,6 +184,8 @@ const repoValueStyle: CSSProperties = {
   fontSize: "15px",
   fontWeight: 800,
   letterSpacing: "-0.02em",
+  overflowWrap: "anywhere",
+  wordBreak: "break-word",
 };
 
 const footerRowStyle: CSSProperties = {
@@ -227,4 +235,5 @@ const hintStyle: CSSProperties = {
   color: "#98a3bf",
   fontSize: "13px",
   fontWeight: 700,
+  overflowWrap: "anywhere",
 };

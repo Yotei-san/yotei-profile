@@ -46,9 +46,15 @@ export async function POST(_req: Request, { params }: RouteProps) {
       },
     });
 
+    const views = await prisma.profileView.count({
+      where: {
+        userId: user.id,
+      },
+    });
+
     return NextResponse.json({
       ok: true,
-      views: user._count.profileViews + 1,
+      views,
     });
   } catch (error) {
     console.error("profile view route error", error);

@@ -9,6 +9,21 @@ type RouteProps = {
   }>;
 };
 
+async function runReactionTransaction<T>(callback: () => Promise<T>, attempts = 2): Promise<T> {
+  try {
+    return await callback();
+  } catch (error) {
+    const isRetryableConflict =
+      error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2034";
+
+    if (attempts > 0 && isRetryableConflict) {
+      return runReactionTransaction(callback, attempts - 1);
+    }
+
+    throw error;
+  }
+}
+
 export async function POST(req: Request, { params }: RouteProps) {
   try {
     const sessionUser = await requireUser();
@@ -48,106 +63,108 @@ export async function POST(req: Request, { params }: RouteProps) {
       );
     }
 
-    const result = await prisma.$transaction(
-      async (tx) => {
-        await tx.$queryRaw`
-          SELECT pg_advisory_xact_lock(
-            hashtext(${sessionUser.id}),
-            hashtext(${targetUser.id})
-          )
-        `;
+    const result = await runReactionTransaction(() =>
+      prisma.$transaction(
+        async (tx) => {
+          await tx.$queryRaw`
+            SELECT pg_advisory_xact_lock(
+              hashtext(${sessionUser.id}),
+              hashtext(${targetUser.id})
+            )
+          `;
 
-        const existingReactions = await tx.reaction.findMany({
-          where: {
-            fromUserId: sessionUser.id,
-            toUserId: targetUser.id,
-          },
-          orderBy: {
-            createdAt: "asc",
-          },
-          select: {
-            id: true,
-            type: true,
-          },
-        });
-
-        const existing = existingReactions[0] ?? null;
-
-        if (existingReactions.length > 1) {
-          await tx.reaction.deleteMany({
+          const existingReactions = await tx.reaction.findMany({
             where: {
-              id: {
-                in: existingReactions.slice(1).map((item) => item.id),
-              },
-            },
-          });
-        }
-
-        if (!existing) {
-          await tx.reaction.create({
-            data: {
               fromUserId: sessionUser.id,
               toUserId: targetUser.id,
-              type,
+            },
+            orderBy: {
+              createdAt: "asc",
+            },
+            select: {
+              id: true,
+              type: true,
             },
           });
-        } else if (existing.type === type) {
-          await tx.reaction.delete({
+
+          const existing = existingReactions[0] ?? null;
+
+          if (existingReactions.length > 1) {
+            await tx.reaction.deleteMany({
+              where: {
+                id: {
+                  in: existingReactions.slice(1).map((item) => item.id),
+                },
+              },
+            });
+          }
+
+          if (!existing) {
+            await tx.reaction.create({
+              data: {
+                fromUserId: sessionUser.id,
+                toUserId: targetUser.id,
+                type,
+              },
+            });
+          } else if (existing.type === type) {
+            await tx.reaction.delete({
+              where: {
+                id: existing.id,
+              },
+            });
+          } else {
+            await tx.reaction.update({
+              where: {
+                id: existing.id,
+              },
+              data: {
+                type,
+              },
+            });
+          }
+
+          const grouped = await tx.reaction.groupBy({
+            by: ["type"],
             where: {
-              id: existing.id,
+              toUserId: targetUser.id,
+            },
+            _count: {
+              type: true,
             },
           });
-        } else {
-          await tx.reaction.update({
+
+          const likes =
+            grouped.find((item) => item.type === "like")?._count.type ?? 0;
+
+          const dislikes =
+            grouped.find((item) => item.type === "dislike")?._count.type ?? 0;
+
+          const myReactionRow = await tx.reaction.findFirst({
             where: {
-              id: existing.id,
+              fromUserId: sessionUser.id,
+              toUserId: targetUser.id,
             },
-            data: {
-              type,
+            select: {
+              type: true,
             },
           });
+
+          const myReaction =
+            myReactionRow?.type === "like" || myReactionRow?.type === "dislike"
+              ? myReactionRow.type
+              : null;
+
+          return {
+            likes,
+            dislikes,
+            myReaction,
+          };
+        },
+        {
+          isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
         }
-
-        const grouped = await tx.reaction.groupBy({
-          by: ["type"],
-          where: {
-            toUserId: targetUser.id,
-          },
-          _count: {
-            type: true,
-          },
-        });
-
-        const likes =
-          grouped.find((item) => item.type === "like")?._count.type ?? 0;
-
-        const dislikes =
-          grouped.find((item) => item.type === "dislike")?._count.type ?? 0;
-
-        const myReactionRow = await tx.reaction.findFirst({
-          where: {
-            fromUserId: sessionUser.id,
-            toUserId: targetUser.id,
-          },
-          select: {
-            type: true,
-          },
-        });
-
-        const myReaction =
-          myReactionRow?.type === "like" || myReactionRow?.type === "dislike"
-            ? myReactionRow.type
-            : null;
-
-        return {
-          likes,
-          dislikes,
-          myReaction,
-        };
-      },
-      {
-        isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
-      }
+      )
     );
 
     return NextResponse.json({

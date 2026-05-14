@@ -63,6 +63,10 @@ const cardStyle: CSSProperties = {
   overflow: "hidden",
   display: "grid",
   gap: "16px",
+  width: "100%",
+  maxWidth: "100%",
+  minWidth: 0,
+  boxSizing: "border-box",
   borderRadius: "24px",
   border: "1px solid rgba(88,101,242,0.24)",
   background:
@@ -143,6 +147,8 @@ const copyStyle: CSSProperties = {
   color: "#c4cbe0",
   fontSize: "14px",
   lineHeight: 1.7,
+  overflowWrap: "anywhere",
+  wordBreak: "break-word",
 };
 
 const footerRowStyle: CSSProperties = {
@@ -192,4 +198,5 @@ const hintStyle: CSSProperties = {
   color: "#98a3bf",
   fontSize: "13px",
   fontWeight: 700,
+  overflowWrap: "anywhere",
 };

@@ -25,6 +25,8 @@ type Props = {
 
 type MyReaction = "like" | "dislike" | null;
 
+const ACTIVE_PREMIUM_STATUSES = new Set(["active", "trialing", "past_due"]);
+
 function withAlpha(hex: string, alpha: string) {
   return `${hex}${alpha}`;
 }
@@ -69,6 +71,28 @@ function normalizeProfileLayout(value: string | null | undefined): PublicProfile
   return "modern";
 }
 
+function isPremiumUser(user: {
+  role: string;
+  plan: string;
+  premiumBadge: boolean;
+  premiumUntil: Date | null;
+  subscriptionStatus: string | null;
+}) {
+  if (user.role === "owner" || user.role === "admin") {
+    return true;
+  }
+
+  const hasPremiumPlan =
+    user.plan === "premium" &&
+    (!user.premiumUntil || new Date(user.premiumUntil) > new Date());
+
+  return (
+    hasPremiumPlan ||
+    user.premiumBadge ||
+    ACTIVE_PREMIUM_STATUSES.has(user.subscriptionStatus || "")
+  );
+}
+
 function getMetadataObject(value: unknown) {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     return null;
@@ -106,6 +130,10 @@ export default async function ProfilePage({ params }: Props) {
       profileLayout: true,
       status: true,
       role: true,
+      plan: true,
+      premiumBadge: true,
+      premiumUntil: true,
+      subscriptionStatus: true,
       selectedDecorationScale: true,
       selectedDecorationOffsetX: true,
       selectedDecorationOffsetY: true,
@@ -225,11 +253,7 @@ export default async function ProfilePage({ params }: Props) {
       isEnabled: block.isEnabled,
     };
   });
-  const hasPremiumState =
-    premiumBadges.length > 0 ||
-    Boolean(user.selectedDecoration) ||
-    user.role === "owner" ||
-    user.role === "admin";
+  const hasPremiumState = isPremiumUser(user);
 
   const heroPills: Array<{
     key: string;
@@ -378,6 +402,7 @@ export default async function ProfilePage({ params }: Props) {
 
         .profile-shell {
           width: min(1180px, calc(100% - 40px));
+          max-width: 1180px;
           min-height: 100vh;
           margin: 0 auto;
           position: relative;
@@ -385,10 +410,12 @@ export default async function ProfilePage({ params }: Props) {
           display: flex;
           align-items: flex-end;
           padding: 34px 0;
+          box-sizing: border-box;
         }
 
         .profile-floating-panel {
           width: 100%;
+          max-width: 100%;
           position: relative;
           border-radius: 34px;
           background:
@@ -418,6 +445,7 @@ export default async function ProfilePage({ params }: Props) {
           display: grid;
           grid-template-columns: minmax(320px, 0.92fr) minmax(0, 1.08fr);
           gap: 0;
+          min-width: 0;
         }
 
         .profile-identity-column {
@@ -468,6 +496,7 @@ export default async function ProfilePage({ params }: Props) {
 
         .identity-stack {
           margin-top: 28px;
+          min-width: 0;
         }
 
         .avatar-and-copy {
@@ -475,6 +504,7 @@ export default async function ProfilePage({ params }: Props) {
           grid-template-columns: auto minmax(0, 1fr);
           gap: 22px;
           align-items: center;
+          min-width: 0;
         }
 
         .avatar-shell {
@@ -650,6 +680,7 @@ export default async function ProfilePage({ params }: Props) {
           gap: 10px;
           flex-wrap: wrap;
           margin-top: 22px;
+          min-width: 0;
         }
 
         .profile-badge-pill {
@@ -689,6 +720,11 @@ export default async function ProfilePage({ params }: Props) {
           align-items: flex-start;
           gap: 16px;
           flex-wrap: wrap;
+          min-width: 0;
+        }
+
+        .links-copy {
+          min-width: 0;
         }
 
         .links-copy h2 {
@@ -725,11 +761,16 @@ export default async function ProfilePage({ params }: Props) {
           display: grid;
           gap: 12px;
           margin-top: 24px;
+          min-width: 0;
         }
 
         .profile-link-card {
           position: relative;
           overflow: hidden;
+          width: 100%;
+          max-width: 100%;
+          min-width: 0;
+          box-sizing: border-box;
           text-decoration: none;
           display: grid;
           grid-template-columns: auto minmax(0, 1fr) auto;
@@ -792,12 +833,15 @@ export default async function ProfilePage({ params }: Props) {
           align-items: center;
           gap: 10px;
           flex-wrap: wrap;
+          min-width: 0;
         }
 
         .profile-link-top strong {
           font-size: 17px;
           letter-spacing: -0.03em;
           color: #ffffff;
+          overflow-wrap: anywhere;
+          word-break: break-word;
         }
 
         .profile-link-platform {
@@ -820,6 +864,7 @@ export default async function ProfilePage({ params }: Props) {
           overflow: hidden;
           text-overflow: ellipsis;
           white-space: nowrap;
+          max-width: 100%;
         }
 
         .profile-link-url {
@@ -830,6 +875,7 @@ export default async function ProfilePage({ params }: Props) {
           overflow: hidden;
           text-overflow: ellipsis;
           white-space: nowrap;
+          max-width: 100%;
         }
 
         .profile-link-arrow {
@@ -954,6 +1000,8 @@ export default async function ProfilePage({ params }: Props) {
             white-space: normal;
             overflow: visible;
             text-overflow: clip;
+            overflow-wrap: anywhere;
+            word-break: break-word;
           }
         }
       `}</style>

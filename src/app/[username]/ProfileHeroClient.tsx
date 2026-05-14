@@ -31,6 +31,14 @@ export default function ProfileHeroClient({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const hasTrackedView = useRef(false);
+  const isSubmittingRef = useRef(false);
+
+  useEffect(() => {
+    setViews(initialViews);
+    setLikes(initialLikes);
+    setDislikes(initialDislikes);
+    setMyReaction(initialMyReaction);
+  }, [initialViews, initialLikes, initialDislikes, initialMyReaction]);
 
   useEffect(() => {
     if (hasTrackedView.current) return;
@@ -48,20 +56,17 @@ export default function ProfileHeroClient({
 
         if (data && typeof data.views === "number") {
           setViews(data.views);
-        } else {
-          setViews((prev) => prev + 1);
         }
-      } catch {
-        setViews((prev) => prev + 1);
-      }
+      } catch {}
     }, 1200);
 
     return () => clearTimeout(timer);
   }, [username]);
 
   async function sendReaction(type: "like" | "dislike") {
-    if (isSubmitting) return;
+    if (isSubmittingRef.current) return;
 
+    isSubmittingRef.current = true;
     setIsSubmitting(true);
 
     try {
@@ -90,18 +95,13 @@ export default function ProfileHeroClient({
           data.myReaction === null
         ) {
           setMyReaction(data.myReaction);
-        } else {
-          setMyReaction(type);
         }
-
-        return;
       }
     } catch (error) {
       console.error("reaction client error", error);
     } finally {
-      setTimeout(() => {
-        setIsSubmitting(false);
-      }, 400);
+      isSubmittingRef.current = false;
+      setIsSubmitting(false);
     }
   }
 
@@ -295,6 +295,10 @@ const chipBaseStyle: CSSProperties = {
   gap: "12px",
   backdropFilter: "blur(12px)",
   boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04)",
+  width: "100%",
+  maxWidth: "100%",
+  minWidth: 0,
+  boxSizing: "border-box",
 };
 
 const iconWrapStyle: CSSProperties = {
@@ -312,6 +316,7 @@ const iconWrapStyle: CSSProperties = {
 const copyWrapStyle: CSSProperties = {
   display: "grid",
   textAlign: "left",
+  minWidth: 0,
 };
 
 const valueStyle: CSSProperties = {

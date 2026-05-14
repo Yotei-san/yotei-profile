@@ -115,6 +115,7 @@ export default function SocialPresenceSection({
 const sectionStyle: CSSProperties = {
   display: "grid",
   gap: "12px",
+  minWidth: 0,
 };
 
 const kickerStyle: CSSProperties = {
@@ -136,4 +137,5 @@ const kickerStyle: CSSProperties = {
 const gridStyle: CSSProperties = {
   display: "grid",
   gap: "12px",
+  minWidth: 0,
 };
