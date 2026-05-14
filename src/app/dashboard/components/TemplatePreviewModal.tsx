@@ -80,7 +80,7 @@ export default function TemplatePreviewModal({
               </div>
 
               <div style={heroBottomCopyStyle}>
-                <div style={eyebrowStyle}>Live preview</div>
+                <div style={eyebrowStyle}>Preview</div>
                 <h2 style={heroTitleStyle}>{template.name}</h2>
                 <p style={heroTextStyle}>
                   {template.description || "Template pronto para aplicar em um clique."}
@@ -143,11 +143,11 @@ export default function TemplatePreviewModal({
 
           <div style={detailsColumnStyle}>
             <div style={detailsBlockStyle}>
-              <div style={detailEyebrowStyle}>Template details</div>
+              <div style={detailEyebrowStyle}>Details</div>
               <h3 style={detailsTitleStyle}>{template.name}</h3>
               <div style={detailsMetaStyle}>Created by @{template.createdByUser.username}</div>
-              <div style={detailsMetaStyle}>Display name: {authorName}</div>
-              <div style={detailsMetaStyle}>Use count: {template.usageCount}</div>
+              <div style={detailsMetaStyle}>Author: {authorName}</div>
+              <div style={detailsMetaStyle}>Uses: {template.usageCount}</div>
             </div>
 
             <div style={detailsBlockStyle}>
@@ -166,11 +166,11 @@ export default function TemplatePreviewModal({
             </div>
 
             <div style={detailsBlockStyle}>
-              <div style={detailEyebrowStyle}>Apply template</div>
+              <div style={detailEyebrowStyle}>Apply</div>
               <div style={ctaTextStyle}>
                 {isLockedPremium
-                  ? "Este template exige premium antes de ser aplicado ao seu perfil."
-                  : "Se gostar do visual, aplique agora no seu perfil atual."}
+                  ? "Premium required to use this template."
+                  : "Apply this look to your profile."}
               </div>
 
               <form action={applyAction} style={{ display: "grid", gap: "12px" }}>

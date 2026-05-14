@@ -36,6 +36,7 @@ export default function TemplateGallery({
           currentTab={currentTab}
           canUsePremium={canUsePremium}
           applyAction={applyAction}
+          isPreviewing={activeTemplateId === template.id}
           onOpenPreview={() => setActiveTemplateId(template.id)}
         />
       ))}

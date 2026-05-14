@@ -241,15 +241,6 @@ function PortfolioLayout(props: Props) {
         </aside>
 
         <section style={portfolioMainStyle}>
-          <div style={portfolioHeadingStyle}>
-            <div style={simpleKickerStyle}>Featured links</div>
-            <h2 style={portfolioSectionTitleStyle}>Projects, socials and contact points</h2>
-            <p style={portfolioSectionTextStyle}>
-              Um layout mais limpo e profissional, com foco em clareza, reputacao e
-              navegacao objetiva.
-            </p>
-          </div>
-
           <SocialPresenceSection blocks={props.socialBlocks} themeColor={props.themeColor} />
           <LinksSection
             layout="portfolio"
@@ -564,7 +555,7 @@ function LinksSection({
     <section
       style={{
         display: "grid",
-        gap: "14px",
+        gap: "12px",
       }}
     >
       <div style={{ display: "grid", gap: "8px" }}>
@@ -572,16 +563,6 @@ function LinksSection({
           <LuSparkles size={13} />
           Links
         </div>
-        <h2
-          style={{
-            margin: 0,
-            fontSize: layout === "portfolio" ? "34px" : "28px",
-            lineHeight: 1,
-            letterSpacing: "-0.04em",
-          }}
-        >
-          {layout === "portfolio" ? "Selected destinations" : "Featured destinations"}
-        </h2>
       </div>
 
       <div style={{ display: "grid", gap: "12px" }}>

@@ -42,12 +42,8 @@ export default function SocialPresenceSection({
       <div style={{ display: "grid", gap: "8px" }}>
         <div style={kickerStyle}>
           <LuSparkles size={13} />
-          Social Presence
+          {compact ? "Presence" : "Socials"}
         </div>
-        <h2 style={titleStyle}>Connected blocks that add more context to the profile.</h2>
-        <p style={copyStyle}>
-          Premium-looking modules for communities, code, music and creator channels.
-        </p>
       </div>
 
       <div style={gridStyle}>
@@ -118,7 +114,7 @@ export default function SocialPresenceSection({
 
 const sectionStyle: CSSProperties = {
   display: "grid",
-  gap: "14px",
+  gap: "12px",
 };
 
 const kickerStyle: CSSProperties = {
@@ -135,22 +131,6 @@ const kickerStyle: CSSProperties = {
   fontSize: "12px",
   fontWeight: 800,
   letterSpacing: "0.02em",
-};
-
-const titleStyle: CSSProperties = {
-  margin: 0,
-  fontSize: "28px",
-  lineHeight: 1,
-  letterSpacing: "-0.04em",
-  color: "#ffffff",
-};
-
-const copyStyle: CSSProperties = {
-  margin: 0,
-  color: "#aab4c8",
-  fontSize: "14px",
-  lineHeight: 1.75,
-  maxWidth: "58ch",
 };
 
 const gridStyle: CSSProperties = {

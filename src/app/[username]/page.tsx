@@ -990,7 +990,7 @@ export default async function ProfilePage({ params }: Props) {
                 <div className="panel-topbar">
                   <div className="ambient-chip accent">
                     <LuSparkles size={13} />
-                    Digital identity
+                    Profile
                   </div>
 
                   <div className="ambient-chip">
@@ -998,18 +998,18 @@ export default async function ProfilePage({ params }: Props) {
                       bannerKind === "video" ? (
                         <>
                           <LuPlay size={13} />
-                          Motion background
+                          Video banner
                         </>
                       ) : (
                         <>
                           <LuBadgeCheck size={13} />
-                          Custom background
+                          Banner
                         </>
                       )
                     ) : (
                       <>
                         <LuBadgeCheck size={13} />
-                        Ambient profile
+                        Signature
                       </>
                     )}
                   </div>
@@ -1108,12 +1108,6 @@ export default async function ProfilePage({ params }: Props) {
                     </div>
                   </div>
 
-                  <p className="profile-summary">
-                    {user.bio
-                      ? "A living public identity built for creators, gamers and developers who want their first impression to feel cinematic, intentional and premium."
-                      : "A premium public profile designed to keep links, identity and social presence in one immersive destination."}
-                  </p>
-
                   {user.bio ? <div className="profile-bio">{user.bio}</div> : null}
 
                   <ProfileHeroClient
@@ -1159,13 +1153,9 @@ export default async function ProfilePage({ params }: Props) {
                 <div className="links-copy">
                   <div className="profile-kicker">
                     <LuSparkles size={13} />
-                    Featured destinations
+                    Links
                   </div>
-                  <h2>Links integrated into the atmosphere.</h2>
-                  <p>
-                    Minimal platform cards with cleaner hierarchy, lighter surfaces and
-                    more focus on identity than interface chrome.
-                  </p>
+                  <h2>Selected links</h2>
                 </div>
 
                 <div className="links-count">

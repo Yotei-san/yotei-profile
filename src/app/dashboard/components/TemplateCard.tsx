@@ -29,6 +29,7 @@ type TemplateCardProps = {
   currentTab: "all" | "mine" | "premium";
   canUsePremium: boolean;
   applyAction: (formData: FormData) => Promise<void>;
+  isPreviewing?: boolean;
   onOpenPreview?: () => void;
 };
 
@@ -38,6 +39,7 @@ export default function TemplateCard({
   currentTab,
   canUsePremium,
   applyAction,
+  isPreviewing = false,
   onOpenPreview,
 }: TemplateCardProps) {
   const previewUrl =
@@ -64,12 +66,13 @@ export default function TemplateCard({
 
   return (
     <article
-      className="template-card"
+      className={`template-card${isPreviewing ? " is-previewing" : ""}`}
       style={cardStyle}
       onClick={openPreview}
       onKeyDown={handleKeyDown}
       role="button"
       tabIndex={0}
+      aria-pressed={isPreviewing}
       aria-label={`Abrir preview do template ${template.name}`}
     >
       <div
@@ -104,14 +107,17 @@ export default function TemplateCard({
           </span>
         </div>
 
-        <div style={previewHintStyle}>Click for live preview</div>
+        <div style={previewHintStyle}>{isPreviewing ? "Previewing" : "Preview"}</div>
       </div>
 
       <div style={contentStyle}>
         <div style={{ display: "grid", gap: "8px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", gap: "12px" }}>
             <h3 style={titleStyle}>{template.name}</h3>
-            {isOwner ? <span style={ownerPillStyle}>Mine</span> : null}
+            <div style={statePillRowStyle}>
+              {isPreviewing ? <span style={selectedPillStyle}>Selected</span> : null}
+              {isOwner ? <span style={ownerPillStyle}>Mine</span> : null}
+            </div>
           </div>
 
           <div style={metaStyle}>
@@ -154,14 +160,17 @@ export default function TemplateCard({
             </button>
           </form>
 
-          <a
-            href="#create-template-form"
-            style={createButtonStyle}
+          <button
+            type="button"
+            style={isPreviewing ? previewSelectedButtonStyle : createButtonStyle}
             className="template-card__ghost"
-            onClick={stopCardPreview}
+            onClick={(event) => {
+              stopCardPreview(event);
+              openPreview();
+            }}
           >
-            Create Template
-          </a>
+            {isPreviewing ? "Selected" : "Preview"}
+          </button>
         </div>
       </div>
 
@@ -184,24 +193,40 @@ export default function TemplateCard({
             0 0 0 1px rgba(244, 114, 182, 0.1);
         }
 
+        .template-card:active {
+          transform: translateY(-1px) scale(0.992);
+        }
+
+        .template-card.is-previewing {
+          border-color: rgba(244, 114, 182, 0.22);
+          box-shadow:
+            0 30px 72px rgba(0, 0, 0, 0.38),
+            0 0 0 1px rgba(244, 114, 182, 0.14),
+            0 0 34px rgba(244, 114, 182, 0.12);
+        }
+
         .template-card:hover .template-card__preview,
-        .template-card:focus-visible .template-card__preview {
+        .template-card:focus-visible .template-card__preview,
+        .template-card.is-previewing .template-card__preview {
           box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
         }
 
         .template-card:hover .template-card__sheen,
-        .template-card:focus-visible .template-card__sheen {
+        .template-card:focus-visible .template-card__sheen,
+        .template-card.is-previewing .template-card__sheen {
           opacity: 1;
           transform: translate3d(0, 0, 0);
         }
 
         .template-card:hover .template-card__action,
-        .template-card:focus-visible .template-card__action {
+        .template-card:focus-visible .template-card__action,
+        .template-card.is-previewing .template-card__action {
           filter: brightness(1.05);
         }
 
         .template-card:hover .template-card__ghost,
-        .template-card:focus-visible .template-card__ghost {
+        .template-card:focus-visible .template-card__ghost,
+        .template-card.is-previewing .template-card__ghost {
           border-color: rgba(255, 255, 255, 0.14);
           background-color: rgba(255, 255, 255, 0.06);
         }
@@ -364,6 +389,26 @@ const titleStyle: CSSProperties = {
   lineHeight: 1.1,
 };
 
+const statePillRowStyle: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: "8px",
+  flexWrap: "wrap",
+  justifyContent: "flex-end",
+};
+
+const selectedPillStyle: CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  padding: "6px 10px",
+  borderRadius: "999px",
+  border: "1px solid rgba(244,114,182,0.20)",
+  backgroundColor: "rgba(236,72,153,0.12)",
+  color: "#f9a8d4",
+  fontSize: "12px",
+  fontWeight: 800,
+};
+
 const ownerPillStyle: CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
@@ -460,4 +505,13 @@ const createButtonStyle: CSSProperties = {
   border: "1px solid rgba(255,255,255,0.08)",
   backgroundColor: "rgba(255,255,255,0.04)",
   color: "#ffffff",
+  cursor: "pointer",
+};
+
+const previewSelectedButtonStyle: CSSProperties = {
+  ...buttonBaseStyle,
+  border: "1px solid rgba(244,114,182,0.20)",
+  backgroundColor: "rgba(236,72,153,0.10)",
+  color: "#f9a8d4",
+  cursor: "pointer",
 };

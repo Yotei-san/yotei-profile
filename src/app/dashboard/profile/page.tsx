@@ -206,83 +206,90 @@ export default async function ProfileSettingsPage({ searchParams }: PageProps) {
                   const isSelected = selectedProfileLayout === layout.key;
 
                   return (
-                    <label
-                      key={layout.key}
-                      style={{
-                        ...layoutCardStyle,
-                        ...(isSelected ? layoutCardSelectedStyle : null),
-                      }}
-                    >
+                    <label key={layout.key} className="layout-option" style={layoutCardStyle}>
                       <input
+                        className="layout-option__input"
                         type="radio"
                         name="profileLayout"
                         value={layout.key}
                         defaultChecked={isSelected}
-                        style={{ display: "none" }}
+                        style={layoutInputStyle}
                       />
 
                       <div
-                        style={{
-                          ...layoutPreviewStyle,
-                          ...(layout.key === "default"
-                            ? defaultPreviewStyle
-                            : layout.key === "modern"
-                              ? modernPreviewStyle
-                              : layout.key === "simplistic"
-                                ? simplisticPreviewStyle
-                                : portfolioPreviewStyle),
-                        }}
+                        style={layoutCardBodyStyle}
+                        className="layout-option__body"
                       >
-                        <div style={previewBannerStyle} />
                         <div
                           style={{
-                            ...previewAvatarStyle,
-                            ...(layout.key === "simplistic"
-                              ? previewAvatarSmallStyle
-                              : layout.key === "portfolio"
-                                ? previewAvatarSquareStyle
-                                : null),
+                            ...layoutPreviewStyle,
+                            ...(layout.key === "default"
+                              ? defaultPreviewStyle
+                              : layout.key === "modern"
+                                ? modernPreviewStyle
+                                : layout.key === "simplistic"
+                                  ? simplisticPreviewStyle
+                                  : portfolioPreviewStyle),
                           }}
-                        />
-                        <div
-                          style={{
-                            ...previewLineStyle,
-                            marginTop: layout.key === "portfolio" ? "18px" : "24px",
-                            width: layout.key === "simplistic" ? "46%" : "56%",
-                          }}
-                        />
-                        <div
-                          style={{
-                            ...previewLineStyle,
-                            width: layout.key === "portfolio" ? "78%" : "68%",
-                            opacity: 0.72,
-                          }}
-                        />
-                        <div style={previewLinksColumnStyle}>
-                          <div style={previewLinkPillStyle} />
-                          <div style={previewLinkPillStyle} />
+                          className="layout-option__preview"
+                        >
+                          <div style={previewBannerStyle} />
                           <div
                             style={{
-                              ...previewLinkPillStyle,
-                              width: layout.key === "simplistic" ? "62%" : "78%",
+                              ...previewAvatarStyle,
+                              ...(layout.key === "simplistic"
+                                ? previewAvatarSmallStyle
+                                : layout.key === "portfolio"
+                                  ? previewAvatarSquareStyle
+                                  : null),
                             }}
                           />
-                        </div>
-                      </div>
-
-                      <div style={{ display: "grid", gap: "6px" }}>
-                        <div style={layoutCardHeaderStyle}>
-                          <span>{layout.name}</span>
-                          <span
+                          <div
                             style={{
-                              ...layoutCheckStyle,
-                              ...(isSelected ? layoutCheckSelectedStyle : null),
+                              ...previewLineStyle,
+                              marginTop: layout.key === "portfolio" ? "18px" : "24px",
+                              width: layout.key === "simplistic" ? "46%" : "56%",
                             }}
-                          >
-                            {isSelected ? "Selected" : "Select"}
-                          </span>
+                          />
+                          <div
+                            style={{
+                              ...previewLineStyle,
+                              width: layout.key === "portfolio" ? "78%" : "68%",
+                              opacity: 0.72,
+                            }}
+                          />
+                          <div style={previewLinksColumnStyle}>
+                            <div style={previewLinkPillStyle} />
+                            <div style={previewLinkPillStyle} />
+                            <div
+                              style={{
+                                ...previewLinkPillStyle,
+                                width: layout.key === "simplistic" ? "62%" : "78%",
+                              }}
+                            />
+                          </div>
                         </div>
-                        <div style={layoutCardDescriptionStyle}>{layout.description}</div>
+
+                        <div style={{ display: "grid", gap: "6px" }}>
+                          <div style={layoutCardHeaderStyle}>
+                            <span>{layout.name}</span>
+                            <div style={layoutCheckWrapStyle}>
+                              <span
+                                className="layout-option__check layout-option__check--idle"
+                                style={layoutCheckStyle}
+                              >
+                                Select
+                              </span>
+                              <span
+                                className="layout-option__check layout-option__check--active"
+                                style={{ ...layoutCheckStyle, ...layoutCheckSelectedStyle }}
+                              >
+                                Current
+                              </span>
+                            </div>
+                          </div>
+                          <div style={layoutCardDescriptionStyle}>{layout.description}</div>
+                        </div>
                       </div>
                     </label>
                   );
@@ -389,7 +396,7 @@ export default async function ProfileSettingsPage({ searchParams }: PageProps) {
               </div>
 
               <div style={{ color: "#f9a8d4", marginTop: "10px", fontWeight: 700 }}>
-                Layout atual: {selectedProfileLayout}
+                Saved layout: {selectedProfileLayout}
               </div>
 
               <div
@@ -409,6 +416,67 @@ export default async function ProfileSettingsPage({ searchParams }: PageProps) {
           </div>
         </section>
       </section>
+
+      <style>{`
+        .layout-option {
+          display: block;
+          cursor: pointer;
+        }
+
+        .layout-option__body {
+          transition:
+            transform 160ms ease,
+            border-color 160ms ease,
+            box-shadow 160ms ease,
+            background 160ms ease;
+        }
+
+        .layout-option__preview {
+          transition:
+            transform 160ms ease,
+            border-color 160ms ease,
+            box-shadow 160ms ease;
+        }
+
+        .layout-option:hover .layout-option__body,
+        .layout-option:focus-within .layout-option__body {
+          transform: translateY(-3px);
+          border-color: rgba(244, 114, 182, 0.18);
+          box-shadow:
+            0 18px 36px rgba(0, 0, 0, 0.22),
+            0 0 0 1px rgba(244, 114, 182, 0.1);
+        }
+
+        .layout-option:hover .layout-option__preview,
+        .layout-option:focus-within .layout-option__preview {
+          border-color: rgba(255, 255, 255, 0.12);
+          transform: translateY(-1px);
+        }
+
+        .layout-option:active .layout-option__body {
+          transform: translateY(0) scale(0.988);
+        }
+
+        .layout-option__input:checked + .layout-option__body {
+          border-color: rgba(244, 114, 182, 0.28);
+          box-shadow:
+            0 0 0 1px rgba(244, 114, 182, 0.1),
+            0 18px 36px rgba(244, 114, 182, 0.1);
+        }
+
+        .layout-option__input:checked + .layout-option__body .layout-option__preview {
+          border-color: rgba(244, 114, 182, 0.18);
+          box-shadow: inset 0 0 0 1px rgba(244, 114, 182, 0.08);
+        }
+
+        .layout-option__input:checked + .layout-option__body .layout-option__check--idle {
+          display: none;
+        }
+
+        .layout-option__input:not(:checked) + .layout-option__body .layout-option__check--active {
+          display: none;
+        }
+      `}</style>
     </main>
   );
 }
@@ -501,6 +569,16 @@ const layoutGridStyle: React.CSSProperties = {
 };
 
 const layoutCardStyle: React.CSSProperties = {
+  cursor: "pointer",
+};
+
+const layoutInputStyle: React.CSSProperties = {
+  position: "absolute",
+  opacity: 0,
+  pointerEvents: "none",
+};
+
+const layoutCardBodyStyle: React.CSSProperties = {
   display: "grid",
   gap: "12px",
   padding: "14px",
@@ -508,13 +586,7 @@ const layoutCardStyle: React.CSSProperties = {
   border: "1px solid rgba(255,255,255,0.08)",
   background:
     "linear-gradient(180deg, rgba(20,20,24,0.96), rgba(12,12,16,0.96))",
-  cursor: "pointer",
   boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03)",
-};
-
-const layoutCardSelectedStyle: React.CSSProperties = {
-  border: "1px solid rgba(244,114,182,0.28)",
-  boxShadow: "0 0 0 1px rgba(244,114,182,0.10), 0 18px 36px rgba(244,114,182,0.10)",
 };
 
 const layoutPreviewStyle: React.CSSProperties = {
@@ -604,6 +676,13 @@ const layoutCardHeaderStyle: React.CSSProperties = {
   alignItems: "center",
   fontWeight: 800,
   color: "#ffffff",
+};
+
+const layoutCheckWrapStyle: React.CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "flex-end",
+  minWidth: "84px",
 };
 
 const layoutCardDescriptionStyle: React.CSSProperties = {
