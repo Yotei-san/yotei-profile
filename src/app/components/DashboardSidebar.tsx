@@ -16,6 +16,7 @@ type SidebarUser = {
 type Props = {
   user: SidebarUser;
   items: DashboardNavItem[];
+  lockedHrefs?: string[];
 };
 
 function groupTitle(label: string) {
@@ -35,7 +36,7 @@ function groupTitle(label: string) {
   );
 }
 
-export default function DashboardSidebar({ user, items }: Props) {
+export default function DashboardSidebar({ user, items, lockedHrefs = [] }: Props) {
   const pathname = usePathname();
 
   const visibleItems = items.filter((item) => !item.adminOnly || user.role === "admin" || user.role === "owner");
@@ -165,7 +166,12 @@ export default function DashboardSidebar({ user, items }: Props) {
           {groupTitle("main")}
           <div style={{ display: "grid", gap: "8px" }}>
             {mainItems.map((item) => (
-              <SidebarLink key={item.href} item={item} active={pathname === item.href} />
+              <SidebarLink
+                key={item.href}
+                item={item}
+                active={pathname === item.href}
+                locked={lockedHrefs.includes(item.href)}
+              />
             ))}
           </div>
         </div>
@@ -174,7 +180,12 @@ export default function DashboardSidebar({ user, items }: Props) {
           {groupTitle("customization")}
           <div style={{ display: "grid", gap: "8px" }}>
             {customizationItems.map((item) => (
-              <SidebarLink key={item.href} item={item} active={pathname === item.href} />
+              <SidebarLink
+                key={item.href}
+                item={item}
+                active={pathname === item.href}
+                locked={lockedHrefs.includes(item.href)}
+              />
             ))}
           </div>
         </div>
@@ -184,7 +195,12 @@ export default function DashboardSidebar({ user, items }: Props) {
             {groupTitle("admin")}
             <div style={{ display: "grid", gap: "8px" }}>
               {adminItems.map((item) => (
-                <SidebarLink key={item.href} item={item} active={pathname === item.href} />
+                <SidebarLink
+                  key={item.href}
+                  item={item}
+                  active={pathname === item.href}
+                  locked={lockedHrefs.includes(item.href)}
+                />
               ))}
             </div>
           </div>
@@ -212,10 +228,77 @@ export default function DashboardSidebar({ user, items }: Props) {
 function SidebarLink({
   item,
   active,
+  locked,
 }: {
   item: DashboardNavItem;
   active: boolean;
+  locked: boolean;
 }) {
+  const content = (
+    <>
+      <span
+        style={{
+          width: "26px",
+          height: "26px",
+          borderRadius: "10px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: active ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.03)",
+          fontSize: "13px",
+        }}
+      >
+        {item.icon}
+      </span>
+      <span style={{ minWidth: 0 }}>{item.label}</span>
+      {locked ? (
+        <span
+          style={{
+            marginLeft: "auto",
+            minHeight: "24px",
+            padding: "0 8px",
+            borderRadius: "999px",
+            border: "1px solid rgba(255,110,168,0.2)",
+            backgroundColor: "rgba(255,110,168,0.08)",
+            color: "#ffd7e8",
+            fontSize: "10px",
+            fontWeight: 900,
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
+            display: "inline-flex",
+            alignItems: "center",
+            flexShrink: 0,
+          }}
+        >
+          Verify
+        </span>
+      ) : null}
+    </>
+  );
+
+  if (locked) {
+    return (
+      <div
+        title="Verify your email to unlock this area."
+        style={{
+          textDecoration: "none",
+          color: "#8d93a2",
+          background: "rgba(255,255,255,0.02)",
+          border: "1px dashed rgba(255,255,255,0.08)",
+          borderRadius: "16px",
+          padding: "12px 14px",
+          display: "flex",
+          alignItems: "center",
+          gap: "10px",
+          fontWeight: 700,
+          cursor: "not-allowed",
+        }}
+      >
+        {content}
+      </div>
+    );
+  }
+
   return (
     <Link
       href={item.href}
@@ -233,24 +316,11 @@ function SidebarLink({
         display: "flex",
         alignItems: "center",
         gap: "10px",
+        minWidth: 0,
         fontWeight: active ? 800 : 700,
       }}
     >
-      <span
-        style={{
-          width: "26px",
-          height: "26px",
-          borderRadius: "10px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          backgroundColor: active ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.03)",
-          fontSize: "13px",
-        }}
-      >
-        {item.icon}
-      </span>
-      <span>{item.label}</span>
+      {content}
     </Link>
   );
 }

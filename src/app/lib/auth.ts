@@ -4,6 +4,10 @@ import { randomUUID } from "crypto";
 import { prisma } from "@/app/lib/prisma";
 
 export const SESSION_COOKIE_NAME = "yotei_session";
+export const SESSION_PERSISTENCE_COOKIE_NAME = "yotei_session_mode";
+
+const PERSISTENT_SESSION_MS = 1000 * 60 * 60 * 24 * 30;
+const SESSION_BROWSER_MS = 1000 * 60 * 60 * 24;
 
 export async function getCurrentSession() {
   const cookieStore = await cookies();
@@ -43,9 +47,15 @@ export async function requireUser() {
   return user;
 }
 
-export async function createUserSession(userId: string) {
+export async function createUserSession(
+  userId: string,
+  options?: { remember?: boolean }
+) {
   const token = randomUUID();
-  const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 30);
+  const remember = options?.remember ?? true;
+  const expiresAt = new Date(
+    Date.now() + (remember ? PERSISTENT_SESSION_MS : SESSION_BROWSER_MS)
+  );
 
   await prisma.session.create({
     data: {
@@ -57,13 +67,22 @@ export async function createUserSession(userId: string) {
 
   const cookieStore = await cookies();
 
-  cookieStore.set(SESSION_COOKIE_NAME, token, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    expires: expiresAt,
-  });
+  cookieStore.set(
+    SESSION_COOKIE_NAME,
+    token,
+    buildSessionCookieOptions({
+      remember,
+      expiresAt,
+    })
+  );
+  cookieStore.set(
+    SESSION_PERSISTENCE_COOKIE_NAME,
+    remember ? "remember" : "session",
+    buildPersistenceCookieOptions({
+      remember,
+      expiresAt,
+    })
+  );
 }
 
 export async function destroyUserSession() {
@@ -76,11 +95,52 @@ export async function destroyUserSession() {
     });
   }
 
-  cookieStore.set(SESSION_COOKIE_NAME, "", {
+  cookieStore.set(SESSION_COOKIE_NAME, "", buildExpiredCookieOptions());
+  cookieStore.set(
+    SESSION_PERSISTENCE_COOKIE_NAME,
+    "",
+    buildExpiredCookieOptions()
+  );
+}
+
+function buildSessionCookieOptions({
+  remember,
+  expiresAt,
+}: {
+  remember: boolean;
+  expiresAt: Date;
+}) {
+  return {
     httpOnly: true,
-    sameSite: "lax",
+    sameSite: "lax" as const,
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    ...(remember ? { expires: expiresAt } : {}),
+  };
+}
+
+function buildPersistenceCookieOptions({
+  remember,
+  expiresAt,
+}: {
+  remember: boolean;
+  expiresAt: Date;
+}) {
+  return {
+    httpOnly: true,
+    sameSite: "lax" as const,
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    ...(remember ? { expires: expiresAt } : {}),
+  };
+}
+
+function buildExpiredCookieOptions() {
+  return {
+    httpOnly: true,
+    sameSite: "lax" as const,
     secure: process.env.NODE_ENV === "production",
     path: "/",
     expires: new Date(0),
-  });
+  };
 }

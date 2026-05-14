@@ -1,10 +1,25 @@
 import { ReactNode } from "react";
-import { requireUser } from "@/app/lib/auth";
-import { prisma } from "@/app/lib/prisma";
 import DashboardSidebar from "@/app/components/DashboardSidebar";
+import EmailVerificationBanner from "@/app/components/EmailVerificationBanner";
+import { requireUser } from "@/app/lib/auth";
 import { dashboardNavItems } from "@/app/lib/dashboard-nav";
+import { isEmailVerified } from "@/app/lib/email-verification";
+import { prisma } from "@/app/lib/prisma";
 
 const ACTIVE_PREMIUM_STATUSES = new Set(["active", "trialing", "past_due"]);
+
+type DashboardLayoutUser = {
+  username: string;
+  email: string;
+  emailVerified: Date | null;
+  displayName: string | null;
+  avatarUrl: string | null;
+  role: string;
+  plan: string;
+  premiumBadge: boolean;
+  premiumUntil: Date | null;
+  subscriptionStatus: string | null;
+};
 
 function isPremiumUser(user: {
   role: string;
@@ -35,10 +50,12 @@ export default async function DashboardLayout({
 }) {
   const sessionUser = await requireUser();
 
-  const user = await prisma.user.findUnique({
+  const user = (await prisma.user.findUnique({
     where: { id: sessionUser.id },
     select: {
       username: true,
+      email: true,
+      emailVerified: true,
       displayName: true,
       avatarUrl: true,
       role: true,
@@ -46,12 +63,15 @@ export default async function DashboardLayout({
       premiumBadge: true,
       premiumUntil: true,
       subscriptionStatus: true,
-    },
-  });
+    } as any,
+  })) as DashboardLayoutUser | null;
 
   if (!user) {
-    throw new Error("Usuário não encontrado.");
+    throw new Error("Usuario nao encontrado.");
   }
+
+  const verified = isEmailVerified(user);
+  const lockedHrefs = verified ? [] : ["/dashboard/socials", "/dashboard/templates"];
 
   return (
     <main
@@ -75,18 +95,25 @@ export default async function DashboardLayout({
       >
         <DashboardSidebar
           user={{
-            ...user,
+            username: user.username,
+            displayName: user.displayName,
+            role: user.role,
+            avatarUrl: user.avatarUrl,
             plan: isPremiumUser(user) ? "premium" : "free",
           }}
           items={dashboardNavItems}
+          lockedHrefs={lockedHrefs}
         />
 
         <section
           style={{
             flex: 1,
             minWidth: 0,
+            display: "grid",
+            gap: "18px",
           }}
         >
+          {!verified ? <EmailVerificationBanner email={user.email} /> : null}
           {children}
         </section>
       </div>

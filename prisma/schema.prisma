@@ -16,6 +16,9 @@ model User {
   email                     String   @unique
   username                  String   @unique
   password                  String
+  emailVerified             DateTime?
+  emailVerificationToken    String?
+  emailVerificationExpires  DateTime?
 
   displayName               String?
   bio                       String?
@@ -128,6 +131,7 @@ model User {
   @@index([role])
   @@index([plan])
   @@index([stripeCustomerId])
+  @@index([emailVerificationToken])
 }
 
 model Session {

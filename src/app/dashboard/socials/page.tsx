@@ -9,7 +9,9 @@ import SocialBrandIcon from "@/app/dashboard/components/SocialBrandIcon";
 import SocialIntegrationCard, {
   type SocialIntegrationItem,
 } from "@/app/dashboard/components/SocialIntegrationCard";
+import VerificationLockedPanel from "@/app/dashboard/components/VerificationLockedPanel";
 import { requireUser } from "@/app/lib/auth";
+import { isEmailVerified } from "@/app/lib/email-verification";
 import {
   readLiveEmbedMetadata,
   type LiveEmbedPlatform,
@@ -81,6 +83,21 @@ type LiveEmbedBlockState = {
   accentColor: string | null;
   isLive: boolean;
   isEnabled: boolean;
+};
+
+type SocialsPageUser = {
+  username: string;
+  emailVerified: Date | null;
+  socialBlocks: Array<{
+    id: string;
+    platform: string;
+    title: string | null;
+    username: string | null;
+    url: string | null;
+    metadata: unknown;
+    isEnabled: boolean;
+    sortOrder: number;
+  }>;
 };
 
 const integrations: SocialIntegrationItem[] = [
@@ -242,12 +259,13 @@ export default async function SocialsPage({ searchParams }: PageProps) {
   const selectedItem =
     integrations.find((item) => item.key === selectedKey) ?? integrations[0];
 
-  const user = await prisma.user.findUnique({
+  const user = (await prisma.user.findUnique({
     where: {
       id: sessionUser.id,
     },
     select: {
       username: true,
+      emailVerified: true,
       socialBlocks: {
         orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
         select: {
@@ -261,11 +279,20 @@ export default async function SocialsPage({ searchParams }: PageProps) {
           sortOrder: true,
         },
       },
-    },
-  });
+    } as any,
+  })) as SocialsPageUser | null;
 
   if (!user) {
     throw new Error("Usuario nao encontrado.");
+  }
+
+  if (!isEmailVerified(user)) {
+    return (
+      <VerificationLockedPanel
+        title="Verify your email to unlock social blocks."
+        description="Your dashboard is active, but live embeds and social publishing stay locked until your email is verified. Finish verification to enable Twitch, YouTube, Kick and the rest of your Social Presence blocks."
+      />
+    );
   }
 
   const discordBlock = getDiscordBlock(user.socialBlocks);

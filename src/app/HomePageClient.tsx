@@ -5,12 +5,6 @@ import { useRouter } from "next/navigation";
 import { motion, useReducedMotion, type Variants } from "framer-motion";
 import { type CSSProperties, type FormEvent, type ReactNode, useState } from "react";
 import {
-  FaDiscord,
-  FaGithub,
-  FaTiktok,
-  FaXTwitter,
-} from "react-icons/fa6";
-import {
   LuArrowRight,
   LuBadgeCheck,
   LuChartNoAxesCombined,
@@ -48,35 +42,6 @@ const navLinks = [
   { label: "Pricing", href: "/pricing" },
 ] as const;
 
-const profileBadges = [
-  { label: "Owner", className: "badge-owner" },
-  { label: "Premium", className: "badge-premium" },
-  { label: "Online", className: "badge-online" },
-] as const;
-
-const socialLinks = [
-  {
-    label: "Discord",
-    icon: <FaDiscord size={16} />,
-    accent: "#8995FF",
-  },
-  {
-    label: "X",
-    icon: <FaXTwitter size={14} />,
-    accent: "#8FD3FF",
-  },
-  {
-    label: "GitHub",
-    icon: <FaGithub size={16} />,
-    accent: "#D0D8E8",
-  },
-  {
-    label: "TikTok",
-    icon: <FaTiktok size={15} />,
-    accent: "#FF89BA",
-  },
-] as const;
-
 const featureCards = [
   {
     title: "Animated profiles",
@@ -102,6 +67,13 @@ const featureCards = [
     icon: <LuChartNoAxesCombined size={18} />,
     accent: "#B58CFF",
   },
+] as const;
+
+const identityChips = [
+  { label: "Links", tone: "violet" },
+  { label: "Live", tone: "rose" },
+  { label: "Social", tone: "blue" },
+  { label: "Premium", tone: "soft" },
 ] as const;
 
 export default function HomePageClient() {
@@ -137,47 +109,84 @@ export default function HomePageClient() {
 
         .page-orb-a,
         .page-orb-b,
+        .page-orb-c,
+        .page-beam,
         .page-grid,
+        .page-noise,
         .page-vignette {
           position: absolute;
           pointer-events: none;
         }
 
         .page-orb-a {
-          top: -180px;
-          left: -120px;
-          width: 520px;
-          height: 520px;
+          top: -220px;
+          left: -160px;
+          width: 660px;
+          height: 660px;
           border-radius: 999px;
-          background: radial-gradient(circle, rgba(123, 108, 255, 0.26) 0%, rgba(123, 108, 255, 0) 72%);
-          filter: blur(18px);
+          background: radial-gradient(circle, rgba(123, 108, 255, 0.28) 0%, rgba(123, 108, 255, 0.08) 34%, rgba(123, 108, 255, 0) 72%);
+          filter: blur(34px);
         }
 
         .page-orb-b {
-          right: -140px;
-          top: 90px;
-          width: 500px;
-          height: 500px;
+          right: -180px;
+          top: 56px;
+          width: 620px;
+          height: 620px;
           border-radius: 999px;
-          background: radial-gradient(circle, rgba(255, 110, 168, 0.18) 0%, rgba(255, 110, 168, 0) 72%);
-          filter: blur(22px);
+          background: radial-gradient(circle, rgba(255, 110, 168, 0.22) 0%, rgba(255, 110, 168, 0.06) 34%, rgba(255, 110, 168, 0) 72%);
+          filter: blur(38px);
+        }
+
+        .page-orb-c {
+          left: 42%;
+          top: 18%;
+          width: 520px;
+          height: 520px;
+          border-radius: 999px;
+          background: radial-gradient(circle, rgba(90, 169, 255, 0.14) 0%, rgba(90, 169, 255, 0.04) 36%, rgba(90, 169, 255, 0) 74%);
+          filter: blur(42px);
+          transform: translateX(-50%);
+        }
+
+        .page-beam {
+          inset: 0 auto auto 50%;
+          width: min(980px, 100vw);
+          height: 460px;
+          transform: translateX(-50%);
+          background:
+            radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.08), transparent 34%),
+            linear-gradient(180deg, rgba(133, 112, 255, 0.12), rgba(133, 112, 255, 0));
+          opacity: 0.65;
         }
 
         .page-grid {
           inset: 0;
           background-image:
-            linear-gradient(rgba(255, 255, 255, 0.028) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255, 255, 255, 0.028) 1px, transparent 1px);
-          background-size: 80px 80px;
-          opacity: 0.18;
+            linear-gradient(rgba(255, 255, 255, 0.022) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 255, 255, 0.022) 1px, transparent 1px);
+          background-size: 88px 88px;
+          opacity: 0.22;
           mask-image: linear-gradient(180deg, rgba(0, 0, 0, 1), rgba(0, 0, 0, 0.18));
+        }
+
+        .page-noise {
+          inset: 0;
+          opacity: 0.08;
+          background-image:
+            radial-gradient(rgba(255, 255, 255, 0.18) 0.7px, transparent 0.7px),
+            radial-gradient(rgba(255, 255, 255, 0.12) 0.6px, transparent 0.6px);
+          background-position: 0 0, 14px 14px;
+          background-size: 28px 28px;
+          mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.2));
         }
 
         .page-vignette {
           inset: 0;
           background:
             radial-gradient(circle at top, rgba(68, 28, 48, 0.18), transparent 20%),
-            linear-gradient(180deg, rgba(5, 5, 10, 0) 0%, rgba(5, 5, 10, 0.32) 100%);
+            radial-gradient(circle at center, rgba(0, 0, 0, 0) 48%, rgba(0, 0, 0, 0.24) 100%),
+            linear-gradient(180deg, rgba(5, 5, 10, 0) 0%, rgba(5, 5, 10, 0.34) 100%);
         }
 
         .home-header {
@@ -198,10 +207,14 @@ export default function HomePageClient() {
           gap: 18px;
           padding: 16px 18px;
           border-radius: 999px;
-          background: rgba(16, 11, 20, 0.84);
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          box-shadow: 0 24px 48px rgba(0, 0, 0, 0.28);
-          backdrop-filter: blur(16px);
+          background:
+            linear-gradient(180deg, rgba(22, 16, 31, 0.94), rgba(11, 10, 18, 0.9)),
+            rgba(16, 11, 20, 0.84);
+          border: 1px solid rgba(255, 255, 255, 0.09);
+          box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.05),
+            0 24px 48px rgba(0, 0, 0, 0.28);
+          backdrop-filter: blur(10px);
           min-width: 0;
         }
 
@@ -211,7 +224,9 @@ export default function HomePageClient() {
         .nav-cta,
         .nav-mobile-toggle,
         .claim-button,
-        .support-link {
+        .support-link,
+        .feature-card,
+        .identity-chip {
           transition:
             transform 180ms ease,
             border-color 180ms ease,
@@ -241,6 +256,7 @@ export default function HomePageClient() {
         }
 
         .brand-mark {
+          position: relative;
           width: 42px;
           height: 42px;
           border-radius: 14px;
@@ -248,12 +264,31 @@ export default function HomePageClient() {
           align-items: center;
           justify-content: center;
           color: #ffffff;
-          font-size: 17px;
-          font-weight: 900;
+          isolation: isolate;
           background:
             radial-gradient(circle at 28% 24%, rgba(255, 255, 255, 0.38), transparent 24%),
             linear-gradient(145deg, #8a76ff 0%, #ff6ea8 54%, #5aa9ff 100%);
-          box-shadow: 0 16px 32px rgba(110, 93, 255, 0.28);
+          box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.18),
+            0 18px 36px rgba(110, 93, 255, 0.26);
+        }
+
+        .brand-mark::before {
+          content: "";
+          position: absolute;
+          inset: 3px;
+          border-radius: 11px;
+          border: 1px solid rgba(255, 255, 255, 0.16);
+          opacity: 0.86;
+        }
+
+        .brand-mark strong {
+          position: relative;
+          z-index: 1;
+          font-size: 17px;
+          font-weight: 950;
+          letter-spacing: -0.08em;
+          text-shadow: 0 8px 20px rgba(14, 18, 38, 0.3);
         }
 
         .brand-copy {
@@ -412,8 +447,12 @@ export default function HomePageClient() {
 
         .nav-cta {
           color: #ffffff;
-          background: linear-gradient(135deg, rgba(124, 108, 255, 0.96), rgba(255, 110, 168, 0.92));
-          box-shadow: 0 14px 28px rgba(117, 95, 255, 0.26);
+          background:
+            linear-gradient(135deg, rgba(124, 108, 255, 0.98), rgba(255, 110, 168, 0.94)),
+            linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0));
+          box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.18),
+            0 16px 30px rgba(117, 95, 255, 0.24);
         }
 
         .hero-section {
@@ -437,6 +476,21 @@ export default function HomePageClient() {
           min-width: 0;
         }
 
+        .hero-copy::before {
+          content: "";
+          position: absolute;
+          top: -62px;
+          left: -30px;
+          width: 420px;
+          height: 320px;
+          border-radius: 999px;
+          background:
+            radial-gradient(circle, rgba(129, 108, 255, 0.22) 0%, rgba(129, 108, 255, 0.08) 34%, rgba(129, 108, 255, 0) 72%);
+          filter: blur(28px);
+          pointer-events: none;
+          z-index: -1;
+        }
+
         .eyebrow {
           display: inline-flex;
           align-items: center;
@@ -445,8 +499,11 @@ export default function HomePageClient() {
           padding: 0 14px;
           border-radius: 999px;
           color: #ffd4e8;
-          background: rgba(255, 110, 168, 0.1);
-          border: 1px solid rgba(255, 110, 168, 0.16);
+          background:
+            linear-gradient(180deg, rgba(255, 110, 168, 0.14), rgba(255, 110, 168, 0.08)),
+            rgba(255, 110, 168, 0.1);
+          border: 1px solid rgba(255, 110, 168, 0.18);
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
           font-size: 13px;
           font-weight: 800;
           letter-spacing: 0.02em;
@@ -455,27 +512,37 @@ export default function HomePageClient() {
         .hero-title {
           margin: 24px 0 0;
           max-width: 720px;
-          font-size: clamp(56px, 8vw, 96px);
-          line-height: 0.92;
-          letter-spacing: -0.08em;
+          font-size: clamp(58px, 8vw, 102px);
+          line-height: 0.9;
+          letter-spacing: -0.085em;
           font-weight: 950;
           text-wrap: balance;
+          text-shadow: 0 18px 44px rgba(0, 0, 0, 0.26);
         }
 
         .hero-gradient {
-          background: linear-gradient(90deg, #ffffff 0%, #ddd4ff 30%, #95b6ff 62%, #ff8fc3 100%);
+          background: linear-gradient(90deg, #ffffff 0%, #ddd4ff 26%, #95b6ff 58%, #ff8fc3 100%);
           -webkit-background-clip: text;
           background-clip: text;
           color: transparent;
+          filter: drop-shadow(0 0 28px rgba(137, 121, 255, 0.16));
         }
 
         .hero-body {
           margin: 24px 0 0;
           max-width: 620px;
-          color: #c5cde0;
+          color: #c9d2e5;
           font-size: 18px;
           line-height: 1.75;
           text-wrap: pretty;
+        }
+
+        .claim-caption {
+          margin-top: 20px;
+          color: #94a3bf;
+          font-size: 13px;
+          font-weight: 700;
+          letter-spacing: 0.01em;
         }
 
         .claim-form {
@@ -486,9 +553,13 @@ export default function HomePageClient() {
           max-width: 660px;
           padding: 12px;
           border-radius: 28px;
-          background: rgba(15, 11, 22, 0.92);
+          background:
+            linear-gradient(180deg, rgba(17, 13, 25, 0.96), rgba(11, 10, 18, 0.94)),
+            rgba(15, 11, 22, 0.92);
           border: 1px solid rgba(255, 255, 255, 0.08);
-          box-shadow: 0 28px 46px rgba(0, 0, 0, 0.24);
+          box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.04),
+            0 28px 46px rgba(0, 0, 0, 0.24);
           width: 100%;
           box-sizing: border-box;
         }
@@ -500,7 +571,9 @@ export default function HomePageClient() {
           gap: 12px;
           padding: 0 18px;
           border-radius: 18px;
-          background: rgba(255, 255, 255, 0.04);
+          background:
+            linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.03)),
+            rgba(255, 255, 255, 0.04);
           border: 1px solid rgba(255, 255, 255, 0.06);
           min-width: 0;
         }
@@ -538,8 +611,12 @@ export default function HomePageClient() {
           justify-content: center;
           gap: 10px;
           color: #ffffff;
-          background: linear-gradient(135deg, rgba(124, 108, 255, 0.98), rgba(255, 110, 168, 0.94));
-          box-shadow: 0 18px 34px rgba(110, 92, 255, 0.3);
+          background:
+            linear-gradient(135deg, rgba(124, 108, 255, 0.98), rgba(255, 110, 168, 0.94)),
+            linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0));
+          box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.18),
+            0 18px 34px rgba(110, 92, 255, 0.3);
           font-size: 15px;
           font-weight: 900;
           font-family: inherit;
@@ -571,443 +648,243 @@ export default function HomePageClient() {
 
         .preview-wrap {
           position: relative;
-          perspective: 1600px;
+          display: grid;
+          place-items: center;
           min-width: 0;
           width: 100%;
         }
 
-        .preview-shell {
-          position: relative;
-          padding: 22px;
-          border-radius: 40px;
-          background:
-            radial-gradient(circle at top, rgba(124, 108, 255, 0.12), transparent 26%),
-            linear-gradient(180deg, rgba(16, 11, 21, 0.98), rgba(8, 8, 14, 1));
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          box-shadow: 0 36px 72px rgba(0, 0, 0, 0.34);
-          overflow: hidden;
-          width: 100%;
-          box-sizing: border-box;
-        }
-
-        .preview-shell::after {
-          content: "";
+        .orb-scene {
           position: absolute;
-          inset: 12px;
-          border-radius: 30px;
-          border: 1px solid rgba(255, 255, 255, 0.04);
+          inset: 4% 6%;
+          border-radius: 50%;
+          background:
+            radial-gradient(circle at center, rgba(124, 108, 255, 0.08), transparent 44%),
+            radial-gradient(circle at 34% 28%, rgba(255, 255, 255, 0.08), transparent 18%);
+          opacity: 0.9;
           pointer-events: none;
         }
 
-        .preview-stage {
+        .orb-shell {
           position: relative;
-          z-index: 1;
-          border-radius: 30px;
-          overflow: hidden;
-          border: 1px solid rgba(255, 255, 255, 0.06);
-          background: linear-gradient(180deg, rgba(11, 12, 20, 0.96), rgba(7, 8, 14, 1));
-          box-shadow:
-            inset 0 1px 0 rgba(255, 255, 255, 0.04),
-            0 24px 40px rgba(0, 0, 0, 0.22);
-          min-width: 0;
+          width: min(560px, 100%);
+          aspect-ratio: 1 / 1;
+          display: grid;
+          place-items: center;
+          isolation: isolate;
         }
 
-        .preview-topbar {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          padding: 14px 16px;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-          background: rgba(255, 255, 255, 0.02);
-        }
-
-        .preview-dots {
-          display: flex;
-          gap: 6px;
-        }
-
-        .preview-dots span {
-          width: 8px;
-          height: 8px;
-          border-radius: 999px;
-          background: rgba(255, 255, 255, 0.18);
-        }
-
-        .preview-url {
-          min-height: 32px;
-          padding: 0 12px;
-          border-radius: 999px;
-          display: inline-flex;
-          align-items: center;
-          color: #a6b0c6;
-          background: rgba(255, 255, 255, 0.03);
-          border: 1px solid rgba(255, 255, 255, 0.06);
-          font-size: 12px;
-          font-weight: 700;
-          letter-spacing: 0.01em;
-          min-width: 0;
-          max-width: 100%;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-        }
-
-        .profile-preview {
-          position: relative;
-          background: linear-gradient(180deg, rgba(11, 12, 20, 0.98), rgba(7, 8, 14, 1));
-        }
-
-        .profile-banner {
-          position: relative;
-          min-height: 270px;
-          padding: 24px;
-          overflow: hidden;
-          background:
-            radial-gradient(circle at 18% 26%, rgba(127, 111, 255, 0.26), transparent 24%),
-            radial-gradient(circle at 82% 18%, rgba(255, 110, 168, 0.18), transparent 22%),
-            linear-gradient(155deg, #1b1120 0%, #11131d 50%, #0a0d15 100%);
-        }
-
-        .profile-banner::before {
-          content: "";
+        .orb-aura {
           position: absolute;
-          inset: 0;
+          inset: 10%;
+          border-radius: 50%;
           background:
-            linear-gradient(120deg, rgba(255, 255, 255, 0.08), transparent 22%),
-            linear-gradient(180deg, rgba(8, 10, 18, 0.02) 0%, rgba(8, 10, 18, 0.56) 100%);
+            radial-gradient(circle, rgba(132, 113, 255, 0.24) 0%, rgba(132, 113, 255, 0.08) 38%, rgba(132, 113, 255, 0) 70%),
+            radial-gradient(circle at 68% 34%, rgba(255, 110, 168, 0.18) 0%, rgba(255, 110, 168, 0) 26%),
+            radial-gradient(circle at 32% 72%, rgba(90, 169, 255, 0.14) 0%, rgba(90, 169, 255, 0) 24%);
+          opacity: 0.96;
           pointer-events: none;
         }
 
-        .banner-chip {
-          position: relative;
-          z-index: 1;
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          min-height: 34px;
-          padding: 0 14px;
-          border-radius: 999px;
-          color: #dce4f5;
-          background: rgba(8, 11, 18, 0.42);
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          backdrop-filter: blur(14px);
-          font-size: 12px;
-          font-weight: 800;
-          letter-spacing: 0.02em;
-        }
-
-        .banner-chip i,
-        .status-pill i {
-          width: 8px;
-          height: 8px;
-          border-radius: 999px;
-          background: #45d483;
-          box-shadow: 0 0 0 4px rgba(69, 212, 131, 0.12);
-          display: inline-block;
-          flex-shrink: 0;
-        }
-
-        .banner-copy {
-          position: relative;
-          z-index: 1;
-          margin-top: 126px;
-          max-width: 320px;
-        }
-
-        .banner-copy strong {
-          display: block;
-          font-size: 32px;
-          line-height: 0.92;
-          letter-spacing: -0.06em;
-        }
-
-        .banner-copy span {
-          display: block;
-          margin-top: 10px;
-          color: #a8b4ce;
-          font-size: 13px;
-          line-height: 1.65;
-        }
-
-        .banner-wordmark {
+        .orb-core {
           position: absolute;
-          right: 24px;
-          bottom: 20px;
-          font-size: clamp(76px, 9vw, 108px);
-          line-height: 0.8;
-          font-weight: 950;
-          letter-spacing: -0.08em;
-          color: rgba(255, 255, 255, 0.08);
-          pointer-events: none;
-          user-select: none;
-        }
-
-        .profile-body {
-          padding: 0 28px 28px;
-          margin-top: -66px;
-          min-width: 0;
-        }
-
-        .profile-card {
-          position: relative;
-          padding: 0 24px 24px;
-          border-radius: 28px;
-          background: linear-gradient(180deg, rgba(11, 13, 21, 0.96), rgba(8, 9, 16, 0.98));
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          box-shadow: 0 24px 34px rgba(0, 0, 0, 0.18);
-          min-width: 0;
-        }
-
-        .avatar-shell {
-          position: relative;
-          width: 118px;
-          height: 118px;
-          margin-top: -36px;
-        }
-
-        .avatar-ring {
-          position: absolute;
-          inset: -8px;
-          border-radius: 999px;
-          border: 1px solid rgba(145, 162, 255, 0.34);
-          box-shadow:
-            0 0 0 8px rgba(8, 10, 17, 0.92),
-            0 0 30px rgba(112, 128, 255, 0.12);
-        }
-
-        .avatar-core {
-          position: relative;
-          width: 118px;
-          height: 118px;
-          border-radius: 999px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          overflow: hidden;
+          width: 42%;
+          aspect-ratio: 1 / 1;
+          border-radius: 50%;
+          display: grid;
+          place-items: center;
+          background:
+            radial-gradient(circle at 34% 28%, rgba(255, 255, 255, 0.24), transparent 18%),
+            linear-gradient(145deg, rgba(135, 118, 255, 0.34), rgba(255, 110, 168, 0.22) 52%, rgba(90, 169, 255, 0.2) 100%);
           border: 1px solid rgba(255, 255, 255, 0.14);
-          background:
-            radial-gradient(circle at 28% 22%, rgba(255, 255, 255, 0.36), transparent 18%),
-            linear-gradient(145deg, #ff6ea8 0%, #7a6dff 56%, #57a7ff 100%);
-          box-shadow: 0 20px 34px rgba(95, 86, 255, 0.2);
+          box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.16),
+            0 24px 44px rgba(8, 8, 18, 0.22);
+          z-index: 2;
         }
 
-        .avatar-core::after {
+        .orb-core::before {
           content: "";
           position: absolute;
           inset: 10px;
-          border-radius: 999px;
+          border-radius: 50%;
           border: 1px solid rgba(255, 255, 255, 0.14);
         }
 
-        .avatar-core strong {
+        .orb-core strong {
           position: relative;
           z-index: 1;
-          color: #ffffff;
-          font-size: 40px;
+          font-size: clamp(64px, 9vw, 104px);
+          line-height: 1;
           font-weight: 950;
-          letter-spacing: -0.05em;
-          text-shadow: 0 10px 24px rgba(13, 18, 34, 0.34);
+          letter-spacing: -0.09em;
+          color: #ffffff;
+          text-shadow: 0 14px 34px rgba(9, 10, 24, 0.22);
         }
 
-        .profile-name {
-          margin: 18px 0 0;
-          font-size: clamp(34px, 4vw, 42px);
-          line-height: 0.92;
+        .orb-ring,
+        .orb-ring::before {
+          position: absolute;
+          border-radius: 50%;
+          pointer-events: none;
+        }
+
+        .orb-ring {
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          box-sizing: border-box;
+        }
+
+        .orb-ring::before {
+          content: "";
+          inset: auto;
+          width: 12px;
+          height: 12px;
+          background: rgba(255, 255, 255, 0.88);
+          box-shadow: 0 0 18px rgba(255, 255, 255, 0.18);
+        }
+
+        .orb-ring-one {
+          inset: 8%;
+          border-color: rgba(135, 118, 255, 0.22);
+        }
+
+        .orb-ring-one::before {
+          top: 18%;
+          right: 12%;
+          background: #9f88ff;
+          box-shadow: 0 0 18px rgba(159, 136, 255, 0.26);
+        }
+
+        .orb-ring-two {
+          inset: 19%;
+          border-color: rgba(255, 110, 168, 0.18);
+          transform: rotate(16deg);
+        }
+
+        .orb-ring-two::before {
+          bottom: 9%;
+          left: 16%;
+          width: 10px;
+          height: 10px;
+          background: #ff8fc3;
+          box-shadow: 0 0 16px rgba(255, 143, 195, 0.24);
+        }
+
+        .orb-ring-three {
+          inset: 30%;
+          border-color: rgba(90, 169, 255, 0.18);
+          transform: rotate(-12deg);
+        }
+
+        .orb-ring-three::before {
+          top: 12%;
+          left: 14%;
+          width: 8px;
+          height: 8px;
+          background: #8fd3ff;
+          box-shadow: 0 0 14px rgba(143, 211, 255, 0.24);
+        }
+
+        .orb-axis {
+          position: absolute;
+          width: 76%;
+          height: 1px;
+          background:
+            linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0));
+          opacity: 0.7;
+          pointer-events: none;
+        }
+
+        .orb-axis-a {
+          transform: rotate(14deg);
+        }
+
+        .orb-axis-b {
+          transform: rotate(-24deg);
+          width: 62%;
+        }
+
+        .orb-copy {
+          position: relative;
+          display: block;
+          z-index: 3;
+          margin-top: 24px;
+          max-width: 340px;
+          text-align: center;
+        }
+
+        .orb-copy strong {
+          display: block;
+          font-size: clamp(28px, 3.2vw, 38px);
+          line-height: 0.98;
           letter-spacing: -0.06em;
         }
 
-        .profile-username {
-          margin-top: 10px;
-          color: #90a0bc;
+        .orb-copy span {
+          display: block;
+          margin-top: 12px;
+          color: #9ca9c4;
           font-size: 14px;
-          font-weight: 700;
+          line-height: 1.7;
         }
 
-        .badge-row {
-          display: flex;
-          gap: 8px;
-          flex-wrap: wrap;
-          margin-top: 16px;
-        }
-
-        .profile-badge {
-          min-height: 30px;
-          padding: 0 11px;
+        .identity-chip {
+          position: absolute;
+          z-index: 4;
+          min-height: 34px;
+          padding: 0 14px;
           border-radius: 999px;
           display: inline-flex;
           align-items: center;
-          gap: 7px;
+          justify-content: center;
+          color: #f7f8ff;
+          background: rgba(16, 14, 25, 0.92);
           border: 1px solid rgba(255, 255, 255, 0.08);
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
           font-size: 11px;
-          font-weight: 800;
-          letter-spacing: 0.03em;
+          font-weight: 900;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          white-space: nowrap;
         }
 
-        .badge-owner {
-          color: #f5d89c;
-          background: rgba(245, 216, 156, 0.12);
-          border-color: rgba(245, 216, 156, 0.18);
+        .chip-links {
+          top: 17%;
+          left: 8%;
         }
 
-        .badge-owner::before {
-          content: "";
-          width: 8px;
-          height: 8px;
-          border-radius: 999px;
-          background: #f5d89c;
-          box-shadow: 0 0 0 4px rgba(245, 216, 156, 0.12);
-          display: inline-block;
-          flex-shrink: 0;
+        .chip-live {
+          top: 14%;
+          right: 7%;
         }
 
-        .badge-premium {
-          color: #ffacd0;
-          background: rgba(255, 110, 168, 0.12);
+        .chip-social {
+          bottom: 21%;
+          left: 10%;
+        }
+
+        .chip-premium {
+          bottom: 15%;
+          right: 11%;
+        }
+
+        .chip-violet {
+          color: #ddd4ff;
+          border-color: rgba(135, 118, 255, 0.18);
+        }
+
+        .chip-rose {
+          color: #ffd5e7;
           border-color: rgba(255, 110, 168, 0.18);
         }
 
-        .badge-premium::before {
-          content: "";
-          width: 8px;
-          height: 8px;
-          border-radius: 999px;
-          background: #ff89ba;
-          box-shadow: 0 0 0 4px rgba(255, 137, 186, 0.12);
-          display: inline-block;
-          flex-shrink: 0;
+        .chip-blue {
+          color: #d9efff;
+          border-color: rgba(90, 169, 255, 0.18);
         }
 
-        .badge-online {
-          color: #99e6b8;
-          background: rgba(69, 212, 131, 0.12);
-          border-color: rgba(69, 212, 131, 0.18);
-        }
-
-        .badge-online::before {
-          content: "";
-          width: 8px;
-          height: 8px;
-          border-radius: 999px;
-          background: #45d483;
-          box-shadow: 0 0 0 4px rgba(69, 212, 131, 0.12);
-          display: inline-block;
-          flex-shrink: 0;
-        }
-
-        .profile-bio {
-          margin: 18px 0 0;
-          max-width: 460px;
-          color: #bec8dc;
-          font-size: 14px;
-          line-height: 1.75;
-          text-wrap: pretty;
-        }
-
-        .social-row {
-          display: flex;
-          gap: 10px;
-          flex-wrap: wrap;
-          margin-top: 20px;
-        }
-
-        .social-chip {
-          width: 44px;
-          height: 44px;
-          border-radius: 16px;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          background: rgba(255, 255, 255, 0.04);
-          box-shadow: 0 10px 24px rgba(0, 0, 0, 0.16);
-        }
-
-        .social-chip span {
-          width: 36px;
-          height: 36px;
-          border-radius: 13px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border: 1px solid rgba(255, 255, 255, 0.06);
-        }
-
-        .profile-links {
-          display: grid;
-          gap: 10px;
-          margin-top: 22px;
-          min-width: 0;
-        }
-
-        .profile-link {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 12px;
-          padding: 14px 16px;
-          border-radius: 18px;
-          background: rgba(255, 255, 255, 0.03);
-          border: 1px solid rgba(255, 255, 255, 0.06);
-          min-width: 0;
-        }
-
-        .profile-link strong {
-          display: block;
-          font-size: 14px;
-          letter-spacing: -0.02em;
-          overflow-wrap: anywhere;
-        }
-
-        .profile-link span {
-          display: block;
-          margin-top: 5px;
-          color: #8e9ab6;
-          font-size: 12px;
-          line-height: 1.45;
-          overflow-wrap: anywhere;
-        }
-
-        .profile-link-mark {
-          width: 38px;
-          height: 38px;
-          border-radius: 14px;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          color: #ffffff;
-          background: linear-gradient(135deg, rgba(124, 108, 255, 0.24), rgba(255, 110, 168, 0.24));
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          flex-shrink: 0;
-          font-size: 14px;
-          font-weight: 800;
-        }
-
-        .status-row {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          flex-wrap: wrap;
-          margin-top: 18px;
-        }
-
-        .status-pill {
-          min-height: 34px;
-          padding: 0 12px;
-          border-radius: 999px;
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          color: #dfe7f6;
-          background: rgba(255, 255, 255, 0.04);
-          border: 1px solid rgba(255, 255, 255, 0.07);
-          font-size: 12px;
-          font-weight: 800;
-        }
-
-        .status-copy {
-          color: #93a0bb;
-          font-size: 12px;
-          font-weight: 700;
+        .chip-soft {
+          color: #f5f7ff;
         }
 
         .features-section {
@@ -1046,7 +923,9 @@ export default function HomePageClient() {
           border-radius: 28px;
           background: linear-gradient(180deg, rgba(15, 17, 28, 0.96), rgba(9, 11, 18, 0.98));
           border: 1px solid rgba(255, 255, 255, 0.07);
-          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.18);
+          box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.04),
+            0 20px 40px rgba(0, 0, 0, 0.18);
         }
 
         .feature-icon {
@@ -1084,7 +963,9 @@ export default function HomePageClient() {
             radial-gradient(circle at top right, rgba(124, 108, 255, 0.16), transparent 26%),
             linear-gradient(180deg, rgba(17, 18, 30, 0.96), rgba(11, 12, 20, 0.98));
           border: 1px solid rgba(255, 255, 255, 0.08);
-          box-shadow: 0 26px 48px rgba(0, 0, 0, 0.2);
+          box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.04),
+            0 26px 48px rgba(0, 0, 0, 0.2);
         }
 
         .support-panel h3 {
@@ -1129,6 +1010,37 @@ export default function HomePageClient() {
           color: #ffffff;
           background: linear-gradient(135deg, rgba(124, 108, 255, 0.9), rgba(255, 110, 168, 0.86));
           box-shadow: 0 16px 30px rgba(110, 92, 255, 0.24);
+        }
+
+        @media (hover: hover) and (pointer: fine) {
+          .brand-link:hover .brand-mark {
+            box-shadow:
+              inset 0 1px 0 rgba(255, 255, 255, 0.2),
+              0 22px 40px rgba(110, 93, 255, 0.34);
+          }
+
+          .nav-cta:hover,
+          .claim-button:hover,
+          .support-link.primary:hover {
+            box-shadow:
+              inset 0 1px 0 rgba(255, 255, 255, 0.22),
+              0 22px 38px rgba(118, 95, 255, 0.3);
+          }
+
+          .feature-card:hover,
+          .support-link:hover {
+            border-color: rgba(255, 255, 255, 0.12);
+            background: rgba(255, 255, 255, 0.05);
+          }
+
+          .feature-card:hover {
+            transform: translateY(-4px);
+          }
+
+          .identity-chip:hover {
+            transform: translateY(-2px);
+            border-color: rgba(255, 255, 255, 0.12);
+          }
         }
 
         @media (max-width: 1120px) {
@@ -1182,7 +1094,13 @@ export default function HomePageClient() {
             text-align: center;
           }
 
+          .hero-copy::before {
+            left: 50%;
+            transform: translateX(-50%);
+          }
+
           .hero-body,
+          .claim-caption,
           .claim-form,
           .hero-trust {
             margin-left: auto;
@@ -1217,6 +1135,7 @@ export default function HomePageClient() {
             font-size: clamp(36px, 11.5vw, 52px);
             line-height: 0.96;
             letter-spacing: -0.07em;
+            text-shadow: none;
           }
 
           .hero-body,
@@ -1236,6 +1155,11 @@ export default function HomePageClient() {
             padding: 10px;
             border-radius: 24px;
             gap: 10px;
+          }
+
+          .claim-caption {
+            margin-top: 16px;
+            font-size: 12px;
           }
 
           .claim-field,
@@ -1264,129 +1188,44 @@ export default function HomePageClient() {
             max-width: 100%;
           }
 
-          .preview-shell,
-          .preview-stage {
-            border-radius: 24px;
+          .orb-shell {
+            width: min(420px, 100%);
           }
 
-          .preview-shell {
-            padding: 12px;
-            box-shadow: 0 24px 48px rgba(0, 0, 0, 0.28);
-          }
-
-          .preview-shell::after {
-            inset: 8px;
-            border-radius: 20px;
-          }
-
-          .preview-topbar {
-            padding: 12px 12px;
-            gap: 10px;
-          }
-
-          .preview-url {
-            font-size: 11px;
-            min-height: 28px;
-            padding: 0 10px;
-          }
-
-          .profile-banner {
-            min-height: 196px;
-            padding: 16px;
-          }
-
-          .banner-copy {
-            margin-top: 88px;
-            max-width: 178px;
-          }
-
-          .banner-copy strong {
-            font-size: 21px;
-          }
-
-          .banner-wordmark {
-            right: 12px;
-            bottom: 8px;
-            font-size: 48px;
-          }
-
-          .profile-body {
-            padding: 0 12px 14px;
-            margin-top: -42px;
-          }
-
-          .profile-card {
-            padding: 0 14px 14px;
-            border-radius: 20px;
-          }
-
-          .avatar-shell,
-          .avatar-core {
-            width: 84px;
-            height: 84px;
-          }
-
-          .avatar-core strong {
-            font-size: 28px;
-          }
-
-          .profile-name {
-            font-size: 26px;
-            margin-top: 14px;
-          }
-
-          .profile-username {
-            margin-top: 8px;
-            font-size: 13px;
-          }
-
-          .profile-bio {
-            margin-top: 14px;
-            font-size: 13px;
-            line-height: 1.65;
-          }
-
-          .social-row {
+          .orb-copy {
             margin-top: 16px;
-            gap: 8px;
+            max-width: 280px;
           }
 
-          .social-chip {
-            width: 40px;
-            height: 40px;
-            border-radius: 14px;
+          .orb-copy strong {
+            font-size: 24px;
           }
 
-          .social-chip span {
-            width: 32px;
-            height: 32px;
-            border-radius: 11px;
-          }
-
-          .profile-links {
-            margin-top: 18px;
-          }
-
-          .profile-link {
-            padding: 12px 12px;
-            border-radius: 16px;
-          }
-
-          .profile-link-mark {
-            width: 34px;
-            height: 34px;
-            border-radius: 12px;
+          .orb-copy span {
             font-size: 13px;
-          }
-
-          .status-row {
-            margin-top: 16px;
-            gap: 10px;
           }
 
           .feature-card,
           .support-panel {
             padding: 20px;
+          }
+
+          .page-orb-a,
+          .page-orb-b,
+          .page-orb-c,
+          .page-beam {
+            opacity: 0.58;
+            filter: blur(22px);
+          }
+
+          .page-noise {
+            opacity: 0.04;
+          }
+
+          .identity-chip {
+            min-height: 30px;
+            padding: 0 11px;
+            font-size: 10px;
           }
 
           .features-section {
@@ -1443,31 +1282,53 @@ export default function HomePageClient() {
             gap: 26px;
           }
 
-          .hero-body {
-            margin-top: 18px;
+          .orb-shell {
+            width: min(320px, 100%);
+          }
+
+          .orb-core {
+            width: 46%;
+          }
+
+          .orb-core strong {
+            font-size: 58px;
+          }
+
+          .identity-chip {
+            min-height: 28px;
+            padding: 0 10px;
+            font-size: 9px;
+          }
+
+          .chip-links {
+            top: 18%;
+            left: 5%;
+          }
+
+          .chip-live {
+            top: 15%;
+            right: 4%;
+          }
+
+          .chip-social {
+            bottom: 22%;
+            left: 6%;
+          }
+
+          .chip-premium {
+            bottom: 18%;
+            right: 8%;
+          }
+
+          .orb-copy {
+            margin-top: 14px;
+            max-width: 220px;
           }
         }
 
         @media (max-width: 390px) {
-          .brand-copy span {
-            display: none;
-          }
-
           .hero-title {
             font-size: clamp(34px, 11vw, 46px);
-          }
-
-          .claim-field {
-            padding: 0 14px;
-            gap: 10px;
-          }
-
-          .banner-copy {
-            max-width: 156px;
-          }
-
-          .banner-wordmark {
-            font-size: 42px;
           }
         }
 
@@ -1494,12 +1355,8 @@ export default function HomePageClient() {
             font-size: clamp(32px, 10.8vw, 42px);
           }
 
-          .profile-banner {
-            min-height: 182px;
-          }
-
-          .banner-copy {
-            margin-top: 82px;
+          .orb-shell {
+            width: min(280px, 100%);
           }
         }
 
@@ -1524,19 +1381,18 @@ export default function HomePageClient() {
             font-size: 13px;
           }
 
-          .preview-shell {
-            padding: 10px;
-          }
-
-          .profile-card {
-            padding: 0 12px 12px;
+          .identity-chip {
+            display: none;
           }
         }
       `}</style>
 
       <div className="page-orb-a" />
       <div className="page-orb-b" />
+      <div className="page-orb-c" />
+      <div className="page-beam" />
       <div className="page-grid" />
+      <div className="page-noise" />
       <div className="page-vignette" />
 
       <header className="home-header">
@@ -1549,10 +1405,12 @@ export default function HomePageClient() {
               transition={{ duration: 0.45, ease: EASE_OUT }}
             >
               <Link href="/" className="brand-link" onClick={() => setIsMobileMenuOpen(false)}>
-                <div className="brand-mark">Y</div>
+                <div className="brand-mark">
+                  <strong>Y</strong>
+                </div>
                 <div className="brand-copy">
                   <strong>Yotei</strong>
-                  <span>Premium digital identity</span>
+                  <span>Profile OS for standout identity</span>
                 </div>
               </Link>
 
@@ -1655,6 +1513,10 @@ export default function HomePageClient() {
               social presence into one beautiful page.
             </motion.p>
 
+            <motion.div className="claim-caption" variants={fadeUp}>
+              Reserve your handle first. Shape the page, mood and presence after.
+            </motion.div>
+
             <motion.form
               className="claim-form"
               onSubmit={handleSubmit}
@@ -1674,7 +1536,7 @@ export default function HomePageClient() {
               </label>
 
               <button type="submit" className="claim-button">
-                Claim Username
+                Reserve Username
                 <LuArrowRight size={17} />
               </button>
             </motion.form>
@@ -1698,146 +1560,37 @@ export default function HomePageClient() {
             whileHover={
               shouldReduceMotion
                 ? undefined
-                : { y: -4, rotateX: 1.5, rotateY: -2.5 }
+                : { y: -3, scale: 1.01 }
             }
           >
-            <div className="preview-shell">
-              <motion.div
-                aria-hidden
-                animate={
-                  shouldReduceMotion
-                    ? undefined
-                    : { opacity: [0.3, 0.42, 0.3], scale: [1, 1.02, 1] }
-                }
-                transition={
-                  shouldReduceMotion
-                    ? undefined
-                    : { duration: 7, repeat: Infinity, ease: "easeInOut" }
-                }
-                style={previewGlowStyle}
-              />
-
-              <div className="preview-stage">
-                <div className="preview-topbar">
-                  <div className="preview-dots" aria-hidden>
-                    <span />
-                    <span />
-                    <span />
-                  </div>
-                  <div className="preview-url">yotei.app/yotei-san</div>
-                </div>
-
-                <div className="profile-preview">
-                  <div className="profile-banner">
-                    <div className="banner-chip">
-                      <i />
-                      Live profile
-                    </div>
-
-                    <div className="banner-copy">
-                      <strong>Yotei</strong>
-                      <span>
-                        Premium identity for links, drops, socials and a stronger first
-                        impression.
-                      </span>
-                    </div>
-
-                    <div className="banner-wordmark" aria-hidden>
-                      Y
-                    </div>
-                  </div>
-
-                  <div className="profile-body">
-                    <div className="profile-card">
-                      <motion.div
-                        className="avatar-shell"
-                        animate={shouldReduceMotion ? undefined : { y: [0, -2, 0] }}
-                        transition={
-                          shouldReduceMotion
-                            ? undefined
-                            : {
-                                duration: 5.4,
-                                repeat: Infinity,
-                                ease: "easeInOut",
-                              }
-                        }
-                      >
-                        <div className="avatar-ring" />
-                        <div className="avatar-core">
-                          <strong>Y</strong>
-                        </div>
-                      </motion.div>
-
-                      <h2 className="profile-name">Yotei</h2>
-                      <div className="profile-username">@yotei-san</div>
-
-                      <div className="badge-row">
-                        {profileBadges.map((badge) => (
-                          <span
-                            key={badge.label}
-                            className={`profile-badge ${badge.className}`}
-                          >
-                            {badge.label}
-                          </span>
-                        ))}
-                      </div>
-
-                      <p className="profile-bio">
-                        Building profile pages with stronger aesthetics, sharper identity
-                        and clean social presence.
-                      </p>
-
-                      <div className="social-row">
-                        {socialLinks.map((social) => (
-                          <motion.div
-                            key={social.label}
-                            className="social-chip"
-                            whileHover={shouldReduceMotion ? undefined : { y: -3 }}
-                            whileTap={shouldReduceMotion ? undefined : { scale: 0.98 }}
-                            aria-label={social.label}
-                            title={social.label}
-                          >
-                            <span
-                              style={{
-                                color: social.accent,
-                                background: `${social.accent}14`,
-                              }}
-                            >
-                              {social.icon}
-                            </span>
-                          </motion.div>
-                        ))}
-                      </div>
-
-                      <div className="profile-links">
-                        <div className="profile-link">
-                          <div>
-                            <strong>Featured drop</strong>
-                            <span>Launches, content and creator updates in one place.</span>
-                          </div>
-                          <div className="profile-link-mark">01</div>
-                        </div>
-
-                        <div className="profile-link">
-                          <div>
-                            <strong>Community hub</strong>
-                            <span>One premium page for Discord, socials and signature links.</span>
-                          </div>
-                          <div className="profile-link-mark">02</div>
-                        </div>
-                      </div>
-
-                      <div className="status-row">
-                        <div className="status-pill">
-                          <i />
-                          Online
-                        </div>
-                        <div className="status-copy">Clean, premium and ready to share.</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+            <div className="orb-shell" aria-hidden>
+              <div className="orb-scene" />
+              <div className="orb-aura" />
+              <div className="orb-ring orb-ring-one" />
+              <div className="orb-ring orb-ring-two" />
+              <div className="orb-ring orb-ring-three" />
+              <div className="orb-axis orb-axis-a" />
+              <div className="orb-axis orb-axis-b" />
+              <div className="orb-core">
+                <strong>Y</strong>
               </div>
+
+              {identityChips.map((chip) => (
+                <div
+                  key={chip.label}
+                  className={`identity-chip chip-${chip.label.toLowerCase()} chip-${chip.tone}`}
+                >
+                  {chip.label}
+                </div>
+              ))}
+            </div>
+
+            <div className="orb-copy">
+              <strong>A digital aura for premium identity, not another generic profile card.</strong>
+              <span>
+                Yotei brings links, live presence and visual signature into one sharper
+                destination with a lighter, more memorable brand feel.
+              </span>
             </div>
           </motion.div>
         </div>
@@ -1950,13 +1703,5 @@ const pageStyle: CSSProperties = {
   overflowX: "clip",
   color: "#f7f8ff",
   background:
-    "radial-gradient(circle at top, rgba(46, 20, 38, 0.34), transparent 22%), radial-gradient(circle at 84% 16%, rgba(124, 108, 255, 0.12), transparent 18%), linear-gradient(180deg, #07060B 0%, #09060D 22%, #06070B 100%)",
-};
-
-const previewGlowStyle: CSSProperties = {
-  position: "absolute",
-  inset: "-24px",
-  background:
-    "radial-gradient(circle at 18% 18%, rgba(124, 108, 255, 0.28), transparent 32%), radial-gradient(circle at 84% 20%, rgba(255, 110, 168, 0.16), transparent 28%)",
-  pointerEvents: "none",
+    "radial-gradient(circle at top, rgba(58, 24, 48, 0.36), transparent 20%), radial-gradient(circle at 18% 12%, rgba(104, 90, 255, 0.18), transparent 24%), radial-gradient(circle at 82% 14%, rgba(255, 110, 168, 0.14), transparent 20%), linear-gradient(180deg, #05050a 0%, #08060d 26%, #06070b 100%)",
 };

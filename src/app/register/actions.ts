@@ -2,14 +2,16 @@
 
 import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
-import { prisma } from "@/app/lib/prisma";
 import { createUserSession } from "@/app/lib/auth";
+import { createAndSendEmailVerification } from "@/app/lib/email-verification";
+import { prisma } from "@/app/lib/prisma";
 
 export async function registerUser(formData: FormData) {
   const email = String(formData.get("email") || "").trim().toLowerCase();
   const username = String(formData.get("username") || "").trim().toLowerCase();
   const password = String(formData.get("password") || "").trim();
   const displayName = String(formData.get("displayName") || "").trim();
+  const rememberSession = parseRememberSession(formData.get("rememberSession"));
 
   if (!email || !username || !password) {
     throw new Error("Preencha email, username e senha.");
@@ -27,7 +29,7 @@ export async function registerUser(formData: FormData) {
   });
 
   if (existingUser) {
-    throw new Error("Email ou username já estão em uso.");
+    throw new Error("Email ou username ja estao em uso.");
   }
 
   const hashedPassword = await bcrypt.hash(password, 10);
@@ -45,6 +47,24 @@ export async function registerUser(formData: FormData) {
     },
   });
 
-  await createUserSession(user.id);
+  try {
+    await createAndSendEmailVerification({
+      userId: user.id,
+      email,
+      username,
+    });
+  } catch (error) {
+    console.warn("Failed to send verification email during registration.", error);
+  }
+
+  await createUserSession(user.id, { remember: rememberSession });
   redirect("/dashboard");
+}
+
+function parseRememberSession(value: FormDataEntryValue | null) {
+  if (typeof value !== "string") {
+    return false;
+  }
+
+  return value === "1" || value === "true" || value === "on";
 }

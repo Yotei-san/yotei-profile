@@ -1,7 +1,9 @@
 import Link from "next/link";
 import type { CSSProperties, ReactNode } from "react";
 import { requireUser } from "@/app/lib/auth";
+import VerificationLockedPanel from "@/app/dashboard/components/VerificationLockedPanel";
 import { prisma } from "@/app/lib/prisma";
+import { isEmailVerified } from "@/app/lib/email-verification";
 import TemplateGallery from "@/app/dashboard/components/TemplateGallery";
 import { applyTemplate, createTemplate } from "./actions";
 
@@ -15,26 +17,47 @@ type PageProps = {
 
 type TemplateTab = "all" | "mine" | "premium";
 
+type TemplatesPageUser = {
+  id: string;
+  username: string;
+  emailVerified: Date | null;
+  role: string;
+  plan: string;
+  premiumBadge: boolean;
+  premiumUntil: Date | null;
+  subscriptionStatus: string | null;
+};
+
 export default async function TemplatesPage({ searchParams }: PageProps) {
   const sessionUser = await requireUser();
   const params = (await searchParams) ?? {};
   const currentTab = getCurrentTab(params.tab);
 
-  const user = await prisma.user.findUnique({
+  const user = (await prisma.user.findUnique({
     where: { id: sessionUser.id },
     select: {
       id: true,
       username: true,
+      emailVerified: true,
       role: true,
       plan: true,
       premiumBadge: true,
       premiumUntil: true,
       subscriptionStatus: true,
-    },
-  });
+    } as any,
+  })) as TemplatesPageUser | null;
 
   if (!user) {
     throw new Error("Usuario nao encontrado.");
+  }
+
+  if (!isEmailVerified(user)) {
+    return (
+      <VerificationLockedPanel
+        title="Verify your email to unlock templates."
+        description="You can keep setting up your account, but publishing or applying reusable public templates stays locked until your email is verified."
+      />
+    );
   }
 
   const templatesWhere = getTemplatesWhere(currentTab, user.id);
