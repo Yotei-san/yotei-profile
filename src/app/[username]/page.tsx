@@ -8,6 +8,8 @@ import {
   LuSparkles,
 } from "react-icons/lu";
 import { getCurrentUser } from "@/app/lib/auth";
+import BadgeVisual from "@/app/dashboard/components/BadgeVisual";
+import { getFeaturedPublicBadges } from "@/app/lib/badges";
 import { getLinkPlatform } from "@/app/lib/link-icons";
 import { readLiveEmbedMetadata } from "@/app/lib/live-embed";
 import { getMediaKind } from "@/app/lib/profile-media";
@@ -112,6 +114,34 @@ function readMetadataValue(
 
   const value = metadata[key];
   return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function getProfileBadgeVisual(
+  badge: {
+    slug: string;
+    category: string | null;
+    rarity: string | null;
+    color: string | null;
+  },
+  themeColor: string
+) {
+  const color = badge.color || themeColor;
+  const isPriority =
+    badge.slug === "owner" ||
+    badge.slug === "admin" ||
+    badge.slug === "premium" ||
+    badge.category === "official";
+
+  return {
+    color,
+    pillBackground: isPriority
+      ? `linear-gradient(135deg, ${withAlpha(color, "16")}, rgba(255,255,255,0.05))`
+      : "rgba(255,255,255,0.04)",
+    pillBorder: isPriority ? withAlpha(color, "34") : "rgba(255,255,255,0.08)",
+    iconBackground: withAlpha(color, isPriority ? "22" : "18"),
+    iconShadow: `0 10px 18px ${withAlpha(color, isPriority ? "22" : "16")}`,
+    labelColor: isPriority ? "#ffffff" : "#f3f5fb",
+  };
 }
 
 export default async function ProfilePage({ params }: Props) {
@@ -222,7 +252,9 @@ export default async function ProfilePage({ params }: Props) {
   const decorationOffsetX = user.selectedDecorationOffsetX ?? 0;
   const decorationOffsetY = user.selectedDecorationOffsetY ?? 0;
   const avatarInitials = getInitials(displayName);
-  const premiumBadges = user.badges.slice(0, 4);
+  const featuredBadgeShowcase = getFeaturedPublicBadges(user.badges, 4);
+  const featuredBadges = featuredBadgeShowcase.badges;
+  const extraBadgeCount = featuredBadgeShowcase.extraCount;
   const likes = user.reactionsReceived.reduce(
     (acc, item) => (item.type === "like" ? acc + 1 : acc),
     0,
@@ -318,7 +350,8 @@ export default async function ProfilePage({ params }: Props) {
         decorationScale={decorationScale}
         decorationOffsetX={decorationOffsetX}
         decorationOffsetY={decorationOffsetY}
-        premiumBadges={premiumBadges}
+        featuredBadges={featuredBadges}
+        extraBadgeCount={extraBadgeCount}
         heroPills={heroPills}
         likes={likes}
         dislikes={dislikes}
@@ -703,9 +736,9 @@ export default async function ProfilePage({ params }: Props) {
         }
 
         .profile-badge-icon {
-          width: 26px;
+          width: auto;
+          min-width: 26px;
           height: 26px;
-          border-radius: 999px;
           display: inline-flex;
           align-items: center;
           justify-content: center;
@@ -1174,29 +1207,62 @@ export default async function ProfilePage({ params }: Props) {
                     initialMyReaction={initialMyReaction}
                   />
 
-                  {premiumBadges.length > 0 ? (
+                  {featuredBadges.length > 0 ? (
                     <div className="profile-badge-rail">
-                      {premiumBadges.map((item) => (
+                      {featuredBadges.map((item) => {
+                        const visual = getProfileBadgeVisual(item.badge, themeColor);
+
+                        return (
+                          <div
+                            key={item.id}
+                            className="profile-badge-pill"
+                            title={item.badge.description || item.badge.name}
+                            style={{
+                              background: visual.pillBackground,
+                              borderColor: visual.pillBorder,
+                              boxShadow:
+                                item.badge.slug === "owner" ||
+                                item.badge.slug === "admin" ||
+                                item.badge.slug === "premium"
+                                  ? `0 14px 28px ${withAlpha(visual.color, "18")}`
+                                  : undefined,
+                            }}
+                          >
+                          <div
+                            className="profile-badge-icon"
+                          >
+                            <BadgeVisual
+                              slug={item.badge.slug}
+                              color={item.badge.color || visual.color}
+                              rarity={item.badge.rarity}
+                              category={item.badge.category}
+                              size={30}
+                              compact
+                            />
+                          </div>
+                          <span
+                            className="profile-badge-label"
+                            style={{ color: visual.labelColor }}
+                          >
+                            {item.badge.name}
+                          </span>
+                        </div>
+                        );
+                      })}
+                      {extraBadgeCount > 0 ? (
                         <div
-                          key={item.id}
                           className="profile-badge-pill"
-                          title={item.badge.description || item.badge.name}
+                          title={`${extraBadgeCount} more badge${extraBadgeCount === 1 ? "" : "s"}`}
                         >
                           <div
                             className="profile-badge-icon"
-                            style={{
-                              background: withAlpha(item.badge.color || themeColor, "18"),
-                              boxShadow: `0 10px 18px ${withAlpha(
-                                item.badge.color || themeColor,
-                                "16",
-                              )}`,
-                            }}
+                            style={{ width: "auto", minWidth: "26px", padding: "0 6px" }}
                           >
-                            {item.badge.icon || "B"}
+                            +{extraBadgeCount}
                           </div>
-                          <span className="profile-badge-label">{item.badge.name}</span>
+                          <span className="profile-badge-label">More</span>
                         </div>
-                      ))}
+                      ) : null}
                     </div>
                   ) : null}
                 </div>

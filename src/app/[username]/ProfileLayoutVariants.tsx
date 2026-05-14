@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactNode } from "react";
 import { LuArrowUpRight, LuSparkles } from "react-icons/lu";
+import BadgeVisual from "@/app/dashboard/components/BadgeVisual";
 import { getLinkPlatform } from "@/app/lib/link-icons";
 import ProfileHeroClient from "./ProfileHeroClient";
 import SocialPresenceSection, {
@@ -11,10 +12,13 @@ export type PublicProfileLayout = "default" | "modern" | "simplistic" | "portfol
 type BadgeEntry = {
   id: string;
   badge: {
+    slug: string;
     name: string;
     icon: string;
     description: string | null;
     color: string | null;
+    category: string | null;
+    rarity: string | null;
   };
 };
 
@@ -57,7 +61,8 @@ type Props = {
   decorationScale: number;
   decorationOffsetX: number;
   decorationOffsetY: number;
-  premiumBadges: BadgeEntry[];
+  featuredBadges: BadgeEntry[];
+  extraBadgeCount: number;
   heroPills: HeroPill[];
   likes: number;
   dislikes: number;
@@ -122,7 +127,11 @@ function DefaultLayout(props: Props) {
             initialMyReaction={props.initialMyReaction}
           />
 
-          <BadgeRail badges={props.premiumBadges} themeColor={props.themeColor} />
+          <BadgeRail
+            badges={props.featuredBadges}
+            extraBadgeCount={props.extraBadgeCount}
+            themeColor={props.themeColor}
+          />
           <SocialPresenceSection blocks={props.socialBlocks} themeColor={props.themeColor} compact />
           <LinksSection
             layout="default"
@@ -181,7 +190,12 @@ function SimplisticLayout(props: Props) {
           initialMyReaction={props.initialMyReaction}
         />
 
-        <BadgeRail badges={props.premiumBadges} themeColor={props.themeColor} minimal />
+        <BadgeRail
+          badges={props.featuredBadges}
+          extraBadgeCount={props.extraBadgeCount}
+          themeColor={props.themeColor}
+          minimal
+        />
         <SocialPresenceSection blocks={props.socialBlocks} themeColor={props.themeColor} compact />
         <LinksSection
           layout="simplistic"
@@ -237,7 +251,11 @@ function PortfolioLayout(props: Props) {
             initialMyReaction={props.initialMyReaction}
           />
 
-          <BadgeRail badges={props.premiumBadges} themeColor={props.themeColor} />
+          <BadgeRail
+            badges={props.featuredBadges}
+            extraBadgeCount={props.extraBadgeCount}
+            themeColor={props.themeColor}
+          />
         </aside>
 
         <section style={portfolioMainStyle}>
@@ -488,10 +506,12 @@ function PillRow({
 
 function BadgeRail({
   badges,
+  extraBadgeCount,
   themeColor,
   minimal = false,
 }: {
   badges: BadgeEntry[];
+  extraBadgeCount: number;
   themeColor: string;
   minimal?: boolean;
 }) {
@@ -501,10 +521,54 @@ function BadgeRail({
 
   return (
     <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-      {badges.map((item) => (
+      {badges.map((item) => {
+        const visual = getBadgeVisual(item.badge, themeColor, minimal);
+
+        return (
+          <div
+            key={item.id}
+            title={item.badge.description || item.badge.name}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "10px",
+              minHeight: "38px",
+              padding: "0 12px",
+              borderRadius: "999px",
+              border: `1px solid ${visual.pillBorder}`,
+              background: visual.pillBackground,
+              boxShadow: visual.pillShadow,
+            }}
+          >
+          <div
+            style={{
+              width: "auto",
+              minWidth: "26px",
+              height: "26px",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+            }}
+          >
+            <BadgeVisual
+              slug={item.badge.slug}
+              color={item.badge.color || themeColor}
+              rarity={item.badge.rarity}
+              category={item.badge.category}
+              size={30}
+              compact
+            />
+          </div>
+          <span style={{ fontSize: "12px", fontWeight: 800, color: visual.labelColor }}>
+            {item.badge.name}
+          </span>
+        </div>
+        );
+      })}
+      {extraBadgeCount > 0 ? (
         <div
-          key={item.id}
-          title={item.badge.description || item.badge.name}
+          title={`${extraBadgeCount} more badge${extraBadgeCount === 1 ? "" : "s"}`}
           style={{
             display: "inline-flex",
             alignItems: "center",
@@ -514,6 +578,7 @@ function BadgeRail({
             borderRadius: "999px",
             border: "1px solid rgba(255,255,255,0.08)",
             background: minimal ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.04)",
+            color: "#f4f4f5",
           }}
         >
           <div
@@ -525,21 +590,48 @@ function BadgeRail({
               alignItems: "center",
               justifyContent: "center",
               color: "#ffffff",
-              background: withAlpha(item.badge.color || themeColor, "18"),
-              boxShadow: `0 10px 18px ${withAlpha(item.badge.color || themeColor, "14")}`,
-              fontSize: "12px",
+              background: withAlpha(themeColor, "18"),
+              boxShadow: `0 10px 18px ${withAlpha(themeColor, "14")}`,
+              fontSize: "11px",
+              fontWeight: 900,
               flexShrink: 0,
             }}
           >
-            {item.badge.icon || "B"}
+            +{extraBadgeCount}
           </div>
           <span style={{ fontSize: "12px", fontWeight: 800, color: "#f4f4f5" }}>
-            {item.badge.name}
+            More
           </span>
         </div>
-      ))}
+      ) : null}
     </div>
   );
+}
+
+function getBadgeVisual(
+  badge: BadgeEntry["badge"],
+  themeColor: string,
+  minimal: boolean
+) {
+  const color = badge.color || themeColor;
+  const isPriority =
+    badge.slug === "owner" ||
+    badge.slug === "admin" ||
+    badge.slug === "premium" ||
+    badge.category === "official";
+
+  return {
+    pillBackground: isPriority
+      ? `linear-gradient(135deg, ${withAlpha(color, "16")}, rgba(255,255,255,0.05))`
+      : minimal
+        ? "rgba(255,255,255,0.03)"
+        : "rgba(255,255,255,0.04)",
+    pillBorder: isPriority ? withAlpha(color, "34") : "rgba(255,255,255,0.08)",
+    pillShadow: isPriority ? `0 14px 28px ${withAlpha(color, "16")}` : "none",
+    iconBackground: withAlpha(color, isPriority ? "22" : "18"),
+    iconShadow: `0 10px 18px ${withAlpha(color, isPriority ? "20" : "14")}`,
+    labelColor: isPriority ? "#ffffff" : "#f4f4f5",
+  };
 }
 
 function LinksSection({
