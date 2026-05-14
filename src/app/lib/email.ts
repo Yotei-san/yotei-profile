@@ -4,14 +4,23 @@ type VerificationEmailInput = {
   verificationUrl: string;
 };
 
+type EmailSendResult = {
+  provider: "resend" | "fallback";
+  from: string;
+  to: string;
+  messageId?: string;
+};
+
 export async function sendVerificationEmail({
   email,
   username,
   verificationUrl,
-}: VerificationEmailInput) {
-  const resendApiKey = process.env.RESEND_API_KEY;
+}: VerificationEmailInput): Promise<EmailSendResult> {
+  const resendApiKey = process.env.RESEND_API_KEY?.trim() || "";
   const fromEmail =
-    process.env.RESEND_FROM_EMAIL || process.env.EMAIL_FROM || "Yotei <onboarding@yotei.app>";
+    process.env.RESEND_FROM_EMAIL?.trim() ||
+    process.env.EMAIL_FROM?.trim() ||
+    "";
   const subject = "Verify your email for Yotei Profile";
   const text = [
     `Hi ${username},`,
@@ -46,16 +55,34 @@ export async function sendVerificationEmail({
   `;
 
   if (!resendApiKey) {
-    const message = `[Yotei email verification] ${email} -> ${verificationUrl}`;
+    const message = `[Yotei email verification fallback] RESEND_API_KEY missing. ${email} -> ${verificationUrl}`;
 
     if (process.env.NODE_ENV !== "production") {
-      console.log(message);
-    } else {
       console.warn(message);
+      return {
+        provider: "fallback",
+        from: fromEmail || "not-configured",
+        to: email,
+      };
     }
 
-    return;
+    throw new Error(
+      "RESEND_API_KEY is not configured in production. Verification email was not sent."
+    );
   }
+
+  if (!fromEmail) {
+    throw new Error(
+      "EMAIL_FROM or RESEND_FROM_EMAIL is not configured. Verification email was not sent."
+    );
+  }
+
+  console.info("[Yotei email] Sending verification email...", {
+    provider: "resend",
+    to: email,
+    from: fromEmail,
+    verificationUrlPreview: redactVerificationUrl(verificationUrl),
+  });
 
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -72,9 +99,83 @@ export async function sendVerificationEmail({
     }),
   });
 
+  const rawBody = await response.text();
+  const parsedBody = tryParseJson(rawBody);
+
   if (!response.ok) {
-    const body = await response.text();
-    throw new Error(`Failed to send verification email: ${response.status} ${body}`);
+    console.error("[Yotei email] Resend send failed.", {
+      status: response.status,
+      body: parsedBody ?? rawBody,
+      to: email,
+      from: fromEmail,
+    });
+
+    throw new Error(
+      `Resend verification email failed (${response.status}): ${extractProviderErrorMessage(
+        parsedBody,
+        rawBody
+      )}`
+    );
+  }
+
+  const messageId = getResendMessageId(parsedBody);
+
+  console.info("[Yotei email] Verification email sent.", {
+    provider: "resend",
+    to: email,
+    from: fromEmail,
+    messageId: messageId || "unknown",
+  });
+
+  return {
+    provider: "resend",
+    from: fromEmail,
+    to: email,
+    messageId: messageId || undefined,
+  };
+}
+
+function getResendMessageId(value: unknown) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return null;
+  }
+
+  const id = (value as Record<string, unknown>).id;
+  return typeof id === "string" && id.trim() ? id.trim() : null;
+}
+
+function extractProviderErrorMessage(parsedBody: unknown, rawBody: string) {
+  if (parsedBody && typeof parsedBody === "object" && !Array.isArray(parsedBody)) {
+    const record = parsedBody as Record<string, unknown>;
+    const message =
+      record.message || record.error || record.name || record.statusCode || null;
+
+    if (typeof message === "string" && message.trim()) {
+      return message.trim();
+    }
+  }
+
+  return rawBody || "Unknown provider error";
+}
+
+function tryParseJson(value: string) {
+  if (!value.trim()) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(value) as unknown;
+  } catch {
+    return null;
+  }
+}
+
+function redactVerificationUrl(value: string) {
+  try {
+    const url = new URL(value);
+    return `${url.origin}${url.pathname}?token=[redacted]`;
+  } catch {
+    return "[invalid verification URL]";
   }
 }
 

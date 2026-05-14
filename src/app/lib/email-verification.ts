@@ -42,7 +42,16 @@ export async function createAndSendEmailVerification(input: {
     } as any,
   });
 
-  const verificationUrl = `${getBaseUrl()}/verify-email?token=${encodeURIComponent(token)}`;
+  const baseUrl = getBaseUrl();
+  const verificationUrl = `${baseUrl}/verify-email?token=${encodeURIComponent(token)}`;
+
+  console.info("[Yotei email verification] Preparing verification email.", {
+    userId: input.userId,
+    email: input.email,
+    username: input.username,
+    expiresAt: expiresAt.toISOString(),
+    baseUrl,
+  });
 
   await sendVerificationEmail({
     email: input.email,
@@ -151,12 +160,24 @@ function getBaseUrl() {
   const explicitUrl = process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL;
 
   if (explicitUrl) {
-    return explicitUrl.replace(/\/+$/, "");
+    const normalizedUrl = explicitUrl.replace(/\/+$/, "");
+    console.info("[Yotei email verification] Using configured base URL.", {
+      source: process.env.APP_URL ? "APP_URL" : "NEXT_PUBLIC_APP_URL",
+      value: normalizedUrl,
+    });
+    return normalizedUrl;
   }
 
   if (process.env.VERCEL_URL) {
-    return `https://${process.env.VERCEL_URL}`;
+    const vercelUrl = `https://${process.env.VERCEL_URL}`;
+    console.warn("[Yotei email verification] APP_URL/NEXT_PUBLIC_APP_URL missing. Falling back to VERCEL_URL.", {
+      value: vercelUrl,
+    });
+    return vercelUrl;
   }
 
+  console.warn(
+    "[Yotei email verification] APP_URL, NEXT_PUBLIC_APP_URL and VERCEL_URL are missing. Falling back to localhost."
+  );
   return "http://localhost:3000";
 }

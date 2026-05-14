@@ -47,15 +47,11 @@ export async function registerUser(formData: FormData) {
     },
   });
 
-  try {
-    await createAndSendEmailVerification({
-      userId: user.id,
-      email,
-      username,
-    });
-  } catch (error) {
-    console.warn("Failed to send verification email during registration.", error);
-  }
+  await createAndSendEmailVerification({
+    userId: user.id,
+    email,
+    username,
+  });
 
   await createUserSession(user.id, { remember: rememberSession });
   redirect("/dashboard");
