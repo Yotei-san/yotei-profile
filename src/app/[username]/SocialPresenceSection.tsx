@@ -4,6 +4,7 @@ import DiscordSocialBlock from "./DiscordSocialBlock";
 import GitHubSocialBlock from "./GitHubSocialBlock";
 import SpotifySocialBlock from "./SpotifySocialBlock";
 import CreatorVideoSocialBlock from "./CreatorVideoSocialBlock";
+import LiveEmbedSocialBlock from "./LiveEmbedSocialBlock";
 
 export type PublicSocialBlock = {
   id: string;
@@ -17,6 +18,11 @@ export type PublicSocialBlock = {
   artistName: string | null;
   headline: string | null;
   featuredVideoTitle: string | null;
+  streamTitle: string | null;
+  embedUrl: string | null;
+  openUrl: string | null;
+  accentColor: string | null;
+  isLive: boolean;
   isEnabled: boolean;
 };
 
@@ -31,7 +37,11 @@ export default function SocialPresenceSection({
   themeColor,
   compact = false,
 }: Props) {
-  const visibleBlocks = blocks.filter((block) => block.isEnabled);
+  const visibleBlocks = [...blocks.filter((block) => block.isEnabled)].sort((left, right) => {
+    const leftPriority = isLivePriority(left);
+    const rightPriority = isLivePriority(right);
+    return rightPriority - leftPriority;
+  });
 
   if (visibleBlocks.length === 0) {
     return null;
@@ -105,11 +115,53 @@ export default function SocialPresenceSection({
             );
           }
 
+          if (
+            block.platform === "twitch_live" ||
+            block.platform === "youtube_live" ||
+            block.platform === "kick_live"
+          ) {
+            return (
+              <LiveEmbedSocialBlock
+                key={block.id}
+                platform={block.platform}
+                channelName={block.username}
+                streamTitle={block.streamTitle}
+                url={block.url}
+                openUrl={block.openUrl}
+                embedUrl={block.embedUrl}
+                accentColor={block.accentColor}
+                isLive={block.isLive}
+                compact={compact}
+              />
+            );
+          }
+
           return null;
         })}
       </div>
     </section>
   );
+}
+
+function isLivePriority(block: PublicSocialBlock) {
+  if (
+    (block.platform === "twitch_live" ||
+      block.platform === "youtube_live" ||
+      block.platform === "kick_live") &&
+    block.isLive
+  ) {
+    return 2;
+  }
+
+  if (
+    block.platform === "twitch_live" ||
+    block.platform === "youtube_live" ||
+    block.platform === "kick_live"
+  ) {
+    return 1;
+  }
+
+  return 0;
 }
 
 const sectionStyle: CSSProperties = {

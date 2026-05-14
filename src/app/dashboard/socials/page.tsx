@@ -3,18 +3,24 @@ import type { CSSProperties } from "react";
 import DiscordBlockPreview from "@/app/dashboard/components/DiscordBlockPreview";
 import GitHubBlockPreview from "@/app/dashboard/components/GitHubBlockPreview";
 import CreatorVideoBlockPreview from "@/app/dashboard/components/CreatorVideoBlockPreview";
+import LiveEmbedBlockPreview from "@/app/dashboard/components/LiveEmbedBlockPreview";
 import SpotifyBlockPreview from "@/app/dashboard/components/SpotifyBlockPreview";
 import SocialBrandIcon from "@/app/dashboard/components/SocialBrandIcon";
 import SocialIntegrationCard, {
   type SocialIntegrationItem,
 } from "@/app/dashboard/components/SocialIntegrationCard";
 import { requireUser } from "@/app/lib/auth";
+import {
+  readLiveEmbedMetadata,
+  type LiveEmbedPlatform,
+} from "@/app/lib/live-embed";
 import { prisma } from "@/app/lib/prisma";
 import {
   deleteSocialBlock,
   toggleSocialBlock,
   upsertDiscordBlock,
   upsertGitHubBlock,
+  upsertLiveEmbedBlock,
   upsertSpotifyBlock,
   upsertCreatorVideoBlock,
 } from "./actions";
@@ -61,6 +67,19 @@ type CreatorVideoBlockState = {
   url: string | null;
   headline: string | null;
   featuredVideoTitle: string | null;
+  isEnabled: boolean;
+};
+
+type LiveEmbedBlockState = {
+  id: string;
+  platform: LiveEmbedPlatform;
+  username: string | null;
+  url: string | null;
+  streamTitle: string | null;
+  embedUrl: string | null;
+  openUrl: string | null;
+  accentColor: string | null;
+  isLive: boolean;
   isEnabled: boolean;
 };
 
@@ -171,6 +190,27 @@ const integrations: SocialIntegrationItem[] = [
     icon: "twitch",
   },
   {
+    key: "twitch_live",
+    name: "Twitch Live",
+    description: "Premium live block with official Twitch embed, ON AIR glow, and responsive player.",
+    accent: "#A970FF",
+    icon: "twitch",
+  },
+  {
+    key: "youtube_live",
+    name: "YouTube Live",
+    description: "Turn live URLs, channel URLs, or video URLs into a premium ON AIR player block.",
+    accent: "#FF3131",
+    icon: "youtube",
+  },
+  {
+    key: "kick_live",
+    name: "Kick Live",
+    description: "Show a premium live status card with CTA-first treatment when embed support is limited.",
+    accent: "#53FC18",
+    icon: "kick",
+  },
+  {
     key: "minecraft",
     name: "Minecraft",
     description: "Reserve a custom block for username, realm presence, or server showcase.",
@@ -233,6 +273,9 @@ export default async function SocialsPage({ searchParams }: PageProps) {
   const spotifyBlock = getSpotifyBlock(user.socialBlocks);
   const youtubeBlock = getCreatorVideoBlock(user.socialBlocks, "youtube");
   const twitchBlock = getCreatorVideoBlock(user.socialBlocks, "twitch");
+  const twitchLiveBlock = getLiveEmbedBlock(user.socialBlocks, "twitch_live");
+  const youtubeLiveBlock = getLiveEmbedBlock(user.socialBlocks, "youtube_live");
+  const kickLiveBlock = getLiveEmbedBlock(user.socialBlocks, "kick_live");
   const configuredCount = user.socialBlocks.length;
   const enabledCount = user.socialBlocks.filter((block) => block.isEnabled).length;
   const successMessage = getSuccessMessage(params.success);
@@ -242,11 +285,18 @@ export default async function SocialsPage({ searchParams }: PageProps) {
   const spotifyCardHref = "/dashboard/socials?active=spotify#spotify-block-form";
   const youtubeCardHref = "/dashboard/socials?active=youtube#youtube-block-form";
   const twitchCardHref = "/dashboard/socials?active=twitch#twitch-block-form";
+  const twitchLiveCardHref = "/dashboard/socials?active=twitch_live#twitch-live-block-form";
+  const youtubeLiveCardHref =
+    "/dashboard/socials?active=youtube_live#youtube-live-block-form";
+  const kickLiveCardHref = "/dashboard/socials?active=kick_live#kick-live-block-form";
   const selectedIsDiscord = selectedKey === "discord";
   const selectedIsGitHub = selectedKey === "github";
   const selectedIsSpotify = selectedKey === "spotify";
   const selectedIsYouTube = selectedKey === "youtube";
   const selectedIsTwitch = selectedKey === "twitch";
+  const selectedIsTwitchLive = selectedKey === "twitch_live";
+  const selectedIsYouTubeLive = selectedKey === "youtube_live";
+  const selectedIsKickLive = selectedKey === "kick_live";
   const heroPrimaryHref = selectedIsGitHub
     ? githubCardHref
     : selectedIsSpotify
@@ -255,6 +305,12 @@ export default async function SocialsPage({ searchParams }: PageProps) {
         ? youtubeCardHref
         : selectedIsTwitch
           ? twitchCardHref
+          : selectedIsTwitchLive
+            ? twitchLiveCardHref
+            : selectedIsYouTubeLive
+              ? youtubeLiveCardHref
+              : selectedIsKickLive
+                ? kickLiveCardHref
       : discordCardHref;
   const heroPrimaryLabel = selectedIsGitHub
     ? githubBlock
@@ -272,6 +328,18 @@ export default async function SocialsPage({ searchParams }: PageProps) {
           ? twitchBlock
             ? "Edit Twitch Block"
             : "Configure Twitch"
+          : selectedIsTwitchLive
+            ? twitchLiveBlock
+              ? "Edit Twitch Live"
+              : "Configure Twitch Live"
+            : selectedIsYouTubeLive
+              ? youtubeLiveBlock
+                ? "Edit YouTube Live"
+                : "Configure YouTube Live"
+              : selectedIsKickLive
+                ? kickLiveBlock
+                  ? "Edit Kick Live"
+                  : "Configure Kick Live"
       : discordBlock
         ? "Edit Discord Block"
         : "Configure Discord";
@@ -283,8 +351,9 @@ export default async function SocialsPage({ searchParams }: PageProps) {
           <div style={eyebrowStyle}>Social Blocks Phase 1</div>
           <h1 style={heroTitleStyle}>Social Integrations</h1>
           <p style={heroDescriptionStyle}>
-            Discord, GitHub, Spotify, YouTube and Twitch are now real blocks you can configure, save, and publish
-            on your public profile. The remaining integrations stay as visual previews
+            Discord, GitHub, Spotify, YouTube, Twitch, Twitch Live, YouTube Live and
+            Kick Live are now real blocks you can configure, preview, and publish on
+            your public profile. The remaining integrations stay as visual previews
             while the block system expands safely.
           </p>
 
@@ -317,6 +386,18 @@ export default async function SocialsPage({ searchParams }: PageProps) {
                       ? twitchBlock?.isEnabled
                         ? enabledBadgeStyle
                         : mutedBadgeStyle
+                      : selectedIsTwitchLive
+                        ? twitchLiveBlock?.isEnabled
+                          ? enabledBadgeStyle
+                          : mutedBadgeStyle
+                        : selectedIsYouTubeLive
+                          ? youtubeLiveBlock?.isEnabled
+                            ? enabledBadgeStyle
+                            : mutedBadgeStyle
+                          : selectedIsKickLive
+                            ? kickLiveBlock?.isEnabled
+                              ? enabledBadgeStyle
+                              : mutedBadgeStyle
                 : discordBlock?.isEnabled
                   ? enabledBadgeStyle
                   : mutedBadgeStyle
@@ -346,6 +427,24 @@ export default async function SocialsPage({ searchParams }: PageProps) {
                       : twitchBlock
                         ? "Saved draft"
                         : "Not configured"
+                    : selectedIsTwitchLive
+                      ? twitchLiveBlock?.isLive && twitchLiveBlock?.isEnabled
+                        ? "Twitch ON AIR"
+                        : twitchLiveBlock
+                          ? "Saved draft"
+                          : "Not configured"
+                      : selectedIsYouTubeLive
+                        ? youtubeLiveBlock?.isLive && youtubeLiveBlock?.isEnabled
+                          ? "YouTube ON AIR"
+                          : youtubeLiveBlock
+                            ? "Saved draft"
+                            : "Not configured"
+                        : selectedIsKickLive
+                          ? kickLiveBlock?.isLive && kickLiveBlock?.isEnabled
+                            ? "Kick ON AIR"
+                            : kickLiveBlock
+                              ? "Saved draft"
+                              : "Not configured"
               : discordBlock?.isEnabled
                 ? "Discord live"
                 : discordBlock
@@ -395,6 +494,42 @@ export default async function SocialsPage({ searchParams }: PageProps) {
               url={twitchBlock?.url ?? null}
               enabled={twitchBlock?.isEnabled ?? false}
             />
+          ) : selectedIsTwitchLive ? (
+            <LiveEmbedBlockPreview
+              platform="twitch_live"
+              channelName={twitchLiveBlock?.username ?? null}
+              streamTitle={twitchLiveBlock?.streamTitle ?? null}
+              url={twitchLiveBlock?.url ?? null}
+              openUrl={twitchLiveBlock?.openUrl ?? null}
+              embedUrl={twitchLiveBlock?.embedUrl ?? null}
+              accentColor={twitchLiveBlock?.accentColor ?? null}
+              isLive={twitchLiveBlock?.isLive ?? false}
+              enabled={twitchLiveBlock?.isEnabled ?? false}
+            />
+          ) : selectedIsYouTubeLive ? (
+            <LiveEmbedBlockPreview
+              platform="youtube_live"
+              channelName={youtubeLiveBlock?.username ?? null}
+              streamTitle={youtubeLiveBlock?.streamTitle ?? null}
+              url={youtubeLiveBlock?.url ?? null}
+              openUrl={youtubeLiveBlock?.openUrl ?? null}
+              embedUrl={youtubeLiveBlock?.embedUrl ?? null}
+              accentColor={youtubeLiveBlock?.accentColor ?? null}
+              isLive={youtubeLiveBlock?.isLive ?? false}
+              enabled={youtubeLiveBlock?.isEnabled ?? false}
+            />
+          ) : selectedIsKickLive ? (
+            <LiveEmbedBlockPreview
+              platform="kick_live"
+              channelName={kickLiveBlock?.username ?? null}
+              streamTitle={kickLiveBlock?.streamTitle ?? null}
+              url={kickLiveBlock?.url ?? null}
+              openUrl={kickLiveBlock?.openUrl ?? null}
+              embedUrl={kickLiveBlock?.embedUrl ?? null}
+              accentColor={kickLiveBlock?.accentColor ?? null}
+              isLive={kickLiveBlock?.isLive ?? false}
+              enabled={kickLiveBlock?.isEnabled ?? false}
+            />
           ) : (
             <div style={previewPanelStyle}>
               <div style={previewLabelStyle}>Current preview</div>
@@ -406,8 +541,9 @@ export default async function SocialsPage({ searchParams }: PageProps) {
               </div>
               <p style={previewTextStyle}>{selectedItem.description}</p>
               <div style={previewHintPanelStyle}>
-                Discord, GitHub, Spotify, YouTube and Twitch are live social blocks in this phase. The other cards stay
-                in design preview mode for now.
+                Discord, GitHub, Spotify, YouTube, Twitch, Twitch Live, YouTube Live
+                and Kick Live are functional in this phase. The other cards stay in
+                design preview mode for now.
               </div>
             </div>
           )}
@@ -422,8 +558,8 @@ export default async function SocialsPage({ searchParams }: PageProps) {
               <div style={statLabelStyle}>Enabled publicly</div>
             </div>
             <div style={statCardStyle}>
-              <div style={statValueStyle}>5</div>
-              <div style={statLabelStyle}>Live platforms</div>
+              <div style={statValueStyle}>8</div>
+              <div style={statLabelStyle}>Functional blocks</div>
             </div>
           </div>
         </div>
@@ -438,8 +574,9 @@ export default async function SocialsPage({ searchParams }: PageProps) {
           <h2 style={sectionTitleStyle}>Choose what your public profile can show</h2>
         </div>
         <div style={sectionHintStyle}>
-          Discord, GitHub, Spotify, YouTube and Twitch are functional now. The remaining integrations stay lightweight
-          and visual until each block gets its own safe backend phase.
+          Discord, GitHub, Spotify, YouTube, Twitch, Twitch Live, YouTube Live and Kick
+          Live are functional now. The remaining integrations stay lightweight and visual
+          until each block gets its own safe backend phase.
         </div>
       </section>
 
@@ -450,6 +587,9 @@ export default async function SocialsPage({ searchParams }: PageProps) {
           const isSpotify = item.key === "spotify";
           const isYouTube = item.key === "youtube";
           const isTwitch = item.key === "twitch";
+          const isTwitchLive = item.key === "twitch_live";
+          const isYouTubeLive = item.key === "youtube_live";
+          const isKickLive = item.key === "kick_live";
           const isConfigured = isDiscord
             ? Boolean(discordBlock?.username)
             : isGitHub
@@ -460,6 +600,12 @@ export default async function SocialsPage({ searchParams }: PageProps) {
                   ? Boolean(youtubeBlock?.username)
                   : isTwitch
                     ? Boolean(twitchBlock?.username)
+                    : isTwitchLive
+                      ? Boolean(twitchLiveBlock?.username || twitchLiveBlock?.url)
+                      : isYouTubeLive
+                        ? Boolean(youtubeLiveBlock?.username || youtubeLiveBlock?.url)
+                        : isKickLive
+                          ? Boolean(kickLiveBlock?.username || kickLiveBlock?.url)
               : false;
           const isEnabled = isDiscord
             ? Boolean(discordBlock?.isEnabled)
@@ -471,7 +617,20 @@ export default async function SocialsPage({ searchParams }: PageProps) {
                   ? Boolean(youtubeBlock?.isEnabled)
                   : isTwitch
                     ? Boolean(twitchBlock?.isEnabled)
+                    : isTwitchLive
+                      ? Boolean(twitchLiveBlock?.isEnabled)
+                      : isYouTubeLive
+                        ? Boolean(youtubeLiveBlock?.isEnabled)
+                        : isKickLive
+                          ? Boolean(kickLiveBlock?.isEnabled)
               : false;
+          const isOnAir = isTwitchLive
+            ? Boolean(twitchLiveBlock?.isEnabled && twitchLiveBlock?.isLive)
+            : isYouTubeLive
+              ? Boolean(youtubeLiveBlock?.isEnabled && youtubeLiveBlock?.isLive)
+              : isKickLive
+                ? Boolean(kickLiveBlock?.isEnabled && kickLiveBlock?.isLive)
+                : false;
 
           return (
             <SocialIntegrationCard
@@ -483,34 +642,65 @@ export default async function SocialsPage({ searchParams }: PageProps) {
                   ? discordCardHref
                   : isGitHub
                     ? githubCardHref
-                    : isSpotify
-                      ? spotifyCardHref
-                      : isYouTube
-                        ? youtubeCardHref
-                        : isTwitch
-                          ? twitchCardHref
+                  : isSpotify
+                    ? spotifyCardHref
+                    : isYouTube
+                      ? youtubeCardHref
+                      : isTwitch
+                        ? twitchCardHref
+                        : isTwitchLive
+                          ? twitchLiveCardHref
+                          : isYouTubeLive
+                            ? youtubeLiveCardHref
+                            : isKickLive
+                              ? kickLiveCardHref
                     : `/dashboard/socials?active=${item.key}`
               }
               stateLabel={
-                isDiscord || isGitHub || isSpotify || isYouTube || isTwitch
+                isDiscord ||
+                isGitHub ||
+                isSpotify ||
+                isYouTube ||
+                isTwitch ||
+                isTwitchLive ||
+                isYouTubeLive ||
+                isKickLive
                   ? isConfigured
-                    ? isEnabled
-                      ? "Configured"
-                      : "Saved"
+                    ? isOnAir
+                      ? "ON AIR"
+                      : isEnabled
+                        ? "Configured"
+                        : "Saved"
                     : "Setup"
                   : item.key === selectedKey
                     ? "Selected"
                     : "Preview"
               }
               footerLabel={
-                isDiscord || isGitHub || isSpotify || isYouTube || isTwitch
+                isDiscord ||
+                isGitHub ||
+                isSpotify ||
+                isYouTube ||
+                isTwitch ||
+                isTwitchLive ||
+                isYouTubeLive ||
+                isKickLive
                   ? isConfigured
-                    ? "Live block available on profile"
+                    ? isOnAir
+                      ? "ON AIR on your public profile"
+                      : "Live block available on profile"
                     : "Real social block"
                   : "Design preview only in this phase"
               }
               actionLabel={
-                isDiscord || isGitHub || isSpotify || isYouTube || isTwitch
+                isDiscord ||
+                isGitHub ||
+                isSpotify ||
+                isYouTube ||
+                isTwitch ||
+                isTwitchLive ||
+                isYouTubeLive ||
+                isKickLive
                   ? isConfigured
                     ? "Edit"
                     : "Configure"
@@ -766,6 +956,409 @@ export default async function SocialsPage({ searchParams }: PageProps) {
             <div style={previewMetaTitleStyle}>Public rendering</div>
             <p style={previewMetaTextStyle}>
               When enabled, this block appears with the other Social Presence cards on your public profile.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section id="twitch-live-block-form" style={discordSectionStyle}>
+        <div style={discordFormColumnStyle}>
+          <div style={{ display: "grid", gap: "8px" }}>
+            <div style={sectionEyebrowStyle}>Twitch Live</div>
+            <h2 style={sectionTitleStyle}>Configure your Twitch LIVE NOW block</h2>
+            <p style={sectionDescriptionStyle}>
+              Official Twitch embed with safe parent detection, manual ON AIR status, and a
+              premium social presence treatment.
+            </p>
+          </div>
+
+          <form action={upsertLiveEmbedBlock} style={formGridStyle}>
+            <input type="hidden" name="platformType" value="twitch_live" />
+
+            <label style={labelStyle}>
+              Channel name
+              <input
+                type="text"
+                name="channelName"
+                maxLength={80}
+                placeholder="ex: YoteiLive"
+                defaultValue={twitchLiveBlock?.username ?? ""}
+                style={inputStyle}
+              />
+            </label>
+
+            <label style={labelStyle}>
+              Stream URL
+              <input
+                type="url"
+                name="streamUrl"
+                placeholder="https://twitch.tv/..."
+                defaultValue={twitchLiveBlock?.url ?? ""}
+                style={inputStyle}
+              />
+            </label>
+
+            <label style={{ ...labelStyle, gridColumn: "1 / -1" }}>
+              Stream title
+              <input
+                type="text"
+                name="streamTitle"
+                maxLength={120}
+                placeholder="ex: Ranked grind with neon HUD"
+                defaultValue={twitchLiveBlock?.streamTitle ?? ""}
+                style={inputStyle}
+              />
+            </label>
+
+            <label style={labelStyle}>
+              Accent color
+              <input
+                type="text"
+                name="accentColor"
+                maxLength={7}
+                placeholder="#a970ff"
+                defaultValue={twitchLiveBlock?.accentColor ?? ""}
+                style={inputStyle}
+              />
+            </label>
+
+            <label style={checkboxLabelStyle}>
+              <input type="checkbox" name="isLive" defaultChecked={twitchLiveBlock?.isLive ?? false} />
+              <span>Mark this stream as LIVE NOW</span>
+            </label>
+
+            <label style={checkboxLabelStyle}>
+              <input
+                type="checkbox"
+                name="isEnabled"
+                defaultChecked={twitchLiveBlock?.isEnabled ?? true}
+              />
+              <span>Show this live block on my public profile</span>
+            </label>
+
+            <div style={hintBoxStyle}>
+              Twitch preview loads lazily and injects the required <code>parent</code> host
+              values for localhost, the Vercel domain, and the current hostname.
+            </div>
+
+            <div style={actionRowStyle}>
+              <button type="submit" style={submitButtonStyle}>
+                {twitchLiveBlock ? "Save Twitch Live" : "Create Twitch Live"}
+              </button>
+
+              {twitchLiveBlock ? (
+                <>
+                  <button
+                    type="submit"
+                    formAction={toggleSocialBlock.bind(null, twitchLiveBlock.id)}
+                    style={secondaryButtonStyle}
+                  >
+                    {twitchLiveBlock.isEnabled ? "Disable Block" : "Enable Block"}
+                  </button>
+
+                  <button
+                    type="submit"
+                    formAction={deleteSocialBlock.bind(null, twitchLiveBlock.id)}
+                    style={dangerButtonStyle}
+                  >
+                    Delete Block
+                  </button>
+                </>
+              ) : null}
+            </div>
+          </form>
+        </div>
+
+        <div style={discordPreviewColumnStyle}>
+          <div style={previewLabelStyle}>Saved preview</div>
+          <LiveEmbedBlockPreview
+            platform="twitch_live"
+            channelName={twitchLiveBlock?.username ?? null}
+            streamTitle={twitchLiveBlock?.streamTitle ?? null}
+            url={twitchLiveBlock?.url ?? null}
+            openUrl={twitchLiveBlock?.openUrl ?? null}
+            embedUrl={twitchLiveBlock?.embedUrl ?? null}
+            accentColor={twitchLiveBlock?.accentColor ?? null}
+            isLive={twitchLiveBlock?.isLive ?? false}
+            enabled={twitchLiveBlock?.isEnabled ?? false}
+            compact
+          />
+
+          <div style={previewMetaPanelStyle}>
+            <div style={previewMetaTitleStyle}>Public rendering</div>
+            <p style={previewMetaTextStyle}>
+              When ON AIR, this block becomes a large LIVE NOW module inside Social Presence
+              with the Twitch player and Watch Stream CTA.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section id="youtube-live-block-form" style={discordSectionStyle}>
+        <div style={discordFormColumnStyle}>
+          <div style={{ display: "grid", gap: "8px" }}>
+            <div style={sectionEyebrowStyle}>YouTube Live</div>
+            <h2 style={sectionTitleStyle}>Configure your YouTube LIVE NOW block</h2>
+            <p style={sectionDescriptionStyle}>
+              Accepts live URLs, channel URLs, and video URLs. The save action resolves a safe
+              embed automatically whenever YouTube exposes enough information.
+            </p>
+          </div>
+
+          <form action={upsertLiveEmbedBlock} style={formGridStyle}>
+            <input type="hidden" name="platformType" value="youtube_live" />
+
+            <label style={labelStyle}>
+              Channel name
+              <input
+                type="text"
+                name="channelName"
+                maxLength={80}
+                placeholder="ex: Yotei Streams"
+                defaultValue={youtubeLiveBlock?.username ?? ""}
+                style={inputStyle}
+              />
+            </label>
+
+            <label style={labelStyle}>
+              Stream URL
+              <input
+                type="url"
+                name="streamUrl"
+                placeholder="https://youtube.com/watch?v=..."
+                defaultValue={youtubeLiveBlock?.url ?? ""}
+                style={inputStyle}
+              />
+            </label>
+
+            <label style={{ ...labelStyle, gridColumn: "1 / -1" }}>
+              Stream title
+              <input
+                type="text"
+                name="streamTitle"
+                maxLength={120}
+                placeholder="ex: Building the ultimate gamer profile live"
+                defaultValue={youtubeLiveBlock?.streamTitle ?? ""}
+                style={inputStyle}
+              />
+            </label>
+
+            <label style={labelStyle}>
+              Accent color
+              <input
+                type="text"
+                name="accentColor"
+                maxLength={7}
+                placeholder="#ff3838"
+                defaultValue={youtubeLiveBlock?.accentColor ?? ""}
+                style={inputStyle}
+              />
+            </label>
+
+            <label style={checkboxLabelStyle}>
+              <input
+                type="checkbox"
+                name="isLive"
+                defaultChecked={youtubeLiveBlock?.isLive ?? false}
+              />
+              <span>Mark this stream as LIVE NOW</span>
+            </label>
+
+            <label style={checkboxLabelStyle}>
+              <input
+                type="checkbox"
+                name="isEnabled"
+                defaultChecked={youtubeLiveBlock?.isEnabled ?? true}
+              />
+              <span>Show this live block on my public profile</span>
+            </label>
+
+            <div style={hintBoxStyle}>
+              YouTube embeds lazy load only when visible. Channel URLs are resolved to embedable
+              live streams when a channel ID can be discovered safely.
+            </div>
+
+            <div style={actionRowStyle}>
+              <button type="submit" style={submitButtonStyle}>
+                {youtubeLiveBlock ? "Save YouTube Live" : "Create YouTube Live"}
+              </button>
+
+              {youtubeLiveBlock ? (
+                <>
+                  <button
+                    type="submit"
+                    formAction={toggleSocialBlock.bind(null, youtubeLiveBlock.id)}
+                    style={secondaryButtonStyle}
+                  >
+                    {youtubeLiveBlock.isEnabled ? "Disable Block" : "Enable Block"}
+                  </button>
+
+                  <button
+                    type="submit"
+                    formAction={deleteSocialBlock.bind(null, youtubeLiveBlock.id)}
+                    style={dangerButtonStyle}
+                  >
+                    Delete Block
+                  </button>
+                </>
+              ) : null}
+            </div>
+          </form>
+        </div>
+
+        <div style={discordPreviewColumnStyle}>
+          <div style={previewLabelStyle}>Saved preview</div>
+          <LiveEmbedBlockPreview
+            platform="youtube_live"
+            channelName={youtubeLiveBlock?.username ?? null}
+            streamTitle={youtubeLiveBlock?.streamTitle ?? null}
+            url={youtubeLiveBlock?.url ?? null}
+            openUrl={youtubeLiveBlock?.openUrl ?? null}
+            embedUrl={youtubeLiveBlock?.embedUrl ?? null}
+            accentColor={youtubeLiveBlock?.accentColor ?? null}
+            isLive={youtubeLiveBlock?.isLive ?? false}
+            enabled={youtubeLiveBlock?.isEnabled ?? false}
+            compact
+          />
+
+          <div style={previewMetaPanelStyle}>
+            <div style={previewMetaTitleStyle}>Public rendering</div>
+            <p style={previewMetaTextStyle}>
+              When ON AIR, this block becomes a large LIVE NOW module inside Social Presence
+              with responsive YouTube embed and CTA.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section id="kick-live-block-form" style={discordSectionStyle}>
+        <div style={discordFormColumnStyle}>
+          <div style={{ display: "grid", gap: "8px" }}>
+            <div style={sectionEyebrowStyle}>Kick Live</div>
+            <h2 style={sectionTitleStyle}>Configure your Kick LIVE NOW block</h2>
+            <p style={sectionDescriptionStyle}>
+              Kick uses a premium fallback card with channel identity, strong CTA, and neon
+              social presence when official embed support is not reliable enough.
+            </p>
+          </div>
+
+          <form action={upsertLiveEmbedBlock} style={formGridStyle}>
+            <input type="hidden" name="platformType" value="kick_live" />
+
+            <label style={labelStyle}>
+              Channel name
+              <input
+                type="text"
+                name="channelName"
+                maxLength={80}
+                placeholder="ex: YoteiKick"
+                defaultValue={kickLiveBlock?.username ?? ""}
+                style={inputStyle}
+              />
+            </label>
+
+            <label style={labelStyle}>
+              Stream URL
+              <input
+                type="url"
+                name="streamUrl"
+                placeholder="https://kick.com/..."
+                defaultValue={kickLiveBlock?.url ?? ""}
+                style={inputStyle}
+              />
+            </label>
+
+            <label style={{ ...labelStyle, gridColumn: "1 / -1" }}>
+              Stream title
+              <input
+                type="text"
+                name="streamTitle"
+                maxLength={120}
+                placeholder="ex: Community queue and late-night chaos"
+                defaultValue={kickLiveBlock?.streamTitle ?? ""}
+                style={inputStyle}
+              />
+            </label>
+
+            <label style={labelStyle}>
+              Accent color
+              <input
+                type="text"
+                name="accentColor"
+                maxLength={7}
+                placeholder="#53fc18"
+                defaultValue={kickLiveBlock?.accentColor ?? ""}
+                style={inputStyle}
+              />
+            </label>
+
+            <label style={checkboxLabelStyle}>
+              <input type="checkbox" name="isLive" defaultChecked={kickLiveBlock?.isLive ?? false} />
+              <span>Mark this stream as LIVE NOW</span>
+            </label>
+
+            <label style={checkboxLabelStyle}>
+              <input
+                type="checkbox"
+                name="isEnabled"
+                defaultChecked={kickLiveBlock?.isEnabled ?? true}
+              />
+              <span>Show this live block on my public profile</span>
+            </label>
+
+            <div style={hintBoxStyle}>
+              Kick renders as a premium aesthetic card with fake avatar, ON AIR state, and Watch
+              Stream button for a cleaner cross-device experience.
+            </div>
+
+            <div style={actionRowStyle}>
+              <button type="submit" style={submitButtonStyle}>
+                {kickLiveBlock ? "Save Kick Live" : "Create Kick Live"}
+              </button>
+
+              {kickLiveBlock ? (
+                <>
+                  <button
+                    type="submit"
+                    formAction={toggleSocialBlock.bind(null, kickLiveBlock.id)}
+                    style={secondaryButtonStyle}
+                  >
+                    {kickLiveBlock.isEnabled ? "Disable Block" : "Enable Block"}
+                  </button>
+
+                  <button
+                    type="submit"
+                    formAction={deleteSocialBlock.bind(null, kickLiveBlock.id)}
+                    style={dangerButtonStyle}
+                  >
+                    Delete Block
+                  </button>
+                </>
+              ) : null}
+            </div>
+          </form>
+        </div>
+
+        <div style={discordPreviewColumnStyle}>
+          <div style={previewLabelStyle}>Saved preview</div>
+          <LiveEmbedBlockPreview
+            platform="kick_live"
+            channelName={kickLiveBlock?.username ?? null}
+            streamTitle={kickLiveBlock?.streamTitle ?? null}
+            url={kickLiveBlock?.url ?? null}
+            openUrl={kickLiveBlock?.openUrl ?? null}
+            embedUrl={kickLiveBlock?.embedUrl ?? null}
+            accentColor={kickLiveBlock?.accentColor ?? null}
+            isLive={kickLiveBlock?.isLive ?? false}
+            enabled={kickLiveBlock?.isEnabled ?? false}
+            compact
+          />
+
+          <div style={previewMetaPanelStyle}>
+            <div style={previewMetaTitleStyle}>Public rendering</div>
+            <p style={previewMetaTextStyle}>
+              When ON AIR, this block becomes a premium LIVE NOW CTA card in Social Presence,
+              optimized for mobile and non-embed fallback flows.
             </p>
           </div>
         </div>
@@ -1164,14 +1757,21 @@ export default async function SocialsPage({ searchParams }: PageProps) {
                     ? "youtube"
                     : selectedIsTwitch
                       ? "twitch"
+                      : selectedIsTwitchLive
+                        ? "twitch"
+                        : selectedIsYouTubeLive
+                          ? "youtube"
+                          : selectedIsKickLive
+                            ? "kick"
                       : "discord"
             }
             size={18}
           />
         </div>
         <p style={footerTextStyle}>
-          Discord, GitHub, Spotify, YouTube and Twitch now write to the database and render on the public profile.
-          Other social cards remain lightweight previews until their backend phases start.
+          Discord, GitHub, Spotify, YouTube, Twitch, Twitch Live, YouTube Live and Kick
+          Live now write to the database and render on the public profile. Other social
+          cards remain lightweight previews until their backend phases start.
         </p>
       </section>
     </main>
@@ -1264,6 +1864,39 @@ function getCreatorVideoBlock(
   };
 }
 
+function getLiveEmbedBlock(
+  blocks: Array<{
+    id: string;
+    platform: string;
+    username: string | null;
+    url: string | null;
+    metadata: unknown;
+    isEnabled: boolean;
+  }>,
+  platform: LiveEmbedPlatform
+): LiveEmbedBlockState | null {
+  const block = blocks.find((item) => item.platform === platform);
+
+  if (!block) {
+    return null;
+  }
+
+  const metadata = readLiveEmbedMetadata(block.metadata);
+
+  return {
+    id: block.id,
+    platform,
+    username: block.username,
+    url: block.url,
+    streamTitle: metadata.streamTitle,
+    embedUrl: metadata.embedUrl,
+    openUrl: metadata.openUrl,
+    accentColor: metadata.accentColor,
+    isLive: metadata.isLive,
+    isEnabled: block.isEnabled,
+  };
+}
+
 function getGitHubBlock(
   blocks: Array<{
     id: string;
@@ -1333,6 +1966,18 @@ function getSuccessMessage(code?: string) {
   if (code === "twitch-enabled") return "Twitch block ativado no perfil publico.";
   if (code === "twitch-disabled") return "Twitch block desativado no perfil publico.";
   if (code === "twitch-deleted") return "Twitch block removido com sucesso.";
+  if (code === "twitch_live-saved") return "Twitch Live salvo com sucesso.";
+  if (code === "twitch_live-enabled") return "Twitch Live ativado no perfil publico.";
+  if (code === "twitch_live-disabled") return "Twitch Live desativado no perfil publico.";
+  if (code === "twitch_live-deleted") return "Twitch Live removido com sucesso.";
+  if (code === "youtube_live-saved") return "YouTube Live salvo com sucesso.";
+  if (code === "youtube_live-enabled") return "YouTube Live ativado no perfil publico.";
+  if (code === "youtube_live-disabled") return "YouTube Live desativado no perfil publico.";
+  if (code === "youtube_live-deleted") return "YouTube Live removido com sucesso.";
+  if (code === "kick_live-saved") return "Kick Live salvo com sucesso.";
+  if (code === "kick_live-enabled") return "Kick Live ativado no perfil publico.";
+  if (code === "kick_live-disabled") return "Kick Live desativado no perfil publico.";
+  if (code === "kick_live-deleted") return "Kick Live removido com sucesso.";
   return "";
 }
 
@@ -1347,6 +1992,18 @@ function getErrorMessage(code?: string) {
   if (code === "youtube-url-invalid") return "URL invalida. Use um endereco http ou https.";
   if (code === "twitch-channel-required") return "Digite o nome do canal da Twitch.";
   if (code === "twitch-url-invalid") return "URL invalida. Use um endereco http ou https.";
+  if (code === "twitch_live-channel-required") return "Digite o nome do canal da Twitch ou use uma URL valida.";
+  if (code === "twitch_live-url-invalid") return "URL da Twitch invalida. Use um endereco http ou https da Twitch.";
+  if (code === "twitch_live-source-required") return "Informe um canal ou URL valida para o Twitch Live.";
+  if (code === "twitch_live-accent-invalid") return "Cor invalida. Use hexadecimal no formato #RRGGBB.";
+  if (code === "youtube_live-channel-required") return "Digite o nome do canal do YouTube ou use uma URL valida.";
+  if (code === "youtube_live-url-invalid") return "URL do YouTube invalida. Use uma URL de live, canal ou video.";
+  if (code === "youtube_live-source-required") return "Nao foi possivel gerar um embed seguro para esta URL do YouTube.";
+  if (code === "youtube_live-accent-invalid") return "Cor invalida. Use hexadecimal no formato #RRGGBB.";
+  if (code === "kick_live-channel-required") return "Digite o nome do canal da Kick ou use uma URL valida.";
+  if (code === "kick_live-url-invalid") return "URL da Kick invalida. Use um endereco http ou https da Kick.";
+  if (code === "kick_live-source-required") return "Informe um canal ou URL valida para o Kick Live.";
+  if (code === "kick_live-accent-invalid") return "Cor invalida. Use hexadecimal no formato #RRGGBB.";
   if (code === "social-block-not-found") return "Bloco social nao encontrado.";
   return "";
 }

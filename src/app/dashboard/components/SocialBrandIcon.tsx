@@ -16,6 +16,7 @@ export type SocialBrandIconName =
   | "spotify"
   | "youtube"
   | "twitch"
+  | "kick"
   | "minecraft"
   | "weather"
   | "brawl-stars";
@@ -175,6 +176,16 @@ function renderIcon(name: SocialBrandIconName) {
         <>
           <path d="M5 5h14v9l-3 3h-3l-2 2H8v-2H5V5Z" fill="currentColor" />
           <path d="M10 9v4M14 9v4" stroke="#0B0C12" strokeWidth="1.8" strokeLinecap="round" />
+        </>
+      );
+    case "kick":
+      return (
+        <>
+          <path
+            d="M5 4.5h5.8v4.9H13l3.5-4.9H21l-4.5 6.1 5 8.9h-5.1l-3-5.4-2.6 3V19.5H5v-15Z"
+            fill="currentColor"
+          />
+          <path d="M8.2 8.4h2.2v2.3H8.2V8.4Zm0 4.2h2.2v2.3H8.2v-2.3Z" fill="#0B0C12" fillOpacity=".24" />
         </>
       );
     case "minecraft":

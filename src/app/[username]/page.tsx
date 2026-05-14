@@ -9,6 +9,7 @@ import {
 } from "react-icons/lu";
 import { getCurrentUser } from "@/app/lib/auth";
 import { getLinkPlatform } from "@/app/lib/link-icons";
+import { readLiveEmbedMetadata } from "@/app/lib/live-embed";
 import { getMediaKind } from "@/app/lib/profile-media";
 import { prisma } from "@/app/lib/prisma";
 import ProfileLayoutVariants, {
@@ -234,6 +235,7 @@ export default async function ProfilePage({ params }: Props) {
   const statusLabel = getStatusLabel(user.status);
   const socialBlocks: PublicSocialBlock[] = user.socialBlocks.map((block) => {
     const metadata = getMetadataObject(block.metadata);
+    const liveMetadata = readLiveEmbedMetadata(block.metadata);
 
     return {
       id: block.id,
@@ -250,6 +252,11 @@ export default async function ProfilePage({ params }: Props) {
       artistName: readMetadataValue(metadata, "artistName"),
       headline: readMetadataValue(metadata, "headline"),
       featuredVideoTitle: readMetadataValue(metadata, "featuredVideoTitle"),
+      streamTitle: liveMetadata.streamTitle,
+      embedUrl: liveMetadata.embedUrl,
+      openUrl: liveMetadata.openUrl,
+      accentColor: liveMetadata.accentColor,
+      isLive: liveMetadata.isLive,
       isEnabled: block.isEnabled,
     };
   });

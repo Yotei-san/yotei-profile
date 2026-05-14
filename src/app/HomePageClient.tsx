@@ -106,6 +106,7 @@ const featureCards = [
 
 export default function HomePageClient() {
   const [username, setUsername] = useState("");
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const router = useRouter();
   const shouldReduceMotion = useReducedMotion();
 
@@ -130,6 +131,7 @@ export default function HomePageClient() {
       <style>{`
         .home-shell {
           width: min(1180px, calc(100% - 32px));
+          max-width: 1180px;
           margin: 0 auto;
         }
 
@@ -184,6 +186,11 @@ export default function HomePageClient() {
           padding: 24px 0 0;
         }
 
+        .nav-shell {
+          display: grid;
+          gap: 12px;
+        }
+
         .home-nav {
           display: flex;
           align-items: center;
@@ -195,11 +202,14 @@ export default function HomePageClient() {
           border: 1px solid rgba(255, 255, 255, 0.08);
           box-shadow: 0 24px 48px rgba(0, 0, 0, 0.28);
           backdrop-filter: blur(16px);
+          min-width: 0;
         }
 
         .brand-link,
         .nav-link,
+        .nav-mobile-link,
         .nav-cta,
+        .nav-mobile-toggle,
         .claim-button,
         .support-link {
           transition:
@@ -212,7 +222,9 @@ export default function HomePageClient() {
 
         .brand-link:hover,
         .nav-link:hover,
+        .nav-mobile-link:hover,
         .nav-cta:hover,
+        .nav-mobile-toggle:hover,
         .claim-button:hover,
         .support-link:hover {
           transform: translateY(-2px);
@@ -225,6 +237,7 @@ export default function HomePageClient() {
           text-decoration: none;
           color: #ffffff;
           flex-shrink: 0;
+          min-width: 0;
         }
 
         .brand-mark {
@@ -246,16 +259,19 @@ export default function HomePageClient() {
         .brand-copy {
           display: grid;
           gap: 2px;
+          min-width: 0;
         }
 
         .brand-copy strong {
           font-size: 15px;
           letter-spacing: -0.04em;
+          white-space: nowrap;
         }
 
         .brand-copy span {
           font-size: 12px;
           color: #99a3bb;
+          white-space: nowrap;
         }
 
         .nav-center,
@@ -264,6 +280,7 @@ export default function HomePageClient() {
           align-items: center;
           gap: 10px;
           flex-wrap: wrap;
+          min-width: 0;
         }
 
         .nav-center {
@@ -272,6 +289,7 @@ export default function HomePageClient() {
         }
 
         .nav-link,
+        .nav-mobile-link,
         .nav-ghost,
         .nav-cta {
           min-height: 42px;
@@ -287,14 +305,109 @@ export default function HomePageClient() {
         }
 
         .nav-link,
+        .nav-mobile-link,
         .nav-ghost {
           color: #d7def0;
         }
 
         .nav-link:hover,
+        .nav-mobile-link:hover,
         .nav-ghost:hover {
           background: rgba(255, 255, 255, 0.04);
           border-color: rgba(255, 255, 255, 0.08);
+        }
+
+        .nav-mobile-toggle {
+          display: none;
+          width: 46px;
+          height: 46px;
+          border-radius: 16px;
+          align-items: center;
+          justify-content: center;
+          border: 1px solid rgba(255, 255, 255, 0.09);
+          background:
+            linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.03)),
+            rgba(14, 12, 20, 0.88);
+          box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.06),
+            0 14px 28px rgba(0, 0, 0, 0.24);
+          color: #f5f7ff;
+          cursor: pointer;
+          flex-shrink: 0;
+        }
+
+        .nav-mobile-toggle i,
+        .nav-mobile-toggle i::before,
+        .nav-mobile-toggle i::after {
+          display: block;
+          width: 16px;
+          height: 2px;
+          border-radius: 999px;
+          background: currentColor;
+          transition: transform 180ms ease, opacity 180ms ease;
+        }
+
+        .nav-mobile-toggle i {
+          position: relative;
+        }
+
+        .nav-mobile-toggle i::before,
+        .nav-mobile-toggle i::after {
+          content: "";
+          position: absolute;
+          left: 0;
+        }
+
+        .nav-mobile-toggle i::before {
+          top: -5px;
+        }
+
+        .nav-mobile-toggle i::after {
+          top: 5px;
+        }
+
+        .nav-mobile-toggle.is-open i {
+          background: transparent;
+        }
+
+        .nav-mobile-toggle.is-open i::before {
+          transform: translateY(5px) rotate(45deg);
+        }
+
+        .nav-mobile-toggle.is-open i::after {
+          transform: translateY(-5px) rotate(-45deg);
+        }
+
+        .nav-mobile-panel {
+          display: none;
+          padding: 14px;
+          border-radius: 26px;
+          background:
+            linear-gradient(180deg, rgba(17, 13, 24, 0.96), rgba(10, 9, 16, 0.98)),
+            rgba(15, 11, 22, 0.92);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          box-shadow: 0 24px 48px rgba(0, 0, 0, 0.24);
+          backdrop-filter: blur(16px);
+          overflow: hidden;
+        }
+
+        .nav-mobile-links,
+        .nav-mobile-actions {
+          display: grid;
+          gap: 10px;
+        }
+
+        .nav-mobile-links {
+          margin-bottom: 12px;
+        }
+
+        .nav-mobile-link,
+        .nav-mobile-actions .nav-ghost,
+        .nav-mobile-actions .nav-cta {
+          width: 100%;
+          justify-content: space-between;
+          padding: 0 16px;
+          box-sizing: border-box;
         }
 
         .nav-cta {
@@ -306,6 +419,7 @@ export default function HomePageClient() {
         .hero-section {
           position: relative;
           padding: 34px 0 88px;
+          overflow-x: clip;
         }
 
         .hero-grid {
@@ -314,11 +428,13 @@ export default function HomePageClient() {
           gap: 48px;
           align-items: center;
           min-height: calc(100vh - 132px);
+          min-width: 0;
         }
 
         .hero-copy {
           position: relative;
           z-index: 1;
+          min-width: 0;
         }
 
         .eyebrow {
@@ -343,6 +459,7 @@ export default function HomePageClient() {
           line-height: 0.92;
           letter-spacing: -0.08em;
           font-weight: 950;
+          text-wrap: balance;
         }
 
         .hero-gradient {
@@ -358,6 +475,7 @@ export default function HomePageClient() {
           color: #c5cde0;
           font-size: 18px;
           line-height: 1.75;
+          text-wrap: pretty;
         }
 
         .claim-form {
@@ -371,6 +489,8 @@ export default function HomePageClient() {
           background: rgba(15, 11, 22, 0.92);
           border: 1px solid rgba(255, 255, 255, 0.08);
           box-shadow: 0 28px 46px rgba(0, 0, 0, 0.24);
+          width: 100%;
+          box-sizing: border-box;
         }
 
         .claim-field {
@@ -382,6 +502,7 @@ export default function HomePageClient() {
           border-radius: 18px;
           background: rgba(255, 255, 255, 0.04);
           border: 1px solid rgba(255, 255, 255, 0.06);
+          min-width: 0;
         }
 
         .claim-prefix {
@@ -451,6 +572,8 @@ export default function HomePageClient() {
         .preview-wrap {
           position: relative;
           perspective: 1600px;
+          min-width: 0;
+          width: 100%;
         }
 
         .preview-shell {
@@ -463,6 +586,8 @@ export default function HomePageClient() {
           border: 1px solid rgba(255, 255, 255, 0.08);
           box-shadow: 0 36px 72px rgba(0, 0, 0, 0.34);
           overflow: hidden;
+          width: 100%;
+          box-sizing: border-box;
         }
 
         .preview-shell::after {
@@ -484,6 +609,7 @@ export default function HomePageClient() {
           box-shadow:
             inset 0 1px 0 rgba(255, 255, 255, 0.04),
             0 24px 40px rgba(0, 0, 0, 0.22);
+          min-width: 0;
         }
 
         .preview-topbar {
@@ -519,6 +645,11 @@ export default function HomePageClient() {
           font-size: 12px;
           font-weight: 700;
           letter-spacing: 0.01em;
+          min-width: 0;
+          max-width: 100%;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
         }
 
         .profile-preview {
@@ -614,6 +745,7 @@ export default function HomePageClient() {
         .profile-body {
           padding: 0 28px 28px;
           margin-top: -66px;
+          min-width: 0;
         }
 
         .profile-card {
@@ -623,6 +755,7 @@ export default function HomePageClient() {
           background: linear-gradient(180deg, rgba(11, 13, 21, 0.96), rgba(8, 9, 16, 0.98));
           border: 1px solid rgba(255, 255, 255, 0.08);
           box-shadow: 0 24px 34px rgba(0, 0, 0, 0.18);
+          min-width: 0;
         }
 
         .avatar-shell {
@@ -767,6 +900,7 @@ export default function HomePageClient() {
           color: #bec8dc;
           font-size: 14px;
           line-height: 1.75;
+          text-wrap: pretty;
         }
 
         .social-row {
@@ -802,6 +936,7 @@ export default function HomePageClient() {
           display: grid;
           gap: 10px;
           margin-top: 22px;
+          min-width: 0;
         }
 
         .profile-link {
@@ -813,12 +948,14 @@ export default function HomePageClient() {
           border-radius: 18px;
           background: rgba(255, 255, 255, 0.03);
           border: 1px solid rgba(255, 255, 255, 0.06);
+          min-width: 0;
         }
 
         .profile-link strong {
           display: block;
           font-size: 14px;
           letter-spacing: -0.02em;
+          overflow-wrap: anywhere;
         }
 
         .profile-link span {
@@ -827,6 +964,7 @@ export default function HomePageClient() {
           color: #8e9ab6;
           font-size: 12px;
           line-height: 1.45;
+          overflow-wrap: anywhere;
         }
 
         .profile-link-mark {
@@ -1000,6 +1138,11 @@ export default function HomePageClient() {
             grid-template-columns: 1fr;
           }
 
+          .hero-grid {
+            min-height: 0;
+            gap: 34px;
+          }
+
           .preview-wrap {
             max-width: 720px;
             width: 100%;
@@ -1013,101 +1156,380 @@ export default function HomePageClient() {
 
         @media (max-width: 920px) {
           .home-nav {
-            justify-content: center;
-            border-radius: 28px;
-            text-align: center;
+            padding: 14px 14px 14px 16px;
+            border-radius: 26px;
+            gap: 12px;
           }
 
           .brand-link {
-            width: 100%;
-            justify-content: center;
+            flex: 1;
           }
 
           .nav-center,
           .nav-actions {
+            display: none;
+          }
+
+          .nav-mobile-toggle {
+            display: flex;
+          }
+
+          .hero-section {
+            padding: 20px 0 72px;
+          }
+
+          .hero-copy {
+            text-align: center;
+          }
+
+          .hero-body,
+          .claim-form,
+          .hero-trust {
+            margin-left: auto;
+            margin-right: auto;
+          }
+
+          .eyebrow,
+          .hero-trust {
             justify-content: center;
           }
 
           .claim-form {
             grid-template-columns: 1fr;
           }
-
         }
 
         @media (max-width: 640px) {
           .home-shell {
-            width: min(100% - 22px, 1180px);
+            width: min(100% - 24px, 1180px);
+          }
+
+          .home-header {
+            padding-top: 14px;
           }
 
           .hero-section {
-            padding: 24px 0 72px;
+            padding: 14px 0 58px;
           }
 
           .hero-title {
-            font-size: clamp(44px, 14vw, 66px);
+            margin-top: 18px;
+            font-size: clamp(36px, 11.5vw, 52px);
+            line-height: 0.96;
+            letter-spacing: -0.07em;
           }
 
           .hero-body,
           .section-intro p {
-            font-size: 16px;
+            font-size: 15px;
+            line-height: 1.68;
+          }
+
+          .eyebrow {
+            min-height: 34px;
+            padding: 0 12px;
+            font-size: 11px;
+          }
+
+          .claim-form {
+            margin-top: 22px;
+            padding: 10px;
+            border-radius: 24px;
+            gap: 10px;
+          }
+
+          .claim-field,
+          .claim-button {
+            min-height: 56px;
+          }
+
+          .claim-button {
+            width: 100%;
+            padding: 0 18px;
+            border-radius: 18px;
+          }
+
+          .claim-prefix,
+          .claim-input {
+            font-size: 14px;
+          }
+
+          .hero-trust {
+            margin-top: 14px;
+            gap: 10px;
+            font-size: 12px;
+          }
+
+          .preview-wrap {
+            max-width: 100%;
           }
 
           .preview-shell,
           .preview-stage {
-            border-radius: 28px;
+            border-radius: 24px;
           }
 
           .preview-shell {
-            padding: 16px;
+            padding: 12px;
+            box-shadow: 0 24px 48px rgba(0, 0, 0, 0.28);
+          }
+
+          .preview-shell::after {
+            inset: 8px;
+            border-radius: 20px;
+          }
+
+          .preview-topbar {
+            padding: 12px 12px;
+            gap: 10px;
+          }
+
+          .preview-url {
+            font-size: 11px;
+            min-height: 28px;
+            padding: 0 10px;
           }
 
           .profile-banner {
-            min-height: 232px;
-            padding: 18px;
+            min-height: 196px;
+            padding: 16px;
           }
 
           .banner-copy {
-            margin-top: 110px;
-            max-width: 220px;
+            margin-top: 88px;
+            max-width: 178px;
           }
 
           .banner-copy strong {
-            font-size: 26px;
+            font-size: 21px;
           }
 
           .banner-wordmark {
-            right: 16px;
-            bottom: 12px;
-            font-size: 66px;
+            right: 12px;
+            bottom: 8px;
+            font-size: 48px;
           }
 
           .profile-body {
-            padding: 0 16px 18px;
-            margin-top: -52px;
+            padding: 0 12px 14px;
+            margin-top: -42px;
           }
 
           .profile-card {
-            padding: 0 18px 18px;
-            border-radius: 24px;
+            padding: 0 14px 14px;
+            border-radius: 20px;
           }
 
           .avatar-shell,
           .avatar-core {
-            width: 102px;
-            height: 102px;
+            width: 84px;
+            height: 84px;
           }
 
           .avatar-core strong {
-            font-size: 32px;
+            font-size: 28px;
           }
 
           .profile-name {
-            font-size: 32px;
+            font-size: 26px;
+            margin-top: 14px;
+          }
+
+          .profile-username {
+            margin-top: 8px;
+            font-size: 13px;
+          }
+
+          .profile-bio {
+            margin-top: 14px;
+            font-size: 13px;
+            line-height: 1.65;
+          }
+
+          .social-row {
+            margin-top: 16px;
+            gap: 8px;
+          }
+
+          .social-chip {
+            width: 40px;
+            height: 40px;
+            border-radius: 14px;
+          }
+
+          .social-chip span {
+            width: 32px;
+            height: 32px;
+            border-radius: 11px;
+          }
+
+          .profile-links {
+            margin-top: 18px;
+          }
+
+          .profile-link {
+            padding: 12px 12px;
+            border-radius: 16px;
+          }
+
+          .profile-link-mark {
+            width: 34px;
+            height: 34px;
+            border-radius: 12px;
+            font-size: 13px;
+          }
+
+          .status-row {
+            margin-top: 16px;
+            gap: 10px;
           }
 
           .feature-card,
           .support-panel {
             padding: 20px;
+          }
+
+          .features-section {
+            padding-bottom: 64px;
+          }
+
+          .section-intro h2 {
+            font-size: clamp(28px, 9vw, 40px);
+          }
+
+          .support-panel {
+            gap: 18px;
+            border-radius: 24px;
+          }
+
+          .support-actions {
+            display: grid;
+            grid-template-columns: 1fr;
+            width: 100%;
+          }
+
+          .support-link {
+            width: 100%;
+            box-sizing: border-box;
+          }
+        }
+
+        @media (max-width: 430px) {
+          .home-shell {
+            width: min(100% - 20px, 1180px);
+          }
+
+          .brand-mark {
+            width: 38px;
+            height: 38px;
+            border-radius: 12px;
+            font-size: 16px;
+          }
+
+          .brand-copy strong {
+            font-size: 14px;
+          }
+
+          .brand-copy span {
+            font-size: 11px;
+          }
+
+          .nav-mobile-panel {
+            padding: 12px;
+            border-radius: 22px;
+          }
+
+          .hero-grid {
+            gap: 26px;
+          }
+
+          .hero-body {
+            margin-top: 18px;
+          }
+        }
+
+        @media (max-width: 390px) {
+          .brand-copy span {
+            display: none;
+          }
+
+          .hero-title {
+            font-size: clamp(34px, 11vw, 46px);
+          }
+
+          .claim-field {
+            padding: 0 14px;
+            gap: 10px;
+          }
+
+          .banner-copy {
+            max-width: 156px;
+          }
+
+          .banner-wordmark {
+            font-size: 42px;
+          }
+        }
+
+        @media (max-width: 375px) {
+          .home-shell {
+            width: min(100% - 18px, 1180px);
+          }
+
+          .home-nav {
+            padding: 12px;
+          }
+
+          .nav-mobile-toggle {
+            width: 42px;
+            height: 42px;
+            border-radius: 14px;
+          }
+
+          .hero-section {
+            padding-bottom: 52px;
+          }
+
+          .hero-title {
+            font-size: clamp(32px, 10.8vw, 42px);
+          }
+
+          .profile-banner {
+            min-height: 182px;
+          }
+
+          .banner-copy {
+            margin-top: 82px;
+          }
+        }
+
+        @media (max-width: 320px) {
+          .home-shell {
+            width: min(100% - 16px, 1180px);
+          }
+
+          .brand-link {
+            gap: 10px;
+          }
+
+          .hero-title {
+            font-size: 30px;
+          }
+
+          .claim-prefix {
+            font-size: 13px;
+          }
+
+          .claim-input {
+            font-size: 13px;
+          }
+
+          .preview-shell {
+            padding: 10px;
+          }
+
+          .profile-card {
+            padding: 0 12px 12px;
           }
         }
       `}</style>
@@ -1119,37 +1541,93 @@ export default function HomePageClient() {
 
       <header className="home-header">
         <div className="home-shell">
-          <motion.div
-            className="home-nav"
-            initial={{ opacity: 0, y: -12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.45, ease: EASE_OUT }}
-          >
-            <Link href="/" className="brand-link">
-              <div className="brand-mark">Y</div>
-              <div className="brand-copy">
-                <strong>Yotei</strong>
-                <span>Premium digital identity</span>
-              </div>
-            </Link>
+          <div className="nav-shell">
+            <motion.div
+              className="home-nav"
+              initial={{ opacity: 0, y: -12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.45, ease: EASE_OUT }}
+            >
+              <Link href="/" className="brand-link" onClick={() => setIsMobileMenuOpen(false)}>
+                <div className="brand-mark">Y</div>
+                <div className="brand-copy">
+                  <strong>Yotei</strong>
+                  <span>Premium digital identity</span>
+                </div>
+              </Link>
 
-            <nav className="nav-center" aria-label="Main navigation">
-              {navLinks.map((item) => (
-                <Link key={item.label} href={item.href} className="nav-link">
-                  {item.label}
+              <nav className="nav-center" aria-label="Main navigation">
+                {navLinks.map((item) => (
+                  <Link key={item.label} href={item.href} className="nav-link">
+                    {item.label}
+                  </Link>
+                ))}
+              </nav>
+
+              <div className="nav-actions">
+                <Link href="/login" className="nav-ghost">
+                  Login
                 </Link>
-              ))}
-            </nav>
+                <Link href="/register" className="nav-cta">
+                  Sign Up
+                </Link>
+              </div>
 
-            <div className="nav-actions">
-              <Link href="/login" className="nav-ghost">
-                Login
-              </Link>
-              <Link href="/register" className="nav-cta">
-                Sign Up
-              </Link>
-            </div>
-          </motion.div>
+              <button
+                type="button"
+                className={`nav-mobile-toggle${isMobileMenuOpen ? " is-open" : ""}`}
+                aria-label={isMobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+                aria-expanded={isMobileMenuOpen}
+                onClick={() => setIsMobileMenuOpen((current) => !current)}
+              >
+                <i />
+              </button>
+            </motion.div>
+
+            {isMobileMenuOpen ? (
+              <motion.div
+                className="nav-mobile-panel"
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{
+                  duration: shouldReduceMotion ? 0 : 0.18,
+                  ease: EASE_OUT,
+                }}
+              >
+                <nav className="nav-mobile-links" aria-label="Mobile navigation">
+                  {navLinks.map((item) => (
+                    <Link
+                      key={item.label}
+                      href={item.href}
+                      className="nav-mobile-link"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      {item.label}
+                      <LuArrowRight size={15} />
+                    </Link>
+                  ))}
+                </nav>
+
+                <div className="nav-mobile-actions">
+                  <Link
+                    href="/login"
+                    className="nav-ghost"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    Login
+                  </Link>
+                  <Link
+                    href="/register"
+                    className="nav-cta"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    Sign Up
+                  </Link>
+                </div>
+              </motion.div>
+            ) : null}
+          </div>
         </div>
       </header>
 
@@ -1467,8 +1945,9 @@ function FeatureCard({
 
 const pageStyle: CSSProperties = {
   minHeight: "100vh",
+  width: "100%",
   position: "relative",
-  overflow: "hidden",
+  overflowX: "clip",
   color: "#f7f8ff",
   background:
     "radial-gradient(circle at top, rgba(46, 20, 38, 0.34), transparent 22%), radial-gradient(circle at 84% 16%, rgba(124, 108, 255, 0.12), transparent 18%), linear-gradient(180deg, #07060B 0%, #09060D 22%, #06070B 100%)",
