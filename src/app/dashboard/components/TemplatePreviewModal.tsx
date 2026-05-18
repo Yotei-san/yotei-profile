@@ -2,6 +2,7 @@
 
 import type { CSSProperties } from "react";
 import { useEffect } from "react";
+import FormActionButton from "@/app/components/FormActionButton";
 import { type TemplateCardData } from "@/app/dashboard/components/TemplateCard";
 
 type Props = {
@@ -176,13 +177,12 @@ export default function TemplatePreviewModal({
               <form action={applyAction} style={{ display: "grid", gap: "12px" }}>
                 <input type="hidden" name="templateId" value={template.id} />
                 <input type="hidden" name="tab" value={currentTab} />
-                <button
-                  type="submit"
+                <FormActionButton
+                  idleLabel={isLockedPremium ? "Premium Required" : "Use Template"}
+                  pendingLabel="Applying Template..."
                   disabled={isLockedPremium}
                   style={isLockedPremium ? lockedButtonStyle : useButtonStyle}
-                >
-                  {isLockedPremium ? "Premium Required" : "Use Template"}
-                </button>
+                />
               </form>
             </div>
           </div>

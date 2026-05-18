@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { requireUser } from "@/app/lib/auth";
+import FormActionButton from "@/app/components/FormActionButton";
+import { redirectWithClearedSession, requireUser } from "@/app/lib/auth";
 import { prisma } from "@/app/lib/prisma";
 import { getMediaKind } from "@/app/lib/profile-media";
 import { saveProfileSettings } from "./actions";
@@ -31,6 +32,7 @@ const PROFILE_LAYOUT_OPTIONS = [
 type PageProps = {
   searchParams?: Promise<{
     success?: string;
+    error?: string;
   }>;
 };
 
@@ -50,6 +52,10 @@ export default async function ProfileSettingsPage({ searchParams }: PageProps) {
       profileLayout: true,
     },
   });
+
+  if (!user) {
+    await redirectWithClearedSession();
+  }
 
   if (!user) {
     throw new Error("Usuário não encontrado.");
@@ -127,11 +133,14 @@ export default async function ProfileSettingsPage({ searchParams }: PageProps) {
       {params.success === "saved" ? (
         <div style={successBoxStyle}>Perfil salvo com sucesso.</div>
       ) : null}
+      {params.error === "save-failed" ? (
+        <div style={errorBoxStyle}>Nao foi possivel salvar o perfil agora.</div>
+      ) : null}
 
       <section
         style={{
           display: "grid",
-          gridTemplateColumns: "1fr 1fr",
+          gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
           gap: "18px",
           marginBottom: "18px",
         }}
@@ -152,7 +161,7 @@ export default async function ProfileSettingsPage({ searchParams }: PageProps) {
       <section
         style={{
           display: "grid",
-          gridTemplateColumns: "1fr 1fr",
+          gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
           gap: "18px",
         }}
       >
@@ -297,9 +306,11 @@ export default async function ProfileSettingsPage({ searchParams }: PageProps) {
               </div>
             </div>
 
-            <button type="submit" style={primaryButtonStyle}>
-              Salvar texto e tema
-            </button>
+            <FormActionButton
+              idleLabel="Salvar texto e tema"
+              pendingLabel="Salvando perfil..."
+              style={primaryButtonStyle}
+            />
           </div>
         </form>
 
@@ -545,6 +556,15 @@ const successBoxStyle: React.CSSProperties = {
   backgroundColor: "rgba(34,197,94,0.10)",
   border: "1px solid rgba(34,197,94,0.22)",
   color: "#86efac",
+  borderRadius: "16px",
+  padding: "14px 16px",
+  marginBottom: "18px",
+};
+
+const errorBoxStyle: React.CSSProperties = {
+  backgroundColor: "rgba(239,68,68,0.10)",
+  border: "1px solid rgba(239,68,68,0.22)",
+  color: "#fca5a5",
   borderRadius: "16px",
   padding: "14px 16px",
   marginBottom: "18px",

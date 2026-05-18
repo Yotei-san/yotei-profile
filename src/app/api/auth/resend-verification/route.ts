@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/app/lib/auth";
 import { resendEmailVerificationForUser } from "@/app/lib/email-verification";
+import { logServerError } from "@/app/lib/server-log";
 
 export async function POST() {
   try {
@@ -50,20 +51,13 @@ export async function POST() {
       message: "Verification email sent. Check your inbox and spam folder.",
     });
   } catch (error) {
-    const message =
-      error instanceof Error && error.message
-        ? error.message
-        : "Unknown verification email error.";
-
-    console.error("[Yotei email verification] Resend verification route failed.", {
-      message,
-      error,
-    });
+    logServerError("auth.resend-verification", error);
 
     return NextResponse.json(
       {
         success: false,
-        message,
+        message:
+          "Unable to resend verification email right now. Please try again in a few minutes.",
       },
       { status: 500 }
     );

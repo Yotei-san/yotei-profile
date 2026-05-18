@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
-import { requireUser } from "@/app/lib/auth";
+import { getCurrentUser } from "@/app/lib/auth";
 import { Prisma } from "@prisma/client";
+import { logServerError } from "@/app/lib/server-log";
 
 type RouteProps = {
   params: Promise<{
@@ -26,8 +27,15 @@ async function runReactionTransaction<T>(callback: () => Promise<T>, attempts = 
 
 export async function POST(req: Request, { params }: RouteProps) {
   try {
-    const sessionUser = await requireUser();
+    const sessionUser = await getCurrentUser();
     const { username } = await params;
+
+    if (!sessionUser) {
+      return NextResponse.json(
+        { error: "You need to sign in before reacting." },
+        { status: 401 }
+      );
+    }
 
     const normalizedUsername = username.trim().toLowerCase();
 
@@ -174,7 +182,7 @@ export async function POST(req: Request, { params }: RouteProps) {
       myReaction: result.myReaction,
     });
   } catch (error) {
-    console.error("profile reaction route error", error);
+    logServerError("profile.reaction-route", error);
 
     return NextResponse.json(
       { error: "Erro ao reagir." },

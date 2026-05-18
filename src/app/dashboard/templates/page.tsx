@@ -1,9 +1,13 @@
 import Link from "next/link";
 import type { CSSProperties, ReactNode } from "react";
-import { requireUser } from "@/app/lib/auth";
+import FormActionButton from "@/app/components/FormActionButton";
+import { redirectWithClearedSession, requireUser } from "@/app/lib/auth";
 import VerificationLockedPanel from "@/app/dashboard/components/VerificationLockedPanel";
 import { prisma } from "@/app/lib/prisma";
-import { isEmailVerified } from "@/app/lib/email-verification";
+import {
+  isEmailVerificationEnforced,
+  isEmailVerified,
+} from "@/app/lib/email-verification";
 import TemplateGallery from "@/app/dashboard/components/TemplateGallery";
 import { applyTemplate, createTemplate } from "./actions";
 
@@ -47,11 +51,9 @@ export default async function TemplatesPage({ searchParams }: PageProps) {
     } as any,
   })) as TemplatesPageUser | null;
 
-  if (!user) {
-    throw new Error("Usuario nao encontrado.");
-  }
+  const resolvedUser = user ?? (await redirectWithClearedSession());
 
-  if (!isEmailVerified(user)) {
+  if (isEmailVerificationEnforced() && !isEmailVerified(resolvedUser)) {
     return (
       <VerificationLockedPanel
         title="Verify your email to unlock templates."
@@ -60,7 +62,7 @@ export default async function TemplatesPage({ searchParams }: PageProps) {
     );
   }
 
-  const templatesWhere = getTemplatesWhere(currentTab, user.id);
+  const templatesWhere = getTemplatesWhere(currentTab, resolvedUser.id);
   const [templates, allCount, myCount, premiumCount] = await Promise.all([
     prisma.profileTemplate.findMany({
       where: templatesWhere,
@@ -76,24 +78,24 @@ export default async function TemplatesPage({ searchParams }: PageProps) {
     }),
     prisma.profileTemplate.count({
       where: {
-        OR: [{ isPublic: true }, { createdByUserId: user.id }],
+        OR: [{ isPublic: true }, { createdByUserId: resolvedUser.id }],
       },
     }),
     prisma.profileTemplate.count({
       where: {
-        createdByUserId: user.id,
+        createdByUserId: resolvedUser.id,
       },
     }),
     prisma.profileTemplate.count({
       where: {
         isPremium: true,
-        OR: [{ isPublic: true }, { createdByUserId: user.id }],
+        OR: [{ isPublic: true }, { createdByUserId: resolvedUser.id }],
       },
     }),
   ]);
 
-  const canMarkPremium = isAdminOrOwner(user.role);
-  const canUsePremium = isPremiumOrPrivilegedUser(user);
+  const canMarkPremium = isAdminOrOwner(resolvedUser.role);
+  const canUsePremium = isPremiumOrPrivilegedUser(resolvedUser);
   const successMessage = getSuccessMessage(params.success);
   const errorMessage = getErrorMessage(params.error);
 
@@ -220,9 +222,11 @@ export default async function TemplatesPage({ searchParams }: PageProps) {
           )}
 
           <div style={{ gridColumn: "1 / -1", display: "flex", gap: "12px", flexWrap: "wrap" }}>
-            <button type="submit" style={submitButtonStyle}>
-              Create Template
-            </button>
+            <FormActionButton
+              idleLabel="Create Template"
+              pendingLabel="Creating Template..."
+              style={submitButtonStyle}
+            />
             <Link href="/dashboard/profile" style={secondaryActionStyle}>
               Review current profile
             </Link>
@@ -234,7 +238,7 @@ export default async function TemplatesPage({ searchParams }: PageProps) {
         {templates.length > 0 ? (
           <TemplateGallery
             templates={templates}
-            currentUserId={user.id}
+            currentUserId={resolvedUser.id}
             currentTab={currentTab}
             canUsePremium={canUsePremium}
             applyAction={applyTemplate}
@@ -546,7 +550,7 @@ const sectionDescriptionStyle: CSSProperties = {
 
 const formGridStyle: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+  gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
   gap: "14px",
 };
 

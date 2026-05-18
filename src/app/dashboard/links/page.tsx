@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { requireUser } from "@/app/lib/auth";
+import FormActionButton from "@/app/components/FormActionButton";
+import { redirectWithClearedSession, requireUser } from "@/app/lib/auth";
 import { prisma } from "@/app/lib/prisma";
 import { getLinkPlatform } from "@/app/lib/link-icons";
 import { createLink, deleteLink, updateLink } from "./actions";
@@ -48,6 +49,10 @@ export default async function LinksPage({ searchParams }: PageProps) {
       },
     },
   });
+
+  if (!user) {
+    await redirectWithClearedSession();
+  }
 
   if (!user) {
     throw new Error("Usuário não encontrado.");
@@ -125,7 +130,7 @@ export default async function LinksPage({ searchParams }: PageProps) {
       <section
         style={{
           display: "grid",
-          gridTemplateColumns: "0.95fr 1.05fr",
+          gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
           gap: "18px",
         }}
       >
@@ -154,9 +159,11 @@ export default async function LinksPage({ searchParams }: PageProps) {
               />
             </label>
 
-            <button type="submit" style={primaryButtonStyle}>
-              Criar link
-            </button>
+            <FormActionButton
+              idleLabel="Criar link"
+              pendingLabel="Criando link..."
+              style={primaryButtonStyle}
+            />
           </div>
         </form>
 
@@ -247,17 +254,21 @@ export default async function LinksPage({ searchParams }: PageProps) {
                           alignItems: "center",
                         }}
                       >
-                        <button type="submit" style={primaryButtonStyle}>
-                          Salvar
-                        </button>
+                        <FormActionButton
+                          idleLabel="Salvar"
+                          pendingLabel="Salvando..."
+                          style={primaryButtonStyle}
+                        />
                       </div>
                     </form>
 
                     <form action={deleteLink} style={{ marginTop: "12px" }}>
                       <input type="hidden" name="linkId" value={item.id} readOnly />
-                      <button type="submit" style={dangerButtonStyle}>
-                        Remover
-                      </button>
+                      <FormActionButton
+                        idleLabel="Remover"
+                        pendingLabel="Removendo..."
+                        style={dangerButtonStyle}
+                      />
                     </form>
                   </article>
                 );

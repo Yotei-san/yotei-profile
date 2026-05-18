@@ -1,9 +1,12 @@
 import { ReactNode } from "react";
 import DashboardSidebar from "@/app/components/DashboardSidebar";
 import EmailVerificationBanner from "@/app/components/EmailVerificationBanner";
-import { requireUser } from "@/app/lib/auth";
+import { redirectWithClearedSession, requireUser } from "@/app/lib/auth";
 import { dashboardNavItems } from "@/app/lib/dashboard-nav";
-import { isEmailVerified } from "@/app/lib/email-verification";
+import {
+  isEmailVerificationEnforced,
+  isEmailVerified,
+} from "@/app/lib/email-verification";
 import { prisma } from "@/app/lib/prisma";
 
 const ACTIVE_PREMIUM_STATUSES = new Set(["active", "trialing", "past_due"]);
@@ -66,15 +69,18 @@ export default async function DashboardLayout({
     } as any,
   })) as DashboardLayoutUser | null;
 
-  if (!user) {
-    throw new Error("Usuario nao encontrado.");
-  }
+  const resolvedUser = user ?? (await redirectWithClearedSession());
 
-  const verified = isEmailVerified(user);
-  const lockedHrefs = verified ? [] : ["/dashboard/socials", "/dashboard/templates"];
+  const verified = isEmailVerified(resolvedUser);
+  const emailVerificationEnforced = isEmailVerificationEnforced();
+  const lockedHrefs =
+    !verified && emailVerificationEnforced
+      ? ["/dashboard/socials", "/dashboard/templates"]
+      : [];
 
   return (
     <main
+      className="dashboard-layout-root"
       style={{
         minHeight: "100vh",
         background:
@@ -84,36 +90,60 @@ export default async function DashboardLayout({
         fontFamily: "Arial, Helvetica, sans-serif",
       }}
     >
+      <style>{`
+        .dashboard-layout-root {
+          min-height: 100vh;
+        }
+
+        .dashboard-layout-shell {
+          display: flex;
+          gap: 22px;
+          align-items: flex-start;
+          max-width: 1700px;
+          margin: 0 auto;
+        }
+
+        .dashboard-layout-content {
+          flex: 1;
+          min-width: 0;
+          display: grid;
+          gap: 18px;
+        }
+
+        @media (max-width: 980px) {
+          .dashboard-layout-shell {
+            flex-direction: column;
+          }
+        }
+
+        @media (max-width: 640px) {
+          .dashboard-layout-root {
+            padding: 14px !important;
+          }
+        }
+      `}</style>
       <div
-        style={{
-          display: "flex",
-          gap: "22px",
-          alignItems: "flex-start",
-          maxWidth: "1700px",
-          margin: "0 auto",
-        }}
+        className="dashboard-layout-shell"
       >
         <DashboardSidebar
           user={{
-            username: user.username,
-            displayName: user.displayName,
-            role: user.role,
-            avatarUrl: user.avatarUrl,
-            plan: isPremiumUser(user) ? "premium" : "free",
+            username: resolvedUser.username,
+            displayName: resolvedUser.displayName,
+            role: resolvedUser.role,
+            avatarUrl: resolvedUser.avatarUrl,
+            plan: isPremiumUser(resolvedUser) ? "premium" : "free",
           }}
           items={dashboardNavItems}
           lockedHrefs={lockedHrefs}
         />
 
-        <section
-          style={{
-            flex: 1,
-            minWidth: 0,
-            display: "grid",
-            gap: "18px",
-          }}
-        >
-          {!verified ? <EmailVerificationBanner email={user.email} /> : null}
+        <section className="dashboard-layout-content">
+          {!verified ? (
+            <EmailVerificationBanner
+              email={resolvedUser.email}
+              isBlocking={emailVerificationEnforced}
+            />
+          ) : null}
           {children}
         </section>
       </div>

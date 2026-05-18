@@ -20,12 +20,16 @@ export async function getCurrentSession() {
     include: { user: true },
   });
 
-  if (!session) return null;
+  if (!session) {
+    await clearSessionCookies();
+    return null;
+  }
 
   if (session.expiresAt < new Date()) {
     await prisma.session.deleteMany({
       where: { token },
     });
+    await clearSessionCookies();
     return null;
   }
 
@@ -103,6 +107,11 @@ export async function destroyUserSession() {
   );
 }
 
+export async function redirectWithClearedSession(): Promise<never> {
+  await destroyUserSession();
+  redirect("/login?error=session-expired");
+}
+
 function buildSessionCookieOptions({
   remember,
   expiresAt,
@@ -143,4 +152,15 @@ function buildExpiredCookieOptions() {
     path: "/",
     expires: new Date(0),
   };
+}
+
+async function clearSessionCookies() {
+  const cookieStore = await cookies();
+
+  cookieStore.set(SESSION_COOKIE_NAME, "", buildExpiredCookieOptions());
+  cookieStore.set(
+    SESSION_PERSISTENCE_COOKIE_NAME,
+    "",
+    buildExpiredCookieOptions()
+  );
 }

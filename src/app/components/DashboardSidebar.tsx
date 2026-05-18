@@ -49,9 +49,11 @@ export default function DashboardSidebar({ user, items, lockedHrefs = [] }: Prop
 
   return (
     <aside
+      className="dashboard-sidebar"
       style={{
-        width: "270px",
-        minWidth: "270px",
+        width: "100%",
+        maxWidth: "270px",
+        minWidth: 0,
         background:
           "linear-gradient(180deg, rgba(12,12,14,0.98), rgba(8,8,10,0.98))",
         border: "1px solid rgba(255,255,255,0.06)",
@@ -66,6 +68,15 @@ export default function DashboardSidebar({ user, items, lockedHrefs = [] }: Prop
         top: "24px",
       }}
     >
+      <style jsx>{`
+        @media (max-width: 980px) {
+          .dashboard-sidebar {
+            max-width: none;
+            height: auto;
+            position: static;
+          }
+        }
+      `}</style>
       <div
         style={{
           display: "flex",

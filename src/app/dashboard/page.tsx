@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { CSSProperties } from "react";
 import DashboardOnboardingChecklist from "@/app/dashboard/components/DashboardOnboardingChecklist";
-import { requireUser } from "@/app/lib/auth";
+import { redirectWithClearedSession, requireUser } from "@/app/lib/auth";
 import { buildDashboardOnboardingState } from "@/app/lib/dashboard-onboarding";
 import { prisma } from "@/app/lib/prisma";
 
@@ -76,22 +76,23 @@ export default async function DashboardPage() {
     } as any,
   })) as DashboardUser | null;
 
-  if (!user) {
-    throw new Error("Usuario nao encontrado.");
-  }
+  const resolvedUser = user ?? (await redirectWithClearedSession());
 
-  const totalClicks = user.links.reduce((sum, link) => sum + link._count.clicks, 0);
-  const topLinks = [...user.links]
+  const totalClicks = resolvedUser.links.reduce(
+    (sum, link) => sum + link._count.clicks,
+    0
+  );
+  const topLinks = [...resolvedUser.links]
     .sort((a, b) => b._count.clicks - a._count.clicks)
     .slice(0, 5);
   const onboarding = buildDashboardOnboardingState({
-    emailVerified: user.emailVerified,
-    avatarUrl: user.avatarUrl,
-    bannerUrl: user.bannerUrl,
-    profileLayout: user.profileLayout,
-    linkCount: user.links.length,
-    socialBlockCount: user.socialBlocks.length,
-    templateCount: user.createdTemplates.length,
+    emailVerified: resolvedUser.emailVerified,
+    avatarUrl: resolvedUser.avatarUrl,
+    bannerUrl: resolvedUser.bannerUrl,
+    profileLayout: resolvedUser.profileLayout,
+    linkCount: resolvedUser.links.length,
+    socialBlockCount: resolvedUser.socialBlocks.length,
+    templateCount: resolvedUser.createdTemplates.length,
   });
 
   return (
@@ -100,7 +101,9 @@ export default async function DashboardPage() {
         <div style={{ display: "grid", gap: "16px", minWidth: 0 }}>
           <div style={heroBadgeStyle}>Dashboard Overview</div>
           <div style={{ display: "grid", gap: "10px", minWidth: 0 }}>
-            <h1 style={heroTitleStyle}>Welcome back, {user.displayName || user.username}</h1>
+            <h1 style={heroTitleStyle}>
+              Welcome back, {resolvedUser.displayName || resolvedUser.username}
+            </h1>
             <p style={heroTextStyle}>
               Track your setup progress, finish the essentials and keep your public
               profile feeling launch ready.
@@ -109,7 +112,11 @@ export default async function DashboardPage() {
         </div>
 
         <div style={heroActionsStyle}>
-          <Link href={`/${user.username}`} style={primaryActionStyle} target="_blank">
+          <Link
+            href={`/${resolvedUser.username}`}
+            style={primaryActionStyle}
+            target="_blank"
+          >
             Open profile
           </Link>
           <Link href="/dashboard/profile" style={secondaryActionStyle}>
@@ -121,12 +128,20 @@ export default async function DashboardPage() {
       <DashboardOnboardingChecklist onboarding={onboarding} />
 
       <section style={statsGridStyle}>
-        <StatCard title="Links" value={String(user.links.length)} hint="Clickable profile actions" />
+        <StatCard
+          title="Links"
+          value={String(resolvedUser.links.length)}
+          hint="Clickable profile actions"
+        />
         <StatCard title="Total clicks" value={String(totalClicks)} hint="Traffic across your links" />
-        <StatCard title="Social blocks" value={String(user.socialBlocks.length)} hint="Identity blocks configured" />
+        <StatCard
+          title="Social blocks"
+          value={String(resolvedUser.socialBlocks.length)}
+          hint="Identity blocks configured"
+        />
         <StatCard
           title="Template activity"
-          value={String(user.createdTemplates.length)}
+          value={String(resolvedUser.createdTemplates.length)}
           hint="Templates created in your studio"
         />
       </section>
@@ -174,8 +189,8 @@ export default async function DashboardPage() {
           </div>
 
           <div style={listStyle}>
-            {user.links.length > 0 ? (
-              user.links.map((link) => (
+            {resolvedUser.links.length > 0 ? (
+              resolvedUser.links.map((link) => (
                 <div key={link.id} style={stackedRowStyle}>
                   <div style={rowTitleStyle}>{link.title || "Untitled link"}</div>
                   <div style={rowSubtleStyle}>{link.url}</div>
@@ -219,7 +234,7 @@ const pageStyle: CSSProperties = {
 
 const heroStyle: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "minmax(0, 1fr) auto",
+  gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
   gap: "18px",
   alignItems: "center",
   padding: "28px",

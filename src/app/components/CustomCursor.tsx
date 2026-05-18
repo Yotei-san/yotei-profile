@@ -7,7 +7,7 @@ type Point = {
   y: number;
 };
 
-const TRAIL_COUNT = 8;
+const TRAIL_COUNT = 4;
 
 export default function CustomCursor() {
   const cursorRef = useRef<HTMLDivElement | null>(null);
@@ -22,6 +22,12 @@ export default function CustomCursor() {
     const reducedMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)"
     ).matches;
+    const lowPowerDevice =
+      typeof navigator !== "undefined" &&
+      "deviceMemory" in navigator &&
+      typeof navigator.deviceMemory === "number" &&
+      navigator.deviceMemory <= 4;
+    const shouldRenderTrail = !reducedMotion && !lowPowerDevice;
 
     if (!finePointer) return;
 
@@ -48,7 +54,7 @@ export default function CustomCursor() {
       ringEl.style.opacity = opacity;
 
       for (const el of trailRefs.current) {
-        if (el) el.style.opacity = reducedMotion ? "0" : opacity;
+        if (el) el.style.opacity = shouldRenderTrail ? opacity : "0";
       }
     };
 
@@ -71,7 +77,7 @@ export default function CustomCursor() {
       }
     };
 
-    const handleMouseMove = (event: MouseEvent) => {
+    const handleMouseMove = (event: PointerEvent) => {
       mouse.x = event.clientX;
       mouse.y = event.clientY;
 
@@ -108,7 +114,7 @@ export default function CustomCursor() {
 
       ringEl.style.transform = `translate3d(${ring.x}px, ${ring.y}px, 0) translate(-50%, -50%)`;
 
-      if (!reducedMotion) {
+      if (shouldRenderTrail) {
         trailPoints[0].x += (mouse.x - trailPoints[0].x) * 0.22;
         trailPoints[0].y += (mouse.y - trailPoints[0].y) * 0.22;
 
@@ -132,7 +138,7 @@ export default function CustomCursor() {
 
     document.documentElement.classList.add("custom-cursor-enabled");
 
-    window.addEventListener("mousemove", handleMouseMove, { passive: true });
+    window.addEventListener("pointermove", handleMouseMove, { passive: true });
     window.addEventListener("mousedown", handleMouseDown);
     window.addEventListener("mouseup", handleMouseUp);
     window.addEventListener("mouseleave", handleMouseLeaveWindow);
@@ -144,7 +150,7 @@ export default function CustomCursor() {
     return () => {
       document.documentElement.classList.remove("custom-cursor-enabled");
 
-      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("pointermove", handleMouseMove);
       window.removeEventListener("mousedown", handleMouseDown);
       window.removeEventListener("mouseup", handleMouseUp);
       window.removeEventListener("mouseleave", handleMouseLeaveWindow);

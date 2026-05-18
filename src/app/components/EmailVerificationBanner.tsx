@@ -3,18 +3,39 @@ import ResendVerificationButton from "@/app/components/ResendVerificationButton"
 
 type Props = {
   email: string;
+  isBlocking?: boolean;
 };
 
-export default function EmailVerificationBanner({ email }: Props) {
+export default function EmailVerificationBanner({
+  email,
+  isBlocking = false,
+}: Props) {
   return (
     <section style={bannerStyle}>
       <div style={{ display: "grid", gap: "12px", minWidth: 0 }}>
-        <div style={badgeStyle}>Email Verification Required</div>
+        <div style={badgeStyle}>
+          {isBlocking ? "Email Verification Required" : "Email Verification Available"}
+        </div>
         <div style={{ display: "grid", gap: "8px", minWidth: 0 }}>
-          <h2 style={titleStyle}>Verify your email to unlock all Yotei features.</h2>
+          <h2 style={titleStyle}>
+            {isBlocking
+              ? "Verify your email to unlock all Yotei features."
+              : "Verify your email whenever you are ready."}
+          </h2>
           <p style={textStyle}>
-            Your account is active and you can keep editing your basic profile, but
-            some sensitive areas stay locked until <strong>{email}</strong> is verified.
+            {isBlocking ? (
+              <>
+                Your account is active and you can keep editing your basic profile, but
+                some sensitive areas stay locked until <strong>{email}</strong> is
+                verified.
+              </>
+            ) : (
+              <>
+                Your account is already active and all dashboard features remain
+                available. Verifying <strong>{email}</strong> is still recommended, and
+                the full verification flow remains ready for production use.
+              </>
+            )}
           </p>
         </div>
       </div>
@@ -31,7 +52,7 @@ export default function EmailVerificationBanner({ email }: Props) {
 
 const bannerStyle: React.CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "minmax(0, 1fr) auto",
+  gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
   gap: "18px",
   alignItems: "center",
   padding: "22px",
@@ -75,7 +96,7 @@ const actionsStyle: React.CSSProperties = {
   display: "grid",
   gap: "10px",
   justifyItems: "stretch",
-  minWidth: "220px",
+  minWidth: 0,
 };
 
 const secondaryLinkStyle: React.CSSProperties = {

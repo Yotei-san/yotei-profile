@@ -2,6 +2,7 @@ import Link from "next/link";
 import ResendVerificationButton from "@/app/components/ResendVerificationButton";
 import { getCurrentUser } from "@/app/lib/auth";
 import { verifyEmailToken } from "@/app/lib/email-verification";
+import { logServerError } from "@/app/lib/server-log";
 
 type PageProps = {
   searchParams?: Promise<{
@@ -14,7 +15,19 @@ export default async function VerifyEmailPage({ searchParams }: PageProps) {
   const token = String(params.token ?? "").trim();
   const currentUser = await getCurrentUser();
 
-  const result = token ? await verifyEmailToken(token) : null;
+  let result: Awaited<ReturnType<typeof verifyEmailToken>> | null = null;
+
+  if (token) {
+    try {
+      result = await verifyEmailToken(token);
+    } catch (error) {
+      logServerError("verify-email.page", error, {
+        hasToken: true,
+      });
+      result = { status: "invalid" };
+    }
+  }
+
   const view = getView(result?.status ?? null, Boolean(currentUser));
 
   return (
@@ -144,7 +157,7 @@ const panelStyle: React.CSSProperties = {
   maxWidth: "620px",
   display: "grid",
   gap: "18px",
-  padding: "32px",
+  padding: "clamp(20px, 4vw, 32px)",
   borderRadius: "32px",
   border: "1px solid rgba(255,255,255,0.08)",
   background:
@@ -169,7 +182,7 @@ const badgeStyle: React.CSSProperties = {
 
 const titleStyle: React.CSSProperties = {
   margin: 0,
-  fontSize: "44px",
+  fontSize: "clamp(32px, 9vw, 44px)",
   lineHeight: 0.96,
   letterSpacing: "-0.06em",
 };

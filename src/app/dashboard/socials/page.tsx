@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { CSSProperties } from "react";
+import FormActionButton from "@/app/components/FormActionButton";
 import DiscordBlockPreview from "@/app/dashboard/components/DiscordBlockPreview";
 import GitHubBlockPreview from "@/app/dashboard/components/GitHubBlockPreview";
 import CreatorVideoBlockPreview from "@/app/dashboard/components/CreatorVideoBlockPreview";
@@ -10,8 +11,11 @@ import SocialIntegrationCard, {
   type SocialIntegrationItem,
 } from "@/app/dashboard/components/SocialIntegrationCard";
 import VerificationLockedPanel from "@/app/dashboard/components/VerificationLockedPanel";
-import { requireUser } from "@/app/lib/auth";
-import { isEmailVerified } from "@/app/lib/email-verification";
+import { redirectWithClearedSession, requireUser } from "@/app/lib/auth";
+import {
+  isEmailVerificationEnforced,
+  isEmailVerified,
+} from "@/app/lib/email-verification";
 import {
   readLiveEmbedMetadata,
   type LiveEmbedPlatform,
@@ -282,11 +286,9 @@ export default async function SocialsPage({ searchParams }: PageProps) {
     } as any,
   })) as SocialsPageUser | null;
 
-  if (!user) {
-    throw new Error("Usuario nao encontrado.");
-  }
+  const resolvedUser = user ?? (await redirectWithClearedSession());
 
-  if (!isEmailVerified(user)) {
+  if (isEmailVerificationEnforced() && !isEmailVerified(resolvedUser)) {
     return (
       <VerificationLockedPanel
         title="Verify your email to unlock social blocks."
@@ -295,16 +297,16 @@ export default async function SocialsPage({ searchParams }: PageProps) {
     );
   }
 
-  const discordBlock = getDiscordBlock(user.socialBlocks);
-  const githubBlock = getGitHubBlock(user.socialBlocks);
-  const spotifyBlock = getSpotifyBlock(user.socialBlocks);
-  const youtubeBlock = getCreatorVideoBlock(user.socialBlocks, "youtube");
-  const twitchBlock = getCreatorVideoBlock(user.socialBlocks, "twitch");
-  const twitchLiveBlock = getLiveEmbedBlock(user.socialBlocks, "twitch_live");
-  const youtubeLiveBlock = getLiveEmbedBlock(user.socialBlocks, "youtube_live");
-  const kickLiveBlock = getLiveEmbedBlock(user.socialBlocks, "kick_live");
-  const configuredCount = user.socialBlocks.length;
-  const enabledCount = user.socialBlocks.filter((block) => block.isEnabled).length;
+  const discordBlock = getDiscordBlock(resolvedUser.socialBlocks);
+  const githubBlock = getGitHubBlock(resolvedUser.socialBlocks);
+  const spotifyBlock = getSpotifyBlock(resolvedUser.socialBlocks);
+  const youtubeBlock = getCreatorVideoBlock(resolvedUser.socialBlocks, "youtube");
+  const twitchBlock = getCreatorVideoBlock(resolvedUser.socialBlocks, "twitch");
+  const twitchLiveBlock = getLiveEmbedBlock(resolvedUser.socialBlocks, "twitch_live");
+  const youtubeLiveBlock = getLiveEmbedBlock(resolvedUser.socialBlocks, "youtube_live");
+  const kickLiveBlock = getLiveEmbedBlock(resolvedUser.socialBlocks, "kick_live");
+  const configuredCount = resolvedUser.socialBlocks.length;
+  const enabledCount = resolvedUser.socialBlocks.filter((block) => block.isEnabled).length;
   const successMessage = getSuccessMessage(params.success);
   const errorMessage = getErrorMessage(params.error);
   const discordCardHref = "/dashboard/socials?active=discord#discord-block-form";
@@ -388,7 +390,11 @@ export default async function SocialsPage({ searchParams }: PageProps) {
             <Link href={heroPrimaryHref} style={primaryActionStyle}>
               {heroPrimaryLabel}
             </Link>
-            <Link href={`/${user.username}`} style={secondaryActionStyle} target="_blank">
+            <Link
+              href={`/${resolvedUser.username}`}
+              style={secondaryActionStyle}
+              target="_blank"
+            >
               Open Public Profile
             </Link>
           </div>
@@ -815,27 +821,29 @@ export default async function SocialsPage({ searchParams }: PageProps) {
             </div>
 
             <div style={actionRowStyle}>
-              <button type="submit" style={submitButtonStyle}>
-                {youtubeBlock ? "Save YouTube Block" : "Create YouTube Block"}
-              </button>
+              <FormActionButton
+                idleLabel={youtubeBlock ? "Save YouTube Block" : "Create YouTube Block"}
+                pendingLabel={
+                  youtubeBlock ? "Saving YouTube Block..." : "Creating YouTube Block..."
+                }
+                style={submitButtonStyle}
+              />
 
               {youtubeBlock ? (
                 <>
-                  <button
-                    type="submit"
+                  <FormActionButton
+                    idleLabel={youtubeBlock.isEnabled ? "Disable Block" : "Enable Block"}
+                    pendingLabel="Updating block..."
                     formAction={toggleSocialBlock.bind(null, youtubeBlock.id)}
                     style={secondaryButtonStyle}
-                  >
-                    {youtubeBlock.isEnabled ? "Disable Block" : "Enable Block"}
-                  </button>
+                  />
 
-                  <button
-                    type="submit"
+                  <FormActionButton
+                    idleLabel="Delete Block"
+                    pendingLabel="Deleting block..."
                     formAction={deleteSocialBlock.bind(null, youtubeBlock.id)}
                     style={dangerButtonStyle}
-                  >
-                    Delete Block
-                  </button>
+                  />
                 </>
               ) : null}
             </div>
@@ -940,27 +948,29 @@ export default async function SocialsPage({ searchParams }: PageProps) {
             </div>
 
             <div style={actionRowStyle}>
-              <button type="submit" style={submitButtonStyle}>
-                {twitchBlock ? "Save Twitch Block" : "Create Twitch Block"}
-              </button>
+              <FormActionButton
+                idleLabel={twitchBlock ? "Save Twitch Block" : "Create Twitch Block"}
+                pendingLabel={
+                  twitchBlock ? "Saving Twitch Block..." : "Creating Twitch Block..."
+                }
+                style={submitButtonStyle}
+              />
 
               {twitchBlock ? (
                 <>
-                  <button
-                    type="submit"
+                  <FormActionButton
+                    idleLabel={twitchBlock.isEnabled ? "Disable Block" : "Enable Block"}
+                    pendingLabel="Updating block..."
                     formAction={toggleSocialBlock.bind(null, twitchBlock.id)}
                     style={secondaryButtonStyle}
-                  >
-                    {twitchBlock.isEnabled ? "Disable Block" : "Enable Block"}
-                  </button>
+                  />
 
-                  <button
-                    type="submit"
+                  <FormActionButton
+                    idleLabel="Delete Block"
+                    pendingLabel="Deleting block..."
                     formAction={deleteSocialBlock.bind(null, twitchBlock.id)}
                     style={dangerButtonStyle}
-                  >
-                    Delete Block
-                  </button>
+                  />
                 </>
               ) : null}
             </div>
@@ -1069,27 +1079,29 @@ export default async function SocialsPage({ searchParams }: PageProps) {
             </div>
 
             <div style={actionRowStyle}>
-              <button type="submit" style={submitButtonStyle}>
-                {twitchLiveBlock ? "Save Twitch Live" : "Create Twitch Live"}
-              </button>
+              <FormActionButton
+                idleLabel={twitchLiveBlock ? "Save Twitch Live" : "Create Twitch Live"}
+                pendingLabel={
+                  twitchLiveBlock ? "Saving Twitch Live..." : "Creating Twitch Live..."
+                }
+                style={submitButtonStyle}
+              />
 
               {twitchLiveBlock ? (
                 <>
-                  <button
-                    type="submit"
+                  <FormActionButton
+                    idleLabel={twitchLiveBlock.isEnabled ? "Disable Block" : "Enable Block"}
+                    pendingLabel="Updating block..."
                     formAction={toggleSocialBlock.bind(null, twitchLiveBlock.id)}
                     style={secondaryButtonStyle}
-                  >
-                    {twitchLiveBlock.isEnabled ? "Disable Block" : "Enable Block"}
-                  </button>
+                  />
 
-                  <button
-                    type="submit"
+                  <FormActionButton
+                    idleLabel="Delete Block"
+                    pendingLabel="Deleting block..."
                     formAction={deleteSocialBlock.bind(null, twitchLiveBlock.id)}
                     style={dangerButtonStyle}
-                  >
-                    Delete Block
-                  </button>
+                  />
                 </>
               ) : null}
             </div>
@@ -1206,27 +1218,31 @@ export default async function SocialsPage({ searchParams }: PageProps) {
             </div>
 
             <div style={actionRowStyle}>
-              <button type="submit" style={submitButtonStyle}>
-                {youtubeLiveBlock ? "Save YouTube Live" : "Create YouTube Live"}
-              </button>
+              <FormActionButton
+                idleLabel={youtubeLiveBlock ? "Save YouTube Live" : "Create YouTube Live"}
+                pendingLabel={
+                  youtubeLiveBlock
+                    ? "Saving YouTube Live..."
+                    : "Creating YouTube Live..."
+                }
+                style={submitButtonStyle}
+              />
 
               {youtubeLiveBlock ? (
                 <>
-                  <button
-                    type="submit"
+                  <FormActionButton
+                    idleLabel={youtubeLiveBlock.isEnabled ? "Disable Block" : "Enable Block"}
+                    pendingLabel="Updating block..."
                     formAction={toggleSocialBlock.bind(null, youtubeLiveBlock.id)}
                     style={secondaryButtonStyle}
-                  >
-                    {youtubeLiveBlock.isEnabled ? "Disable Block" : "Enable Block"}
-                  </button>
+                  />
 
-                  <button
-                    type="submit"
+                  <FormActionButton
+                    idleLabel="Delete Block"
+                    pendingLabel="Deleting block..."
                     formAction={deleteSocialBlock.bind(null, youtubeLiveBlock.id)}
                     style={dangerButtonStyle}
-                  >
-                    Delete Block
-                  </button>
+                  />
                 </>
               ) : null}
             </div>
@@ -1339,27 +1355,29 @@ export default async function SocialsPage({ searchParams }: PageProps) {
             </div>
 
             <div style={actionRowStyle}>
-              <button type="submit" style={submitButtonStyle}>
-                {kickLiveBlock ? "Save Kick Live" : "Create Kick Live"}
-              </button>
+              <FormActionButton
+                idleLabel={kickLiveBlock ? "Save Kick Live" : "Create Kick Live"}
+                pendingLabel={
+                  kickLiveBlock ? "Saving Kick Live..." : "Creating Kick Live..."
+                }
+                style={submitButtonStyle}
+              />
 
               {kickLiveBlock ? (
                 <>
-                  <button
-                    type="submit"
+                  <FormActionButton
+                    idleLabel={kickLiveBlock.isEnabled ? "Disable Block" : "Enable Block"}
+                    pendingLabel="Updating block..."
                     formAction={toggleSocialBlock.bind(null, kickLiveBlock.id)}
                     style={secondaryButtonStyle}
-                  >
-                    {kickLiveBlock.isEnabled ? "Disable Block" : "Enable Block"}
-                  </button>
+                  />
 
-                  <button
-                    type="submit"
+                  <FormActionButton
+                    idleLabel="Delete Block"
+                    pendingLabel="Deleting block..."
                     formAction={deleteSocialBlock.bind(null, kickLiveBlock.id)}
                     style={dangerButtonStyle}
-                  >
-                    Delete Block
-                  </button>
+                  />
                 </>
               ) : null}
             </div>
@@ -1466,27 +1484,29 @@ export default async function SocialsPage({ searchParams }: PageProps) {
             </div>
 
             <div style={actionRowStyle}>
-              <button type="submit" style={submitButtonStyle}>
-                {discordBlock ? "Save Discord Block" : "Create Discord Block"}
-              </button>
+              <FormActionButton
+                idleLabel={discordBlock ? "Save Discord Block" : "Create Discord Block"}
+                pendingLabel={
+                  discordBlock ? "Saving Discord Block..." : "Creating Discord Block..."
+                }
+                style={submitButtonStyle}
+              />
 
               {discordBlock ? (
                 <>
-                  <button
-                    type="submit"
+                  <FormActionButton
+                    idleLabel={discordBlock.isEnabled ? "Disable Block" : "Enable Block"}
+                    pendingLabel="Updating block..."
                     formAction={toggleSocialBlock.bind(null, discordBlock.id)}
                     style={secondaryButtonStyle}
-                  >
-                    {discordBlock.isEnabled ? "Disable Block" : "Enable Block"}
-                  </button>
+                  />
 
-                  <button
-                    type="submit"
+                  <FormActionButton
+                    idleLabel="Delete Block"
+                    pendingLabel="Deleting block..."
                     formAction={deleteSocialBlock.bind(null, discordBlock.id)}
                     style={dangerButtonStyle}
-                  >
-                    Delete Block
-                  </button>
+                  />
                 </>
               ) : null}
             </div>
@@ -1588,27 +1608,29 @@ export default async function SocialsPage({ searchParams }: PageProps) {
             </div>
 
             <div style={actionRowStyle}>
-              <button type="submit" style={submitButtonStyle}>
-                {githubBlock ? "Save GitHub Block" : "Create GitHub Block"}
-              </button>
+              <FormActionButton
+                idleLabel={githubBlock ? "Save GitHub Block" : "Create GitHub Block"}
+                pendingLabel={
+                  githubBlock ? "Saving GitHub Block..." : "Creating GitHub Block..."
+                }
+                style={submitButtonStyle}
+              />
 
               {githubBlock ? (
                 <>
-                  <button
-                    type="submit"
+                  <FormActionButton
+                    idleLabel={githubBlock.isEnabled ? "Disable Block" : "Enable Block"}
+                    pendingLabel="Updating block..."
                     formAction={toggleSocialBlock.bind(null, githubBlock.id)}
                     style={secondaryButtonStyle}
-                  >
-                    {githubBlock.isEnabled ? "Disable Block" : "Enable Block"}
-                  </button>
+                  />
 
-                  <button
-                    type="submit"
+                  <FormActionButton
+                    idleLabel="Delete Block"
+                    pendingLabel="Deleting block..."
                     formAction={deleteSocialBlock.bind(null, githubBlock.id)}
                     style={dangerButtonStyle}
-                  >
-                    Delete Block
-                  </button>
+                  />
                 </>
               ) : null}
             </div>
@@ -1723,27 +1745,29 @@ export default async function SocialsPage({ searchParams }: PageProps) {
             </div>
 
             <div style={actionRowStyle}>
-              <button type="submit" style={submitButtonStyle}>
-                {spotifyBlock ? "Save Spotify Block" : "Create Spotify Block"}
-              </button>
+              <FormActionButton
+                idleLabel={spotifyBlock ? "Save Spotify Block" : "Create Spotify Block"}
+                pendingLabel={
+                  spotifyBlock ? "Saving Spotify Block..." : "Creating Spotify Block..."
+                }
+                style={submitButtonStyle}
+              />
 
               {spotifyBlock ? (
                 <>
-                  <button
-                    type="submit"
+                  <FormActionButton
+                    idleLabel={spotifyBlock.isEnabled ? "Disable Block" : "Enable Block"}
+                    pendingLabel="Updating block..."
                     formAction={toggleSocialBlock.bind(null, spotifyBlock.id)}
                     style={secondaryButtonStyle}
-                  >
-                    {spotifyBlock.isEnabled ? "Disable Block" : "Enable Block"}
-                  </button>
+                  />
 
-                  <button
-                    type="submit"
+                  <FormActionButton
+                    idleLabel="Delete Block"
+                    pendingLabel="Deleting block..."
                     formAction={deleteSocialBlock.bind(null, spotifyBlock.id)}
                     style={dangerButtonStyle}
-                  >
-                    Delete Block
-                  </button>
+                  />
                 </>
               ) : null}
             </div>
@@ -2292,7 +2316,7 @@ const gridStyle: CSSProperties = {
 
 const discordSectionStyle: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "minmax(0, 1.15fr) minmax(300px, 0.85fr)",
+  gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
   gap: "18px",
   padding: "26px",
   borderRadius: "28px",
@@ -2314,7 +2338,7 @@ const discordPreviewColumnStyle: CSSProperties = {
 
 const formGridStyle: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+  gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
   gap: "14px",
 };
 

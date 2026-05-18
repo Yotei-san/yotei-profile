@@ -2,8 +2,9 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { requireUser } from "@/app/lib/auth";
+import { redirectWithClearedSession, requireUser } from "@/app/lib/auth";
 import { prisma } from "@/app/lib/prisma";
+import { logServerError } from "@/app/lib/server-log";
 
 const VALID_PROFILE_LAYOUTS = new Set([
   "default",
@@ -24,19 +25,36 @@ export async function saveProfileSettings(formData: FormData) {
     ? requestedProfileLayout
     : "modern";
 
-  await prisma.user.update({
+  const currentUser = await prisma.user.findUnique({
     where: { id: sessionUser.id },
-    data: {
-      displayName: displayName || null,
-      bio: bio || null,
-      themeColor,
-      profileLayout,
+    select: {
+      id: true,
+      username: true,
     },
   });
 
+  const resolvedUser = currentUser ?? (await redirectWithClearedSession());
+
+  try {
+    await prisma.user.update({
+      where: { id: resolvedUser.id },
+      data: {
+        displayName: displayName || null,
+        bio: bio || null,
+        themeColor,
+        profileLayout,
+      },
+    });
+  } catch (error) {
+    logServerError("dashboard.profile.save-settings", error, {
+      userId: sessionUser.id,
+    });
+    redirect("/dashboard/profile?error=save-failed");
+  }
+
   revalidatePath("/dashboard/profile");
   revalidatePath("/dashboard");
-  revalidatePath(`/${sessionUser.username}`);
+  revalidatePath(`/${resolvedUser.username}`);
 
   redirect("/dashboard/profile?success=saved");
 }

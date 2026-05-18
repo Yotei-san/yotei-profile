@@ -279,7 +279,9 @@ export function AuthFooterLinks({
   );
 }
 
-export function useAuthSubmit<T extends (...args: never[]) => Promise<void>>(action: T) {
+export function useAuthSubmit<
+  T extends (...args: never[]) => Promise<{ error?: string; success?: string } | void>,
+>(action: T) {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [isPending, startTransition] = useTransition();
@@ -296,7 +298,18 @@ export function useAuthSubmit<T extends (...args: never[]) => Promise<void>>(act
 
     startTransition(async () => {
       try {
-        await action(formData as never);
+        const result = (await action(formData as never)) as
+          | { error?: string; success?: string }
+          | void;
+
+        if (result?.error) {
+          setError(result.error);
+          return;
+        }
+
+        if (result?.success) {
+          setSuccess(result.success);
+        }
       } catch (err) {
         const message = err instanceof Error ? err.message : "Ocorreu um erro inesperado.";
 

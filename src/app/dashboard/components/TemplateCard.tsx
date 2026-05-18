@@ -1,6 +1,7 @@
 "use client";
 
 import type { CSSProperties, KeyboardEvent, MouseEvent } from "react";
+import FormActionButton from "@/app/components/FormActionButton";
 
 export type TemplateCardData = {
   id: string;
@@ -150,14 +151,13 @@ export default function TemplateCard({
           <form action={applyAction} style={{ display: "contents" }}>
             <input type="hidden" name="templateId" value={template.id} />
             <input type="hidden" name="tab" value={currentTab} />
-            <button
-              type="submit"
-              disabled={isLockedPremium}
+            <FormActionButton
               className="template-card__action"
+              idleLabel={isLockedPremium ? "Premium Only" : "Use Template"}
+              pendingLabel="Applying Template..."
+              disabled={isLockedPremium}
               style={isLockedPremium ? lockedButtonStyle : useButtonStyle}
-            >
-              {isLockedPremium ? "Premium Only" : "Use Template"}
-            </button>
+            />
           </form>
 
           <button

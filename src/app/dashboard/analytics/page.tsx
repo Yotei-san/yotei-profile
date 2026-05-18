@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requireUser } from "@/app/lib/auth";
+import { redirectWithClearedSession, requireUser } from "@/app/lib/auth";
 import { prisma } from "@/app/lib/prisma";
 
 export default async function AnalyticsPage() {
@@ -24,6 +24,10 @@ export default async function AnalyticsPage() {
       },
     },
   });
+
+  if (!user) {
+    await redirectWithClearedSession();
+  }
 
   if (!user) {
     throw new Error("Usuário não encontrado.");

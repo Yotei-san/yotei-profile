@@ -4,8 +4,15 @@ import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
 import { createUserSession } from "@/app/lib/auth";
 import { prisma } from "@/app/lib/prisma";
+import { logServerError } from "@/app/lib/server-log";
 
-export async function loginUser(formData: FormData) {
+type AuthActionResult = {
+  error?: string;
+};
+
+export async function loginUser(
+  formData: FormData
+): Promise<AuthActionResult | void> {
   const identifier = String(formData.get("identifier") || "")
     .trim()
     .toLowerCase();
@@ -13,35 +20,46 @@ export async function loginUser(formData: FormData) {
   const rememberSession = parseRememberSession(formData.get("rememberSession"));
 
   if (!identifier || !password) {
-    throw new Error("Preencha seu email ou username e a senha.");
+    return { error: "Preencha seu email ou username e a senha." };
   }
 
-  const user = await prisma.user.findFirst({
-    where: {
-      OR: [{ email: identifier }, { username: identifier }],
-    },
-    select: {
-      id: true,
-      password: true,
-      status: true,
-    },
-  });
+  try {
+    const user = await prisma.user.findFirst({
+      where: {
+        OR: [{ email: identifier }, { username: identifier }],
+      },
+      select: {
+        id: true,
+        password: true,
+        status: true,
+      },
+    });
 
-  if (!user) {
-    throw new Error("Usuario ou senha invalidos.");
+    if (!user) {
+      return { error: "Email, username ou senha invalidos." };
+    }
+
+    if (user.status !== "active") {
+      return { error: "Esta conta esta temporariamente indisponivel." };
+    }
+
+    const passwordMatches = await bcrypt.compare(password, user.password);
+
+    if (!passwordMatches) {
+      return { error: "Email, username ou senha invalidos." };
+    }
+
+    await createUserSession(user.id, { remember: rememberSession });
+  } catch (error) {
+    logServerError("auth.login", error, {
+      identifier,
+    });
+    return {
+      error:
+        "Nao foi possivel entrar agora. Tente novamente em instantes.",
+    };
   }
 
-  if (user.status !== "active") {
-    throw new Error("Conta desativada.");
-  }
-
-  const passwordMatches = await bcrypt.compare(password, user.password);
-
-  if (!passwordMatches) {
-    throw new Error("Usuario ou senha invalidos.");
-  }
-
-  await createUserSession(user.id, { remember: rememberSession });
   redirect("/dashboard");
 }
 

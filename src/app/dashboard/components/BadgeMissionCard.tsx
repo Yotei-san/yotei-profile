@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { CSSProperties } from "react";
+import FormActionButton from "@/app/components/FormActionButton";
 import { claimBadge } from "@/app/dashboard/badges/actions";
 import BadgeVisual from "@/app/dashboard/components/BadgeVisual";
 import type { BadgeFilter, BadgeMissionCardState } from "@/app/lib/badge-missions";
@@ -82,9 +83,12 @@ export default function BadgeMissionCard({ badge, activeFilter }: Props) {
           <form action={claimBadge}>
             <input type="hidden" name="badgeSlug" value={badge.slug} />
             <input type="hidden" name="filter" value={activeFilter} />
-            <button type="submit" className="badge-action-button" style={buttonStyle}>
-              {badge.buttonLabel}
-            </button>
+            <FormActionButton
+              className="badge-action-button"
+              idleLabel={badge.buttonLabel}
+              pendingLabel="Claiming Badge..."
+              style={buttonStyle}
+            />
           </form>
         ) : badge.status === "premium-required" ? (
           <Link href="/pricing" className="badge-action-button" style={buttonStyle}>

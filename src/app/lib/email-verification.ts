@@ -25,11 +25,17 @@ type VerificationTokenUser = {
   emailVerificationExpires: Date | null;
 };
 
+type CreateAndSendEmailVerificationOptions = {
+  allowEmailDeliveryFailure?: boolean;
+};
+
 export async function createAndSendEmailVerification(input: {
   userId: string;
   email: string;
   username: string;
-}) {
+},
+options?: CreateAndSendEmailVerificationOptions
+) {
   const token = randomBytes(32).toString("hex");
   const tokenHash = hashVerificationToken(token);
   const expiresAt = new Date(Date.now() + VERIFICATION_TTL_MS);
@@ -53,11 +59,25 @@ export async function createAndSendEmailVerification(input: {
     baseUrl,
   });
 
-  await sendVerificationEmail({
-    email: input.email,
-    username: input.username,
-    verificationUrl,
-  });
+  try {
+    await sendVerificationEmail({
+      email: input.email,
+      username: input.username,
+      verificationUrl,
+    });
+  } catch (error) {
+    console.error("[Yotei email verification] Verification email delivery failed.", {
+      userId: input.userId,
+      email: input.email,
+      username: input.username,
+      message: error instanceof Error ? error.message : "Unknown email delivery error.",
+      error,
+    });
+
+    if (!options?.allowEmailDeliveryFailure) {
+      throw error;
+    }
+  }
 }
 
 export async function resendEmailVerificationForUser(userId: string) {
@@ -150,6 +170,24 @@ export async function verifyEmailToken(rawToken: string): Promise<VerificationRe
 
 export function isEmailVerified(user: { emailVerified?: Date | null }) {
   return Boolean(user.emailVerified);
+}
+
+export function isEmailVerificationEnforced() {
+  const configuredValue = process.env.ENFORCE_EMAIL_VERIFICATION?.trim().toLowerCase();
+
+  if (configuredValue === "1" || configuredValue === "true" || configuredValue === "on") {
+    return true;
+  }
+
+  if (
+    configuredValue === "0" ||
+    configuredValue === "false" ||
+    configuredValue === "off"
+  ) {
+    return false;
+  }
+
+  return process.env.NODE_ENV === "production";
 }
 
 function hashVerificationToken(token: string) {

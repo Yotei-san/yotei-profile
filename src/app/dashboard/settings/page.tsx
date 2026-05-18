@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { requireUser } from "@/app/lib/auth";
+import FormActionButton from "@/app/components/FormActionButton";
+import { redirectWithClearedSession, requireUser } from "@/app/lib/auth";
 import { prisma } from "@/app/lib/prisma";
 import {
   updateDisplayName,
@@ -75,6 +76,10 @@ export default async function SettingsPage({
   });
 
   if (!user) {
+    await redirectWithClearedSession();
+  }
+
+  if (!user) {
     throw new Error("Usuário não encontrado.");
   }
 
@@ -96,7 +101,7 @@ export default async function SettingsPage({
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "260px 1fr",
+            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
             gap: "24px",
             alignItems: "start",
           }}
@@ -176,7 +181,7 @@ export default async function SettingsPage({
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "1fr 1fr",
+                gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
                 gap: "20px",
               }}
             >
@@ -200,9 +205,11 @@ export default async function SettingsPage({
                     />
                   </div>
 
-                  <button type="submit" style={primaryButtonStyle}>
-                    Atualizar username
-                  </button>
+                  <FormActionButton
+                    idleLabel="Atualizar username"
+                    pendingLabel="Atualizando username..."
+                    style={primaryButtonStyle}
+                  />
                 </form>
               </section>
 
@@ -245,9 +252,11 @@ export default async function SettingsPage({
                     />
                   </div>
 
-                  <button type="submit" style={primaryButtonStyle}>
-                    Alterar senha
-                  </button>
+                  <FormActionButton
+                    idleLabel="Alterar senha"
+                    pendingLabel="Alterando senha..."
+                    style={primaryButtonStyle}
+                  />
                 </form>
               </section>
 
@@ -270,9 +279,11 @@ export default async function SettingsPage({
                     />
                   </div>
 
-                  <button type="submit" style={primaryButtonStyle}>
-                    Atualizar display name
-                  </button>
+                  <FormActionButton
+                    idleLabel="Atualizar display name"
+                    pendingLabel="Atualizando display name..."
+                    style={primaryButtonStyle}
+                  />
                 </form>
               </section>
 
