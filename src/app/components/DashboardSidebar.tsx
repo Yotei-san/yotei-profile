@@ -61,7 +61,6 @@ export default function DashboardSidebar({ user, items, lockedHrefs = [] }: Prop
         width: "100%",
         maxWidth: "270px",
         minWidth: 0,
-        overflow: "hidden",
         background:
           "linear-gradient(180deg, rgba(12,12,14,0.98), rgba(8,8,10,0.98))",
         border: "1px solid rgba(255,255,255,0.06)",
@@ -71,9 +70,9 @@ export default function DashboardSidebar({ user, items, lockedHrefs = [] }: Prop
         display: "flex",
         flexDirection: "column",
         gap: "18px",
-        height: "calc(100vh - 48px)",
         position: "sticky",
         top: "24px",
+        alignSelf: "flex-start",
       }}
     >
       <style jsx>{`
@@ -197,9 +196,6 @@ export default function DashboardSidebar({ user, items, lockedHrefs = [] }: Prop
 
       <div
         style={{
-          overflowY: "auto",
-          overflowX: "hidden",
-          paddingRight: "4px",
           display: "grid",
           gap: "18px",
         }}

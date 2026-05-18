@@ -437,13 +437,19 @@ const layoutGridStyle: CSSProperties = {
 };
 
 const layoutCardStyle: CSSProperties = {
+  position: "relative",
+  minWidth: 0,
   cursor: "pointer",
 };
 
 const layoutInputStyle: CSSProperties = {
   position: "absolute",
+  inset: 0,
+  width: "100%",
+  height: "100%",
+  margin: 0,
   opacity: 0,
-  pointerEvents: "none",
+  cursor: "pointer",
 };
 
 const layoutCardBodyStyle: CSSProperties = {
