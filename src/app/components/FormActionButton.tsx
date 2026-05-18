@@ -34,6 +34,12 @@ export default function FormActionButton({
       aria-busy={pending}
       style={{
         ...style,
+        minHeight: style.minHeight ?? "46px",
+        display: style.display ?? "inline-flex",
+        alignItems: style.alignItems ?? "center",
+        justifyContent: style.justifyContent ?? "center",
+        gap: style.gap ?? "10px",
+        textAlign: style.textAlign ?? "center",
         opacity: isDisabled ? 0.72 : 1,
         cursor: isDisabled ? "not-allowed" : style.cursor,
       }}

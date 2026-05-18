@@ -1,5 +1,22 @@
+import type { CSSProperties } from "react";
 import Link from "next/link";
 import FormActionButton from "@/app/components/FormActionButton";
+import {
+  DashboardEmptyState,
+  DashboardNotice,
+  DashboardPageHeader,
+  DashboardSectionHeading,
+  dashboardAutoGridStyle,
+  dashboardButtonStyle,
+  dashboardFieldGridStyle,
+  dashboardInputStyle,
+  dashboardLabelStyle,
+  dashboardListItemStyle,
+  dashboardMutedTextStyle,
+  dashboardPageStyle,
+  dashboardSurfaceStyle,
+  dashboardTagStyle,
+} from "@/app/dashboard/components/DashboardUI";
 import { redirectWithClearedSession, requireUser } from "@/app/lib/auth";
 import { prisma } from "@/app/lib/prisma";
 import { getLinkPlatform } from "@/app/lib/link-icons";
@@ -16,17 +33,17 @@ function getMessage(type: "success" | "error", value?: string) {
   if (!value) return null;
 
   if (type === "success") {
-    if (value === "created") return "Link criado com sucesso.";
-    if (value === "updated") return "Link atualizado com sucesso.";
-    if (value === "deleted") return "Link removido com sucesso.";
-    return "Ação concluída.";
+    if (value === "created") return "Link created successfully.";
+    if (value === "updated") return "Link updated successfully.";
+    if (value === "deleted") return "Link removed successfully.";
+    return "Action completed.";
   }
 
-  if (value === "missing-url") return "Preencha a URL do link.";
-  if (value === "invalid-update") return "Dados inválidos para atualizar.";
-  if (value === "invalid-delete") return "Dados inválidos para remover.";
-  if (value === "link-not-found") return "Link não encontrado.";
-  return "Não foi possível concluir a ação.";
+  if (value === "missing-url") return "Add a valid URL before saving.";
+  if (value === "invalid-update") return "Unable to update that link.";
+  if (value === "invalid-delete") return "Unable to remove that link.";
+  if (value === "link-not-found") return "That link could not be found.";
+  return "Unable to complete that action right now.";
 }
 
 export default async function LinksPage({ searchParams }: PageProps) {
@@ -50,233 +67,164 @@ export default async function LinksPage({ searchParams }: PageProps) {
     },
   });
 
-  if (!user) {
-    await redirectWithClearedSession();
-  }
-
-  if (!user) {
-    throw new Error("Usuário não encontrado.");
-  }
+  const resolvedUser = user ?? (await redirectWithClearedSession());
+  const successMessage = getMessage("success", params.success);
+  const errorMessage = getMessage("error", params.error);
 
   return (
-    <main style={{ color: "#ffffff", fontFamily: "Arial, Helvetica, sans-serif" }}>
-      <section
-        style={{
-          background:
-            "linear-gradient(135deg, rgba(25,10,18,0.98), rgba(10,10,12,0.98))",
-          border: "1px solid rgba(244,114,182,0.14)",
-          borderRadius: "28px",
-          padding: "26px",
-          boxShadow: "0 24px 60px rgba(0,0,0,0.28)",
-          marginBottom: "22px",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            gap: "16px",
-            flexWrap: "wrap",
-            alignItems: "center",
-          }}
-        >
-          <div>
-            <div
-              style={{
-                display: "inline-flex",
-                gap: "8px",
-                alignItems: "center",
-                padding: "8px 12px",
-                borderRadius: "999px",
-                backgroundColor: "rgba(244,114,182,0.08)",
-                border: "1px solid rgba(244,114,182,0.14)",
-                color: "#f9a8d4",
-                fontWeight: 700,
-                fontSize: "13px",
-                marginBottom: "10px",
-              }}
+    <main style={dashboardPageStyle}>
+      <DashboardPageHeader
+        eyebrow="Links manager"
+        title="Shape the actions visitors take from your profile."
+        description="Keep every profile destination aligned, readable, and easy to update across mobile and desktop."
+        actions={
+          <>
+            <Link href="/dashboard/analytics" style={dashboardButtonStyle("secondary")}>
+              View analytics
+            </Link>
+            <Link
+              href={`/${resolvedUser.username}`}
+              style={dashboardButtonStyle("primary")}
+              target="_blank"
             >
-              ✦ Links Manager
+              Open profile
+            </Link>
+          </>
+        }
+        aside={
+          <div style={summaryCardStyle}>
+            <div style={dashboardTagStyle("violet")}>{resolvedUser.links.length} links</div>
+            <div style={{ display: "grid", gap: "6px" }}>
+              <div style={summaryValueStyle}>Keep your profile actionable.</div>
+              <div style={dashboardMutedTextStyle}>
+                Add social destinations, projects, communities, and your most important calls to action.
+              </div>
             </div>
-
-            <h1 style={{ margin: 0, fontSize: "48px", lineHeight: 1 }}>
-              Seus links
-            </h1>
-
-            <p style={{ color: "#a3a3a3", marginTop: "10px", marginBottom: 0 }}>
-              Adicione Discord, Instagram, GitHub, X e qualquer outro link.
-            </p>
           </div>
+        }
+      />
 
-          <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
-            <Link href="/dashboard" style={topLinkStyle}>
-              Dashboard
-            </Link>
-            <Link href={`/${user.username}`} target="_blank" style={topLinkStyle}>
-              Ver perfil
-            </Link>
-          </div>
-        </div>
-      </section>
+      {successMessage ? <DashboardNotice tone="success">{successMessage}</DashboardNotice> : null}
+      {errorMessage ? <DashboardNotice tone="error">{errorMessage}</DashboardNotice> : null}
 
-      {getMessage("success", params.success) ? (
-        <div style={successBoxStyle}>{getMessage("success", params.success)}</div>
-      ) : null}
+      <section style={dashboardAutoGridStyle(320)}>
+        <form action={createLink} style={dashboardSurfaceStyle}>
+          <DashboardSectionHeading
+            eyebrow="Create"
+            title="Add a new link"
+            description="Title is optional. Platform details are inferred automatically from the URL."
+          />
 
-      {getMessage("error", params.error) ? (
-        <div style={errorBoxStyle}>{getMessage("error", params.error)}</div>
-      ) : null}
-
-      <section
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-          gap: "18px",
-        }}
-      >
-        <form action={createLink} style={panelStyle}>
-          <h2 style={panelTitleStyle}>Adicionar link</h2>
-
-          <div style={{ display: "grid", gap: "14px", marginTop: "18px" }}>
-            <label style={labelStyle}>
-              Título
+          <div style={dashboardFieldGridStyle}>
+            <label style={dashboardLabelStyle}>
+              Title
               <input
                 type="text"
                 name="title"
-                placeholder="Ex: Discord"
-                style={inputStyle}
+                placeholder="Discord, portfolio, shop..."
+                style={dashboardInputStyle}
               />
             </label>
 
-            <label style={labelStyle}>
+            <label style={dashboardLabelStyle}>
               URL
               <input
                 type="text"
                 name="url"
-                placeholder="discord.gg/seulink"
-                style={inputStyle}
+                placeholder="https://discord.gg/yourserver"
+                style={dashboardInputStyle}
                 required
               />
             </label>
 
             <FormActionButton
-              idleLabel="Criar link"
-              pendingLabel="Criando link..."
-              style={primaryButtonStyle}
+              idleLabel="Create link"
+              pendingLabel="Creating link..."
+              style={dashboardButtonStyle("primary", { fullWidth: true })}
             />
           </div>
         </form>
 
-        <section style={panelStyle}>
-          <h2 style={panelTitleStyle}>Links atuais</h2>
+        <section style={dashboardSurfaceStyle}>
+          <DashboardSectionHeading
+            eyebrow="Inventory"
+            title="Current links"
+            description="Edit titles and destinations without losing the structure already attached to your profile."
+          />
 
-          <div style={{ display: "grid", gap: "14px", marginTop: "18px" }}>
-            {user.links.length > 0 ? (
-              user.links.map((item) => {
+          <div style={{ display: "grid", gap: "14px" }}>
+            {resolvedUser.links.length > 0 ? (
+              resolvedUser.links.map((item, index) => {
                 const platform = getLinkPlatform(item.url, item.title);
                 const PlatformIcon = platform.icon;
 
                 return (
-                  <article
-                    key={item.id}
-                    style={{
-                      backgroundColor: "#101010",
-                      border: "1px solid #1f1f1f",
-                      borderRadius: "18px",
-                      padding: "16px",
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "12px",
-                        marginBottom: "14px",
-                      }}
-                    >
-                      <div
-                        style={{
-                          width: "42px",
-                          height: "42px",
-                          borderRadius: "14px",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          backgroundColor: "rgba(244,114,182,0.10)",
-                          border: "1px solid rgba(244,114,182,0.18)",
-                          flexShrink: 0,
-                        }}
-                      >
-                        <PlatformIcon size={20} color={platform.color} />
+                  <article key={item.id} style={dashboardListItemStyle}>
+                    <div style={cardHeaderStyle}>
+                      <div style={cardIdentityStyle}>
+                        <div style={iconWrapStyle}>
+                          <PlatformIcon size={20} color={platform.color} />
+                        </div>
+                        <div style={{ minWidth: 0, display: "grid", gap: "4px" }}>
+                          <div style={cardTitleStyle}>
+                            {item.title || platform.name}
+                          </div>
+                          <div style={dashboardMutedTextStyle}>{platform.name}</div>
+                        </div>
                       </div>
 
-                      <div>
-                        <div style={{ fontWeight: 800 }}>
-                          {item.title || platform.name}
-                        </div>
-                        <div style={{ color: "#9ca3af", fontSize: "13px", marginTop: "4px" }}>
-                          {platform.name}
-                        </div>
-                      </div>
+                      <div style={dashboardTagStyle("pink")}>Link {index + 1}</div>
                     </div>
 
-                    <form action={updateLink} style={{ display: "grid", gap: "12px" }}>
+                    <form action={updateLink} style={dashboardFieldGridStyle}>
                       <input type="hidden" name="linkId" value={item.id} readOnly />
 
-                      <label style={labelStyle}>
-                        Título
+                      <label style={dashboardLabelStyle}>
+                        Title
                         <input
                           type="text"
                           name="title"
                           defaultValue={item.title || ""}
-                          placeholder="Título do link"
-                          style={inputStyle}
+                          placeholder="Link title"
+                          style={dashboardInputStyle}
                         />
                       </label>
 
-                      <label style={labelStyle}>
+                      <label style={dashboardLabelStyle}>
                         URL
                         <input
                           type="text"
                           name="url"
                           defaultValue={item.url}
                           placeholder="https://..."
-                          style={inputStyle}
+                          style={dashboardInputStyle}
                           required
                         />
                       </label>
 
-                      <div
-                        style={{
-                          display: "flex",
-                          gap: "12px",
-                          flexWrap: "wrap",
-                          alignItems: "center",
-                        }}
-                      >
-                        <FormActionButton
-                          idleLabel="Salvar"
-                          pendingLabel="Salvando..."
-                          style={primaryButtonStyle}
-                        />
-                      </div>
+                      <FormActionButton
+                        idleLabel="Save changes"
+                        pendingLabel="Saving changes..."
+                        style={dashboardButtonStyle("secondary", { fullWidth: true })}
+                      />
                     </form>
 
-                    <form action={deleteLink} style={{ marginTop: "12px" }}>
+                    <form action={deleteLink}>
                       <input type="hidden" name="linkId" value={item.id} readOnly />
                       <FormActionButton
-                        idleLabel="Remover"
-                        pendingLabel="Removendo..."
-                        style={dangerButtonStyle}
+                        idleLabel="Remove link"
+                        pendingLabel="Removing link..."
+                        style={dashboardButtonStyle("danger", { fullWidth: true })}
                       />
                     </form>
                   </article>
                 );
               })
             ) : (
-              <div style={emptyBoxStyle}>
-                Você ainda não adicionou links ao perfil.
-              </div>
+              <DashboardEmptyState
+                title="No links yet"
+                description="Your public profile is ready for actions, but it still needs its first destination. Add one link to start turning visits into clicks."
+              />
             )}
           </div>
         </section>
@@ -285,88 +233,49 @@ export default async function LinksPage({ searchParams }: PageProps) {
   );
 }
 
-const topLinkStyle: React.CSSProperties = {
-  textDecoration: "none",
-  backgroundColor: "#141414",
-  border: "1px solid #2a2a2a",
-  color: "#fff",
-  padding: "12px 16px",
-  borderRadius: "12px",
+const summaryCardStyle: CSSProperties = {
+  ...dashboardSurfaceStyle,
+  padding: "20px",
+  gap: "14px",
 };
 
-const panelStyle: React.CSSProperties = {
-  backgroundColor: "#0b0b0b",
-  border: "1px solid #1f1f1f",
-  borderRadius: "28px",
-  padding: "22px",
-};
-
-const panelTitleStyle: React.CSSProperties = {
-  margin: 0,
-  fontSize: "30px",
-};
-
-const labelStyle: React.CSSProperties = {
-  display: "grid",
-  gap: "8px",
-  color: "#d4d4d8",
-  fontSize: "14px",
-  fontWeight: 700,
-};
-
-const inputStyle: React.CSSProperties = {
-  width: "100%",
-  padding: "14px 16px",
-  borderRadius: "14px",
-  border: "1px solid #2a2a2a",
-  backgroundColor: "#0f0f0f",
+const summaryValueStyle: CSSProperties = {
   color: "#ffffff",
-  outline: "none",
+  fontSize: "20px",
+  fontWeight: 900,
+  lineHeight: 1.2,
 };
 
-const primaryButtonStyle: React.CSSProperties = {
-  padding: "14px 16px",
+const cardHeaderStyle: CSSProperties = {
+  display: "flex",
+  alignItems: "start",
+  justifyContent: "space-between",
+  gap: "12px",
+  flexWrap: "wrap",
+};
+
+const cardIdentityStyle: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: "12px",
+  minWidth: 0,
+};
+
+const iconWrapStyle: CSSProperties = {
+  width: "44px",
+  height: "44px",
   borderRadius: "14px",
-  border: "1px solid rgba(244,114,182,0.20)",
-  backgroundColor: "rgba(236,72,153,0.12)",
-  color: "#f9a8d4",
-  cursor: "pointer",
-  fontWeight: "bold",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  backgroundColor: "rgba(244,114,182,0.10)",
+  border: "1px solid rgba(244,114,182,0.18)",
+  flexShrink: 0,
 };
 
-const dangerButtonStyle: React.CSSProperties = {
-  padding: "14px 16px",
-  borderRadius: "14px",
-  border: "1px solid rgba(239,68,68,0.18)",
-  backgroundColor: "rgba(239,68,68,0.10)",
-  color: "#fca5a5",
-  cursor: "pointer",
-  fontWeight: "bold",
-};
-
-const successBoxStyle: React.CSSProperties = {
-  backgroundColor: "rgba(34,197,94,0.10)",
-  border: "1px solid rgba(34,197,94,0.22)",
-  color: "#86efac",
-  borderRadius: "16px",
-  padding: "14px 16px",
-  marginBottom: "18px",
-};
-
-const errorBoxStyle: React.CSSProperties = {
-  backgroundColor: "rgba(239,68,68,0.10)",
-  border: "1px solid rgba(239,68,68,0.22)",
-  color: "#fca5a5",
-  borderRadius: "16px",
-  padding: "14px 16px",
-  marginBottom: "18px",
-};
-
-const emptyBoxStyle: React.CSSProperties = {
-  border: "1px dashed #3a3a3a",
-  borderRadius: "14px",
-  padding: "24px",
-  textAlign: "center",
-  color: "#a3a3a3",
-  backgroundColor: "#0b0b0b",
+const cardTitleStyle: CSSProperties = {
+  color: "#ffffff",
+  fontSize: "16px",
+  fontWeight: 800,
+  overflowWrap: "anywhere",
 };

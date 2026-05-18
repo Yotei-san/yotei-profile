@@ -1,6 +1,18 @@
-import Link from "next/link";
 import type { CSSProperties } from "react";
+import Link from "next/link";
 import DashboardOnboardingChecklist from "@/app/dashboard/components/DashboardOnboardingChecklist";
+import {
+  DashboardEmptyState,
+  DashboardPageHeader,
+  DashboardSectionHeading,
+  dashboardAutoGridStyle,
+  dashboardButtonStyle,
+  dashboardListItemStyle,
+  dashboardMutedTextStyle,
+  dashboardPageStyle,
+  dashboardSurfaceStyle,
+  dashboardTagStyle,
+} from "@/app/dashboard/components/DashboardUI";
 import { redirectWithClearedSession, requireUser } from "@/app/lib/auth";
 import { buildDashboardOnboardingState } from "@/app/lib/dashboard-onboarding";
 import { prisma } from "@/app/lib/prisma";
@@ -77,7 +89,6 @@ export default async function DashboardPage() {
   })) as DashboardUser | null;
 
   const resolvedUser = user ?? (await redirectWithClearedSession());
-
   const totalClicks = resolvedUser.links.reduce(
     (sum, link) => sum + link._count.clicks,
     0
@@ -96,112 +107,117 @@ export default async function DashboardPage() {
   });
 
   return (
-    <main style={pageStyle}>
-      <section style={heroStyle}>
-        <div style={{ display: "grid", gap: "16px", minWidth: 0 }}>
-          <div style={heroBadgeStyle}>Dashboard Overview</div>
-          <div style={{ display: "grid", gap: "10px", minWidth: 0 }}>
-            <h1 style={heroTitleStyle}>
-              Welcome back, {resolvedUser.displayName || resolvedUser.username}
-            </h1>
-            <p style={heroTextStyle}>
-              Track your setup progress, finish the essentials and keep your public
-              profile feeling launch ready.
-            </p>
+    <main style={dashboardPageStyle}>
+      <DashboardPageHeader
+        eyebrow="Dashboard overview"
+        title={`Welcome back, ${resolvedUser.displayName || resolvedUser.username}`}
+        description="Track setup progress, keep key profile systems aligned, and focus on the next actions that make your public page feel launch ready."
+        actions={
+          <>
+            <Link
+              href={`/${resolvedUser.username}`}
+              style={dashboardButtonStyle("primary")}
+              target="_blank"
+            >
+              Open profile
+            </Link>
+            <Link href="/dashboard/profile" style={dashboardButtonStyle("secondary")}>
+              Edit profile
+            </Link>
+          </>
+        }
+        aside={
+          <div style={heroStatsGridStyle}>
+            <StatCard
+              title="Links"
+              value={String(resolvedUser.links.length)}
+              hint="Clickable profile actions"
+            />
+            <StatCard
+              title="Total clicks"
+              value={String(totalClicks)}
+              hint="Traffic across your links"
+            />
+            <StatCard
+              title="Social blocks"
+              value={String(resolvedUser.socialBlocks.length)}
+              hint="Identity blocks configured"
+            />
           </div>
-        </div>
-
-        <div style={heroActionsStyle}>
-          <Link
-            href={`/${resolvedUser.username}`}
-            style={primaryActionStyle}
-            target="_blank"
-          >
-            Open profile
-          </Link>
-          <Link href="/dashboard/profile" style={secondaryActionStyle}>
-            Edit profile
-          </Link>
-        </div>
-      </section>
+        }
+      />
 
       <DashboardOnboardingChecklist onboarding={onboarding} />
 
-      <section style={statsGridStyle}>
-        <StatCard
-          title="Links"
-          value={String(resolvedUser.links.length)}
-          hint="Clickable profile actions"
-        />
-        <StatCard title="Total clicks" value={String(totalClicks)} hint="Traffic across your links" />
-        <StatCard
-          title="Social blocks"
-          value={String(resolvedUser.socialBlocks.length)}
-          hint="Identity blocks configured"
-        />
-        <StatCard
-          title="Template activity"
-          value={String(resolvedUser.createdTemplates.length)}
-          hint="Templates created in your studio"
-        />
-      </section>
-
-      <section style={contentGridStyle}>
-        <div style={panelStyle}>
-          <div style={panelHeaderStyle}>
-            <div>
-              <div style={panelEyebrowStyle}>Performance</div>
-              <h2 style={panelTitleStyle}>Top links</h2>
-            </div>
-            <Link href="/dashboard/analytics" style={panelLinkStyle}>
-              Open analytics
-            </Link>
-          </div>
+      <section style={dashboardAutoGridStyle(340)}>
+        <section style={dashboardSurfaceStyle}>
+          <DashboardSectionHeading
+            eyebrow="Performance"
+            title="Top links"
+            description="A ranked snapshot of the destinations currently getting the most clicks."
+            actions={
+              <Link href="/dashboard/analytics" style={dashboardButtonStyle("secondary")}>
+                Open analytics
+              </Link>
+            }
+          />
 
           <div style={listStyle}>
             {topLinks.length > 0 ? (
               topLinks.map((link, index) => (
                 <div key={link.id} style={rowStyle}>
-                  <div style={{ minWidth: 0 }}>
+                  <div style={{ minWidth: 0, display: "grid", gap: "6px" }}>
                     <div style={rowTitleStyle}>
                       #{index + 1} {link.title || "Untitled link"}
                     </div>
-                    <div style={rowSubtleStyle}>{link.url}</div>
+                    <div style={dashboardMutedTextStyle}>{link.url}</div>
                   </div>
-                  <div style={countPillStyle}>{link._count.clicks} clicks</div>
+                  <div style={dashboardTagStyle("pink")}>{link._count.clicks} clicks</div>
                 </div>
               ))
             ) : (
-              <div style={emptyStyle}>You do not have links with clicks yet.</div>
+              <DashboardEmptyState
+                title="No link activity yet"
+                description="Your analytics panel will start filling in as soon as visitors interact with your first published links."
+              />
             )}
           </div>
-        </div>
+        </section>
 
-        <div style={panelStyle}>
-          <div style={panelHeaderStyle}>
-            <div>
-              <div style={panelEyebrowStyle}>Inventory</div>
-              <h2 style={panelTitleStyle}>All links</h2>
-            </div>
-            <Link href="/dashboard/links" style={panelLinkStyle}>
-              Manage links
-            </Link>
-          </div>
+        <section style={dashboardSurfaceStyle}>
+          <DashboardSectionHeading
+            eyebrow="Inventory"
+            title="All links"
+            description="A quick reference view of the destinations currently powering your profile."
+            actions={
+              <Link href="/dashboard/links" style={dashboardButtonStyle("secondary")}>
+                Manage links
+              </Link>
+            }
+          />
 
           <div style={listStyle}>
             {resolvedUser.links.length > 0 ? (
               resolvedUser.links.map((link) => (
-                <div key={link.id} style={stackedRowStyle}>
+                <div key={link.id} style={dashboardListItemStyle}>
                   <div style={rowTitleStyle}>{link.title || "Untitled link"}</div>
-                  <div style={rowSubtleStyle}>{link.url}</div>
-                  <div style={inlineMetaStyle}>{link._count.clicks} clicks</div>
+                  <div style={dashboardMutedTextStyle}>{link.url}</div>
+                  <div style={dashboardTagStyle("violet")}>{link._count.clicks} clicks</div>
                 </div>
               ))
             ) : (
-              <div style={emptyStyle}>You have not created your first link yet.</div>
+              <DashboardEmptyState
+                title="No links created yet"
+                description="Create your first link to give visitors a clear place to click from your profile."
+                action={
+                  <Link href="/dashboard/links" style={dashboardButtonStyle("primary")}>
+                    Create first link
+                  </Link>
+                }
+              />
             )}
           </div>
-        </div>
+        </section>
       </section>
     </main>
   );
@@ -225,101 +241,16 @@ function StatCard({
   );
 }
 
-const pageStyle: CSSProperties = {
+const heroStatsGridStyle: CSSProperties = {
   display: "grid",
-  gap: "22px",
-  color: "#ffffff",
-  fontFamily: "Arial, Helvetica, sans-serif",
-};
-
-const heroStyle: CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-  gap: "18px",
-  alignItems: "center",
-  padding: "28px",
-  borderRadius: "30px",
-  border: "1px solid rgba(255,255,255,0.08)",
-  background:
-    "radial-gradient(circle at top left, rgba(255,110,168,0.12), transparent 26%), radial-gradient(circle at 82% 18%, rgba(135,118,255,0.14), transparent 22%), linear-gradient(135deg, rgba(22,14,24,0.98), rgba(8,8,12,0.98))",
-  boxShadow: "0 24px 60px rgba(0,0,0,0.24)",
-};
-
-const heroBadgeStyle: CSSProperties = {
-  display: "inline-flex",
-  width: "fit-content",
-  minHeight: "32px",
-  padding: "0 12px",
-  borderRadius: "999px",
-  border: "1px solid rgba(255,110,168,0.18)",
-  backgroundColor: "rgba(255,110,168,0.08)",
-  color: "#ffd7e8",
-  fontSize: "12px",
-  fontWeight: 800,
-  letterSpacing: "0.08em",
-  textTransform: "uppercase",
-};
-
-const heroTitleStyle: CSSProperties = {
-  margin: 0,
-  fontSize: "48px",
-  lineHeight: 0.96,
-  letterSpacing: "-0.05em",
-};
-
-const heroTextStyle: CSSProperties = {
-  margin: 0,
-  maxWidth: "60ch",
-  color: "#b7c1d8",
-  fontSize: "15px",
-  lineHeight: 1.75,
-};
-
-const heroActionsStyle: CSSProperties = {
-  display: "flex",
+  gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
   gap: "12px",
-  flexWrap: "wrap",
-};
-
-const actionBaseStyle: CSSProperties = {
-  textDecoration: "none",
-  minHeight: "46px",
-  padding: "0 16px",
-  borderRadius: "16px",
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  fontWeight: 800,
-};
-
-const primaryActionStyle: CSSProperties = {
-  ...actionBaseStyle,
-  color: "#ffffff",
-  background:
-    "linear-gradient(135deg, rgba(135,118,255,0.94), rgba(255,110,168,0.9))",
-};
-
-const secondaryActionStyle: CSSProperties = {
-  ...actionBaseStyle,
-  color: "#dbe6ff",
-  border: "1px solid rgba(255,255,255,0.08)",
-  backgroundColor: "rgba(255,255,255,0.04)",
-};
-
-const statsGridStyle: CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-  gap: "16px",
 };
 
 const statCardStyle: CSSProperties = {
-  display: "grid",
+  ...dashboardSurfaceStyle,
+  padding: "18px",
   gap: "10px",
-  minWidth: 0,
-  padding: "22px",
-  borderRadius: "24px",
-  border: "1px solid rgba(255,255,255,0.08)",
-  backgroundColor: "rgba(9,9,12,0.92)",
 };
 
 const statTitleStyle: CSSProperties = {
@@ -341,60 +272,6 @@ const statHintStyle: CSSProperties = {
   lineHeight: 1.6,
 };
 
-const contentGridStyle: CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
-  gap: "18px",
-};
-
-const panelStyle: CSSProperties = {
-  display: "grid",
-  gap: "16px",
-  minWidth: 0,
-  padding: "24px",
-  borderRadius: "28px",
-  border: "1px solid rgba(255,255,255,0.08)",
-  backgroundColor: "rgba(9,9,12,0.92)",
-};
-
-const panelHeaderStyle: CSSProperties = {
-  display: "flex",
-  alignItems: "end",
-  justifyContent: "space-between",
-  gap: "14px",
-  flexWrap: "wrap",
-};
-
-const panelEyebrowStyle: CSSProperties = {
-  color: "#8ea0c9",
-  fontSize: "12px",
-  fontWeight: 800,
-  letterSpacing: "0.08em",
-  textTransform: "uppercase",
-  marginBottom: "8px",
-};
-
-const panelTitleStyle: CSSProperties = {
-  margin: 0,
-  fontSize: "30px",
-  lineHeight: 1.02,
-};
-
-const panelLinkStyle: CSSProperties = {
-  textDecoration: "none",
-  minHeight: "40px",
-  padding: "0 14px",
-  borderRadius: "14px",
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  border: "1px solid rgba(255,255,255,0.08)",
-  backgroundColor: "rgba(255,255,255,0.04)",
-  color: "#dbe6ff",
-  fontSize: "13px",
-  fontWeight: 800,
-};
-
 const listStyle: CSSProperties = {
   display: "grid",
   gap: "12px",
@@ -405,19 +282,10 @@ const rowStyle: CSSProperties = {
   alignItems: "center",
   justifyContent: "space-between",
   gap: "12px",
+  flexWrap: "wrap",
   minWidth: 0,
-  padding: "14px 16px",
-  borderRadius: "18px",
-  backgroundColor: "rgba(255,255,255,0.03)",
-  border: "1px solid rgba(255,255,255,0.06)",
-};
-
-const stackedRowStyle: CSSProperties = {
-  display: "grid",
-  gap: "8px",
-  minWidth: 0,
-  padding: "14px 16px",
-  borderRadius: "18px",
+  padding: "16px",
+  borderRadius: "20px",
   backgroundColor: "rgba(255,255,255,0.03)",
   border: "1px solid rgba(255,255,255,0.06)",
 };
@@ -425,41 +293,5 @@ const stackedRowStyle: CSSProperties = {
 const rowTitleStyle: CSSProperties = {
   color: "#ffffff",
   fontWeight: 800,
-};
-
-const rowSubtleStyle: CSSProperties = {
-  color: "#9eabc5",
-  fontSize: "13px",
-  lineHeight: 1.6,
-  overflow: "hidden",
-  textOverflow: "ellipsis",
-  whiteSpace: "nowrap",
-};
-
-const countPillStyle: CSSProperties = {
-  flexShrink: 0,
-  display: "inline-flex",
-  alignItems: "center",
-  minHeight: "34px",
-  padding: "0 12px",
-  borderRadius: "999px",
-  border: "1px solid rgba(255,110,168,0.18)",
-  backgroundColor: "rgba(255,110,168,0.08)",
-  color: "#ffd7e8",
-  fontSize: "12px",
-  fontWeight: 800,
-};
-
-const inlineMetaStyle: CSSProperties = {
-  color: "#f9a8d4",
-  fontSize: "13px",
-  fontWeight: 700,
-};
-
-const emptyStyle: CSSProperties = {
-  padding: "16px",
-  borderRadius: "16px",
-  border: "1px dashed rgba(255,255,255,0.10)",
-  backgroundColor: "rgba(255,255,255,0.03)",
-  color: "#97a3bc",
+  overflowWrap: "anywhere",
 };

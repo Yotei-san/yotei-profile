@@ -1,5 +1,21 @@
+import type { CSSProperties } from "react";
 import Link from "next/link";
 import FormActionButton from "@/app/components/FormActionButton";
+import {
+  DashboardNotice,
+  DashboardPageHeader,
+  DashboardSectionHeading,
+  dashboardAutoGridStyle,
+  dashboardButtonStyle,
+  dashboardFieldGridStyle,
+  dashboardInputStyle,
+  dashboardLabelStyle,
+  dashboardMutedTextStyle,
+  dashboardPageStyle,
+  dashboardSurfaceStyle,
+  dashboardTagStyle,
+  dashboardTextareaStyle,
+} from "@/app/dashboard/components/DashboardUI";
 import { redirectWithClearedSession, requireUser } from "@/app/lib/auth";
 import { prisma } from "@/app/lib/prisma";
 import { getMediaKind } from "@/app/lib/profile-media";
@@ -10,22 +26,22 @@ const PROFILE_LAYOUT_OPTIONS = [
   {
     key: "default",
     name: "Default",
-    description: "Banner no topo, avatar em destaque e links em lista premium simples.",
+    description: "Top banner, featured avatar, and a clean premium list of links.",
   },
   {
     key: "modern",
     name: "Modern",
-    description: "Visual cinematografico e premium. Continua como layout principal.",
+    description: "Cinematic premium styling with stronger contrast and presence.",
   },
   {
     key: "simplistic",
     name: "Simplistic",
-    description: "Minimalista, limpo e focado em leitura com menos brilho visual.",
+    description: "Minimal structure focused on reading and quick scanning.",
   },
   {
     key: "portfolio",
     name: "Portfolio",
-    description: "Mais profissional, ideal para devs, criadores e projetos.",
+    description: "A more professional presentation for creators, devs, and projects.",
   },
 ] as const;
 
@@ -53,162 +69,117 @@ export default async function ProfileSettingsPage({ searchParams }: PageProps) {
     },
   });
 
-  if (!user) {
-    await redirectWithClearedSession();
-  }
-
-  if (!user) {
-    throw new Error("Usuário não encontrado.");
-  }
-
-  const bannerKind = getMediaKind(user.bannerUrl || "");
-  const selectedProfileLayout = normalizeProfileLayout(user.profileLayout);
+  const resolvedUser = user ?? (await redirectWithClearedSession());
+  const bannerKind = getMediaKind(resolvedUser.bannerUrl || "");
+  const selectedProfileLayout = normalizeProfileLayout(resolvedUser.profileLayout);
 
   return (
-    <main
-      style={{
-        color: "#ffffff",
-        fontFamily: "Arial, Helvetica, sans-serif",
-      }}
-    >
-      <section
-        style={{
-          background:
-            "linear-gradient(135deg, rgba(25,10,18,0.98), rgba(10,10,12,0.98))",
-          border: "1px solid rgba(244,114,182,0.14)",
-          borderRadius: "28px",
-          padding: "26px",
-          boxShadow: "0 24px 60px rgba(0,0,0,0.28)",
-          marginBottom: "22px",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            gap: "16px",
-            flexWrap: "wrap",
-            alignItems: "center",
-          }}
-        >
-          <div>
-            <div
-              style={{
-                display: "inline-flex",
-                gap: "8px",
-                alignItems: "center",
-                padding: "8px 12px",
-                borderRadius: "999px",
-                backgroundColor: "rgba(244,114,182,0.08)",
-                border: "1px solid rgba(244,114,182,0.14)",
-                color: "#f9a8d4",
-                fontWeight: 700,
-                fontSize: "13px",
-                marginBottom: "10px",
-              }}
+    <main style={dashboardPageStyle}>
+      <DashboardPageHeader
+        eyebrow="Profile editor"
+        title="Refine the public identity visitors see first."
+        description="Update profile copy, theme color, media, and layout while keeping a real preview of the final presentation."
+        actions={
+          <>
+            <Link href="/dashboard" style={dashboardButtonStyle("secondary")}>
+              Back to dashboard
+            </Link>
+            <Link
+              href={`/${resolvedUser.username}`}
+              style={dashboardButtonStyle("primary")}
+              target="_blank"
             >
-              ✦ Profile Editor • Discord Upload
+              Open profile
+            </Link>
+          </>
+        }
+        aside={
+          <div style={summaryCardStyle}>
+            <div style={dashboardTagStyle("pink")}>{selectedProfileLayout} layout</div>
+            <div style={{ display: "grid", gap: "8px" }}>
+              <div style={summaryValueStyle}>
+                {resolvedUser.displayName || resolvedUser.username}
+              </div>
+              <div style={dashboardMutedTextStyle}>@{resolvedUser.username}</div>
+              <div style={dashboardMutedTextStyle}>
+                {resolvedUser.bio || "Add a short bio to make the profile feel more complete."}
+              </div>
             </div>
-
-            <h1 style={{ margin: 0, fontSize: "48px", lineHeight: 1 }}>
-              Editar perfil
-            </h1>
-
-            <p style={{ color: "#a3a3a3", marginTop: "10px", marginBottom: 0 }}>
-              Ajuste texto, cor, avatar e banner com preview real.
-            </p>
           </div>
-
-          <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
-            <Link href="/dashboard" style={topLinkStyle}>
-              Dashboard
-            </Link>
-            <Link href={`/${user.username}`} target="_blank" style={topLinkStyle}>
-              Ver perfil
-            </Link>
-          </div>
-        </div>
-      </section>
+        }
+      />
 
       {params.success === "saved" ? (
-        <div style={successBoxStyle}>Perfil salvo com sucesso.</div>
+        <DashboardNotice tone="success">Profile saved successfully.</DashboardNotice>
       ) : null}
       {params.error === "save-failed" ? (
-        <div style={errorBoxStyle}>Nao foi possivel salvar o perfil agora.</div>
+        <DashboardNotice tone="error">
+          Unable to save the profile right now.
+        </DashboardNotice>
       ) : null}
 
-      <section
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-          gap: "18px",
-          marginBottom: "18px",
-        }}
-      >
+      <section style={dashboardAutoGridStyle(320)}>
         <ProfileMediaUploader
           type="avatar"
-          currentUrl={user.avatarUrl}
-          themeColor={user.themeColor}
+          currentUrl={resolvedUser.avatarUrl}
+          themeColor={resolvedUser.themeColor}
         />
 
         <ProfileMediaUploader
           type="banner"
-          currentUrl={user.bannerUrl}
-          themeColor={user.themeColor}
+          currentUrl={resolvedUser.bannerUrl}
+          themeColor={resolvedUser.themeColor}
         />
       </section>
 
-      <section
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-          gap: "18px",
-        }}
-      >
-        <form action={saveProfileSettings} style={panelStyle}>
-          <h2 style={panelTitleStyle}>Dados principais</h2>
+      <section style={dashboardAutoGridStyle(340)}>
+        <form action={saveProfileSettings} style={dashboardSurfaceStyle}>
+          <DashboardSectionHeading
+            eyebrow="Core content"
+            title="Profile content and layout"
+            description="Keep your main identity, description, and layout choice aligned across every device size."
+          />
 
-          <div style={{ display: "grid", gap: "14px", marginTop: "18px" }}>
-            <label style={labelStyle}>
+          <div style={dashboardFieldGridStyle}>
+            <label style={dashboardLabelStyle}>
               Display name
               <input
                 type="text"
                 name="displayName"
-                defaultValue={user.displayName || ""}
-                placeholder="Seu nome visível"
-                style={inputStyle}
+                defaultValue={resolvedUser.displayName || ""}
+                placeholder="Your visible name"
+                style={dashboardInputStyle}
               />
             </label>
 
-            <label style={labelStyle}>
+            <label style={dashboardLabelStyle}>
               Bio
               <textarea
                 name="bio"
-                defaultValue={user.bio || ""}
-                placeholder="Escreva algo sobre você"
+                defaultValue={resolvedUser.bio || ""}
+                placeholder="Tell visitors what you do."
                 rows={5}
-                style={textareaStyle}
+                style={dashboardTextareaStyle}
               />
             </label>
 
-            <label style={labelStyle}>
+            <label style={dashboardLabelStyle}>
               Theme color
               <input
                 type="text"
                 name="themeColor"
-                defaultValue={user.themeColor || "#f472b6"}
+                defaultValue={resolvedUser.themeColor || "#f472b6"}
                 placeholder="#f472b6"
-                style={inputStyle}
+                style={dashboardInputStyle}
               />
             </label>
 
-            <div style={{ display: "grid", gap: "10px" }}>
-              <div style={{ display: "grid", gap: "6px" }}>
-                <div style={sectionTitleMiniStyle}>Profile Layout</div>
-                <div style={sectionDescriptionMiniStyle}>
-                  Escolha como seu perfil publico sera apresentado.
-                </div>
-              </div>
+            <div style={{ display: "grid", gap: "12px" }}>
+              <DashboardSectionHeading
+                eyebrow="Layout"
+                title="Choose profile layout"
+                description="Selected state is always visible so you can compare styles quickly."
+              />
 
               <div style={layoutGridStyle}>
                 {PROFILE_LAYOUT_OPTIONS.map((layout) => {
@@ -225,10 +196,7 @@ export default async function ProfileSettingsPage({ searchParams }: PageProps) {
                         style={layoutInputStyle}
                       />
 
-                      <div
-                        style={layoutCardBodyStyle}
-                        className="layout-option__body"
-                      >
+                      <div style={layoutCardBodyStyle} className="layout-option__body">
                         <div
                           style={{
                             ...layoutPreviewStyle,
@@ -307,34 +275,30 @@ export default async function ProfileSettingsPage({ searchParams }: PageProps) {
             </div>
 
             <FormActionButton
-              idleLabel="Salvar texto e tema"
-              pendingLabel="Salvando perfil..."
-              style={primaryButtonStyle}
+              idleLabel="Save profile settings"
+              pendingLabel="Saving profile..."
+              style={dashboardButtonStyle("primary", { fullWidth: true })}
             />
           </div>
         </form>
 
-        <section style={panelStyle}>
-          <h2 style={panelTitleStyle}>Preview</h2>
+        <section style={dashboardSurfaceStyle}>
+          <DashboardSectionHeading
+            eyebrow="Preview"
+            title="Live profile preview"
+            description="A condensed view of how your chosen theme and content will feel once published."
+          />
 
-          <div
-            style={{
-              marginTop: "18px",
-              borderRadius: "24px",
-              overflow: "hidden",
-              border: "1px solid rgba(255,255,255,0.07)",
-              background: "#0b0b0b",
-            }}
-          >
+          <div style={previewShellStyle}>
             <div
               style={{
                 height: "180px",
                 position: "relative",
                 overflow: "hidden",
-                background: `linear-gradient(135deg, ${user.themeColor || "#f472b6"}, rgba(0,0,0,0.2))`,
+                background: `linear-gradient(135deg, ${resolvedUser.themeColor || "#f472b6"}, rgba(0,0,0,0.2))`,
               }}
             >
-              {user.bannerUrl ? (
+              {resolvedUser.bannerUrl ? (
                 bannerKind === "video" ? (
                   <video
                     autoPlay
@@ -342,86 +306,46 @@ export default async function ProfileSettingsPage({ searchParams }: PageProps) {
                     loop
                     playsInline
                     preload="metadata"
-                    style={{
-                      position: "absolute",
-                      inset: 0,
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "cover",
-                      pointerEvents: "none",
-                    }}
+                    style={bannerMediaStyle}
                   >
-                    <source src={user.bannerUrl} />
+                    <source src={resolvedUser.bannerUrl} />
                   </video>
                 ) : (
                   <img
-                    src={user.bannerUrl}
+                    src={resolvedUser.bannerUrl}
                     alt="Banner preview"
-                    style={{
-                      position: "absolute",
-                      inset: 0,
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "cover",
-                    }}
+                    style={bannerMediaStyle}
                   />
                 )
               ) : null}
 
-              <div
-                style={{
-                  position: "absolute",
-                  inset: 0,
-                  background:
-                    "linear-gradient(180deg, rgba(0,0,0,0.08), rgba(0,0,0,0.32) 52%, rgba(0,0,0,0.56) 100%)",
-                  pointerEvents: "none",
-                }}
-              />
+              <div style={previewOverlayStyle} />
             </div>
 
-            <div
-              style={{
-                marginTop: "-52px",
-                padding: "0 20px 20px",
-              }}
-            >
+            <div style={previewContentStyle}>
               <img
-                src={user.avatarUrl || "https://placehold.co/200x200?text=Y"}
-                alt={user.displayName || user.username}
+                src={resolvedUser.avatarUrl || "https://placehold.co/200x200?text=Y"}
+                alt={resolvedUser.displayName || resolvedUser.username}
                 style={{
                   width: "104px",
                   height: "104px",
                   borderRadius: "999px",
                   objectFit: "cover",
-                  border: `4px solid ${user.themeColor || "#f472b6"}`,
+                  border: `4px solid ${resolvedUser.themeColor || "#f472b6"}`,
                   backgroundColor: "#111",
                 }}
               />
 
-              <div style={{ marginTop: "14px", fontSize: "28px", fontWeight: 900 }}>
-                {user.displayName || user.username}
+              <div style={previewNameStyle}>
+                {resolvedUser.displayName || resolvedUser.username}
               </div>
-
-              <div style={{ color: "#9ca3af", marginTop: "4px" }}>
-                @{user.username}
-              </div>
-
-              <div style={{ color: "#f9a8d4", marginTop: "10px", fontWeight: 700 }}>
+              <div style={previewHandleStyle}>@{resolvedUser.username}</div>
+              <div style={dashboardTagStyle("pink")}>
                 Saved layout: {selectedProfileLayout}
               </div>
 
-              <div
-                style={{
-                  marginTop: "14px",
-                  color: "#d4d4d8",
-                  lineHeight: 1.7,
-                  backgroundColor: "rgba(255,255,255,0.03)",
-                  border: "1px solid rgba(255,255,255,0.05)",
-                  borderRadius: "16px",
-                  padding: "14px 16px",
-                }}
-              >
-                {user.bio || "Sua bio vai aparecer aqui."}
+              <div style={previewBioStyle}>
+                {resolvedUser.bio || "Your bio will appear here once you add it."}
               </div>
             </div>
           </div>
@@ -431,6 +355,7 @@ export default async function ProfileSettingsPage({ searchParams }: PageProps) {
       <style>{`
         .layout-option {
           display: block;
+          min-width: 0;
           cursor: pointer;
         }
 
@@ -492,113 +417,36 @@ export default async function ProfileSettingsPage({ searchParams }: PageProps) {
   );
 }
 
-const topLinkStyle: React.CSSProperties = {
-  textDecoration: "none",
-  backgroundColor: "#141414",
-  border: "1px solid #2a2a2a",
-  color: "#fff",
-  padding: "12px 16px",
-  borderRadius: "12px",
+const summaryCardStyle: CSSProperties = {
+  ...dashboardSurfaceStyle,
+  padding: "20px",
+  gap: "14px",
 };
 
-const panelStyle: React.CSSProperties = {
-  backgroundColor: "#0b0b0b",
-  border: "1px solid #1f1f1f",
-  borderRadius: "28px",
-  padding: "22px",
-};
-
-const panelTitleStyle: React.CSSProperties = {
-  margin: 0,
-  fontSize: "30px",
-};
-
-const labelStyle: React.CSSProperties = {
-  display: "grid",
-  gap: "8px",
-  color: "#d4d4d8",
-  fontSize: "14px",
-  fontWeight: 700,
-};
-
-const inputStyle: React.CSSProperties = {
-  width: "100%",
-  padding: "14px 16px",
-  borderRadius: "14px",
-  border: "1px solid #2a2a2a",
-  backgroundColor: "#0f0f0f",
+const summaryValueStyle: CSSProperties = {
   color: "#ffffff",
-  outline: "none",
-};
-
-const textareaStyle: React.CSSProperties = {
-  width: "100%",
-  padding: "14px 16px",
-  borderRadius: "14px",
-  border: "1px solid #2a2a2a",
-  backgroundColor: "#0f0f0f",
-  color: "#ffffff",
-  outline: "none",
-  resize: "vertical",
-};
-
-const primaryButtonStyle: React.CSSProperties = {
-  padding: "14px 16px",
-  borderRadius: "14px",
-  border: "1px solid rgba(244,114,182,0.20)",
-  backgroundColor: "rgba(236,72,153,0.12)",
-  color: "#f9a8d4",
-  cursor: "pointer",
-  fontWeight: "bold",
-};
-
-const successBoxStyle: React.CSSProperties = {
-  backgroundColor: "rgba(34,197,94,0.10)",
-  border: "1px solid rgba(34,197,94,0.22)",
-  color: "#86efac",
-  borderRadius: "16px",
-  padding: "14px 16px",
-  marginBottom: "18px",
-};
-
-const errorBoxStyle: React.CSSProperties = {
-  backgroundColor: "rgba(239,68,68,0.10)",
-  border: "1px solid rgba(239,68,68,0.22)",
-  color: "#fca5a5",
-  borderRadius: "16px",
-  padding: "14px 16px",
-  marginBottom: "18px",
-};
-
-const sectionTitleMiniStyle: React.CSSProperties = {
-  fontSize: "18px",
+  fontSize: "20px",
   fontWeight: 900,
-  color: "#ffffff",
+  lineHeight: 1.2,
 };
 
-const sectionDescriptionMiniStyle: React.CSSProperties = {
-  color: "#a3a3a3",
-  fontSize: "14px",
-  lineHeight: 1.6,
-};
-
-const layoutGridStyle: React.CSSProperties = {
+const layoutGridStyle: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+  gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 220px), 1fr))",
   gap: "12px",
 };
 
-const layoutCardStyle: React.CSSProperties = {
+const layoutCardStyle: CSSProperties = {
   cursor: "pointer",
 };
 
-const layoutInputStyle: React.CSSProperties = {
+const layoutInputStyle: CSSProperties = {
   position: "absolute",
   opacity: 0,
   pointerEvents: "none",
 };
 
-const layoutCardBodyStyle: React.CSSProperties = {
+const layoutCardBodyStyle: CSSProperties = {
   display: "grid",
   gap: "12px",
   padding: "14px",
@@ -609,7 +457,7 @@ const layoutCardBodyStyle: React.CSSProperties = {
   boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03)",
 };
 
-const layoutPreviewStyle: React.CSSProperties = {
+const layoutPreviewStyle: CSSProperties = {
   minHeight: "116px",
   borderRadius: "16px",
   padding: "12px",
@@ -621,34 +469,34 @@ const layoutPreviewStyle: React.CSSProperties = {
   gap: "8px",
 };
 
-const defaultPreviewStyle: React.CSSProperties = {
+const defaultPreviewStyle: CSSProperties = {
   background:
     "linear-gradient(180deg, rgba(25,18,28,0.96), rgba(8,8,12,0.96))",
 };
 
-const modernPreviewStyle: React.CSSProperties = {
+const modernPreviewStyle: CSSProperties = {
   background:
     "radial-gradient(circle at top left, rgba(244,114,182,0.20), transparent 28%), linear-gradient(180deg, rgba(18,18,26,0.96), rgba(8,8,12,0.96))",
 };
 
-const simplisticPreviewStyle: React.CSSProperties = {
+const simplisticPreviewStyle: CSSProperties = {
   background:
     "linear-gradient(180deg, rgba(16,16,18,0.98), rgba(10,10,12,0.98))",
 };
 
-const portfolioPreviewStyle: React.CSSProperties = {
+const portfolioPreviewStyle: CSSProperties = {
   background:
     "linear-gradient(180deg, rgba(17,24,39,0.98), rgba(7,10,16,0.98))",
 };
 
-const previewBannerStyle: React.CSSProperties = {
+const previewBannerStyle: CSSProperties = {
   height: "24px",
   borderRadius: "10px",
   background:
     "linear-gradient(90deg, rgba(244,114,182,0.52), rgba(96,165,250,0.28))",
 };
 
-const previewAvatarStyle: React.CSSProperties = {
+const previewAvatarStyle: CSSProperties = {
   width: "34px",
   height: "34px",
   borderRadius: "999px",
@@ -657,39 +505,39 @@ const previewAvatarStyle: React.CSSProperties = {
   marginTop: "-10px",
 };
 
-const previewAvatarSmallStyle: React.CSSProperties = {
+const previewAvatarSmallStyle: CSSProperties = {
   width: "22px",
   height: "22px",
   marginTop: "2px",
 };
 
-const previewAvatarSquareStyle: React.CSSProperties = {
+const previewAvatarSquareStyle: CSSProperties = {
   width: "28px",
   height: "28px",
   borderRadius: "10px",
   marginTop: "2px",
 };
 
-const previewLineStyle: React.CSSProperties = {
+const previewLineStyle: CSSProperties = {
   height: "7px",
   borderRadius: "999px",
   background: "rgba(255,255,255,0.16)",
 };
 
-const previewLinksColumnStyle: React.CSSProperties = {
+const previewLinksColumnStyle: CSSProperties = {
   display: "grid",
   gap: "6px",
   marginTop: "4px",
 };
 
-const previewLinkPillStyle: React.CSSProperties = {
+const previewLinkPillStyle: CSSProperties = {
   height: "18px",
   borderRadius: "999px",
   background: "rgba(255,255,255,0.08)",
   width: "100%",
 };
 
-const layoutCardHeaderStyle: React.CSSProperties = {
+const layoutCardHeaderStyle: CSSProperties = {
   display: "flex",
   justifyContent: "space-between",
   gap: "8px",
@@ -698,20 +546,20 @@ const layoutCardHeaderStyle: React.CSSProperties = {
   color: "#ffffff",
 };
 
-const layoutCheckWrapStyle: React.CSSProperties = {
+const layoutCheckWrapStyle: CSSProperties = {
   display: "flex",
   alignItems: "center",
   justifyContent: "flex-end",
   minWidth: "84px",
 };
 
-const layoutCardDescriptionStyle: React.CSSProperties = {
+const layoutCardDescriptionStyle: CSSProperties = {
   color: "#a3a3a3",
   fontSize: "13px",
   lineHeight: 1.6,
 };
 
-const layoutCheckStyle: React.CSSProperties = {
+const layoutCheckStyle: CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
   minHeight: "26px",
@@ -725,10 +573,63 @@ const layoutCheckStyle: React.CSSProperties = {
   letterSpacing: "0.04em",
 };
 
-const layoutCheckSelectedStyle: React.CSSProperties = {
+const layoutCheckSelectedStyle: CSSProperties = {
   border: "1px solid rgba(244,114,182,0.20)",
   backgroundColor: "rgba(236,72,153,0.12)",
   color: "#f9a8d4",
+};
+
+const previewShellStyle: CSSProperties = {
+  borderRadius: "24px",
+  overflow: "hidden",
+  border: "1px solid rgba(255,255,255,0.07)",
+  background: "#0b0b0b",
+};
+
+const bannerMediaStyle: CSSProperties = {
+  position: "absolute",
+  inset: 0,
+  width: "100%",
+  height: "100%",
+  objectFit: "cover",
+  pointerEvents: "none",
+};
+
+const previewOverlayStyle: CSSProperties = {
+  position: "absolute",
+  inset: 0,
+  background:
+    "linear-gradient(180deg, rgba(0,0,0,0.08), rgba(0,0,0,0.32) 52%, rgba(0,0,0,0.56) 100%)",
+  pointerEvents: "none",
+};
+
+const previewContentStyle: CSSProperties = {
+  marginTop: "-52px",
+  padding: "0 20px 20px",
+  display: "grid",
+  gap: "12px",
+};
+
+const previewNameStyle: CSSProperties = {
+  color: "#ffffff",
+  fontSize: "28px",
+  fontWeight: 900,
+  lineHeight: 1.05,
+};
+
+const previewHandleStyle: CSSProperties = {
+  color: "#9ca3af",
+  fontSize: "14px",
+  fontWeight: 700,
+};
+
+const previewBioStyle: CSSProperties = {
+  color: "#d4d4d8",
+  lineHeight: 1.7,
+  backgroundColor: "rgba(255,255,255,0.03)",
+  border: "1px solid rgba(255,255,255,0.05)",
+  borderRadius: "16px",
+  padding: "14px 16px",
 };
 
 function normalizeProfileLayout(value: string | null | undefined) {
