@@ -11,6 +11,7 @@ import {
 } from "@/app/lib/profile-presence";
 import type { ProfileMusicData } from "@/app/lib/profile-music";
 import LivingAvatar from "@/app/components/LivingAvatar";
+import LivingProfileBackground from "./LivingProfileBackground";
 import ProfileLayoutVariants, { type PublicProfileLayout } from "./ProfileLayoutVariants";
 import ProfileMusicCard from "./ProfileMusicCard";
 import ProfileHeroClient from "./ProfileHeroClient";
@@ -736,6 +737,13 @@ export default function PublicProfileRenderer({
           }
         }
       `}</style>
+
+      <LivingProfileBackground
+        mood={mood}
+        aura={aura}
+        themeColor={themeColor}
+        previewMode={preview}
+      />
 
       <div className="profile-stage" aria-hidden>
         {bannerUrl ? (

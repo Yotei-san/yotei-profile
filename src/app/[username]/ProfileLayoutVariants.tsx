@@ -9,6 +9,7 @@ import {
   type ProfileMood,
 } from "@/app/lib/profile-presence";
 import type { ProfileMusicData } from "@/app/lib/profile-music";
+import LivingProfileBackground from "./LivingProfileBackground";
 import ProfileHeroClient from "./ProfileHeroClient";
 import ProfileMusicCard from "./ProfileMusicCard";
 import SocialPresenceSection, {
@@ -108,6 +109,12 @@ function DefaultLayout(props: Props) {
 
   return (
     <main style={defaultPageStyle(props.themeColor, props.preview, presence.stageGlow)}>
+      <LivingProfileBackground
+        mood={props.mood}
+        aura={props.aura}
+        themeColor={props.themeColor}
+        previewMode={props.preview}
+      />
       <section style={defaultShellStyle(props.preview, presence.panelGlow)}>
         <BannerSurface
           bannerUrl={props.user.bannerUrl}
@@ -202,6 +209,12 @@ function SimplisticLayout(props: Props) {
 
   return (
     <main style={simplisticPageStyle(props.preview, presence.stageGlow)}>
+      <LivingProfileBackground
+        mood={props.mood}
+        aura={props.aura}
+        themeColor={props.themeColor}
+        previewMode={props.preview}
+      />
       <div style={simplisticShellStyle(props.preview)}>
         <div style={simplisticHeaderStyle}>
           <AvatarVisual
@@ -298,6 +311,12 @@ function PortfolioLayout(props: Props) {
 
   return (
     <main style={portfolioPageStyle(props.preview, presence.stageGlow)}>
+      <LivingProfileBackground
+        mood={props.mood}
+        aura={props.aura}
+        themeColor={props.themeColor}
+        previewMode={props.preview}
+      />
       <div style={portfolioBannerWrapStyle(props.preview)}>
         <BannerSurface
           bannerUrl={props.user.bannerUrl}
@@ -830,6 +849,9 @@ const defaultPageStyle = (
   minHeight: "100vh",
   height: preview ? "100%" : undefined,
   minWidth: 0,
+  position: "relative",
+  overflow: "hidden",
+  isolation: "isolate",
   padding: preview ? "24px" : "32px 16px 40px",
   color: "#ffffff",
   fontFamily: '"Space Grotesk", Inter, Arial, Helvetica, sans-serif',
@@ -840,6 +862,8 @@ const defaultShellStyle = (preview = false, panelGlow = ""): CSSProperties => ({
   width: "min(1040px, 100%)",
   maxWidth: "1040px",
   margin: "0 auto",
+  position: "relative",
+  zIndex: 1,
   borderRadius: "30px",
   overflow: "hidden",
   border: "1px solid rgba(255,255,255,0.08)",
@@ -889,6 +913,9 @@ const simplisticPageStyle = (preview = false, stageGlow = ""): CSSProperties => 
   minHeight: "100vh",
   height: preview ? "100%" : undefined,
   minWidth: 0,
+  position: "relative",
+  overflow: "hidden",
+  isolation: "isolate",
   padding: preview ? "28px 24px" : "42px 16px",
   color: "#ffffff",
   fontFamily: 'Inter, Arial, Helvetica, sans-serif',
@@ -899,6 +926,8 @@ const simplisticShellStyle = (preview = false): CSSProperties => ({
   width: "min(820px, 100%)",
   maxWidth: "820px",
   margin: "0 auto",
+  position: "relative",
+  zIndex: 1,
   display: "grid",
   gap: "18px",
   minWidth: 0,
@@ -937,6 +966,9 @@ const portfolioPageStyle = (preview = false, stageGlow = ""): CSSProperties => (
   minHeight: "100vh",
   height: preview ? "100%" : undefined,
   minWidth: 0,
+  position: "relative",
+  overflow: "hidden",
+  isolation: "isolate",
   padding: preview ? "24px" : "26px 16px 38px",
   color: "#ffffff",
   fontFamily: '"Space Grotesk", Inter, Arial, Helvetica, sans-serif',
@@ -946,12 +978,16 @@ const portfolioPageStyle = (preview = false, stageGlow = ""): CSSProperties => (
 const portfolioBannerWrapStyle = (preview = false): CSSProperties => ({
   width: "min(1160px, 100%)",
   maxWidth: "1160px",
+  position: "relative",
+  zIndex: 1,
   margin: preview ? "0 auto 16px" : "0 auto 18px",
 });
 
 const portfolioShellStyle = (preview = false): CSSProperties => ({
   width: "min(1160px, 100%)",
   maxWidth: "1160px",
+  position: "relative",
+  zIndex: 1,
   margin: "0 auto",
   display: "grid",
   gridTemplateColumns: "minmax(0, 320px) minmax(0, 1fr)",
