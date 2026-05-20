@@ -166,6 +166,38 @@ export default function DecorationManager({
 
   return (
     <div style={{ display: "grid", gap: "20px" }}>
+      <style>{`
+        .decoration-catalog-card {
+          transition:
+            transform 180ms ease,
+            border-color 180ms ease,
+            box-shadow 180ms ease,
+            background 180ms ease;
+        }
+
+        .decoration-catalog-card:hover {
+          transform: translateY(-4px);
+        }
+
+        .decoration-preview-button {
+          transition:
+            border-color 180ms ease,
+            box-shadow 180ms ease,
+            background 180ms ease;
+        }
+
+        .decoration-catalog-card:hover .decoration-preview-button {
+          box-shadow: 0 18px 32px rgba(0, 0, 0, 0.18);
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .decoration-catalog-card,
+          .decoration-preview-button {
+            transition: none;
+          }
+        }
+      `}</style>
+
       <section style={studioLayoutStyle}>
         <div style={panelStyle}>
           <DashboardSectionHeading
@@ -200,6 +232,7 @@ export default function DecorationManager({
                 decorationScale={scale}
                 decorationOffsetX={offsetX}
                 decorationOffsetY={offsetY}
+                emphasized
               />
 
               <div style={{ display: "grid", gap: "8px", textAlign: "center" }}>
@@ -398,16 +431,19 @@ export default function DecorationManager({
             return (
               <article
                 key={item.id}
+                className="decoration-catalog-card"
                 style={catalogCardStyle(
                   isSelected,
                   isEquipped,
                   item.isLocked,
+                  isEquipped,
                   previewPresence.accent,
                 )}
               >
                 <button
                   type="button"
                   onClick={() => setSelectedId(item.id)}
+                  className="decoration-preview-button"
                   style={previewButtonStyle}
                 >
                   <LivingAvatar
@@ -429,6 +465,8 @@ export default function DecorationManager({
                     decorationOffsetX={item.isStarter ? 0 : offsetX}
                     decorationOffsetY={item.isStarter ? 0 : offsetY}
                     minimal
+                    interactive
+                    emphasized={isEquipped}
                   />
                 </button>
 
@@ -737,6 +775,7 @@ function catalogCardStyle(
   isSelected: boolean,
   isEquipped: boolean,
   isLocked: boolean,
+  equippedGlow: boolean,
   accentColor: string,
 ) {
   return {
@@ -755,16 +794,20 @@ function catalogCardStyle(
     background: isLocked
       ? "linear-gradient(180deg, rgba(18,18,24,0.92), rgba(10,10,15,0.98))"
       : "linear-gradient(180deg, rgba(22,24,34,0.94), rgba(11,12,18,0.98))",
-    boxShadow: isSelected ? `0 18px 34px ${withAlpha(accentColor, "14")}` : "none",
+    boxShadow: equippedGlow
+      ? `0 22px 40px ${withAlpha(accentColor, "16")}, 0 0 0 1px ${withAlpha("#34d399", "1c")}`
+      : isSelected
+        ? `0 18px 34px ${withAlpha(accentColor, "14")}`
+        : "none",
   } satisfies CSSProperties;
 }
 
 const previewButtonStyle = {
-  border: 0,
   padding: "12px",
   borderRadius: "20px",
   background:
     "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015))",
+  border: "1px solid rgba(255,255,255,0.06)",
   display: "grid",
   placeItems: "center",
   cursor: "pointer",
