@@ -7,6 +7,7 @@ import { getFeaturedPublicBadges } from "@/app/lib/badges";
 import { resolveEquippedDecoration } from "@/app/lib/decorations";
 import { readLiveEmbedMetadata } from "@/app/lib/live-embed";
 import { normalizeProfileMusic } from "@/app/lib/profile-music";
+import { normalizeProfileScene } from "@/app/lib/profile-scenes";
 import {
   normalizeProfileAura,
   normalizeProfileMood,
@@ -17,6 +18,7 @@ import { prisma } from "@/app/lib/prisma";
 import PublicProfileRenderer, {
   type PublicProfileHeroPill,
   type PublicProfileReaction,
+  type PublicProfileRenderUser,
 } from "./PublicProfileRenderer";
 import type { PublicProfileLayout } from "./ProfileLayoutVariants";
 import type { PublicSocialBlock } from "./SocialPresenceSection";
@@ -80,6 +82,7 @@ async function getProfileUser(username: string) {
       profileLayout: true,
       profileMood: true,
       profileAura: true,
+      profileScene: true,
       profileMusicTitle: true,
       profileMusicArtist: true,
       profileMusicUrl: true,
@@ -166,13 +169,21 @@ function buildProfileRenderData(user: ProfileUserRecord) {
   return {
     layout,
     user: {
-      ...user,
+      username: user.username,
+      bio: user.bio,
+      avatarUrl: user.avatarUrl,
+      bannerUrl: user.bannerUrl,
+      selectedDecorationScale: user.selectedDecorationScale,
+      selectedDecorationOffsetX: user.selectedDecorationOffsetX,
+      selectedDecorationOffsetY: user.selectedDecorationOffsetY,
       selectedDecoration,
-    },
+      links: user.links,
+    } satisfies PublicProfileRenderUser,
     displayName,
     themeColor,
     mood: normalizeProfileMood(user.profileMood),
     aura: normalizeProfileAura(user.profileAura),
+    scene: normalizeProfileScene(user.profileScene),
     music: normalizeProfileMusic({
       enabled: user.profileMusicEnabled,
       title: user.profileMusicTitle,

@@ -1,5 +1,9 @@
 import type { CSSProperties } from "react";
 import {
+  getProfileSceneDefinition,
+  type ProfileScene,
+} from "@/app/lib/profile-scenes";
+import {
   getProfilePresence,
   normalizeProfileAura,
   normalizeProfileMood,
@@ -11,6 +15,7 @@ type Props = {
   mood: ProfileMood;
   aura: ProfileAura;
   themeColor: string;
+  scene?: ProfileScene;
   previewMode?: boolean;
 };
 
@@ -26,6 +31,7 @@ export default function LivingProfileBackground({
   mood,
   aura,
   themeColor,
+  scene = "default",
   previewMode = false,
 }: Props) {
   const resolvedMood = normalizeProfileMood(mood);
@@ -35,7 +41,7 @@ export default function LivingProfileBackground({
     aura: resolvedAura,
     themeColor,
   });
-  const variant = resolveLivingBackgroundVariant(resolvedMood, resolvedAura);
+  const variant = resolveLivingBackgroundVariant(scene, resolvedMood, resolvedAura);
   const config = getLivingBackgroundConfig(variant, presence, themeColor);
 
   return (
@@ -64,9 +70,16 @@ export default function LivingProfileBackground({
 }
 
 function resolveLivingBackgroundVariant(
+  scene: ProfileScene,
   mood: ProfileMood,
   aura: ProfileAura,
 ): LivingBackgroundVariant {
+  const sceneDefinition = getProfileSceneDefinition(scene);
+
+  if (sceneDefinition.backgroundVariant !== "mood-driven") {
+    return sceneDefinition.backgroundVariant;
+  }
+
   if (aura === "galaxy") {
     return "galaxy";
   }

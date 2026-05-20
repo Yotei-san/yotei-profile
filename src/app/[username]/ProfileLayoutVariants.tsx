@@ -4,11 +4,14 @@ import LivingAvatar from "@/app/components/LivingAvatar";
 import BadgeVisual from "@/app/dashboard/components/BadgeVisual";
 import { getLinkPlatform } from "@/app/lib/link-icons";
 import {
-  getProfilePresence,
   type ProfileAura,
   type ProfileMood,
 } from "@/app/lib/profile-presence";
 import type { ProfileMusicData } from "@/app/lib/profile-music";
+import {
+  getProfileSceneAppearance,
+  type ProfileScene,
+} from "@/app/lib/profile-scenes";
 import LivingProfileBackground from "./LivingProfileBackground";
 import ProfileHeroClient from "./ProfileHeroClient";
 import ProfileMusicCard from "./ProfileMusicCard";
@@ -71,6 +74,7 @@ type Props = {
   themeColor: string;
   mood: ProfileMood;
   aura: ProfileAura;
+  scene: ProfileScene;
   music: ProfileMusicData;
   bannerKind: "image" | "video" | "unknown";
   avatarInitials: string;
@@ -101,21 +105,37 @@ export default function ProfileLayoutVariants(props: Props) {
 }
 
 function DefaultLayout(props: Props) {
-  const presence = getProfilePresence({
+  const sceneAppearance = getProfileSceneAppearance({
+    scene: props.scene,
     mood: props.mood,
     aura: props.aura,
     themeColor: props.themeColor,
   });
+  const { presence } = sceneAppearance;
 
   return (
-    <main style={defaultPageStyle(props.themeColor, props.preview, presence.stageGlow)}>
+    <main
+      style={defaultPageStyle(
+        sceneAppearance.linkThemeColor,
+        props.preview,
+        presence.stageGlow,
+      )}
+    >
       <LivingProfileBackground
         mood={props.mood}
         aura={props.aura}
         themeColor={props.themeColor}
+        scene={props.scene}
         previewMode={props.preview}
       />
-      <section style={defaultShellStyle(props.preview, presence.panelGlow)}>
+      <section
+        style={defaultShellStyle(
+          props.preview,
+          presence.panelGlow,
+          sceneAppearance.surfaceBorder,
+          sceneAppearance.surfaceBackground,
+        )}
+      >
         <BannerSurface
           bannerUrl={props.user.bannerUrl}
           bannerKind={props.bannerKind}
@@ -149,7 +169,9 @@ function DefaultLayout(props: Props) {
             />
 
             <div style={{ display: "grid", gap: "10px", minWidth: 0 }}>
-              <div style={eyebrowStyle(props.themeColor)}>Default layout</div>
+              <div style={eyebrowStyle(sceneAppearance.linkThemeColor)}>
+                {sceneAppearance.scene.name}
+              </div>
               <h1 style={defaultNameStyle}>{props.displayName}</h1>
               <div style={usernameStyle}>@{props.user.username}</div>
               <div style={presenceChipStyle(presence.presenceBackground, presence.presenceBorder)}>
@@ -165,7 +187,7 @@ function DefaultLayout(props: Props) {
             initialViews={props.views}
             initialLikes={props.likes}
             initialDislikes={props.dislikes}
-            themeColor={props.themeColor}
+            themeColor={sceneAppearance.linkThemeColor}
             initialMyReaction={props.initialMyReaction}
             preview={props.preview}
           />
@@ -173,11 +195,11 @@ function DefaultLayout(props: Props) {
           <BadgeRail
             badges={props.featuredBadges}
             extraBadgeCount={props.extraBadgeCount}
-            themeColor={props.themeColor}
+            themeColor={sceneAppearance.linkThemeColor}
           />
           <ProfileMusicCard
             music={props.music}
-            themeColor={props.themeColor}
+            themeColor={sceneAppearance.linkThemeColor}
             accentColor={presence.accent}
             contrastColor={presence.contrast}
             softColor={presence.soft}
@@ -185,14 +207,16 @@ function DefaultLayout(props: Props) {
           />
           <SocialPresenceSection
             blocks={props.socialBlocks}
-            themeColor={props.themeColor}
+            themeColor={sceneAppearance.socialThemeColor}
             compact
             preview={props.preview}
           />
           <LinksSection
             layout="default"
             links={props.user.links}
-            themeColor={props.themeColor}
+            themeColor={sceneAppearance.linkThemeColor}
+            surfaceBackground={sceneAppearance.surfaceBackground}
+            surfaceBorder={sceneAppearance.surfaceBorder}
           />
         </div>
       </section>
@@ -201,18 +225,27 @@ function DefaultLayout(props: Props) {
 }
 
 function SimplisticLayout(props: Props) {
-  const presence = getProfilePresence({
+  const sceneAppearance = getProfileSceneAppearance({
+    scene: props.scene,
     mood: props.mood,
     aura: props.aura,
     themeColor: props.themeColor,
   });
+  const { presence } = sceneAppearance;
 
   return (
-    <main style={simplisticPageStyle(props.preview, presence.stageGlow)}>
+    <main
+      style={simplisticPageStyle(
+        props.preview,
+        presence.stageGlow,
+        sceneAppearance.surfaceBackground,
+      )}
+    >
       <LivingProfileBackground
         mood={props.mood}
         aura={props.aura}
         themeColor={props.themeColor}
+        scene={props.scene}
         previewMode={props.preview}
       />
       <div style={simplisticShellStyle(props.preview)}>
@@ -238,7 +271,9 @@ function SimplisticLayout(props: Props) {
           />
 
           <div style={{ display: "grid", gap: "10px" }}>
-            <div style={simpleKickerStyle}>Simplistic</div>
+            <div style={simpleKickerStyle(sceneAppearance.linkThemeColor)}>
+              {sceneAppearance.scene.name}
+            </div>
             <h1 style={simplisticNameStyle}>{props.displayName}</h1>
             <div style={usernameStyle}>@{props.user.username}</div>
             <div style={presenceChipStyle(presence.presenceBackground, presence.presenceBorder)}>
@@ -267,7 +302,7 @@ function SimplisticLayout(props: Props) {
           initialViews={props.views}
           initialLikes={props.likes}
           initialDislikes={props.dislikes}
-          themeColor={props.themeColor}
+          themeColor={sceneAppearance.linkThemeColor}
           initialMyReaction={props.initialMyReaction}
           preview={props.preview}
         />
@@ -275,12 +310,12 @@ function SimplisticLayout(props: Props) {
         <BadgeRail
           badges={props.featuredBadges}
           extraBadgeCount={props.extraBadgeCount}
-          themeColor={props.themeColor}
+          themeColor={sceneAppearance.linkThemeColor}
           minimal
         />
         <ProfileMusicCard
           music={props.music}
-          themeColor={props.themeColor}
+          themeColor={sceneAppearance.linkThemeColor}
           accentColor={presence.accent}
           contrastColor={presence.contrast}
           softColor={presence.soft}
@@ -288,14 +323,16 @@ function SimplisticLayout(props: Props) {
         />
         <SocialPresenceSection
           blocks={props.socialBlocks}
-          themeColor={props.themeColor}
+          themeColor={sceneAppearance.socialThemeColor}
           compact
           preview={props.preview}
         />
         <LinksSection
           layout="simplistic"
           links={props.user.links}
-          themeColor={props.themeColor}
+          themeColor={sceneAppearance.linkThemeColor}
+          surfaceBackground={sceneAppearance.surfaceBackground}
+          surfaceBorder={sceneAppearance.surfaceBorder}
         />
       </div>
     </main>
@@ -303,18 +340,27 @@ function SimplisticLayout(props: Props) {
 }
 
 function PortfolioLayout(props: Props) {
-  const presence = getProfilePresence({
+  const sceneAppearance = getProfileSceneAppearance({
+    scene: props.scene,
     mood: props.mood,
     aura: props.aura,
     themeColor: props.themeColor,
   });
+  const { presence } = sceneAppearance;
 
   return (
-    <main style={portfolioPageStyle(props.preview, presence.stageGlow)}>
+    <main
+      style={portfolioPageStyle(
+        props.preview,
+        presence.stageGlow,
+        sceneAppearance.surfaceBackground,
+      )}
+    >
       <LivingProfileBackground
         mood={props.mood}
         aura={props.aura}
         themeColor={props.themeColor}
+        scene={props.scene}
         previewMode={props.preview}
       />
       <div style={portfolioBannerWrapStyle(props.preview)}>
@@ -330,8 +376,17 @@ function PortfolioLayout(props: Props) {
       </div>
 
       <div style={portfolioShellStyle(props.preview)}>
-        <aside style={portfolioSidebarStyle(props.preview, presence.panelGlow)}>
-          <div style={eyebrowStyle(props.themeColor)}>Portfolio</div>
+        <aside
+          style={portfolioSidebarStyle(
+            props.preview,
+            presence.panelGlow,
+            sceneAppearance.surfaceBorder,
+            sceneAppearance.surfaceBackground,
+          )}
+        >
+          <div style={eyebrowStyle(sceneAppearance.linkThemeColor)}>
+            {sceneAppearance.scene.name}
+          </div>
           <AvatarVisual
             avatarUrl={props.user.avatarUrl}
             avatarInitials={props.avatarInitials}
@@ -367,7 +422,7 @@ function PortfolioLayout(props: Props) {
             initialViews={props.views}
             initialLikes={props.likes}
             initialDislikes={props.dislikes}
-            themeColor={props.themeColor}
+            themeColor={sceneAppearance.linkThemeColor}
             initialMyReaction={props.initialMyReaction}
             preview={props.preview}
           />
@@ -375,12 +430,12 @@ function PortfolioLayout(props: Props) {
           <BadgeRail
             badges={props.featuredBadges}
             extraBadgeCount={props.extraBadgeCount}
-            themeColor={props.themeColor}
+            themeColor={sceneAppearance.linkThemeColor}
           />
 
           <ProfileMusicCard
             music={props.music}
-            themeColor={props.themeColor}
+            themeColor={sceneAppearance.linkThemeColor}
             accentColor={presence.accent}
             contrastColor={presence.contrast}
             softColor={presence.soft}
@@ -388,16 +443,25 @@ function PortfolioLayout(props: Props) {
           />
         </aside>
 
-        <section style={portfolioMainStyle(props.preview, presence.panelGlow)}>
+        <section
+          style={portfolioMainStyle(
+            props.preview,
+            presence.panelGlow,
+            sceneAppearance.surfaceBorder,
+            sceneAppearance.surfaceBackground,
+          )}
+        >
           <SocialPresenceSection
             blocks={props.socialBlocks}
-            themeColor={props.themeColor}
+            themeColor={sceneAppearance.socialThemeColor}
             preview={props.preview}
           />
           <LinksSection
             layout="portfolio"
             links={props.user.links}
-            themeColor={props.themeColor}
+            themeColor={sceneAppearance.linkThemeColor}
+            surfaceBackground={sceneAppearance.surfaceBackground}
+            surfaceBorder={sceneAppearance.surfaceBorder}
           />
         </section>
       </div>
@@ -702,10 +766,14 @@ function LinksSection({
   layout,
   links,
   themeColor,
+  surfaceBackground,
+  surfaceBorder,
 }: {
   layout: "default" | "simplistic" | "portfolio";
   links: LinkEntry[];
   themeColor: string;
+  surfaceBackground: string;
+  surfaceBorder: string;
 }) {
   return (
     <section
@@ -715,7 +783,7 @@ function LinksSection({
       }}
     >
       <div style={{ display: "grid", gap: "8px" }}>
-        <div style={simpleKickerStyle}>
+        <div style={simpleKickerStyle(themeColor)}>
           <LuSparkles size={13} />
           Links
         </div>
@@ -742,7 +810,9 @@ function LinksSection({
                     : layout === "portfolio"
                       ? portfolioLinkCardStyle
                       : defaultLinkCardStyle),
+                  background: surfaceBackground,
                   borderColor: withAlpha(color, layout === "simplistic" ? "14" : "22"),
+                  boxShadow: `0 18px 34px ${withAlpha(color, "10")}, inset 0 1px 0 ${surfaceBorder}`,
                 }}
               >
                 <div
@@ -858,7 +928,12 @@ const defaultPageStyle = (
   background: `${stageGlow}, linear-gradient(180deg, rgba(5,6,10,0.98), rgba(3,4,7,1)), radial-gradient(circle at top, ${withAlpha(themeColor, "16")} 0%, transparent 28%)`,
 });
 
-const defaultShellStyle = (preview = false, panelGlow = ""): CSSProperties => ({
+const defaultShellStyle = (
+  preview = false,
+  panelGlow = "",
+  surfaceBorder = "rgba(255,255,255,0.08)",
+  surfaceBackground = "linear-gradient(180deg, rgba(10,11,16,0.98), rgba(7,8,12,0.98))",
+): CSSProperties => ({
   width: "min(1040px, 100%)",
   maxWidth: "1040px",
   margin: "0 auto",
@@ -866,8 +941,8 @@ const defaultShellStyle = (preview = false, panelGlow = ""): CSSProperties => ({
   zIndex: 1,
   borderRadius: "30px",
   overflow: "hidden",
-  border: "1px solid rgba(255,255,255,0.08)",
-  background: "linear-gradient(180deg, rgba(10,11,16,0.98), rgba(7,8,12,0.98))",
+  border: `1px solid ${surfaceBorder}`,
+  background: surfaceBackground,
   boxShadow: panelGlow ? `${panelGlow}, 0 28px 70px rgba(0,0,0,0.24)` : "0 28px 70px rgba(0,0,0,0.28)",
   minHeight: preview ? "100%" : undefined,
 });
@@ -909,7 +984,11 @@ const defaultBioStyle: CSSProperties = {
   whiteSpace: "pre-wrap",
 };
 
-const simplisticPageStyle = (preview = false, stageGlow = ""): CSSProperties => ({
+const simplisticPageStyle = (
+  preview = false,
+  stageGlow = "",
+  surfaceBackground = "rgba(6,7,11,0.96)",
+): CSSProperties => ({
   minHeight: "100vh",
   height: preview ? "100%" : undefined,
   minWidth: 0,
@@ -919,7 +998,7 @@ const simplisticPageStyle = (preview = false, stageGlow = ""): CSSProperties => 
   padding: preview ? "28px 24px" : "42px 16px",
   color: "#ffffff",
   fontFamily: 'Inter, Arial, Helvetica, sans-serif',
-  background: `${stageGlow}, #06070b`,
+  background: `${stageGlow}, ${surfaceBackground}`,
 });
 
 const simplisticShellStyle = (preview = false): CSSProperties => ({
@@ -962,7 +1041,11 @@ const simplisticBannerWrapStyle: CSSProperties = {
   marginTop: "4px",
 };
 
-const portfolioPageStyle = (preview = false, stageGlow = ""): CSSProperties => ({
+const portfolioPageStyle = (
+  preview = false,
+  stageGlow = "",
+  surfaceBackground = "linear-gradient(180deg, #071018 0%, #04070d 100%)",
+): CSSProperties => ({
   minHeight: "100vh",
   height: preview ? "100%" : undefined,
   minWidth: 0,
@@ -972,7 +1055,7 @@ const portfolioPageStyle = (preview = false, stageGlow = ""): CSSProperties => (
   padding: preview ? "24px" : "26px 16px 38px",
   color: "#ffffff",
   fontFamily: '"Space Grotesk", Inter, Arial, Helvetica, sans-serif',
-  background: `${stageGlow}, linear-gradient(180deg, #071018 0%, #04070d 100%)`,
+  background: `${stageGlow}, ${surfaceBackground}`,
 });
 
 const portfolioBannerWrapStyle = (preview = false): CSSProperties => ({
@@ -996,27 +1079,37 @@ const portfolioShellStyle = (preview = false): CSSProperties => ({
   minHeight: preview ? "calc(100% - 236px)" : undefined,
 });
 
-const portfolioSidebarStyle = (preview = false, panelGlow = ""): CSSProperties => ({
+const portfolioSidebarStyle = (
+  preview = false,
+  panelGlow = "",
+  surfaceBorder = "rgba(255,255,255,0.08)",
+  surfaceBackground = "linear-gradient(180deg, rgba(10,14,22,0.98), rgba(8,10,16,0.98))",
+): CSSProperties => ({
   display: "grid",
   alignContent: "start",
   gap: "18px",
   padding: "22px",
   borderRadius: "28px",
-  border: "1px solid rgba(255,255,255,0.08)",
-  background: "linear-gradient(180deg, rgba(10,14,22,0.98), rgba(8,10,16,0.98))",
+  border: `1px solid ${surfaceBorder}`,
+  background: surfaceBackground,
   boxShadow: panelGlow,
   minWidth: 0,
   overflow: "hidden",
   minHeight: preview ? "100%" : undefined,
 });
 
-const portfolioMainStyle = (preview = false, panelGlow = ""): CSSProperties => ({
+const portfolioMainStyle = (
+  preview = false,
+  panelGlow = "",
+  surfaceBorder = "rgba(255,255,255,0.08)",
+  surfaceBackground = "linear-gradient(180deg, rgba(10,14,22,0.98), rgba(8,10,16,0.98))",
+): CSSProperties => ({
   display: "grid",
   gap: "18px",
   padding: "22px",
   borderRadius: "28px",
-  border: "1px solid rgba(255,255,255,0.08)",
-  background: "linear-gradient(180deg, rgba(10,14,22,0.98), rgba(8,10,16,0.98))",
+  border: `1px solid ${surfaceBorder}`,
+  background: surfaceBackground,
   boxShadow: panelGlow,
   minWidth: 0,
   overflow: "hidden",
@@ -1058,7 +1151,7 @@ const portfolioSectionTextStyle: CSSProperties = {
   maxWidth: "62ch",
 };
 
-const simpleKickerStyle: CSSProperties = {
+const simpleKickerStyle = (themeColor: string): CSSProperties => ({
   display: "inline-flex",
   alignItems: "center",
   gap: "8px",
@@ -1066,13 +1159,13 @@ const simpleKickerStyle: CSSProperties = {
   minHeight: "34px",
   padding: "0 12px",
   borderRadius: "999px",
-  border: "1px solid rgba(255,255,255,0.08)",
-  background: "rgba(255,255,255,0.04)",
-  color: "#e4e4e7",
+  border: `1px solid ${withAlpha(themeColor, "24")}`,
+  background: withAlpha(themeColor, "12"),
+  color: "#f1f5f9",
   fontSize: "12px",
   fontWeight: 800,
   letterSpacing: "0.02em",
-};
+});
 
 const eyebrowStyle = (themeColor: string): CSSProperties => ({
   display: "inline-flex",

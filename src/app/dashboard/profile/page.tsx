@@ -17,6 +17,7 @@ import { getFeaturedPublicBadges } from "@/app/lib/badges";
 import { resolveEquippedDecoration } from "@/app/lib/decorations";
 import { readLiveEmbedMetadata } from "@/app/lib/live-embed";
 import { normalizeProfileMusic } from "@/app/lib/profile-music";
+import { normalizeProfileScene } from "@/app/lib/profile-scenes";
 import {
   normalizeProfileAura,
   normalizeProfileMood,
@@ -24,7 +25,10 @@ import {
 import { getMediaKind } from "@/app/lib/profile-media";
 import { hasPremiumAccess } from "@/app/lib/premium";
 import { prisma } from "@/app/lib/prisma";
-import type { PublicProfileHeroPill } from "@/app/[username]/PublicProfileRenderer";
+import type {
+  PublicProfileHeroPill,
+  PublicProfileRenderUser,
+} from "@/app/[username]/PublicProfileRenderer";
 import type { PublicProfileLayout } from "@/app/[username]/ProfileLayoutVariants";
 import type { PublicSocialBlock } from "@/app/[username]/SocialPresenceSection";
 import ProfileLayoutExperience from "./ProfileLayoutExperience";
@@ -116,6 +120,7 @@ export default async function ProfileSettingsPage({ searchParams }: PageProps) {
         savedLayout={profileData.layout}
         savedMood={profileData.mood}
         savedAura={profileData.aura}
+        savedScene={profileData.scene}
         initialMusic={profileData.music}
         previewUser={profileData.user}
         bannerKind={profileData.bannerKind}
@@ -148,6 +153,7 @@ async function getDashboardProfileUser(userId: string) {
       profileLayout: true,
       profileMood: true,
       profileAura: true,
+      profileScene: true,
       profileMusicTitle: true,
       profileMusicArtist: true,
       profileMusicUrl: true,
@@ -234,11 +240,19 @@ function buildProfileRenderData(user: ProfileUserRecord) {
   return {
     layout,
     user: {
-      ...user,
+      username: user.username,
+      bio: user.bio,
+      avatarUrl: user.avatarUrl,
+      bannerUrl: user.bannerUrl,
+      selectedDecorationScale: user.selectedDecorationScale,
+      selectedDecorationOffsetX: user.selectedDecorationOffsetX,
+      selectedDecorationOffsetY: user.selectedDecorationOffsetY,
       selectedDecoration,
-    },
+      links: user.links,
+    } satisfies PublicProfileRenderUser,
     mood: normalizeProfileMood(user.profileMood),
     aura: normalizeProfileAura(user.profileAura),
+    scene: normalizeProfileScene(user.profileScene),
     music: normalizeProfileMusic({
       enabled: user.profileMusicEnabled,
       title: user.profileMusicTitle,

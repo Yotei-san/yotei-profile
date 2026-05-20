@@ -5,11 +5,14 @@ import { LuArrowUpRight, LuBadgeCheck, LuMoonStar, LuSparkles } from "react-icon
 import BadgeVisual from "@/app/dashboard/components/BadgeVisual";
 import { getLinkPlatform } from "@/app/lib/link-icons";
 import {
-  getProfilePresence,
   type ProfileAura,
   type ProfileMood,
 } from "@/app/lib/profile-presence";
 import type { ProfileMusicData } from "@/app/lib/profile-music";
+import {
+  getProfileSceneAppearance,
+  type ProfileScene,
+} from "@/app/lib/profile-scenes";
 import LivingAvatar from "@/app/components/LivingAvatar";
 import LivingProfileBackground from "./LivingProfileBackground";
 import ProfileLayoutVariants, { type PublicProfileLayout } from "./ProfileLayoutVariants";
@@ -71,6 +74,7 @@ type Props = {
   themeColor: string;
   mood: ProfileMood;
   aura: ProfileAura;
+  scene: ProfileScene;
   music: ProfileMusicData;
   bannerKind: "image" | "video" | "unknown";
   avatarInitials: string;
@@ -96,6 +100,7 @@ export default function PublicProfileRenderer({
   themeColor,
   mood,
   aura,
+  scene,
   music,
   bannerKind,
   avatarInitials,
@@ -122,6 +127,7 @@ export default function PublicProfileRenderer({
         themeColor={themeColor}
         mood={mood}
         aura={aura}
+        scene={scene}
         music={music}
         bannerKind={bannerKind}
         avatarInitials={avatarInitials}
@@ -142,7 +148,13 @@ export default function PublicProfileRenderer({
   }
 
   const bannerUrl = user.bannerUrl?.trim() || null;
-  const presence = getProfilePresence({ mood, aura, themeColor });
+  const sceneAppearance = getProfileSceneAppearance({
+    scene,
+    mood,
+    aura,
+    themeColor,
+  });
+  const { presence } = sceneAppearance;
 
   return (
     <main
@@ -155,7 +167,7 @@ export default function PublicProfileRenderer({
         fontFamily:
           '"Space Grotesk", Inter, Arial, Helvetica, system-ui, sans-serif',
         background: `
-          radial-gradient(circle at top, ${withAlpha(themeColor, "16")} 0%, transparent 24%),
+          radial-gradient(circle at top, ${withAlpha(sceneAppearance.linkThemeColor, "16")} 0%, transparent 24%),
           radial-gradient(circle at 84% 14%, ${withAlpha(presence.accent, "16")} 0%, transparent 18%),
           linear-gradient(180deg, #05060a 0%, #040508 46%, #030407 100%)
         `,
@@ -241,10 +253,8 @@ export default function PublicProfileRenderer({
           max-width: 100%;
           position: relative;
           border-radius: 34px;
-          background:
-            linear-gradient(180deg, rgba(13, 15, 24, 0.56), rgba(8, 9, 15, 0.74)),
-            linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
-          border: 1px solid rgba(255, 255, 255, 0.08);
+          background: ${sceneAppearance.shellBackground};
+          border: 1px solid ${sceneAppearance.surfaceBorder};
           box-shadow:
             ${presence.panelGlow},
             0 34px 80px rgba(0, 0, 0, 0.30),
@@ -285,8 +295,8 @@ export default function PublicProfileRenderer({
         }
 
         .profile-links-column {
-          border-left: 1px solid rgba(255, 255, 255, 0.06);
-          background: linear-gradient(180deg, rgba(255, 255, 255, 0.015), rgba(255, 255, 255, 0.01));
+          border-left: 1px solid ${sceneAppearance.surfaceBorder};
+          background: ${sceneAppearance.surfaceBackground};
         }
 
         .panel-topbar,
@@ -705,7 +715,7 @@ export default function PublicProfileRenderer({
 
           .profile-links-column {
             border-left: 0;
-            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            border-top: 1px solid ${sceneAppearance.surfaceBorder};
           }
         }
 
@@ -742,6 +752,7 @@ export default function PublicProfileRenderer({
         mood={mood}
         aura={aura}
         themeColor={themeColor}
+        scene={scene}
         previewMode={preview}
       />
 
@@ -777,7 +788,7 @@ export default function PublicProfileRenderer({
                 <div className="panel-topbar">
                   <div className="ambient-chip accent">
                     <LuSparkles size={13} />
-                    {preview ? "Live Preview" : presence.chipText}
+                    {preview ? `${sceneAppearance.scene.name} Preview` : presence.chipText}
                   </div>
 
                   <div className="ambient-chip">
@@ -828,7 +839,7 @@ export default function PublicProfileRenderer({
                     <div className="identity-copy">
                       <div className="profile-kicker">
                         <LuBadgeCheck size={13} />
-                        yotei.app/{user.username}
+                        {sceneAppearance.scene.name}
                       </div>
 
                       <h1 className="profile-name">{displayName}</h1>
@@ -862,7 +873,7 @@ export default function PublicProfileRenderer({
 
                   <ProfileMusicCard
                     music={music}
-                    themeColor={themeColor}
+                    themeColor={sceneAppearance.linkThemeColor}
                     accentColor={presence.accent}
                     contrastColor={presence.contrast}
                     softColor={presence.soft}
@@ -874,7 +885,7 @@ export default function PublicProfileRenderer({
                     initialViews={views}
                     initialLikes={likes}
                     initialDislikes={dislikes}
-                    themeColor={themeColor}
+                    themeColor={sceneAppearance.linkThemeColor}
                     initialMyReaction={initialMyReaction}
                     preview={preview}
                   />
@@ -882,7 +893,10 @@ export default function PublicProfileRenderer({
                   {featuredBadges.length > 0 ? (
                     <div className="profile-badge-rail">
                       {featuredBadges.map((item) => {
-                        const visual = getProfileBadgeVisual(item.badge, themeColor);
+                        const visual = getProfileBadgeVisual(
+                          item.badge,
+                          sceneAppearance.linkThemeColor,
+                        );
 
                         return (
                           <div
@@ -950,7 +964,7 @@ export default function PublicProfileRenderer({
               <div className="links-list">
                 <SocialPresenceSection
                   blocks={socialBlocks}
-                  themeColor={themeColor}
+                  themeColor={sceneAppearance.socialThemeColor}
                   compact
                   preview={preview}
                 />
@@ -958,7 +972,7 @@ export default function PublicProfileRenderer({
                 {user.links.length > 0 ? (
                   user.links.map((link) => {
                     const platform = getLinkPlatform(link.url, link.title);
-                    const color = platform.color || themeColor;
+                    const color = platform.color || sceneAppearance.linkThemeColor;
                     const PlatformIcon = platform.icon;
 
                     return (

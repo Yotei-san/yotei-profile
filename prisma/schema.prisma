@@ -32,6 +32,7 @@ model User {
   profileLayout             String   @default("modern")
   profileMood               String   @default("locked-in")
   profileAura               String   @default("neon")
+  profileScene              String   @default("default")
   profileMusicTitle         String?
   profileMusicArtist        String?
   profileMusicUrl           String?

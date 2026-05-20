@@ -19,6 +19,7 @@ import PublicProfileRenderer, {
   type PublicProfileHeroPill,
   type PublicProfileRenderUser,
 } from "@/app/[username]/PublicProfileRenderer";
+import LivingProfileBackground from "@/app/[username]/LivingProfileBackground";
 import ProfileMusicCard from "@/app/[username]/ProfileMusicCard";
 import type { PublicProfileLayout } from "@/app/[username]/ProfileLayoutVariants";
 import type { PublicSocialBlock } from "@/app/[username]/SocialPresenceSection";
@@ -29,12 +30,16 @@ import {
   type ProfileMusicProvider,
 } from "@/app/lib/profile-music";
 import {
-  getProfilePresence,
   PROFILE_AURA_OPTIONS,
   PROFILE_MOOD_OPTIONS,
   type ProfileAura,
   type ProfileMood,
 } from "@/app/lib/profile-presence";
+import {
+  getProfileSceneAppearance,
+  getProfileSceneOptions,
+  type ProfileScene,
+} from "@/app/lib/profile-scenes";
 import { saveProfileSettings } from "./actions";
 
 const PROFILE_LAYOUT_OPTIONS = [
@@ -71,6 +76,7 @@ type Props = {
   savedLayout: PublicProfileLayout;
   savedMood: ProfileMood;
   savedAura: ProfileAura;
+  savedScene: ProfileScene;
   initialMusic: ProfileMusicData;
   previewUser: PublicProfileRenderUser;
   bannerKind: "image" | "video" | "unknown";
@@ -94,6 +100,7 @@ export default function ProfileLayoutExperience({
   savedLayout,
   savedMood,
   savedAura,
+  savedScene,
   initialMusic,
   previewUser,
   bannerKind,
@@ -115,6 +122,7 @@ export default function ProfileLayoutExperience({
   const [previewLayout, setPreviewLayout] = useState<PublicProfileLayout>(savedLayout);
   const [previewMood, setPreviewMood] = useState<ProfileMood>(savedMood);
   const [previewAura, setPreviewAura] = useState<ProfileAura>(savedAura);
+  const [previewScene, setPreviewScene] = useState<ProfileScene>(savedScene);
   const [profileMusicEnabled, setProfileMusicEnabled] = useState(initialMusic.enabled);
   const [profileMusicTitle, setProfileMusicTitle] = useState(initialMusic.title || "");
   const [profileMusicArtist, setProfileMusicArtist] = useState(initialMusic.artist || "");
@@ -122,6 +130,9 @@ export default function ProfileLayoutExperience({
   const [profileMusicProvider, setProfileMusicProvider] = useState<ProfileMusicProvider>(
     initialMusic.provider,
   );
+  const sceneOptions = getProfileSceneOptions();
+  const savedSceneName =
+    sceneOptions.find((option) => option.value === savedScene)?.name || "Default";
 
   const deferredDisplayName = useDeferredValue(displayName);
   const deferredBio = useDeferredValue(bio);
@@ -129,6 +140,7 @@ export default function ProfileLayoutExperience({
   const deferredPreviewLayout = useDeferredValue(previewLayout);
   const deferredPreviewMood = useDeferredValue(previewMood);
   const deferredPreviewAura = useDeferredValue(previewAura);
+  const deferredPreviewScene = useDeferredValue(previewScene);
   const deferredProfileMusicEnabled = useDeferredValue(profileMusicEnabled);
   const deferredProfileMusicTitle = useDeferredValue(profileMusicTitle);
   const deferredProfileMusicArtist = useDeferredValue(profileMusicArtist);
@@ -142,11 +154,13 @@ export default function ProfileLayoutExperience({
     ...previewUser,
     bio: resolvedBio || null,
   };
-  const previewPresence = getProfilePresence({
+  const previewSceneAppearance = getProfileSceneAppearance({
+    scene: deferredPreviewScene,
     mood: deferredPreviewMood,
     aura: deferredPreviewAura,
     themeColor: safeThemeColor,
   });
+  const previewPresence = previewSceneAppearance.presence;
   const livePreviewMusic = normalizeProfileMusic({
     enabled: deferredProfileMusicEnabled,
     title: deferredProfileMusicTitle,
@@ -158,6 +172,7 @@ export default function ProfileLayoutExperience({
     previewLayout !== savedLayout ||
     previewMood !== savedMood ||
     previewAura !== savedAura ||
+    previewScene !== savedScene ||
     profileMusicEnabled !== initialMusic.enabled ||
     profileMusicTitle !== (initialMusic.title || "") ||
     profileMusicArtist !== (initialMusic.artist || "") ||
@@ -288,6 +303,7 @@ export default function ProfileLayoutExperience({
 
               <input type="hidden" name="profileMood" value={previewMood} readOnly />
               <input type="hidden" name="profileAura" value={previewAura} readOnly />
+              <input type="hidden" name="profileScene" value={previewScene} readOnly />
 
               <div style={{ display: "grid", gap: "12px" }}>
                 <div style={livingSectionTitleStyle}>Mood</div>
@@ -348,6 +364,78 @@ export default function ProfileLayoutExperience({
                             {isSelected ? <LuCheck size={16} /> : null}
                           </div>
                           <div style={layoutCardDescriptionStyle}>{option.description}</div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div style={{ display: "grid", gap: "12px" }}>
+                <div style={livingSectionTitleStyle}>Profile Scene</div>
+                <div style={sceneGridStyle}>
+                  {sceneOptions.map((sceneOption) => {
+                    const isSelected = previewScene === sceneOption.value;
+                    const isSaved = savedScene === sceneOption.value;
+                    const indicatorLabel = isSelected
+                      ? isSaved
+                        ? "Current"
+                        : "Previewing"
+                      : isSaved
+                        ? "Saved"
+                        : "Scene";
+
+                    return (
+                      <button
+                        key={sceneOption.value}
+                        type="button"
+                        className="scene-card"
+                        aria-pressed={isSelected}
+                        onClick={() => {
+                          startTransition(() => setPreviewScene(sceneOption.value));
+                        }}
+                        style={sceneCardStyle(
+                          isSelected,
+                          isSaved,
+                          sceneOption.accent,
+                          sceneOption.contrast,
+                        )}
+                      >
+                        <div style={scenePreviewStyle(sceneOption.accent, sceneOption.contrast)}>
+                          <LivingProfileBackground
+                            mood={previewMood}
+                            aura={previewAura}
+                            themeColor={safeThemeColor}
+                            scene={sceneOption.value}
+                            previewMode
+                          />
+                          <div style={scenePreviewChromeStyle(sceneOption.accent)}>
+                            <span style={scenePreviewBadgeStyle(sceneOption.accent)}>
+                              {sceneOption.previewLabel}
+                            </span>
+                            <div style={scenePreviewFrameStyle(sceneOption.accent)} />
+                          </div>
+                        </div>
+
+                        <div style={{ display: "grid", gap: "8px", minWidth: 0 }}>
+                          <div style={layoutIndicatorRowStyle}>
+                            <span
+                              style={
+                                isSelected
+                                  ? selectedIndicatorStyle(sceneOption.accent)
+                                  : savedIndicatorStyle
+                              }
+                            >
+                              {indicatorLabel}
+                            </span>
+                          </div>
+                          <div style={livingCardHeaderStyle}>
+                            <span>{sceneOption.name}</span>
+                            {isSelected ? <LuCheck size={16} /> : null}
+                          </div>
+                          <div style={layoutCardDescriptionStyle}>
+                            {sceneOption.description}
+                          </div>
                         </div>
                       </button>
                     );
@@ -485,6 +573,9 @@ export default function ProfileLayoutExperience({
                 <span style={dashboardTagStyle("pink")}>Previewing {deferredPreviewLayout}</span>
                 <span style={dashboardTagStyle("violet")}>{deferredPreviewMood}</span>
                 <span style={dashboardTagStyle("violet")}>{deferredPreviewAura} aura</span>
+                <span style={dashboardTagStyle("violet")}>
+                  {previewSceneAppearance.scene.name}
+                </span>
                 <span style={dashboardTagStyle(isDirty ? "violet" : "green")}>
                   {isDirty ? "Unsaved changes" : "Saved state"}
                 </span>
@@ -516,6 +607,7 @@ export default function ProfileLayoutExperience({
                   themeColor={safeThemeColor}
                   mood={deferredPreviewMood}
                   aura={deferredPreviewAura}
+                  scene={deferredPreviewScene}
                   music={livePreviewMusic}
                   bannerKind={bannerKind}
                   avatarInitials={avatarInitials}
@@ -539,7 +631,7 @@ export default function ProfileLayoutExperience({
             <div style={previewFooterStyle}>
               <div style={previewFooterCopyStyle}>
                 <LuSparkles size={13} />
-                Saved vibe: {savedMood} with {savedAura} aura
+                Saved vibe: {savedMood} with {savedAura} aura in {savedSceneName}
               </div>
               <div style={dashboardMutedTextStyle}>
                 The preview updates from your unsaved editor values first, then the public profile changes after save.
@@ -558,14 +650,25 @@ export default function ProfileLayoutExperience({
             background 180ms ease;
         }
 
+        .scene-card {
+          transition:
+            transform 180ms ease,
+            border-color 180ms ease,
+            box-shadow 180ms ease,
+            background 180ms ease;
+        }
+
         .layout-card:hover,
+        .scene-card:hover,
         .living-card:hover,
         .layout-card:focus-visible,
+        .scene-card:focus-visible,
         .living-card:focus-visible {
           transform: translateY(-3px);
         }
 
         .layout-card:active,
+        .scene-card:active,
         .living-card:active {
           transform: translateY(0) scale(0.988);
         }
@@ -589,6 +692,7 @@ export default function ProfileLayoutExperience({
 
         @media (prefers-reduced-motion: reduce) {
           .layout-card,
+          .scene-card,
           .living-card,
           .profile-preview-canvas {
             transition: none;
@@ -621,6 +725,12 @@ const layoutGridStyle: CSSProperties = {
 const livingGridStyle: CSSProperties = {
   display: "grid",
   gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 170px), 1fr))",
+  gap: "12px",
+};
+
+const sceneGridStyle: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 220px), 1fr))",
   gap: "12px",
 };
 
@@ -749,6 +859,36 @@ function livingCardStyle(isSelected: boolean, accentColor: string): CSSPropertie
   };
 }
 
+function sceneCardStyle(
+  isSelected: boolean,
+  isSaved: boolean,
+  accentColor: string,
+  contrastColor: string,
+): CSSProperties {
+  return {
+    display: "grid",
+    gap: "14px",
+    minWidth: 0,
+    padding: "14px",
+    borderRadius: "20px",
+    textAlign: "left",
+    color: "#ffffff",
+    border: `1px solid ${
+      isSelected ? `${accentColor}55` : isSaved ? `${contrastColor}2f` : "rgba(255,255,255,0.08)"
+    }`,
+    background: isSelected
+      ? `linear-gradient(180deg, ${withAlpha(accentColor, "1a")}, rgba(11,11,16,0.96))`
+      : `linear-gradient(180deg, ${withAlpha(contrastColor, "0d")}, rgba(12,12,18,0.96))`,
+    boxShadow: isSelected
+      ? `0 20px 38px ${withAlpha(accentColor, "18")}`
+      : isSaved
+        ? `0 16px 30px ${withAlpha(contrastColor, "12")}`
+        : "inset 0 1px 0 rgba(255,255,255,0.03)",
+    cursor: "pointer",
+    overflow: "hidden",
+  };
+}
+
 const livingCardHeaderStyle: CSSProperties = {
   display: "flex",
   alignItems: "center",
@@ -806,6 +946,65 @@ function auraPreviewStyle(
     boxShadow: glow === "rgba(255,255,255,0.00)" ? "none" : `0 12px 24px ${glow}`,
     outline: `1px solid ${withAlpha(ring, "38")}`,
     outlineOffset: "-1px",
+  };
+}
+
+function scenePreviewStyle(accentColor: string, contrastColor: string): CSSProperties {
+  return {
+    minHeight: "96px",
+    borderRadius: "18px",
+    border: `1px solid ${withAlpha(accentColor, "2c")}`,
+    background: `linear-gradient(135deg, ${withAlpha(accentColor, "16")}, ${withAlpha(contrastColor, "10")}, rgba(5,5,9,0.98))`,
+    position: "relative",
+    overflow: "hidden",
+    isolation: "isolate",
+    boxShadow: `0 18px 30px ${withAlpha(accentColor, "14")}`,
+  };
+}
+
+function scenePreviewChromeStyle(accentColor: string): CSSProperties {
+  return {
+    position: "absolute",
+    inset: 0,
+    zIndex: 1,
+    display: "grid",
+    alignContent: "space-between",
+    padding: "10px",
+    background:
+      "linear-gradient(180deg, rgba(6,7,12,0.14), rgba(6,7,12,0.12) 48%, rgba(6,7,12,0.44) 100%)",
+    pointerEvents: "none",
+    boxShadow: `inset 0 0 0 1px ${withAlpha(accentColor, "16")}`,
+  };
+}
+
+function scenePreviewBadgeStyle(accentColor: string): CSSProperties {
+  return {
+    display: "inline-flex",
+    alignItems: "center",
+    width: "fit-content",
+    minHeight: "24px",
+    padding: "0 9px",
+    borderRadius: "999px",
+    color: "#ffffff",
+    background: withAlpha(accentColor, "18"),
+    border: `1px solid ${withAlpha(accentColor, "30")}`,
+    fontSize: "10px",
+    fontWeight: 900,
+    letterSpacing: "0.08em",
+    textTransform: "uppercase",
+    backdropFilter: "blur(6px)",
+  };
+}
+
+function scenePreviewFrameStyle(accentColor: string): CSSProperties {
+  return {
+    width: "72px",
+    height: "28px",
+    justifySelf: "end",
+    borderRadius: "999px",
+    border: `1px solid ${withAlpha(accentColor, "30")}`,
+    background: `linear-gradient(90deg, transparent, ${withAlpha(accentColor, "18")}, transparent)`,
+    boxShadow: `0 0 0 1px ${withAlpha(accentColor, "12")}`,
   };
 }
 

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { redirectWithClearedSession, requireUser } from "@/app/lib/auth";
 import { normalizeProfileMusic } from "@/app/lib/profile-music";
+import { normalizeProfileScene } from "@/app/lib/profile-scenes";
 import {
   normalizeProfileAura,
   normalizeProfileMood,
@@ -31,6 +32,9 @@ export async function saveProfileSettings(formData: FormData) {
   );
   const profileAura = normalizeProfileAura(
     String(formData.get("profileAura") || "").trim(),
+  );
+  const profileScene = normalizeProfileScene(
+    String(formData.get("profileScene") || "").trim(),
   );
   const profileMusic = normalizeProfileMusic({
     enabled: parseBooleanFormValue(formData.get("profileMusicEnabled")),
@@ -63,6 +67,7 @@ export async function saveProfileSettings(formData: FormData) {
         profileLayout,
         profileMood,
         profileAura,
+        profileScene,
         profileMusicTitle: profileMusic.title,
         profileMusicArtist: profileMusic.artist,
         profileMusicUrl: profileMusic.url,
