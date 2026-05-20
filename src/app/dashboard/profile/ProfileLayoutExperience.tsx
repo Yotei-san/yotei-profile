@@ -21,6 +21,13 @@ import PublicProfileRenderer, {
 } from "@/app/[username]/PublicProfileRenderer";
 import type { PublicProfileLayout } from "@/app/[username]/ProfileLayoutVariants";
 import type { PublicSocialBlock } from "@/app/[username]/SocialPresenceSection";
+import {
+  getProfilePresence,
+  PROFILE_AURA_OPTIONS,
+  PROFILE_MOOD_OPTIONS,
+  type ProfileAura,
+  type ProfileMood,
+} from "@/app/lib/profile-presence";
 import { saveProfileSettings } from "./actions";
 
 const PROFILE_LAYOUT_OPTIONS = [
@@ -55,6 +62,8 @@ type Props = {
   initialBio: string;
   initialThemeColor: string;
   savedLayout: PublicProfileLayout;
+  savedMood: ProfileMood;
+  savedAura: ProfileAura;
   previewUser: PublicProfileRenderUser;
   bannerKind: "image" | "video" | "unknown";
   avatarInitials: string;
@@ -75,6 +84,8 @@ export default function ProfileLayoutExperience({
   initialBio,
   initialThemeColor,
   savedLayout,
+  savedMood,
+  savedAura,
   previewUser,
   bannerKind,
   avatarInitials,
@@ -93,16 +104,32 @@ export default function ProfileLayoutExperience({
   const [bio, setBio] = useState(initialBio);
   const [themeColor, setThemeColor] = useState(initialThemeColor);
   const [previewLayout, setPreviewLayout] = useState<PublicProfileLayout>(savedLayout);
+  const [previewMood, setPreviewMood] = useState<ProfileMood>(savedMood);
+  const [previewAura, setPreviewAura] = useState<ProfileAura>(savedAura);
 
   const deferredDisplayName = useDeferredValue(displayName);
   const deferredBio = useDeferredValue(bio);
   const deferredThemeColor = useDeferredValue(themeColor);
   const deferredPreviewLayout = useDeferredValue(previewLayout);
+  const deferredPreviewMood = useDeferredValue(previewMood);
+  const deferredPreviewAura = useDeferredValue(previewAura);
   const safeThemeColor = normalizeThemeColor(deferredThemeColor);
   const resolvedDisplayName =
     deferredDisplayName.trim() || previewUser.username;
+  const resolvedBio = deferredBio.trim();
+  const livePreviewUser = {
+    ...previewUser,
+    bio: resolvedBio || null,
+  };
+  const previewPresence = getProfilePresence({
+    mood: deferredPreviewMood,
+    aura: deferredPreviewAura,
+    themeColor: safeThemeColor,
+  });
   const isDirty =
     previewLayout !== savedLayout ||
+    previewMood !== savedMood ||
+    previewAura !== savedAura ||
     displayName !== initialDisplayName ||
     bio !== initialBio ||
     themeColor !== initialThemeColor;
@@ -219,6 +246,83 @@ export default function ProfileLayoutExperience({
               </div>
             </div>
 
+            <div style={{ display: "grid", gap: "14px" }}>
+              <DashboardSectionHeading
+                eyebrow="Living Profile"
+                title="Mood and aura"
+                description="Shape the vibe of the live profile with lightweight atmosphere, pulse, and aura treatments."
+              />
+
+              <input type="hidden" name="profileMood" value={previewMood} readOnly />
+              <input type="hidden" name="profileAura" value={previewAura} readOnly />
+
+              <div style={{ display: "grid", gap: "12px" }}>
+                <div style={livingSectionTitleStyle}>Mood</div>
+                <div style={livingGridStyle}>
+                  {PROFILE_MOOD_OPTIONS.map((option) => {
+                    const isSelected = previewMood === option.value;
+
+                    return (
+                      <button
+                        key={option.value}
+                        type="button"
+                        className="living-card"
+                        aria-pressed={isSelected}
+                        onClick={() => {
+                          startTransition(() => setPreviewMood(option.value));
+                        }}
+                        style={livingCardStyle(isSelected, option.primary)}
+                      >
+                        <div style={livingPreviewStyle(option.primary, option.secondary, option.pulse)}>
+                          <div style={livingPreviewPulseStyle(option.pulse)} />
+                          <div style={livingPreviewLineStyle(option.tertiary, "68%")} />
+                          <div style={livingPreviewLineStyle(option.secondary, "48%")} />
+                        </div>
+                        <div style={{ display: "grid", gap: "6px", minWidth: 0 }}>
+                          <div style={livingCardHeaderStyle}>
+                            <span>{option.name}</span>
+                            {isSelected ? <LuCheck size={16} /> : null}
+                          </div>
+                          <div style={layoutCardDescriptionStyle}>{option.description}</div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div style={{ display: "grid", gap: "12px" }}>
+                <div style={livingSectionTitleStyle}>Aura</div>
+                <div style={livingGridStyle}>
+                  {PROFILE_AURA_OPTIONS.map((option) => {
+                    const isSelected = previewAura === option.value;
+
+                    return (
+                      <button
+                        key={option.value}
+                        type="button"
+                        className="living-card"
+                        aria-pressed={isSelected}
+                        onClick={() => {
+                          startTransition(() => setPreviewAura(option.value));
+                        }}
+                        style={livingCardStyle(isSelected, option.accent)}
+                      >
+                        <div style={auraPreviewStyle(option.overlay, option.glow, option.ring)} />
+                        <div style={{ display: "grid", gap: "6px", minWidth: 0 }}>
+                          <div style={livingCardHeaderStyle}>
+                            <span>{option.name}</span>
+                            {isSelected ? <LuCheck size={16} /> : null}
+                          </div>
+                          <div style={layoutCardDescriptionStyle}>{option.description}</div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
             <FormActionButton
               idleLabel={isDirty ? "Save profile settings" : "Saved state is up to date"}
               pendingLabel="Saving profile..."
@@ -236,6 +340,8 @@ export default function ProfileLayoutExperience({
             actions={
               <>
                 <span style={dashboardTagStyle("pink")}>Previewing {deferredPreviewLayout}</span>
+                <span style={dashboardTagStyle("violet")}>{deferredPreviewMood}</span>
+                <span style={dashboardTagStyle("violet")}>{deferredPreviewAura} aura</span>
                 <span style={dashboardTagStyle(isDirty ? "violet" : "green")}>
                   {isDirty ? "Unsaved changes" : "Saved state"}
                 </span>
@@ -244,13 +350,13 @@ export default function ProfileLayoutExperience({
           />
 
           <div style={previewFrameStyle}>
-            <div style={previewChromeStyle}>
+            <div style={previewChromeStyle(previewPresence.accent, previewPresence.contrast)}>
               <div style={previewChromeBadgeStyle}>
                 <LuLayoutTemplate size={13} />
                 Real public renderer
               </div>
               <div style={previewChromeTextStyle}>
-                Instant layout switching, live copy updates, lightweight ambient motion.
+                Instant layout switching, live copy updates, and a shared mood/aura atmosphere.
               </div>
             </div>
 
@@ -262,9 +368,11 @@ export default function ProfileLayoutExperience({
               >
                 <PublicProfileRenderer
                   layout={deferredPreviewLayout}
-                  user={previewUser}
+                  user={livePreviewUser}
                   displayName={resolvedDisplayName}
                   themeColor={safeThemeColor}
+                  mood={deferredPreviewMood}
+                  aura={deferredPreviewAura}
                   bannerKind={bannerKind}
                   avatarInitials={avatarInitials}
                   decorationScale={decorationScale}
@@ -287,7 +395,7 @@ export default function ProfileLayoutExperience({
             <div style={previewFooterStyle}>
               <div style={previewFooterCopyStyle}>
                 <LuSparkles size={13} />
-                Saved layout: {savedLayout}
+                Saved vibe: {savedMood} with {savedAura} aura
               </div>
               <div style={dashboardMutedTextStyle}>
                 The preview updates from your unsaved editor values first, then the public profile changes after save.
@@ -307,11 +415,14 @@ export default function ProfileLayoutExperience({
         }
 
         .layout-card:hover,
-        .layout-card:focus-visible {
+        .living-card:hover,
+        .layout-card:focus-visible,
+        .living-card:focus-visible {
           transform: translateY(-3px);
         }
 
-        .layout-card:active {
+        .layout-card:active,
+        .living-card:active {
           transform: translateY(0) scale(0.988);
         }
 
@@ -334,6 +445,7 @@ export default function ProfileLayoutExperience({
 
         @media (prefers-reduced-motion: reduce) {
           .layout-card,
+          .living-card,
           .profile-preview-canvas {
             transition: none;
             animation: none;
@@ -359,6 +471,12 @@ const editorGridBaseStyle: CSSProperties = {
 const layoutGridStyle: CSSProperties = {
   display: "grid",
   gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 210px), 1fr))",
+  gap: "12px",
+};
+
+const livingGridStyle: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 170px), 1fr))",
   gap: "12px",
 };
 
@@ -396,6 +514,94 @@ const layoutCardTopStyle: CSSProperties = {
   justifyContent: "space-between",
   gap: "12px",
 };
+
+const livingSectionTitleStyle: CSSProperties = {
+  color: "#e8eefc",
+  fontSize: "13px",
+  fontWeight: 900,
+  letterSpacing: "0.08em",
+  textTransform: "uppercase",
+};
+
+function livingCardStyle(isSelected: boolean, accentColor: string): CSSProperties {
+  return {
+    display: "grid",
+    gap: "12px",
+    minWidth: 0,
+    padding: "14px",
+    borderRadius: "18px",
+    textAlign: "left",
+    color: "#ffffff",
+    border: `1px solid ${isSelected ? `${accentColor}55` : "rgba(255,255,255,0.08)"}`,
+    background: isSelected
+      ? `linear-gradient(180deg, ${withAlpha(accentColor, "18")}, rgba(11,11,16,0.96))`
+      : "linear-gradient(180deg, rgba(18,18,24,0.96), rgba(11,11,15,0.96))",
+    boxShadow: isSelected
+      ? `0 18px 36px ${withAlpha(accentColor, "18")}`
+      : "inset 0 1px 0 rgba(255,255,255,0.03)",
+    cursor: "pointer",
+  };
+}
+
+const livingCardHeaderStyle: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  gap: "8px",
+  fontWeight: 800,
+};
+
+function livingPreviewStyle(primary: string, secondary: string, pulse: string): CSSProperties {
+  return {
+    minHeight: "72px",
+    borderRadius: "16px",
+    border: "1px solid rgba(255,255,255,0.08)",
+    background: `radial-gradient(circle at 24% 30%, ${withAlpha(primary, "44")}, transparent 48%), linear-gradient(135deg, ${withAlpha(primary, "24")}, ${withAlpha(secondary, "16")}, rgba(8,8,12,0.98))`,
+    padding: "12px",
+    display: "grid",
+    alignContent: "space-between",
+    overflow: "hidden",
+    position: "relative",
+    boxShadow: `0 12px 24px ${withAlpha(pulse, "12")}`,
+  };
+}
+
+function livingPreviewPulseStyle(pulse: string): CSSProperties {
+  return {
+    width: "12px",
+    height: "12px",
+    borderRadius: "999px",
+    background: pulse,
+    boxShadow: `0 0 0 5px ${withAlpha(pulse, "14")}`,
+  };
+}
+
+function livingPreviewLineStyle(color: string, width: string): CSSProperties {
+  return {
+    width,
+    height: "8px",
+    borderRadius: "999px",
+    background: withAlpha(color, "66"),
+  };
+}
+
+function auraPreviewStyle(
+  overlay: string,
+  glow: string,
+  ring: string,
+): CSSProperties {
+  return {
+    minHeight: "72px",
+    borderRadius: "16px",
+    border: "1px solid rgba(255,255,255,0.08)",
+    background: `${overlay}, linear-gradient(135deg, rgba(12,12,18,0.98), rgba(5,5,9,0.98))`,
+    position: "relative",
+    overflow: "hidden",
+    boxShadow: glow === "rgba(255,255,255,0.00)" ? "none" : `0 12px 24px ${glow}`,
+    outline: `1px solid ${withAlpha(ring, "38")}`,
+    outlineOffset: "-1px",
+  };
+}
 
 function layoutSwatchStyle(
   layout: PublicProfileLayout,
@@ -481,15 +687,17 @@ const previewFrameStyle: CSSProperties = {
   gap: "14px",
 };
 
-const previewChromeStyle: CSSProperties = {
-  display: "grid",
-  gap: "8px",
-  padding: "16px",
-  borderRadius: "18px",
-  border: "1px solid rgba(255,255,255,0.08)",
-  background:
-    "radial-gradient(circle at top left, rgba(255,110,168,0.10), transparent 24%), linear-gradient(180deg, rgba(17,15,24,0.96), rgba(9,9,13,0.96))",
-};
+function previewChromeStyle(accent: string, contrast: string): CSSProperties {
+  return {
+    display: "grid",
+    gap: "8px",
+    padding: "16px",
+    borderRadius: "18px",
+    border: "1px solid rgba(255,255,255,0.08)",
+    background:
+      `radial-gradient(circle at top left, ${withAlpha(accent, "24")}, transparent 24%), radial-gradient(circle at 86% 18%, ${withAlpha(contrast, "18")}, transparent 18%), linear-gradient(180deg, rgba(17,15,24,0.96), rgba(9,9,13,0.96))`,
+  };
+}
 
 const previewChromeBadgeStyle: CSSProperties = {
   display: "inline-flex",

@@ -5,6 +5,10 @@ import { LuSparkles } from "react-icons/lu";
 import { getCurrentUser } from "@/app/lib/auth";
 import { getFeaturedPublicBadges } from "@/app/lib/badges";
 import { readLiveEmbedMetadata } from "@/app/lib/live-embed";
+import {
+  normalizeProfileAura,
+  normalizeProfileMood,
+} from "@/app/lib/profile-presence";
 import { getMediaKind } from "@/app/lib/profile-media";
 import { hasPremiumAccess } from "@/app/lib/premium";
 import { prisma } from "@/app/lib/prisma";
@@ -72,6 +76,8 @@ async function getProfileUser(username: string) {
       bannerUrl: true,
       themeColor: true,
       profileLayout: true,
+      profileMood: true,
+      profileAura: true,
       status: true,
       role: true,
       plan: true,
@@ -149,6 +155,8 @@ function buildProfileRenderData(user: ProfileUserRecord) {
     user,
     displayName,
     themeColor,
+    mood: normalizeProfileMood(user.profileMood),
+    aura: normalizeProfileAura(user.profileAura),
     bannerKind: getMediaKind(user.bannerUrl || ""),
     avatarInitials: getInitials(displayName),
     decorationScale,

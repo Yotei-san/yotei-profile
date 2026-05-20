@@ -2,6 +2,11 @@ import type { CSSProperties, ReactNode } from "react";
 import { LuArrowUpRight, LuSparkles } from "react-icons/lu";
 import BadgeVisual from "@/app/dashboard/components/BadgeVisual";
 import { getLinkPlatform } from "@/app/lib/link-icons";
+import {
+  getProfilePresence,
+  type ProfileAura,
+  type ProfileMood,
+} from "@/app/lib/profile-presence";
 import ProfileHeroClient from "./ProfileHeroClient";
 import SocialPresenceSection, {
   type PublicSocialBlock,
@@ -56,6 +61,8 @@ type Props = {
   user: LayoutUser;
   displayName: string;
   themeColor: string;
+  mood: ProfileMood;
+  aura: ProfileAura;
   bannerKind: "image" | "video" | "unknown";
   avatarInitials: string;
   decorationScale: number;
@@ -85,9 +92,15 @@ export default function ProfileLayoutVariants(props: Props) {
 }
 
 function DefaultLayout(props: Props) {
+  const presence = getProfilePresence({
+    mood: props.mood,
+    aura: props.aura,
+    themeColor: props.themeColor,
+  });
+
   return (
-    <main style={defaultPageStyle(props.themeColor, props.preview)}>
-      <section style={defaultShellStyle(props.preview)}>
+    <main style={defaultPageStyle(props.themeColor, props.preview, presence.stageGlow)}>
+      <section style={defaultShellStyle(props.preview, presence.panelGlow)}>
         <BannerSurface
           bannerUrl={props.user.bannerUrl}
           bannerKind={props.bannerKind}
@@ -95,6 +108,8 @@ function DefaultLayout(props: Props) {
           height={260}
           roundedTop
           preview={props.preview}
+          presenceOverlay={presence.auraOverlay}
+          accentColor={presence.accent}
         />
 
         <div style={defaultContentStyle(props.preview)}>
@@ -109,12 +124,18 @@ function DefaultLayout(props: Props) {
               decorationOffsetY={props.decorationOffsetY}
               size={126}
               frameInset={8}
+              presenceAura={presence.avatarAuraBackground}
+              presenceRing={presence.avatarRing}
+              presenceGlow={presence.avatarGlow}
             />
 
             <div style={{ display: "grid", gap: "10px", minWidth: 0 }}>
               <div style={eyebrowStyle(props.themeColor)}>Default layout</div>
               <h1 style={defaultNameStyle}>{props.displayName}</h1>
               <div style={usernameStyle}>@{props.user.username}</div>
+              <div style={presenceChipStyle(presence.presenceBackground, presence.presenceBorder)}>
+                {presence.statusLabel}
+              </div>
               <PillRow pills={props.heroPills} compact />
               {props.user.bio ? <p style={defaultBioStyle}>{props.user.bio}</p> : null}
             </div>
@@ -153,8 +174,14 @@ function DefaultLayout(props: Props) {
 }
 
 function SimplisticLayout(props: Props) {
+  const presence = getProfilePresence({
+    mood: props.mood,
+    aura: props.aura,
+    themeColor: props.themeColor,
+  });
+
   return (
-    <main style={simplisticPageStyle(props.preview)}>
+    <main style={simplisticPageStyle(props.preview, presence.stageGlow)}>
       <div style={simplisticShellStyle(props.preview)}>
         <div style={simplisticHeaderStyle}>
           <AvatarVisual
@@ -168,12 +195,18 @@ function SimplisticLayout(props: Props) {
             size={92}
             frameInset={6}
             minimal
+            presenceAura={presence.avatarAuraBackground}
+            presenceRing={presence.avatarRing}
+            presenceGlow={presence.avatarGlow}
           />
 
           <div style={{ display: "grid", gap: "10px" }}>
             <div style={simpleKickerStyle}>Simplistic</div>
             <h1 style={simplisticNameStyle}>{props.displayName}</h1>
             <div style={usernameStyle}>@{props.user.username}</div>
+            <div style={presenceChipStyle(presence.presenceBackground, presence.presenceBorder)}>
+              {presence.statusLabel}
+            </div>
             {props.user.bio ? <p style={simplisticBioStyle}>{props.user.bio}</p> : null}
           </div>
         </div>
@@ -187,6 +220,8 @@ function SimplisticLayout(props: Props) {
           themeColor={props.themeColor}
           height={160}
           preview={props.preview}
+          presenceOverlay={presence.auraOverlay}
+          accentColor={presence.accent}
         />
         </div>
 
@@ -223,8 +258,14 @@ function SimplisticLayout(props: Props) {
 }
 
 function PortfolioLayout(props: Props) {
+  const presence = getProfilePresence({
+    mood: props.mood,
+    aura: props.aura,
+    themeColor: props.themeColor,
+  });
+
   return (
-    <main style={portfolioPageStyle(props.preview)}>
+    <main style={portfolioPageStyle(props.preview, presence.stageGlow)}>
       <div style={portfolioBannerWrapStyle(props.preview)}>
         <BannerSurface
           bannerUrl={props.user.bannerUrl}
@@ -232,11 +273,13 @@ function PortfolioLayout(props: Props) {
           themeColor={props.themeColor}
           height={220}
           preview={props.preview}
+          presenceOverlay={presence.auraOverlay}
+          accentColor={presence.accent}
         />
       </div>
 
       <div style={portfolioShellStyle(props.preview)}>
-        <aside style={portfolioSidebarStyle(props.preview)}>
+        <aside style={portfolioSidebarStyle(props.preview, presence.panelGlow)}>
           <div style={eyebrowStyle(props.themeColor)}>Portfolio</div>
           <AvatarVisual
             avatarUrl={props.user.avatarUrl}
@@ -248,11 +291,17 @@ function PortfolioLayout(props: Props) {
             decorationOffsetY={props.decorationOffsetY}
             size={108}
             frameInset={7}
+            presenceAura={presence.avatarAuraBackground}
+            presenceRing={presence.avatarRing}
+            presenceGlow={presence.avatarGlow}
           />
 
           <div style={{ display: "grid", gap: "8px" }}>
             <h1 style={portfolioNameStyle}>{props.displayName}</h1>
             <div style={usernameStyle}>@{props.user.username}</div>
+            <div style={presenceChipStyle(presence.presenceBackground, presence.presenceBorder)}>
+              {presence.statusLabel}
+            </div>
             {props.user.bio ? <p style={portfolioBioStyle}>{props.user.bio}</p> : null}
           </div>
 
@@ -275,7 +324,7 @@ function PortfolioLayout(props: Props) {
           />
         </aside>
 
-        <section style={portfolioMainStyle(props.preview)}>
+        <section style={portfolioMainStyle(props.preview, presence.panelGlow)}>
           <SocialPresenceSection
             blocks={props.socialBlocks}
             themeColor={props.themeColor}
@@ -299,6 +348,8 @@ function BannerSurface({
   height,
   roundedTop = false,
   preview = false,
+  presenceOverlay,
+  accentColor,
 }: {
   bannerUrl: string | null;
   bannerKind: "image" | "video" | "unknown";
@@ -306,6 +357,8 @@ function BannerSurface({
   height: number;
   roundedTop?: boolean;
   preview?: boolean;
+  presenceOverlay: string;
+  accentColor: string;
 }) {
   return (
     <div
@@ -314,7 +367,7 @@ function BannerSurface({
         overflow: "hidden",
         height: `${height}px`,
         borderRadius: roundedTop ? "30px 30px 0 0" : "26px",
-        background: `linear-gradient(135deg, ${themeColor}, rgba(15,23,42,0.82), rgba(3,7,18,0.96))`,
+        background: `linear-gradient(135deg, ${themeColor}, ${withAlpha(accentColor, "c0")}, rgba(3,7,18,0.96))`,
         isolation: preview ? "isolate" : undefined,
       }}
     >
@@ -340,7 +393,7 @@ function BannerSurface({
           position: "absolute",
           inset: 0,
           background:
-            "linear-gradient(180deg, rgba(6,8,12,0.10), rgba(6,8,12,0.28) 48%, rgba(6,8,12,0.68) 100%)",
+            `linear-gradient(180deg, rgba(6,8,12,0.10), rgba(6,8,12,0.28) 48%, rgba(6,8,12,0.68) 100%), ${presenceOverlay}`,
         }}
       />
     </div>
@@ -358,6 +411,9 @@ function AvatarVisual({
   size,
   frameInset,
   minimal = false,
+  presenceAura,
+  presenceRing,
+  presenceGlow,
 }: {
   avatarUrl: string | null;
   avatarInitials: string;
@@ -369,6 +425,9 @@ function AvatarVisual({
   size: number;
   frameInset: number;
   minimal?: boolean;
+  presenceAura: string;
+  presenceRing: string;
+  presenceGlow: string;
 }) {
   return (
     <div
@@ -385,7 +444,7 @@ function AvatarVisual({
             position: "absolute",
             inset: 0,
             borderRadius: "999px",
-            background: `radial-gradient(circle, ${withAlpha(themeColor, "30")} 0%, transparent 72%)`,
+            background: presenceAura,
             filter: "blur(16px)",
             transform: "scale(1.1)",
           }}
@@ -419,7 +478,7 @@ function AvatarVisual({
                 width: `${decorationScale}%`,
                 height: `${decorationScale}%`,
                 objectFit: "contain",
-                filter: `drop-shadow(0 0 18px ${withAlpha(themeColor, "26")})`,
+                filter: `drop-shadow(0 0 18px ${presenceGlow})`,
               }}
             />
           ) : (
@@ -430,7 +489,7 @@ function AvatarVisual({
                 width: `${decorationScale}%`,
                 height: `${decorationScale}%`,
                 objectFit: "contain",
-                filter: `drop-shadow(0 0 18px ${withAlpha(themeColor, "26")})`,
+                filter: `drop-shadow(0 0 18px ${presenceGlow})`,
               }}
             />
           )}
@@ -445,11 +504,11 @@ function AvatarVisual({
           borderRadius: "999px",
           border: minimal
             ? "1px solid rgba(255,255,255,0.10)"
-            : `1px solid ${withAlpha(themeColor, "46")}`,
+            : `1px solid ${presenceRing}`,
           background: "linear-gradient(180deg, rgba(11,14,20,0.98), rgba(7,10,16,0.98))",
           boxShadow: minimal
             ? "0 12px 24px rgba(0,0,0,0.18)"
-            : `0 18px 36px ${withAlpha(themeColor, "16")}`,
+            : `0 18px 36px ${presenceGlow}`,
           zIndex: 1,
         }}
       >
@@ -804,6 +863,7 @@ const bannerMediaStyle: CSSProperties = {
 const defaultPageStyle = (
   themeColor: string,
   preview = false,
+  stageGlow = "",
 ): CSSProperties => ({
   minHeight: "100vh",
   height: preview ? "100%" : undefined,
@@ -811,10 +871,10 @@ const defaultPageStyle = (
   padding: preview ? "24px" : "32px 16px 40px",
   color: "#ffffff",
   fontFamily: '"Space Grotesk", Inter, Arial, Helvetica, sans-serif',
-  background: `linear-gradient(180deg, rgba(5,6,10,0.98), rgba(3,4,7,1)), radial-gradient(circle at top, ${withAlpha(themeColor, "16")} 0%, transparent 28%)`,
+  background: `${stageGlow}, linear-gradient(180deg, rgba(5,6,10,0.98), rgba(3,4,7,1)), radial-gradient(circle at top, ${withAlpha(themeColor, "16")} 0%, transparent 28%)`,
 });
 
-const defaultShellStyle = (preview = false): CSSProperties => ({
+const defaultShellStyle = (preview = false, panelGlow = ""): CSSProperties => ({
   width: "min(1040px, 100%)",
   maxWidth: "1040px",
   margin: "0 auto",
@@ -822,7 +882,7 @@ const defaultShellStyle = (preview = false): CSSProperties => ({
   overflow: "hidden",
   border: "1px solid rgba(255,255,255,0.08)",
   background: "linear-gradient(180deg, rgba(10,11,16,0.98), rgba(7,8,12,0.98))",
-  boxShadow: "0 28px 70px rgba(0,0,0,0.28)",
+  boxShadow: panelGlow ? `${panelGlow}, 0 28px 70px rgba(0,0,0,0.24)` : "0 28px 70px rgba(0,0,0,0.28)",
   minHeight: preview ? "100%" : undefined,
 });
 
@@ -863,14 +923,14 @@ const defaultBioStyle: CSSProperties = {
   whiteSpace: "pre-wrap",
 };
 
-const simplisticPageStyle = (preview = false): CSSProperties => ({
+const simplisticPageStyle = (preview = false, stageGlow = ""): CSSProperties => ({
   minHeight: "100vh",
   height: preview ? "100%" : undefined,
   minWidth: 0,
   padding: preview ? "28px 24px" : "42px 16px",
   color: "#ffffff",
   fontFamily: 'Inter, Arial, Helvetica, sans-serif',
-  background: "#06070b",
+  background: `${stageGlow}, #06070b`,
 });
 
 const simplisticShellStyle = (preview = false): CSSProperties => ({
@@ -911,14 +971,14 @@ const simplisticBannerWrapStyle: CSSProperties = {
   marginTop: "4px",
 };
 
-const portfolioPageStyle = (preview = false): CSSProperties => ({
+const portfolioPageStyle = (preview = false, stageGlow = ""): CSSProperties => ({
   minHeight: "100vh",
   height: preview ? "100%" : undefined,
   minWidth: 0,
   padding: preview ? "24px" : "26px 16px 38px",
   color: "#ffffff",
   fontFamily: '"Space Grotesk", Inter, Arial, Helvetica, sans-serif',
-  background: "linear-gradient(180deg, #071018 0%, #04070d 100%)",
+  background: `${stageGlow}, linear-gradient(180deg, #071018 0%, #04070d 100%)`,
 });
 
 const portfolioBannerWrapStyle = (preview = false): CSSProperties => ({
@@ -938,7 +998,7 @@ const portfolioShellStyle = (preview = false): CSSProperties => ({
   minHeight: preview ? "calc(100% - 236px)" : undefined,
 });
 
-const portfolioSidebarStyle = (preview = false): CSSProperties => ({
+const portfolioSidebarStyle = (preview = false, panelGlow = ""): CSSProperties => ({
   display: "grid",
   alignContent: "start",
   gap: "18px",
@@ -946,18 +1006,20 @@ const portfolioSidebarStyle = (preview = false): CSSProperties => ({
   borderRadius: "28px",
   border: "1px solid rgba(255,255,255,0.08)",
   background: "linear-gradient(180deg, rgba(10,14,22,0.98), rgba(8,10,16,0.98))",
+  boxShadow: panelGlow,
   minWidth: 0,
   overflow: "hidden",
   minHeight: preview ? "100%" : undefined,
 });
 
-const portfolioMainStyle = (preview = false): CSSProperties => ({
+const portfolioMainStyle = (preview = false, panelGlow = ""): CSSProperties => ({
   display: "grid",
   gap: "18px",
   padding: "22px",
   borderRadius: "28px",
   border: "1px solid rgba(255,255,255,0.08)",
   background: "linear-gradient(180deg, rgba(10,14,22,0.98), rgba(8,10,16,0.98))",
+  boxShadow: panelGlow,
   minWidth: 0,
   overflow: "hidden",
   minHeight: preview ? "100%" : undefined,
@@ -1028,6 +1090,25 @@ const eyebrowStyle = (themeColor: string): CSSProperties => ({
   fontWeight: 800,
   letterSpacing: "0.06em",
   textTransform: "uppercase",
+});
+
+const presenceChipStyle = (
+  background: string,
+  borderColor: string,
+): CSSProperties => ({
+  width: "fit-content",
+  minHeight: "32px",
+  padding: "0 12px",
+  borderRadius: "999px",
+  display: "inline-flex",
+  alignItems: "center",
+  color: "#f8fafc",
+  background,
+  border: `1px solid ${borderColor}`,
+  boxShadow: "0 12px 22px rgba(0,0,0,0.16)",
+  fontSize: "12px",
+  fontWeight: 800,
+  letterSpacing: "0.02em",
 });
 
 const linkCardBaseStyle: CSSProperties = {

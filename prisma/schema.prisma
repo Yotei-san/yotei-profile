@@ -30,6 +30,8 @@ model User {
 
   themeColor                String?  @default("#f472b6")
   profileLayout             String   @default("modern")
+  profileMood               String   @default("locked-in")
+  profileAura               String   @default("neon")
   textColor                 String?
   cardOpacity               Int?     @default(72)
   cardBlur                  Int?     @default(16)

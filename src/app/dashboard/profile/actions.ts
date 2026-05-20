@@ -3,6 +3,10 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { redirectWithClearedSession, requireUser } from "@/app/lib/auth";
+import {
+  normalizeProfileAura,
+  normalizeProfileMood,
+} from "@/app/lib/profile-presence";
 import { prisma } from "@/app/lib/prisma";
 import { logServerError } from "@/app/lib/server-log";
 
@@ -21,6 +25,12 @@ export async function saveProfileSettings(formData: FormData) {
   const rawThemeColor = String(formData.get("themeColor") || "").trim();
   const themeColor = normalizeThemeColor(rawThemeColor);
   const requestedProfileLayout = String(formData.get("profileLayout") || "").trim();
+  const profileMood = normalizeProfileMood(
+    String(formData.get("profileMood") || "").trim(),
+  );
+  const profileAura = normalizeProfileAura(
+    String(formData.get("profileAura") || "").trim(),
+  );
   const profileLayout = VALID_PROFILE_LAYOUTS.has(requestedProfileLayout)
     ? requestedProfileLayout
     : "modern";
@@ -43,6 +53,8 @@ export async function saveProfileSettings(formData: FormData) {
         bio: bio || null,
         themeColor,
         profileLayout,
+        profileMood,
+        profileAura,
       },
     });
   } catch (error) {

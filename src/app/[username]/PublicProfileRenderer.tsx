@@ -1,9 +1,14 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { LuArrowUpRight, LuBadgeCheck, LuPlay, LuSparkles } from "react-icons/lu";
+import { LuArrowUpRight, LuBadgeCheck, LuMoonStar, LuSparkles } from "react-icons/lu";
 import BadgeVisual from "@/app/dashboard/components/BadgeVisual";
 import { getLinkPlatform } from "@/app/lib/link-icons";
+import {
+  getProfilePresence,
+  type ProfileAura,
+  type ProfileMood,
+} from "@/app/lib/profile-presence";
 import ProfileLayoutVariants, { type PublicProfileLayout } from "./ProfileLayoutVariants";
 import ProfileHeroClient from "./ProfileHeroClient";
 import SocialPresenceSection, { type PublicSocialBlock } from "./SocialPresenceSection";
@@ -56,6 +61,8 @@ type Props = {
   user: PublicProfileRenderUser;
   displayName: string;
   themeColor: string;
+  mood: ProfileMood;
+  aura: ProfileAura;
   bannerKind: "image" | "video" | "unknown";
   avatarInitials: string;
   decorationScale: number;
@@ -78,6 +85,8 @@ export default function PublicProfileRenderer({
   user,
   displayName,
   themeColor,
+  mood,
+  aura,
   bannerKind,
   avatarInitials,
   decorationScale,
@@ -101,6 +110,8 @@ export default function PublicProfileRenderer({
         user={user}
         displayName={displayName}
         themeColor={themeColor}
+        mood={mood}
+        aura={aura}
         bannerKind={bannerKind}
         avatarInitials={avatarInitials}
         decorationScale={decorationScale}
@@ -121,6 +132,7 @@ export default function PublicProfileRenderer({
 
   const bannerUrl = user.bannerUrl?.trim() || null;
   const avatarUrl = user.avatarUrl?.trim() || null;
+  const presence = getProfilePresence({ mood, aura, themeColor });
 
   return (
     <main
@@ -133,8 +145,8 @@ export default function PublicProfileRenderer({
         fontFamily:
           '"Space Grotesk", Inter, Arial, Helvetica, system-ui, sans-serif',
         background: `
-          radial-gradient(circle at top, ${withAlpha(themeColor, "22")} 0%, transparent 24%),
-          radial-gradient(circle at 84% 14%, ${withAlpha(themeColor, "10")} 0%, transparent 16%),
+          radial-gradient(circle at top, ${withAlpha(themeColor, "16")} 0%, transparent 24%),
+          radial-gradient(circle at 84% 14%, ${withAlpha(presence.accent, "16")} 0%, transparent 18%),
           linear-gradient(180deg, #05060a 0%, #040508 46%, #030407 100%)
         `,
         pointerEvents: preview ? "none" : undefined,
@@ -169,7 +181,7 @@ export default function PublicProfileRenderer({
         .profile-stage-overlay {
           background:
             linear-gradient(180deg, rgba(4, 5, 9, 0.18) 0%, rgba(4, 5, 9, 0.36) 28%, rgba(4, 5, 9, 0.74) 72%, rgba(4, 5, 9, 0.92) 100%),
-            radial-gradient(circle at 50% 16%, ${withAlpha(themeColor, "24")} 0%, transparent 44%);
+            radial-gradient(circle at 50% 16%, ${withAlpha(presence.accent, "22")} 0%, transparent 44%);
         }
 
         .profile-stage-vignette {
@@ -181,17 +193,16 @@ export default function PublicProfileRenderer({
         .profile-stage-noise {
           opacity: 0.08;
           background-image:
+            ${presence.ambientGrid},
             radial-gradient(rgba(255, 255, 255, 0.82) 0.5px, transparent 0.6px),
             radial-gradient(rgba(255, 255, 255, 0.4) 0.5px, transparent 0.6px);
-          background-position: 0 0, 7px 11px;
-          background-size: 12px 12px, 15px 15px;
+          background-position: 0 0, 0 0, 7px 11px;
+          background-size: 80px 80px, 12px 12px, 15px 15px;
           mix-blend-mode: soft-light;
         }
 
         .profile-stage-glow {
-          background:
-            radial-gradient(circle at 22% 18%, ${withAlpha(themeColor, "20")} 0%, transparent 22%),
-            radial-gradient(circle at 78% 82%, rgba(110, 146, 255, 0.12) 0%, transparent 24%);
+          background: ${presence.stageGlow};
           filter: blur(22px);
           opacity: 0.92;
         }
@@ -225,7 +236,8 @@ export default function PublicProfileRenderer({
             linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
           border: 1px solid rgba(255, 255, 255, 0.08);
           box-shadow:
-            0 34px 80px rgba(0, 0, 0, 0.34),
+            ${presence.panelGlow},
+            0 34px 80px rgba(0, 0, 0, 0.30),
             inset 0 1px 0 rgba(255, 255, 255, 0.05);
           overflow: hidden;
         }
@@ -236,7 +248,8 @@ export default function PublicProfileRenderer({
           inset: 0;
           background:
             linear-gradient(120deg, rgba(255, 255, 255, 0.07), transparent 18%),
-            radial-gradient(circle at top right, ${withAlpha(themeColor, "16")} 0%, transparent 28%);
+            radial-gradient(circle at top right, ${withAlpha(presence.accent, "14")} 0%, transparent 28%),
+            ${presence.auraOverlay};
           pointer-events: none;
         }
 
@@ -296,13 +309,31 @@ export default function PublicProfileRenderer({
         .ambient-chip.accent,
         .preview-callout {
           color: #ffe5f1;
-          border-color: ${withAlpha(themeColor, "32")};
-          background: linear-gradient(135deg, ${withAlpha(themeColor, "20")}, rgba(255, 255, 255, 0.05));
-          box-shadow: 0 16px 28px ${withAlpha(themeColor, "12")};
+          border-color: ${presence.presenceBorder};
+          background: ${presence.presenceBackground};
+          box-shadow: 0 16px 28px ${withAlpha(presence.accent, "12")};
         }
 
         .preview-callout {
           width: fit-content;
+        }
+
+        .presence-chip {
+          width: fit-content;
+          min-height: 34px;
+          margin-top: 14px;
+          padding: 0 12px;
+          border-radius: 999px;
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          color: #f7fbff;
+          background: ${presence.presenceBackground};
+          border: 1px solid ${presence.presenceBorder};
+          box-shadow: 0 14px 26px ${withAlpha(presence.accent, "12")};
+          font-size: 12px;
+          font-weight: 800;
+          letter-spacing: 0.02em;
         }
 
         .identity-stack {
@@ -329,7 +360,7 @@ export default function PublicProfileRenderer({
           position: absolute;
           inset: 10px;
           border-radius: 999px;
-          background: radial-gradient(circle, ${withAlpha(themeColor, "36")} 0%, ${withAlpha(themeColor, "00")} 72%);
+          background: ${presence.avatarAuraBackground};
           filter: blur(18px);
           transform: scale(1.12);
           animation: profile-aura 4.8s ease-in-out infinite;
@@ -347,7 +378,7 @@ export default function PublicProfileRenderer({
 
         .avatar-decoration-media {
           object-fit: contain;
-          filter: drop-shadow(0 0 22px ${withAlpha(themeColor, "3a")});
+          filter: drop-shadow(0 0 22px ${withAlpha(presence.accent, "3a")});
         }
 
         .avatar-frame {
@@ -358,9 +389,9 @@ export default function PublicProfileRenderer({
           border: 1px solid rgba(255, 255, 255, 0.16);
           background: linear-gradient(180deg, rgba(8, 9, 16, 0.96), rgba(11, 12, 20, 0.98));
           box-shadow:
-            0 0 0 1px ${withAlpha(themeColor, "38")},
+            0 0 0 1px ${presence.avatarRing},
             0 22px 54px rgba(0, 0, 0, 0.26),
-            0 0 34px ${withAlpha(themeColor, "1e")};
+            0 0 34px ${presence.avatarGlow};
           z-index: 2;
         }
 
@@ -408,8 +439,8 @@ export default function PublicProfileRenderer({
           width: 11px;
           height: 11px;
           border-radius: 999px;
-          background: #45d483;
-          box-shadow: 0 0 0 4px rgba(69, 212, 131, 0.12);
+          background: ${presence.presenceDot};
+          box-shadow: 0 0 0 4px ${withAlpha(presence.pulse, "20")};
           display: inline-block;
           animation: online-pulse 2.2s ease-in-out infinite;
         }
@@ -729,28 +760,14 @@ export default function PublicProfileRenderer({
                 <div className="panel-topbar">
                   <div className="ambient-chip accent">
                     <LuSparkles size={13} />
-                    {preview ? "Live Preview" : "Profile"}
+                    {preview ? "Live Preview" : presence.chipText}
                   </div>
 
                   <div className="ambient-chip">
-                    {bannerUrl ? (
-                      bannerKind === "video" ? (
-                        <>
-                          <LuPlay size={13} />
-                          Video banner
-                        </>
-                      ) : (
-                        <>
-                          <LuBadgeCheck size={13} />
-                          Banner
-                        </>
-                      )
-                    ) : (
-                      <>
-                        <LuBadgeCheck size={13} />
-                        Signature
-                      </>
-                    )}
+                    <LuMoonStar size={13} />
+                    {aura === "none"
+                      ? "Clean aura"
+                      : `${aura.charAt(0).toUpperCase()}${aura.slice(1)} aura`}
                   </div>
                 </div>
 
@@ -829,6 +846,10 @@ export default function PublicProfileRenderer({
 
                       <h1 className="profile-name">{displayName}</h1>
                       <div className="profile-username">@{user.username}</div>
+                      <div className="presence-chip">
+                        <LuMoonStar size={13} />
+                        {presence.statusLabel}
+                      </div>
 
                       <div className="profile-pill-row">
                         {heroPills.map((pill) => (

@@ -15,6 +15,10 @@ import {
 import { redirectWithClearedSession, requireUser } from "@/app/lib/auth";
 import { getFeaturedPublicBadges } from "@/app/lib/badges";
 import { readLiveEmbedMetadata } from "@/app/lib/live-embed";
+import {
+  normalizeProfileAura,
+  normalizeProfileMood,
+} from "@/app/lib/profile-presence";
 import { getMediaKind } from "@/app/lib/profile-media";
 import { hasPremiumAccess } from "@/app/lib/premium";
 import { prisma } from "@/app/lib/prisma";
@@ -108,6 +112,8 @@ export default async function ProfileSettingsPage({ searchParams }: PageProps) {
         initialBio={resolvedUser.bio || ""}
         initialThemeColor={resolvedUser.themeColor || "#f472b6"}
         savedLayout={profileData.layout}
+        savedMood={profileData.mood}
+        savedAura={profileData.aura}
         previewUser={profileData.user}
         bannerKind={profileData.bannerKind}
         avatarInitials={profileData.avatarInitials}
@@ -137,6 +143,8 @@ async function getDashboardProfileUser(userId: string) {
       bannerUrl: true,
       themeColor: true,
       profileLayout: true,
+      profileMood: true,
+      profileAura: true,
       status: true,
       role: true,
       plan: true,
@@ -212,6 +220,8 @@ function buildProfileRenderData(user: ProfileUserRecord) {
   return {
     layout,
     user,
+    mood: normalizeProfileMood(user.profileMood),
+    aura: normalizeProfileAura(user.profileAura),
     bannerKind: getMediaKind(user.bannerUrl || ""),
     avatarInitials: getInitials(displayName),
     decorationScale,
