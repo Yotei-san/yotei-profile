@@ -4,7 +4,10 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { redirectWithClearedSession, requireUser } from "@/app/lib/auth";
 import { normalizeProfileMusic } from "@/app/lib/profile-music";
-import { normalizeProfileScene } from "@/app/lib/profile-scenes";
+import {
+  isMissingProfileSceneColumnError,
+  normalizeProfileScene,
+} from "@/app/lib/profile-scenes";
 import {
   normalizeProfileAura,
   normalizeProfileMood,
@@ -58,23 +61,46 @@ export async function saveProfileSettings(formData: FormData) {
   const resolvedUser = currentUser ?? (await redirectWithClearedSession());
 
   try {
-    await prisma.user.update({
-      where: { id: resolvedUser.id },
-      data: {
-        displayName: displayName || null,
-        bio: bio || null,
-        themeColor,
-        profileLayout,
-        profileMood,
-        profileAura,
-        profileScene,
-        profileMusicTitle: profileMusic.title,
-        profileMusicArtist: profileMusic.artist,
-        profileMusicUrl: profileMusic.url,
-        profileMusicProvider: profileMusic.provider,
-        profileMusicEnabled: profileMusic.enabled,
-      },
-    });
+    try {
+      await prisma.user.update({
+        where: { id: resolvedUser.id },
+        data: {
+          displayName: displayName || null,
+          bio: bio || null,
+          themeColor,
+          profileLayout,
+          profileMood,
+          profileAura,
+          profileScene,
+          profileMusicTitle: profileMusic.title,
+          profileMusicArtist: profileMusic.artist,
+          profileMusicUrl: profileMusic.url,
+          profileMusicProvider: profileMusic.provider,
+          profileMusicEnabled: profileMusic.enabled,
+        },
+      });
+    } catch (error) {
+      if (!isMissingProfileSceneColumnError(error)) {
+        throw error;
+      }
+
+      await prisma.user.update({
+        where: { id: resolvedUser.id },
+        data: {
+          displayName: displayName || null,
+          bio: bio || null,
+          themeColor,
+          profileLayout,
+          profileMood,
+          profileAura,
+          profileMusicTitle: profileMusic.title,
+          profileMusicArtist: profileMusic.artist,
+          profileMusicUrl: profileMusic.url,
+          profileMusicProvider: profileMusic.provider,
+          profileMusicEnabled: profileMusic.enabled,
+        },
+      });
+    }
   } catch (error) {
     logServerError("dashboard.profile.save-settings", error, {
       userId: sessionUser.id,

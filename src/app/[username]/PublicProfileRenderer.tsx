@@ -100,7 +100,7 @@ export default function PublicProfileRenderer({
   themeColor,
   mood,
   aura,
-  scene,
+  scene = "default",
   music,
   bannerKind,
   avatarInitials,

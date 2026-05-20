@@ -7,7 +7,10 @@ import { getFeaturedPublicBadges } from "@/app/lib/badges";
 import { resolveEquippedDecoration } from "@/app/lib/decorations";
 import { readLiveEmbedMetadata } from "@/app/lib/live-embed";
 import { normalizeProfileMusic } from "@/app/lib/profile-music";
-import { normalizeProfileScene } from "@/app/lib/profile-scenes";
+import {
+  isMissingProfileSceneColumnError,
+  normalizeProfileScene,
+} from "@/app/lib/profile-scenes";
 import {
   normalizeProfileAura,
   normalizeProfileMood,
@@ -69,90 +72,21 @@ export default async function ProfilePage({ params }: Props) {
 }
 
 async function getProfileUser(username: string) {
-  return prisma.user.findUnique({
-    where: { username: username.toLowerCase() },
-    select: {
-      id: true,
-      username: true,
-      displayName: true,
-      bio: true,
-      avatarUrl: true,
-      bannerUrl: true,
-      themeColor: true,
-      profileLayout: true,
-      profileMood: true,
-      profileAura: true,
-      profileScene: true,
-      profileMusicTitle: true,
-      profileMusicArtist: true,
-      profileMusicUrl: true,
-      profileMusicProvider: true,
-      profileMusicEnabled: true,
-      status: true,
-      role: true,
-      plan: true,
-      premiumBadge: true,
-      premiumUntil: true,
-      subscriptionStatus: true,
-      selectedDecorationScale: true,
-      selectedDecorationOffsetX: true,
-      selectedDecorationOffsetY: true,
-      selectedDecoration: {
-        select: {
-          id: true,
-          name: true,
-          slug: true,
-          imageUrl: true,
-          previewUrl: true,
-          posterUrl: true,
-          mediaType: true,
-          overlayScale: true,
-          overlayOffsetY: true,
-        },
-      },
-      badges: {
-        include: {
-          badge: true,
-        },
-        orderBy: {
-          createdAt: "desc",
-        },
-      },
-      links: {
-        orderBy: [{ position: "asc" }, { createdAt: "asc" }],
-        select: {
-          id: true,
-          title: true,
-          url: true,
-        },
-      },
-      socialBlocks: {
-        where: {
-          isEnabled: true,
-        },
-        orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
-        select: {
-          id: true,
-          platform: true,
-          title: true,
-          username: true,
-          url: true,
-          metadata: true,
-          isEnabled: true,
-        },
-      },
-      reactionsReceived: {
-        select: {
-          type: true,
-        },
-      },
-      profileViews: {
-        select: {
-          id: true,
-        },
-      },
-    },
-  });
+  try {
+    return await prisma.user.findUnique({
+      where: { username: username.toLowerCase() },
+      select: buildProfileUserSelect(true),
+    });
+  } catch (error) {
+    if (!isMissingProfileSceneColumnError(error)) {
+      throw error;
+    }
+
+    return prisma.user.findUnique({
+      where: { username: username.toLowerCase() },
+      select: buildProfileUserSelect(false),
+    });
+  }
 }
 
 function buildProfileRenderData(user: ProfileUserRecord) {
@@ -183,7 +117,7 @@ function buildProfileRenderData(user: ProfileUserRecord) {
     themeColor,
     mood: normalizeProfileMood(user.profileMood),
     aura: normalizeProfileAura(user.profileAura),
-    scene: normalizeProfileScene(user.profileScene),
+    scene: normalizeProfileScene("profileScene" in user ? user.profileScene : undefined),
     music: normalizeProfileMusic({
       enabled: user.profileMusicEnabled,
       title: user.profileMusicTitle,
@@ -209,6 +143,90 @@ function buildProfileRenderData(user: ProfileUserRecord) {
     ),
     views: user.profileViews.length,
     socialBlocks: mapSocialBlocks(user.socialBlocks),
+  };
+}
+
+function buildProfileUserSelect(includeProfileScene: boolean) {
+  return {
+    id: true,
+    username: true,
+    displayName: true,
+    bio: true,
+    avatarUrl: true,
+    bannerUrl: true,
+    themeColor: true,
+    profileLayout: true,
+    profileMood: true,
+    profileAura: true,
+    ...(includeProfileScene ? { profileScene: true } : {}),
+    profileMusicTitle: true,
+    profileMusicArtist: true,
+    profileMusicUrl: true,
+    profileMusicProvider: true,
+    profileMusicEnabled: true,
+    status: true,
+    role: true,
+    plan: true,
+    premiumBadge: true,
+    premiumUntil: true,
+    subscriptionStatus: true,
+    selectedDecorationScale: true,
+    selectedDecorationOffsetX: true,
+    selectedDecorationOffsetY: true,
+    selectedDecoration: {
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        imageUrl: true,
+        previewUrl: true,
+        posterUrl: true,
+        mediaType: true,
+        overlayScale: true,
+        overlayOffsetY: true,
+      },
+    },
+    badges: {
+      include: {
+        badge: true,
+      },
+      orderBy: {
+        createdAt: "desc" as const,
+      },
+    },
+    links: {
+      orderBy: [{ position: "asc" as const }, { createdAt: "asc" as const }],
+      select: {
+        id: true,
+        title: true,
+        url: true,
+      },
+    },
+    socialBlocks: {
+      where: {
+        isEnabled: true,
+      },
+      orderBy: [{ sortOrder: "asc" as const }, { createdAt: "asc" as const }],
+      select: {
+        id: true,
+        platform: true,
+        title: true,
+        username: true,
+        url: true,
+        metadata: true,
+        isEnabled: true,
+      },
+    },
+    reactionsReceived: {
+      select: {
+        type: true,
+      },
+    },
+    profileViews: {
+      select: {
+        id: true,
+      },
+    },
   };
 }
 

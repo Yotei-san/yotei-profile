@@ -93,15 +93,20 @@ type Props = {
 };
 
 export default function ProfileLayoutVariants(props: Props) {
-  if (props.layout === "default") {
-    return <DefaultLayout {...props} />;
+  const resolvedProps = {
+    ...props,
+    scene: props.scene || "default",
+  };
+
+  if (resolvedProps.layout === "default") {
+    return <DefaultLayout {...resolvedProps} />;
   }
 
-  if (props.layout === "simplistic") {
-    return <SimplisticLayout {...props} />;
+  if (resolvedProps.layout === "simplistic") {
+    return <SimplisticLayout {...resolvedProps} />;
   }
 
-  return <PortfolioLayout {...props} />;
+  return <PortfolioLayout {...resolvedProps} />;
 }
 
 function DefaultLayout(props: Props) {

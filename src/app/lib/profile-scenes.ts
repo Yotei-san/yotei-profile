@@ -11,6 +11,7 @@ export const PROFILE_SCENES = [
 ] as const;
 
 export type ProfileScene = (typeof PROFILE_SCENES)[number];
+export const DEFAULT_PROFILE_SCENE: ProfileScene = "default";
 
 type ProfileSceneDefinition = {
   value: ProfileScene;
@@ -150,9 +151,15 @@ const PROFILE_SCENE_DEFINITIONS: Record<ProfileScene, ProfileSceneDefinition> = 
 };
 
 export function normalizeProfileScene(value: string | null | undefined): ProfileScene {
-  return PROFILE_SCENES.includes(value as ProfileScene)
-    ? (value as ProfileScene)
-    : "default";
+  if (typeof value !== "string") {
+    return DEFAULT_PROFILE_SCENE;
+  }
+
+  const trimmed = value.trim();
+
+  return PROFILE_SCENES.includes(trimmed as ProfileScene)
+    ? (trimmed as ProfileScene)
+    : DEFAULT_PROFILE_SCENE;
 }
 
 export function getProfileSceneDefinition(value: string | null | undefined) {
@@ -234,4 +241,25 @@ export function getProfileSceneAppearance(input: {
 
 function withAlpha(hex: string, alpha: string) {
   return /^#([0-9a-fA-F]{6})$/.test(hex.trim()) ? `${hex}${alpha}` : hex;
+}
+
+export function isMissingProfileSceneColumnError(error: unknown) {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+
+  const candidate = error as {
+    code?: unknown;
+    message?: unknown;
+    meta?: {
+      column?: unknown;
+    };
+  };
+  const column = typeof candidate.meta?.column === "string" ? candidate.meta.column : "";
+  const message = typeof candidate.message === "string" ? candidate.message : "";
+
+  return (
+    candidate.code === "P2022" &&
+    (column.includes("profileScene") || message.includes("profileScene"))
+  );
 }

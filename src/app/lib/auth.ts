@@ -8,6 +8,21 @@ export const SESSION_PERSISTENCE_COOKIE_NAME = "yotei_session_mode";
 
 const PERSISTENT_SESSION_MS = 1000 * 60 * 60 * 24 * 30;
 const SESSION_BROWSER_MS = 1000 * 60 * 60 * 24;
+const SESSION_USER_SELECT = {
+  id: true,
+  email: true,
+  username: true,
+  displayName: true,
+  avatarUrl: true,
+  emailVerified: true,
+  role: true,
+  status: true,
+  plan: true,
+  premiumBadge: true,
+  premiumUntil: true,
+  subscriptionStatus: true,
+  stripeCustomerId: true,
+} as const;
 
 export async function getCurrentSession() {
   const cookieStore = await cookies();
@@ -17,7 +32,15 @@ export async function getCurrentSession() {
 
   const session = await prisma.session.findUnique({
     where: { token },
-    include: { user: true },
+    select: {
+      id: true,
+      token: true,
+      userId: true,
+      expiresAt: true,
+      user: {
+        select: SESSION_USER_SELECT,
+      },
+    },
   });
 
   if (!session) {
