@@ -8,6 +8,7 @@ import {
   isEmailVerificationEnforced,
   isEmailVerified,
 } from "@/app/lib/email-verification";
+import { hasPremiumAccess } from "@/app/lib/premium";
 import TemplateGallery from "@/app/dashboard/components/TemplateGallery";
 import { applyTemplate, createTemplate } from "./actions";
 
@@ -95,7 +96,7 @@ export default async function TemplatesPage({ searchParams }: PageProps) {
   ]);
 
   const canMarkPremium = isAdminOrOwner(resolvedUser.role);
-  const canUsePremium = isPremiumOrPrivilegedUser(resolvedUser);
+  const canUsePremium = hasPremiumAccess(resolvedUser);
   const successMessage = getSuccessMessage(params.success);
   const errorMessage = getErrorMessage(params.error);
 
@@ -296,30 +297,6 @@ function getTemplatesWhere(tab: TemplateTab, userId: string) {
 
 function isAdminOrOwner(role: string) {
   return role === "admin" || role === "owner";
-}
-
-function isPremiumOrPrivilegedUser(user: {
-  role: string;
-  plan: string;
-  premiumBadge: boolean;
-  premiumUntil: Date | null;
-  subscriptionStatus: string | null;
-}) {
-  if (isAdminOrOwner(user.role)) {
-    return true;
-  }
-
-  const hasPremiumPlan =
-    user.plan === "premium" &&
-    (!user.premiumUntil || new Date(user.premiumUntil) > new Date());
-
-  return (
-    hasPremiumPlan ||
-    user.premiumBadge ||
-    user.subscriptionStatus === "active" ||
-    user.subscriptionStatus === "trialing" ||
-    user.subscriptionStatus === "past_due"
-  );
 }
 
 function getSuccessMessage(code?: string) {

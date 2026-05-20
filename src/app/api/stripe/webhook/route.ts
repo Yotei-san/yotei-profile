@@ -1,6 +1,7 @@
 import Stripe from "stripe";
-import { stripe } from "@/app/lib/stripe";
 import { prisma } from "@/app/lib/prisma";
+import { logServerError } from "@/app/lib/server-log";
+import { getStripe } from "@/app/lib/stripe";
 
 const ACTIVE_PREMIUM_STATUSES = new Set(["active", "trialing", "past_due"]);
 
@@ -34,16 +35,20 @@ async function syncPremiumByCustomerId(input: {
 }
 
 export async function POST(request: Request) {
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET?.trim();
 
   if (!webhookSecret) {
-    return new Response("Webhook secret não configurado.", { status: 500 });
+    logServerError(
+      "stripe.webhook.config",
+      new Error("STRIPE_WEBHOOK_SECRET is missing.")
+    );
+    return new Response("Webhook is not configured.", { status: 503 });
   }
 
   const signature = request.headers.get("stripe-signature");
 
   if (!signature) {
-    return new Response("Stripe-Signature ausente.", { status: 400 });
+    return new Response("Stripe signature is missing.", { status: 400 });
   }
 
   const body = await request.text();
@@ -51,11 +56,10 @@ export async function POST(request: Request) {
   let event: Stripe.Event;
 
   try {
-    event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
+    event = getStripe().webhooks.constructEvent(body, signature, webhookSecret);
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Falha ao verificar webhook.";
-    return new Response(`Webhook Error: ${message}`, { status: 400 });
+    logServerError("stripe.webhook.signature", error);
+    return new Response("Invalid webhook signature.", { status: 400 });
   }
 
   try {
@@ -65,10 +69,8 @@ export async function POST(request: Request) {
 
         const customerId =
           typeof session.customer === "string" ? session.customer : null;
-
         const subscriptionId =
           typeof session.subscription === "string" ? session.subscription : null;
-
         const userId = session.metadata?.userId ?? null;
 
         if (userId) {
@@ -89,12 +91,10 @@ export async function POST(request: Request) {
 
       case "invoice.paid": {
         const invoice = event.data.object as Stripe.Invoice;
-
         const customerId =
           typeof invoice.customer === "string" ? invoice.customer : null;
 
         let premiumUntil: Date | null = null;
-
         const lines = invoice.lines?.data ?? [];
         const firstLine = lines[0];
 
@@ -114,7 +114,6 @@ export async function POST(request: Request) {
       case "customer.subscription.created":
       case "customer.subscription.updated": {
         const subscription = event.data.object as Stripe.Subscription;
-
         const customerId =
           typeof subscription.customer === "string" ? subscription.customer : null;
 
@@ -140,7 +139,6 @@ export async function POST(request: Request) {
 
       case "customer.subscription.deleted": {
         const subscription = event.data.object as Stripe.Subscription;
-
         const customerId =
           typeof subscription.customer === "string" ? subscription.customer : null;
 
@@ -161,8 +159,7 @@ export async function POST(request: Request) {
 
     return new Response("ok", { status: 200 });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Erro ao processar webhook.";
-    return new Response(message, { status: 500 });
+    logServerError("stripe.webhook.process", error);
+    return new Response("Webhook processing failed.", { status: 500 });
   }
 }

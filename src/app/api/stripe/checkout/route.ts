@@ -1,15 +1,8 @@
 import { NextResponse } from "next/server";
-import Stripe from "stripe";
-import { prisma } from "@/app/lib/prisma";
 import { getCurrentUser } from "@/app/lib/auth";
-
-const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
-
-if (!stripeSecretKey) {
-  throw new Error("STRIPE_SECRET_KEY não configurada.");
-}
-
-const stripe = new Stripe(stripeSecretKey);
+import { prisma } from "@/app/lib/prisma";
+import { logServerError } from "@/app/lib/server-log";
+import { getStripe, getStripeAppUrl } from "@/app/lib/stripe";
 
 export async function POST() {
   try {
@@ -17,41 +10,26 @@ export async function POST() {
 
     if (!user) {
       return NextResponse.json(
-        { error: "Você precisa estar logado." },
+        { error: "You need to sign in before starting checkout." },
         { status: 401 }
       );
     }
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL;
-    const priceId = process.env.STRIPE_PRICE_PREMIUM_MONTHLY;
+    const appUrl = getStripeAppUrl();
+    const priceId = process.env.STRIPE_PRICE_PREMIUM_MONTHLY?.trim();
 
-    console.log("[CHECKOUT] user:", {
-      id: user.id,
-      email: user.email,
-      username: user.username,
-      stripeCustomerId: user.stripeCustomerId,
-    });
-
-    console.log("[CHECKOUT] env:", {
-      appUrl,
-      priceId,
-      hasStripeSecretKey: Boolean(process.env.STRIPE_SECRET_KEY),
-    });
-
-    if (!appUrl) {
+    if (!appUrl || !priceId) {
+      logServerError(
+        "stripe.checkout.config",
+        new Error("Stripe checkout configuration is incomplete.")
+      );
       return NextResponse.json(
-        { error: "NEXT_PUBLIC_APP_URL não configurada." },
-        { status: 500 }
+        { error: "Premium checkout is not available right now." },
+        { status: 503 }
       );
     }
 
-    if (!priceId) {
-      return NextResponse.json(
-        { error: "STRIPE_PRICE_PREMIUM_MONTHLY não configurada." },
-        { status: 500 }
-      );
-    }
-
+    const stripe = getStripe();
     let customerId = user.stripeCustomerId ?? null;
 
     if (!customerId) {
@@ -88,15 +66,12 @@ export async function POST() {
       },
     });
 
-    return NextResponse.json({
-      url: session.url,
-    });
+    return NextResponse.json({ url: session.url });
   } catch (error) {
-    console.error("[STRIPE_CHECKOUT_POST]", error);
-
-    const message =
-      error instanceof Error ? error.message : "Erro desconhecido no checkout.";
-
-    return NextResponse.json({ error: message }, { status: 500 });
+    logServerError("stripe.checkout", error);
+    return NextResponse.json(
+      { error: "Unable to start premium checkout right now." },
+      { status: 500 }
+    );
   }
 }

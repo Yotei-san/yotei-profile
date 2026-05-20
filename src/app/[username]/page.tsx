@@ -13,6 +13,7 @@ import { getFeaturedPublicBadges } from "@/app/lib/badges";
 import { getLinkPlatform } from "@/app/lib/link-icons";
 import { readLiveEmbedMetadata } from "@/app/lib/live-embed";
 import { getMediaKind } from "@/app/lib/profile-media";
+import { hasPremiumAccess } from "@/app/lib/premium";
 import { prisma } from "@/app/lib/prisma";
 import ProfileLayoutVariants, {
   type PublicProfileLayout,
@@ -27,8 +28,6 @@ type Props = {
 };
 
 type MyReaction = "like" | "dislike" | null;
-
-const ACTIVE_PREMIUM_STATUSES = new Set(["active", "trialing", "past_due"]);
 
 function withAlpha(hex: string, alpha: string) {
   return `${hex}${alpha}`;
@@ -72,28 +71,6 @@ function normalizeProfileLayout(value: string | null | undefined): PublicProfile
   }
 
   return "modern";
-}
-
-function isPremiumUser(user: {
-  role: string;
-  plan: string;
-  premiumBadge: boolean;
-  premiumUntil: Date | null;
-  subscriptionStatus: string | null;
-}) {
-  if (user.role === "owner" || user.role === "admin") {
-    return true;
-  }
-
-  const hasPremiumPlan =
-    user.plan === "premium" &&
-    (!user.premiumUntil || new Date(user.premiumUntil) > new Date());
-
-  return (
-    hasPremiumPlan ||
-    user.premiumBadge ||
-    ACTIVE_PREMIUM_STATUSES.has(user.subscriptionStatus || "")
-  );
 }
 
 function getMetadataObject(value: unknown) {
@@ -292,7 +269,7 @@ export default async function ProfilePage({ params }: Props) {
       isEnabled: block.isEnabled,
     };
   });
-  const hasPremiumState = isPremiumUser(user);
+  const hasPremiumState = hasPremiumAccess(user);
 
   const heroPills: Array<{
     key: string;

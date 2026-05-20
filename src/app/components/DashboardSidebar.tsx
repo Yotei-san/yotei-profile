@@ -61,6 +61,9 @@ export default function DashboardSidebar({ user, items, lockedHrefs = [] }: Prop
         width: "100%",
         maxWidth: "270px",
         minWidth: 0,
+        maxHeight: "calc(100vh - 48px)",
+        overflowY: "auto",
+        overscrollBehavior: "contain",
         background:
           "linear-gradient(180deg, rgba(12,12,14,0.98), rgba(8,8,10,0.98))",
         border: "1px solid rgba(255,255,255,0.06)",
@@ -79,6 +82,8 @@ export default function DashboardSidebar({ user, items, lockedHrefs = [] }: Prop
         @media (max-width: 980px) {
           .dashboard-sidebar {
             max-width: none;
+            max-height: none;
+            overflow: visible;
             height: auto;
             position: static;
           }

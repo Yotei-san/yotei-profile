@@ -4,7 +4,8 @@ import CustomCursor from "./components/CustomCursor";
 
 export const metadata: Metadata = {
   title: "Yotei Profile",
-  description: "Plataforma de perfis personalizáveis com links",
+  description:
+    "Premium profile pages with links, creator identity, and visual customization.",
 };
 
 export default function RootLayout({

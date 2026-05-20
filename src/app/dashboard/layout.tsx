@@ -7,9 +7,8 @@ import {
   isEmailVerificationEnforced,
   isEmailVerified,
 } from "@/app/lib/email-verification";
+import { hasPremiumAccess } from "@/app/lib/premium";
 import { prisma } from "@/app/lib/prisma";
-
-const ACTIVE_PREMIUM_STATUSES = new Set(["active", "trialing", "past_due"]);
 
 type DashboardLayoutUser = {
   username: string;
@@ -23,28 +22,6 @@ type DashboardLayoutUser = {
   premiumUntil: Date | null;
   subscriptionStatus: string | null;
 };
-
-function isPremiumUser(user: {
-  role: string;
-  plan: string;
-  premiumBadge: boolean;
-  premiumUntil: Date | null;
-  subscriptionStatus: string | null;
-}) {
-  if (user.role === "owner" || user.role === "admin") {
-    return true;
-  }
-
-  const hasPremiumPlan =
-    user.plan === "premium" &&
-    (!user.premiumUntil || new Date(user.premiumUntil) > new Date());
-
-  return (
-    hasPremiumPlan ||
-    user.premiumBadge ||
-    ACTIVE_PREMIUM_STATUSES.has(user.subscriptionStatus || "")
-  );
-}
 
 export default async function DashboardLayout({
   children,
@@ -66,11 +43,10 @@ export default async function DashboardLayout({
       premiumBadge: true,
       premiumUntil: true,
       subscriptionStatus: true,
-    } as any,
+    } as const,
   })) as DashboardLayoutUser | null;
 
   const resolvedUser = user ?? (await redirectWithClearedSession());
-
   const verified = isEmailVerified(resolvedUser);
   const emailVerificationEnforced = isEmailVerificationEnforced();
   const lockedHrefs =
@@ -83,6 +59,8 @@ export default async function DashboardLayout({
       className="dashboard-layout-root"
       style={{
         minHeight: "100vh",
+        boxSizing: "border-box",
+        overflowX: "clip",
         background:
           "radial-gradient(circle at top, rgba(236,72,153,0.08), transparent 28%), radial-gradient(circle at 80% 10%, rgba(168,85,247,0.06), transparent 22%), #070707",
         padding: "24px",
@@ -93,6 +71,7 @@ export default async function DashboardLayout({
       <style>{`
         .dashboard-layout-root {
           min-height: 100vh;
+          box-sizing: border-box;
         }
 
         .dashboard-layout-shell {
@@ -122,16 +101,14 @@ export default async function DashboardLayout({
           }
         }
       `}</style>
-      <div
-        className="dashboard-layout-shell"
-      >
+      <div className="dashboard-layout-shell">
         <DashboardSidebar
           user={{
             username: resolvedUser.username,
             displayName: resolvedUser.displayName,
             role: resolvedUser.role,
             avatarUrl: resolvedUser.avatarUrl,
-            plan: isPremiumUser(resolvedUser) ? "premium" : "free",
+            plan: hasPremiumAccess(resolvedUser) ? "premium" : "free",
           }}
           items={dashboardNavItems}
           lockedHrefs={lockedHrefs}

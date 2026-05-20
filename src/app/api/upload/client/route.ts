@@ -1,5 +1,6 @@
 import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 import { NextResponse } from "next/server";
+import { logServerError } from "@/app/lib/server-log";
 
 export async function POST(request: Request): Promise<NextResponse> {
   const body = (await request.json()) as HandleUploadBody;
@@ -24,14 +25,12 @@ export async function POST(request: Request): Promise<NextResponse> {
           }),
         };
       },
-      onUploadCompleted: async ({ blob, tokenPayload }) => {
-        console.log("Upload concluído:", blob.url, tokenPayload);
-      },
+      onUploadCompleted: async () => {},
     });
 
     return NextResponse.json(jsonResponse);
   } catch (error) {
-    console.error("[CLIENT_UPLOAD_ROUTE]", error);
+    logServerError("upload.client-route", error);
     return NextResponse.json(
       { error: "Falha ao iniciar upload do Blob." },
       { status: 400 }

@@ -17,6 +17,7 @@ import {
   dashboardTagStyle,
 } from "@/app/dashboard/components/DashboardUI";
 import { redirectWithClearedSession, requireUser } from "@/app/lib/auth";
+import { hasPremiumAccess } from "@/app/lib/premium";
 import { prisma } from "@/app/lib/prisma";
 import {
   updateDisplayName,
@@ -86,14 +87,18 @@ export default async function SettingsPage({
       username: true,
       displayName: true,
       email: true,
+      role: true,
       plan: true,
+      premiumBadge: true,
       premiumUntil: true,
+      subscriptionStatus: true,
     },
   });
 
   const resolvedUser = user ?? (await redirectWithClearedSession());
   const successMessage = getMessageFromCode("success", params.success);
   const errorMessage = getMessageFromCode("error", params.error);
+  const premium = hasPremiumAccess(resolvedUser);
 
   return (
     <main style={dashboardPageStyle}>
@@ -117,8 +122,8 @@ export default async function SettingsPage({
         }
         aside={
           <div style={summaryCardStyle}>
-            <div style={dashboardTagStyle(resolvedUser.plan === "premium" ? "pink" : "violet")}>
-              {resolvedUser.plan === "premium" ? "Premium" : "Free"}
+            <div style={dashboardTagStyle(premium ? "pink" : "violet")}>
+              {premium ? "Premium" : "Free"}
             </div>
             <div style={{ display: "grid", gap: "8px" }}>
               <div style={summaryNameStyle}>
@@ -255,10 +260,7 @@ export default async function SettingsPage({
               label="Display name"
               value={resolvedUser.displayName || resolvedUser.username}
             />
-            <InfoRow
-              label="Plan"
-              value={resolvedUser.plan === "premium" ? "Premium" : "Free"}
-            />
+            <InfoRow label="Plan" value={premium ? "Premium" : "Free"} />
           </div>
         </section>
       </section>

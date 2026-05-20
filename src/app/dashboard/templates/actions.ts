@@ -3,15 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/app/lib/auth";
+import { hasPremiumAccess } from "@/app/lib/premium";
 import { prisma } from "@/app/lib/prisma";
 
 type TemplateTab = "all" | "mine" | "premium";
-
-const ACTIVE_SUBSCRIPTION_STATUSES = new Set([
-  "active",
-  "trialing",
-  "past_due",
-]);
 
 export async function createTemplate(formData: FormData) {
   const sessionUser = await requireUser();
@@ -120,7 +115,7 @@ export async function applyTemplate(formData: FormData) {
     redirect(buildTemplatesPath(tab, "error", "template-private"));
   }
 
-  if (template.isPremium && !isPremiumOrPrivilegedUser(user)) {
+  if (template.isPremium && !hasPremiumAccess(user)) {
     redirect(buildTemplatesPath(tab, "error", "premium-required"));
   }
 
@@ -188,28 +183,6 @@ function normalizeOptionalText(value: FormDataEntryValue | null) {
 
 function isAdminOrOwner(role: string | null | undefined) {
   return role === "admin" || role === "owner";
-}
-
-function isPremiumOrPrivilegedUser(user: {
-  role: string;
-  plan: string;
-  premiumBadge: boolean;
-  premiumUntil: Date | null;
-  subscriptionStatus: string | null;
-}) {
-  if (isAdminOrOwner(user.role)) {
-    return true;
-  }
-
-  const hasPremiumPlan =
-    user.plan === "premium" &&
-    (!user.premiumUntil || new Date(user.premiumUntil) > new Date());
-
-  return (
-    hasPremiumPlan ||
-    user.premiumBadge ||
-    ACTIVE_SUBSCRIPTION_STATUSES.has(user.subscriptionStatus || "")
-  );
 }
 
 function buildTemplatesPath(

@@ -1,9 +1,24 @@
 import Stripe from "stripe";
 
-const secretKey = process.env.STRIPE_SECRET_KEY;
+let stripeClient: Stripe | null = null;
 
-if (!secretKey) {
-  throw new Error("STRIPE_SECRET_KEY não configurada.");
+export function getStripe() {
+  const secretKey = process.env.STRIPE_SECRET_KEY?.trim();
+
+  if (!secretKey) {
+    throw new Error("Stripe is not configured.");
+  }
+
+  if (!stripeClient) {
+    stripeClient = new Stripe(secretKey);
+  }
+
+  return stripeClient;
 }
 
-export const stripe = new Stripe(secretKey);
+export function getStripeAppUrl() {
+  const appUrl =
+    process.env.APP_URL?.trim() || process.env.NEXT_PUBLIC_APP_URL?.trim();
+
+  return appUrl ? appUrl.replace(/\/+$/, "") : null;
+}

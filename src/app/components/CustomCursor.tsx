@@ -1,22 +1,35 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
 
 type Point = {
   x: number;
   y: number;
 };
 
-const TRAIL_COUNT = 4;
+const TRAIL_COUNT = 2;
+const DISABLED_ROUTES = new Set([
+  "/forgot-password",
+  "/login",
+  "/pricing",
+  "/register",
+  "/verify-email",
+]);
 
 export default function CustomCursor() {
+  const pathname = usePathname();
   const cursorRef = useRef<HTMLDivElement | null>(null);
   const ringRef = useRef<HTMLDivElement | null>(null);
   const trailRefs = useRef<(HTMLDivElement | null)[]>([]);
   const rafRef = useRef<number | null>(null);
+  const shouldDisable =
+    pathname.startsWith("/dashboard") || DISABLED_ROUTES.has(pathname);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (shouldDisable || typeof window === "undefined") {
+      return;
+    }
 
     const finePointer = window.matchMedia("(pointer: fine)").matches;
     const reducedMotion = window.matchMedia(
@@ -29,12 +42,16 @@ export default function CustomCursor() {
       navigator.deviceMemory <= 4;
     const shouldRenderTrail = !reducedMotion && !lowPowerDevice;
 
-    if (!finePointer) return;
+    if (!finePointer) {
+      return;
+    }
 
     const cursorEl = cursorRef.current;
     const ringEl = ringRef.current;
 
-    if (!cursorEl || !ringEl) return;
+    if (!cursorEl || !ringEl) {
+      return;
+    }
 
     let mouse: Point = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
     let ring: Point = { ...mouse };
@@ -54,7 +71,9 @@ export default function CustomCursor() {
       ringEl.style.opacity = opacity;
 
       for (const el of trailRefs.current) {
-        if (el) el.style.opacity = shouldRenderTrail ? opacity : "0";
+        if (el) {
+          el.style.opacity = shouldRenderTrail ? opacity : "0";
+        }
       }
     };
 
@@ -73,11 +92,13 @@ export default function CustomCursor() {
       ringEl.dataset.interactive = hoveringInteractive ? "true" : "false";
 
       for (const el of trailRefs.current) {
-        if (el) el.dataset.interactive = hoveringInteractive ? "true" : "false";
+        if (el) {
+          el.dataset.interactive = hoveringInteractive ? "true" : "false";
+        }
       }
     };
 
-    const handleMouseMove = (event: PointerEvent) => {
+    const handlePointerMove = (event: PointerEvent) => {
       mouse.x = event.clientX;
       mouse.y = event.clientY;
 
@@ -88,21 +109,21 @@ export default function CustomCursor() {
       updateInteractiveState(event.target);
     };
 
-    const handleMouseDown = () => {
+    const handlePointerDown = () => {
       cursorEl.dataset.pressed = "true";
       ringEl.dataset.pressed = "true";
     };
 
-    const handleMouseUp = () => {
+    const handlePointerUp = () => {
       cursorEl.dataset.pressed = "false";
       ringEl.dataset.pressed = "false";
     };
 
-    const handleMouseLeaveWindow = () => {
+    const handleWindowLeave = () => {
       setVisibility(false);
     };
 
-    const handleMouseEnterWindow = () => {
+    const handleWindowEnter = () => {
       setVisibility(true);
     };
 
@@ -111,25 +132,26 @@ export default function CustomCursor() {
 
       ring.x += (mouse.x - ring.x) * 0.18;
       ring.y += (mouse.y - ring.y) * 0.18;
-
       ringEl.style.transform = `translate3d(${ring.x}px, ${ring.y}px, 0) translate(-50%, -50%)`;
 
       if (shouldRenderTrail) {
-        trailPoints[0].x += (mouse.x - trailPoints[0].x) * 0.22;
-        trailPoints[0].y += (mouse.y - trailPoints[0].y) * 0.22;
+        trailPoints[0].x += (mouse.x - trailPoints[0].x) * 0.24;
+        trailPoints[0].y += (mouse.y - trailPoints[0].y) * 0.24;
 
         for (let i = 1; i < trailPoints.length; i++) {
-          trailPoints[i].x += (trailPoints[i - 1].x - trailPoints[i].x) * 0.22;
-          trailPoints[i].y += (trailPoints[i - 1].y - trailPoints[i].y) * 0.22;
+          trailPoints[i].x += (trailPoints[i - 1].x - trailPoints[i].x) * 0.24;
+          trailPoints[i].y += (trailPoints[i - 1].y - trailPoints[i].y) * 0.24;
         }
 
         for (let i = 0; i < trailRefs.current.length; i++) {
           const el = trailRefs.current[i];
           const point = trailPoints[i];
 
-          if (!el || !point) continue;
+          if (!el || !point) {
+            continue;
+          }
 
-          el.style.transform = `translate3d(${point.x}px, ${point.y}px, 0) translate(-50%, -50%) scale(${1 - i * 0.06})`;
+          el.style.transform = `translate3d(${point.x}px, ${point.y}px, 0) translate(-50%, -50%) scale(${1 - i * 0.08})`;
         }
       }
 
@@ -137,30 +159,32 @@ export default function CustomCursor() {
     };
 
     document.documentElement.classList.add("custom-cursor-enabled");
-
-    window.addEventListener("pointermove", handleMouseMove, { passive: true });
-    window.addEventListener("mousedown", handleMouseDown);
-    window.addEventListener("mouseup", handleMouseUp);
-    window.addEventListener("mouseleave", handleMouseLeaveWindow);
-    window.addEventListener("mouseenter", handleMouseEnterWindow);
-
     setVisibility(false);
     rafRef.current = window.requestAnimationFrame(animate);
 
+    window.addEventListener("pointermove", handlePointerMove, { passive: true });
+    window.addEventListener("pointerdown", handlePointerDown);
+    window.addEventListener("pointerup", handlePointerUp);
+    window.addEventListener("mouseleave", handleWindowLeave);
+    window.addEventListener("mouseenter", handleWindowEnter);
+
     return () => {
       document.documentElement.classList.remove("custom-cursor-enabled");
-
-      window.removeEventListener("pointermove", handleMouseMove);
-      window.removeEventListener("mousedown", handleMouseDown);
-      window.removeEventListener("mouseup", handleMouseUp);
-      window.removeEventListener("mouseleave", handleMouseLeaveWindow);
-      window.removeEventListener("mouseenter", handleMouseEnterWindow);
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerdown", handlePointerDown);
+      window.removeEventListener("pointerup", handlePointerUp);
+      window.removeEventListener("mouseleave", handleWindowLeave);
+      window.removeEventListener("mouseenter", handleWindowEnter);
 
       if (rafRef.current) {
         window.cancelAnimationFrame(rafRef.current);
       }
     };
-  }, []);
+  }, [shouldDisable]);
+
+  if (shouldDisable) {
+    return null;
+  }
 
   return (
     <>

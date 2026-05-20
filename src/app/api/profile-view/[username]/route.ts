@@ -1,5 +1,8 @@
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { getCurrentUser } from "@/app/lib/auth";
 import { prisma } from "@/app/lib/prisma";
+import { logServerError } from "@/app/lib/server-log";
 
 type RouteProps = {
   params: Promise<{
@@ -7,17 +10,27 @@ type RouteProps = {
   }>;
 };
 
+function buildViewCookieName(userId: string) {
+  return `yotei_profile_view_${userId}`;
+}
+
+function getDailyViewKey() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function getViewCookieExpiry() {
+  return new Date(Date.now() + 1000 * 60 * 60 * 24);
+}
+
 export async function POST(_req: Request, { params }: RouteProps) {
   try {
     const { username } = await params;
-
+    const currentUser = await getCurrentUser();
+    const cookieStore = await cookies();
     const normalizedUsername = username.trim().toLowerCase();
 
     if (!normalizedUsername) {
-      return NextResponse.json(
-        { error: "Username inválido." },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid username." }, { status: 400 });
     }
 
     const user = await prisma.user.findUnique({
@@ -34,10 +47,24 @@ export async function POST(_req: Request, { params }: RouteProps) {
     });
 
     if (!user || user.status === "banned") {
-      return NextResponse.json(
-        { error: "Perfil não encontrado." },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Profile not found." }, { status: 404 });
+    }
+
+    const existingResponse = NextResponse.json({
+      ok: true,
+      views: user._count.profileViews,
+    });
+
+    if (currentUser?.id === user.id) {
+      return existingResponse;
+    }
+
+    const cookieName = buildViewCookieName(user.id);
+    const dailyKey = getDailyViewKey();
+    const alreadyTracked = cookieStore.get(cookieName)?.value === dailyKey;
+
+    if (alreadyTracked) {
+      return existingResponse;
     }
 
     await prisma.profileView.create({
@@ -46,21 +73,24 @@ export async function POST(_req: Request, { params }: RouteProps) {
       },
     });
 
-    const views = await prisma.profileView.count({
-      where: {
-        userId: user.id,
-      },
-    });
-
-    return NextResponse.json({
+    const trackedResponse = NextResponse.json({
       ok: true,
-      views,
+      views: user._count.profileViews + 1,
     });
-  } catch (error) {
-    console.error("profile view route error", error);
 
+    trackedResponse.cookies.set(cookieName, dailyKey, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      expires: getViewCookieExpiry(),
+    });
+
+    return trackedResponse;
+  } catch (error) {
+    logServerError("profile.view-route", error);
     return NextResponse.json(
-      { error: "Falha ao registrar view." },
+      { error: "Unable to register this profile view right now." },
       { status: 500 }
     );
   }

@@ -1,9 +1,8 @@
 "use client";
 
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 import { LuEye, LuThumbsDown, LuThumbsUp } from "react-icons/lu";
-import type { ReactNode } from "react";
 
 type MyReaction = "like" | "dislike" | null;
 
@@ -15,6 +14,10 @@ type Props = {
   themeColor: string;
   initialMyReaction: MyReaction;
 };
+
+function getDailyViewStorageKey(username: string) {
+  return `profile-view:${username}:${new Date().toDateString()}`;
+}
 
 export default function ProfileHeroClient({
   username,
@@ -41,30 +44,50 @@ export default function ProfileHeroClient({
   }, [initialViews, initialLikes, initialDislikes, initialMyReaction]);
 
   useEffect(() => {
-    if (hasTrackedView.current) return;
+    if (hasTrackedView.current) {
+      return;
+    }
+
     hasTrackedView.current = true;
 
-    const timer = setTimeout(async () => {
+    const storageKey = getDailyViewStorageKey(username);
+
+    if (window.localStorage.getItem(storageKey)) {
+      return;
+    }
+
+    const controller = new AbortController();
+    const timer = window.setTimeout(async () => {
       try {
         const res = await fetch(`/api/profile-view/${username}`, {
           method: "POST",
+          signal: controller.signal,
         });
 
-        if (!res.ok) return;
+        if (!res.ok) {
+          return;
+        }
 
         const data = await res.json().catch(() => null);
 
         if (data && typeof data.views === "number") {
           setViews(data.views);
         }
+
+        window.localStorage.setItem(storageKey, "1");
       } catch {}
     }, 1200);
 
-    return () => clearTimeout(timer);
+    return () => {
+      controller.abort();
+      window.clearTimeout(timer);
+    };
   }, [username]);
 
   async function sendReaction(type: "like" | "dislike") {
-    if (isSubmittingRef.current) return;
+    if (isSubmittingRef.current) {
+      return;
+    }
 
     isSubmittingRef.current = true;
     setIsSubmitting(true);
@@ -97,8 +120,6 @@ export default function ProfileHeroClient({
           setMyReaction(data.myReaction);
         }
       }
-    } catch (error) {
-      console.error("reaction client error", error);
     } finally {
       isSubmittingRef.current = false;
       setIsSubmitting(false);
@@ -251,7 +272,7 @@ function ReactionButton({
         background,
         border,
         disabled,
-        isActive,
+        isActive
       )}
     >
       <span style={iconWrapStyle}>{icon}</span>
@@ -268,7 +289,7 @@ function reactionButtonStyle(
   background: string,
   border: string,
   disabled: boolean,
-  isActive: boolean,
+  isActive: boolean
 ): CSSProperties {
   return {
     ...chipBaseStyle,
@@ -293,7 +314,6 @@ const chipBaseStyle: CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
   gap: "12px",
-  backdropFilter: "blur(12px)",
   boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04)",
   width: "100%",
   maxWidth: "100%",
