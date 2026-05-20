@@ -1,7 +1,7 @@
 "use client";
 
 import { startTransition, useDeferredValue, useState, type CSSProperties } from "react";
-import { LuCheck, LuLayoutTemplate, LuSparkles } from "react-icons/lu";
+import { LuCheck, LuLayoutTemplate, LuMusic4, LuSparkles } from "react-icons/lu";
 import FormActionButton from "@/app/components/FormActionButton";
 import {
   DashboardSectionHeading,
@@ -19,8 +19,15 @@ import PublicProfileRenderer, {
   type PublicProfileHeroPill,
   type PublicProfileRenderUser,
 } from "@/app/[username]/PublicProfileRenderer";
+import ProfileMusicCard from "@/app/[username]/ProfileMusicCard";
 import type { PublicProfileLayout } from "@/app/[username]/ProfileLayoutVariants";
 import type { PublicSocialBlock } from "@/app/[username]/SocialPresenceSection";
+import {
+  normalizeProfileMusic,
+  PROFILE_MUSIC_PROVIDERS,
+  type ProfileMusicData,
+  type ProfileMusicProvider,
+} from "@/app/lib/profile-music";
 import {
   getProfilePresence,
   PROFILE_AURA_OPTIONS,
@@ -64,6 +71,7 @@ type Props = {
   savedLayout: PublicProfileLayout;
   savedMood: ProfileMood;
   savedAura: ProfileAura;
+  initialMusic: ProfileMusicData;
   previewUser: PublicProfileRenderUser;
   bannerKind: "image" | "video" | "unknown";
   avatarInitials: string;
@@ -86,6 +94,7 @@ export default function ProfileLayoutExperience({
   savedLayout,
   savedMood,
   savedAura,
+  initialMusic,
   previewUser,
   bannerKind,
   avatarInitials,
@@ -106,6 +115,13 @@ export default function ProfileLayoutExperience({
   const [previewLayout, setPreviewLayout] = useState<PublicProfileLayout>(savedLayout);
   const [previewMood, setPreviewMood] = useState<ProfileMood>(savedMood);
   const [previewAura, setPreviewAura] = useState<ProfileAura>(savedAura);
+  const [profileMusicEnabled, setProfileMusicEnabled] = useState(initialMusic.enabled);
+  const [profileMusicTitle, setProfileMusicTitle] = useState(initialMusic.title || "");
+  const [profileMusicArtist, setProfileMusicArtist] = useState(initialMusic.artist || "");
+  const [profileMusicUrl, setProfileMusicUrl] = useState(initialMusic.url || "");
+  const [profileMusicProvider, setProfileMusicProvider] = useState<ProfileMusicProvider>(
+    initialMusic.provider,
+  );
 
   const deferredDisplayName = useDeferredValue(displayName);
   const deferredBio = useDeferredValue(bio);
@@ -113,6 +129,11 @@ export default function ProfileLayoutExperience({
   const deferredPreviewLayout = useDeferredValue(previewLayout);
   const deferredPreviewMood = useDeferredValue(previewMood);
   const deferredPreviewAura = useDeferredValue(previewAura);
+  const deferredProfileMusicEnabled = useDeferredValue(profileMusicEnabled);
+  const deferredProfileMusicTitle = useDeferredValue(profileMusicTitle);
+  const deferredProfileMusicArtist = useDeferredValue(profileMusicArtist);
+  const deferredProfileMusicUrl = useDeferredValue(profileMusicUrl);
+  const deferredProfileMusicProvider = useDeferredValue(profileMusicProvider);
   const safeThemeColor = normalizeThemeColor(deferredThemeColor);
   const resolvedDisplayName =
     deferredDisplayName.trim() || previewUser.username;
@@ -126,10 +147,22 @@ export default function ProfileLayoutExperience({
     aura: deferredPreviewAura,
     themeColor: safeThemeColor,
   });
+  const livePreviewMusic = normalizeProfileMusic({
+    enabled: deferredProfileMusicEnabled,
+    title: deferredProfileMusicTitle,
+    artist: deferredProfileMusicArtist,
+    url: deferredProfileMusicUrl,
+    provider: deferredProfileMusicProvider,
+  });
   const isDirty =
     previewLayout !== savedLayout ||
     previewMood !== savedMood ||
     previewAura !== savedAura ||
+    profileMusicEnabled !== initialMusic.enabled ||
+    profileMusicTitle !== (initialMusic.title || "") ||
+    profileMusicArtist !== (initialMusic.artist || "") ||
+    profileMusicUrl !== (initialMusic.url || "") ||
+    profileMusicProvider !== initialMusic.provider ||
     displayName !== initialDisplayName ||
     bio !== initialBio ||
     themeColor !== initialThemeColor;
@@ -323,6 +356,116 @@ export default function ProfileLayoutExperience({
               </div>
             </div>
 
+            <div style={musicSectionStyle}>
+              <DashboardSectionHeading
+                eyebrow="Profile Music"
+                title="Sound atmosphere"
+                description="Add a track or atmosphere that represents your profile."
+              />
+
+              <input
+                type="hidden"
+                name="profileMusicEnabled"
+                value={profileMusicEnabled ? "true" : "false"}
+                readOnly
+              />
+
+              <label style={musicToggleStyle(profileMusicEnabled, previewPresence.accent)}>
+                <span style={musicToggleCopyStyle}>
+                  <span style={musicToggleTitleStyle}>Enable profile music</span>
+                  <span style={dashboardMutedTextStyle}>
+                    Show a lightweight music presence card on your public profile.
+                  </span>
+                </span>
+
+                <input
+                  type="checkbox"
+                  checked={profileMusicEnabled}
+                  onChange={(event) => setProfileMusicEnabled(event.target.checked)}
+                  style={musicCheckboxStyle}
+                />
+              </label>
+
+              <div style={musicFieldsGridStyle}>
+                <label style={dashboardLabelStyle}>
+                  Song/title
+                  <input
+                    type="text"
+                    name="profileMusicTitle"
+                    value={profileMusicTitle}
+                    onChange={(event) => setProfileMusicTitle(event.target.value)}
+                    placeholder="Night drive loop"
+                    style={dashboardInputStyle}
+                  />
+                </label>
+
+                <label style={dashboardLabelStyle}>
+                  Artist
+                  <input
+                    type="text"
+                    name="profileMusicArtist"
+                    value={profileMusicArtist}
+                    onChange={(event) => setProfileMusicArtist(event.target.value)}
+                    placeholder="Your artist or vibe source"
+                    style={dashboardInputStyle}
+                  />
+                </label>
+
+                <label style={dashboardLabelStyle}>
+                  URL
+                  <input
+                    type="text"
+                    name="profileMusicUrl"
+                    value={profileMusicUrl}
+                    onChange={(event) => setProfileMusicUrl(event.target.value)}
+                    placeholder="https://open.spotify.com/..."
+                    style={dashboardInputStyle}
+                  />
+                </label>
+
+                <label style={dashboardLabelStyle}>
+                  Provider
+                  <select
+                    name="profileMusicProvider"
+                    value={profileMusicProvider}
+                    onChange={(event) =>
+                      setProfileMusicProvider(event.target.value as ProfileMusicProvider)
+                    }
+                    style={dashboardInputStyle}
+                  >
+                    {PROFILE_MUSIC_PROVIDERS.map((provider) => (
+                      <option key={provider} value={provider}>
+                        {provider.charAt(0).toUpperCase()}
+                        {provider.slice(1)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+
+              <div style={musicPreviewWrapStyle}>
+                <div style={musicPreviewHeaderStyle}>
+                  <div style={dashboardTagStyle(profileMusicEnabled ? "pink" : "violet")}>
+                    <LuMusic4 size={13} />
+                    Preview player
+                  </div>
+                  <span style={dashboardMutedTextStyle}>
+                    No autoplay, embeds, or background audio.
+                  </span>
+                </div>
+
+                <ProfileMusicCard
+                  music={livePreviewMusic}
+                  themeColor={safeThemeColor}
+                  accentColor={previewPresence.accent}
+                  contrastColor={previewPresence.contrast}
+                  softColor={previewPresence.soft}
+                  compact
+                  showPlaceholder
+                />
+              </div>
+            </div>
+
             <FormActionButton
               idleLabel={isDirty ? "Save profile settings" : "Saved state is up to date"}
               pendingLabel="Saving profile..."
@@ -373,6 +516,7 @@ export default function ProfileLayoutExperience({
                   themeColor={safeThemeColor}
                   mood={deferredPreviewMood}
                   aura={deferredPreviewAura}
+                  music={livePreviewMusic}
                   bannerKind={bannerKind}
                   avatarInitials={avatarInitials}
                   decorationScale={decorationScale}
@@ -478,6 +622,68 @@ const livingGridStyle: CSSProperties = {
   display: "grid",
   gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 170px), 1fr))",
   gap: "12px",
+};
+
+const musicSectionStyle: CSSProperties = {
+  display: "grid",
+  gap: "14px",
+};
+
+const musicFieldsGridStyle: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 220px), 1fr))",
+  gap: "12px",
+};
+
+function musicToggleStyle(isEnabled: boolean, accentColor: string): CSSProperties {
+  return {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: "14px",
+    padding: "16px",
+    borderRadius: "20px",
+    border: `1px solid ${
+      isEnabled ? withAlpha(accentColor, "30") : "rgba(255,255,255,0.08)"
+    }`,
+    background: isEnabled
+      ? `linear-gradient(180deg, ${withAlpha(accentColor, "14")}, rgba(12,12,18,0.98))`
+      : "linear-gradient(180deg, rgba(18,18,24,0.96), rgba(11,11,15,0.96))",
+    boxShadow: isEnabled ? `0 16px 32px ${withAlpha(accentColor, "14")}` : "none",
+    cursor: "pointer",
+  };
+}
+
+const musicToggleCopyStyle: CSSProperties = {
+  display: "grid",
+  gap: "6px",
+  minWidth: 0,
+};
+
+const musicToggleTitleStyle: CSSProperties = {
+  color: "#ffffff",
+  fontSize: "14px",
+  fontWeight: 800,
+};
+
+const musicCheckboxStyle: CSSProperties = {
+  width: "18px",
+  height: "18px",
+  accentColor: "#f472b6",
+  flexShrink: 0,
+};
+
+const musicPreviewWrapStyle: CSSProperties = {
+  display: "grid",
+  gap: "12px",
+};
+
+const musicPreviewHeaderStyle: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  gap: "12px",
+  flexWrap: "wrap",
 };
 
 function layoutCardStyle(

@@ -32,6 +32,11 @@ model User {
   profileLayout             String   @default("modern")
   profileMood               String   @default("locked-in")
   profileAura               String   @default("neon")
+  profileMusicTitle         String?
+  profileMusicArtist        String?
+  profileMusicUrl           String?
+  profileMusicProvider      String   @default("custom")
+  profileMusicEnabled       Boolean  @default(false)
   textColor                 String?
   cardOpacity               Int?     @default(72)
   cardBlur                  Int?     @default(16)

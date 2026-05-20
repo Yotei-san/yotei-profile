@@ -9,7 +9,9 @@ import {
   type ProfileAura,
   type ProfileMood,
 } from "@/app/lib/profile-presence";
+import type { ProfileMusicData } from "@/app/lib/profile-music";
 import ProfileLayoutVariants, { type PublicProfileLayout } from "./ProfileLayoutVariants";
+import ProfileMusicCard from "./ProfileMusicCard";
 import ProfileHeroClient from "./ProfileHeroClient";
 import SocialPresenceSection, { type PublicSocialBlock } from "./SocialPresenceSection";
 
@@ -63,6 +65,7 @@ type Props = {
   themeColor: string;
   mood: ProfileMood;
   aura: ProfileAura;
+  music: ProfileMusicData;
   bannerKind: "image" | "video" | "unknown";
   avatarInitials: string;
   decorationScale: number;
@@ -87,6 +90,7 @@ export default function PublicProfileRenderer({
   themeColor,
   mood,
   aura,
+  music,
   bannerKind,
   avatarInitials,
   decorationScale,
@@ -112,6 +116,7 @@ export default function PublicProfileRenderer({
         themeColor={themeColor}
         mood={mood}
         aura={aura}
+        music={music}
         bannerKind={bannerKind}
         avatarInitials={avatarInitials}
         decorationScale={decorationScale}
@@ -871,7 +876,16 @@ export default function PublicProfileRenderer({
                     </div>
                   </div>
 
-                  {user.bio ? <div className="profile-bio">{user.bio}</div> : null}
+                {user.bio ? <div className="profile-bio">{user.bio}</div> : null}
+
+                  <ProfileMusicCard
+                    music={music}
+                    themeColor={themeColor}
+                    accentColor={presence.accent}
+                    contrastColor={presence.contrast}
+                    softColor={presence.soft}
+                    compact
+                  />
 
                   <ProfileHeroClient
                     username={user.username}

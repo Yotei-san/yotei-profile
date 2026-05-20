@@ -15,6 +15,7 @@ import {
 import { redirectWithClearedSession, requireUser } from "@/app/lib/auth";
 import { getFeaturedPublicBadges } from "@/app/lib/badges";
 import { readLiveEmbedMetadata } from "@/app/lib/live-embed";
+import { normalizeProfileMusic } from "@/app/lib/profile-music";
 import {
   normalizeProfileAura,
   normalizeProfileMood,
@@ -114,6 +115,7 @@ export default async function ProfileSettingsPage({ searchParams }: PageProps) {
         savedLayout={profileData.layout}
         savedMood={profileData.mood}
         savedAura={profileData.aura}
+        initialMusic={profileData.music}
         previewUser={profileData.user}
         bannerKind={profileData.bannerKind}
         avatarInitials={profileData.avatarInitials}
@@ -145,6 +147,11 @@ async function getDashboardProfileUser(userId: string) {
       profileLayout: true,
       profileMood: true,
       profileAura: true,
+      profileMusicTitle: true,
+      profileMusicArtist: true,
+      profileMusicUrl: true,
+      profileMusicProvider: true,
+      profileMusicEnabled: true,
       status: true,
       role: true,
       plan: true,
@@ -222,6 +229,13 @@ function buildProfileRenderData(user: ProfileUserRecord) {
     user,
     mood: normalizeProfileMood(user.profileMood),
     aura: normalizeProfileAura(user.profileAura),
+    music: normalizeProfileMusic({
+      enabled: user.profileMusicEnabled,
+      title: user.profileMusicTitle,
+      artist: user.profileMusicArtist,
+      url: user.profileMusicUrl,
+      provider: user.profileMusicProvider,
+    }),
     bannerKind: getMediaKind(user.bannerUrl || ""),
     avatarInitials: getInitials(displayName),
     decorationScale,

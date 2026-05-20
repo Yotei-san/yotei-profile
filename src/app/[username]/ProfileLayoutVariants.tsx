@@ -7,7 +7,9 @@ import {
   type ProfileAura,
   type ProfileMood,
 } from "@/app/lib/profile-presence";
+import type { ProfileMusicData } from "@/app/lib/profile-music";
 import ProfileHeroClient from "./ProfileHeroClient";
+import ProfileMusicCard from "./ProfileMusicCard";
 import SocialPresenceSection, {
   type PublicSocialBlock,
 } from "./SocialPresenceSection";
@@ -63,6 +65,7 @@ type Props = {
   themeColor: string;
   mood: ProfileMood;
   aura: ProfileAura;
+  music: ProfileMusicData;
   bannerKind: "image" | "video" | "unknown";
   avatarInitials: string;
   decorationScale: number;
@@ -156,6 +159,14 @@ function DefaultLayout(props: Props) {
             extraBadgeCount={props.extraBadgeCount}
             themeColor={props.themeColor}
           />
+          <ProfileMusicCard
+            music={props.music}
+            themeColor={props.themeColor}
+            accentColor={presence.accent}
+            contrastColor={presence.contrast}
+            softColor={presence.soft}
+            compact
+          />
           <SocialPresenceSection
             blocks={props.socialBlocks}
             themeColor={props.themeColor}
@@ -241,6 +252,14 @@ function SimplisticLayout(props: Props) {
           themeColor={props.themeColor}
           minimal
         />
+        <ProfileMusicCard
+          music={props.music}
+          themeColor={props.themeColor}
+          accentColor={presence.accent}
+          contrastColor={presence.contrast}
+          softColor={presence.soft}
+          compact
+        />
         <SocialPresenceSection
           blocks={props.socialBlocks}
           themeColor={props.themeColor}
@@ -321,6 +340,15 @@ function PortfolioLayout(props: Props) {
             badges={props.featuredBadges}
             extraBadgeCount={props.extraBadgeCount}
             themeColor={props.themeColor}
+          />
+
+          <ProfileMusicCard
+            music={props.music}
+            themeColor={props.themeColor}
+            accentColor={presence.accent}
+            contrastColor={presence.contrast}
+            softColor={presence.soft}
+            compact
           />
         </aside>
 

@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { redirectWithClearedSession, requireUser } from "@/app/lib/auth";
+import { normalizeProfileMusic } from "@/app/lib/profile-music";
 import {
   normalizeProfileAura,
   normalizeProfileMood,
@@ -31,6 +32,13 @@ export async function saveProfileSettings(formData: FormData) {
   const profileAura = normalizeProfileAura(
     String(formData.get("profileAura") || "").trim(),
   );
+  const profileMusic = normalizeProfileMusic({
+    enabled: parseBooleanFormValue(formData.get("profileMusicEnabled")),
+    title: String(formData.get("profileMusicTitle") || ""),
+    artist: String(formData.get("profileMusicArtist") || ""),
+    url: String(formData.get("profileMusicUrl") || ""),
+    provider: String(formData.get("profileMusicProvider") || ""),
+  });
   const profileLayout = VALID_PROFILE_LAYOUTS.has(requestedProfileLayout)
     ? requestedProfileLayout
     : "modern";
@@ -55,6 +63,11 @@ export async function saveProfileSettings(formData: FormData) {
         profileLayout,
         profileMood,
         profileAura,
+        profileMusicTitle: profileMusic.title,
+        profileMusicArtist: profileMusic.artist,
+        profileMusicUrl: profileMusic.url,
+        profileMusicProvider: profileMusic.provider,
+        profileMusicEnabled: profileMusic.enabled,
       },
     });
   } catch (error) {
@@ -87,4 +100,8 @@ function normalizeThemeColor(value: string) {
   }
 
   return "#f472b6";
+}
+
+function parseBooleanFormValue(value: FormDataEntryValue | null) {
+  return value === "true" || value === "on" || value === "1";
 }
