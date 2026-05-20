@@ -3,6 +3,12 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/app/lib/auth";
+import {
+  canUserEquipDecoration,
+  inferMediaType,
+  toDecorationCatalogItem,
+} from "@/app/lib/decorations";
+import { ensureStarterDecorations } from "@/app/lib/decoration-storage";
 import { prisma } from "@/app/lib/prisma";
 
 function toNumber(value: FormDataEntryValue | null, fallback: number) {
@@ -13,19 +19,74 @@ function toNumber(value: FormDataEntryValue | null, fallback: number) {
 export async function saveSelectedDecoration(formData: FormData) {
   const sessionUser = await requireUser();
 
+  const decorationSlug = String(formData.get("decorationSlug") || "").trim();
   const decorationId = String(formData.get("decorationId") || "").trim();
-  const scale = toNumber(formData.get("scale"), 165);
-  const offsetX = toNumber(formData.get("offsetX"), 0);
-  const offsetY = toNumber(formData.get("offsetY"), 0);
 
-  if (!decorationId) {
+  if (!decorationSlug && !decorationId) {
     redirect("/dashboard/decorations?error=missing-decoration");
   }
 
-  await prisma.user.update({
+  await ensureStarterDecorations();
+
+  const user = await prisma.user.findUnique({
     where: { id: sessionUser.id },
+    select: {
+      id: true,
+      username: true,
+      role: true,
+      plan: true,
+      premiumBadge: true,
+      premiumUntil: true,
+      subscriptionStatus: true,
+    },
+  });
+
+  if (!user) {
+    redirect("/dashboard/decorations?error=missing-decoration");
+  }
+
+  const decoration = await prisma.decoration.findFirst({
+    where: decorationSlug
+      ? { slug: decorationSlug, isPublic: true }
+      : { id: decorationId, isPublic: true },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      imageUrl: true,
+      previewUrl: true,
+      posterUrl: true,
+      mediaType: true,
+      overlayScale: true,
+      overlayOffsetY: true,
+      createdByUserId: true,
+    },
+  });
+
+  if (!decoration) {
+    redirect("/dashboard/decorations?error=invalid-decoration");
+  }
+
+  const catalogItem = toDecorationCatalogItem(decoration, user);
+
+  if (!canUserEquipDecoration(catalogItem, user)) {
+    redirect(
+      `/dashboard/decorations?error=${
+        catalogItem.lockedReason === "owner" ? "owner-required" : "premium-required"
+      }`,
+    );
+  }
+
+  const scale = catalogItem.isStarter
+    ? 165
+    : toNumber(formData.get("scale"), decoration.overlayScale ?? 165);
+  const offsetX = catalogItem.isStarter ? 0 : toNumber(formData.get("offsetX"), 0);
+  const offsetY = catalogItem.isStarter ? 0 : toNumber(formData.get("offsetY"), 0);
+
+  await prisma.user.update({
+    where: { id: user.id },
     data: {
-      selectedDecorationId: decorationId,
+      selectedDecorationId: decoration.id,
       selectedDecorationScale: scale,
       selectedDecorationOffsetX: offsetX,
       selectedDecorationOffsetY: offsetY,
@@ -34,7 +95,8 @@ export async function saveSelectedDecoration(formData: FormData) {
 
   revalidatePath("/dashboard/decorations");
   revalidatePath("/dashboard");
-  revalidatePath(`/${sessionUser.username}`);
+  revalidatePath("/dashboard/profile");
+  revalidatePath(`/${user.username}`);
 
   redirect("/dashboard/decorations?success=decoration-saved");
 }
@@ -54,6 +116,7 @@ export async function clearSelectedDecoration() {
 
   revalidatePath("/dashboard/decorations");
   revalidatePath("/dashboard");
+  revalidatePath("/dashboard/profile");
   revalidatePath(`/${sessionUser.username}`);
 
   redirect("/dashboard/decorations?success=decoration-cleared");
@@ -64,7 +127,7 @@ export async function createUploadedDecoration(formData: FormData) {
 
   const name = String(formData.get("name") || "").trim();
   const imageUrl = String(formData.get("imageUrl") || "").trim();
-  const mediaType = String(formData.get("mediaType") || "image").trim();
+  const mediaType = String(formData.get("mediaType") || "").trim();
   const previewUrl = String(formData.get("previewUrl") || imageUrl).trim();
   const posterUrl = String(formData.get("posterUrl") || "").trim();
 
@@ -88,7 +151,7 @@ export async function createUploadedDecoration(formData: FormData) {
       imageUrl,
       previewUrl: previewUrl || imageUrl,
       posterUrl: posterUrl || null,
-      mediaType: mediaType || "image",
+      mediaType: mediaType || inferMediaType(imageUrl),
       isPublic: true,
       createdByUserId: sessionUser.id,
       sortOrder: 999,
@@ -109,6 +172,7 @@ export async function createUploadedDecoration(formData: FormData) {
   });
 
   revalidatePath("/dashboard/decorations");
+  revalidatePath("/dashboard/profile");
   revalidatePath(`/${sessionUser.username}`);
 
   redirect("/dashboard/decorations?success=decoration-uploaded");

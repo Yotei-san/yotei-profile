@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactNode } from "react";
 import { LuArrowUpRight, LuSparkles } from "react-icons/lu";
+import LivingAvatar from "@/app/components/LivingAvatar";
 import BadgeVisual from "@/app/dashboard/components/BadgeVisual";
 import { getLinkPlatform } from "@/app/lib/link-icons";
 import {
@@ -36,10 +37,14 @@ type LinkEntry = {
 };
 
 type DecorationEntry = {
+  name: string;
+  slug: string;
   imageUrl: string;
   previewUrl: string | null;
   posterUrl: string | null;
   mediaType: string;
+  overlayScale: number | null;
+  overlayOffsetY: number | null;
 };
 
 type LayoutUser = {
@@ -127,6 +132,10 @@ function DefaultLayout(props: Props) {
               decorationOffsetY={props.decorationOffsetY}
               size={126}
               frameInset={8}
+              presenceAccent={presence.accent}
+              presenceContrast={presence.contrast}
+              presenceSoft={presence.soft}
+              presencePulse={presence.pulse}
               presenceAura={presence.avatarAuraBackground}
               presenceRing={presence.avatarRing}
               presenceGlow={presence.avatarGlow}
@@ -206,6 +215,10 @@ function SimplisticLayout(props: Props) {
             size={92}
             frameInset={6}
             minimal
+            presenceAccent={presence.accent}
+            presenceContrast={presence.contrast}
+            presenceSoft={presence.soft}
+            presencePulse={presence.pulse}
             presenceAura={presence.avatarAuraBackground}
             presenceRing={presence.avatarRing}
             presenceGlow={presence.avatarGlow}
@@ -310,6 +323,10 @@ function PortfolioLayout(props: Props) {
             decorationOffsetY={props.decorationOffsetY}
             size={108}
             frameInset={7}
+            presenceAccent={presence.accent}
+            presenceContrast={presence.contrast}
+            presenceSoft={presence.soft}
+            presencePulse={presence.pulse}
             presenceAura={presence.avatarAuraBackground}
             presenceRing={presence.avatarRing}
             presenceGlow={presence.avatarGlow}
@@ -439,6 +456,10 @@ function AvatarVisual({
   size,
   frameInset,
   minimal = false,
+  presenceAccent,
+  presenceContrast,
+  presenceSoft,
+  presencePulse,
   presenceAura,
   presenceRing,
   presenceGlow,
@@ -453,122 +474,35 @@ function AvatarVisual({
   size: number;
   frameInset: number;
   minimal?: boolean;
+  presenceAccent: string;
+  presenceContrast: string;
+  presenceSoft: string;
+  presencePulse: string;
   presenceAura: string;
   presenceRing: string;
   presenceGlow: string;
 }) {
   return (
-    <div
-      style={{
-        position: "relative",
-        width: `${size}px`,
-        height: `${size}px`,
-        flexShrink: 0,
-      }}
-    >
-      {minimal ? null : (
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            borderRadius: "999px",
-            background: presenceAura,
-            filter: "blur(16px)",
-            transform: "scale(1.1)",
-          }}
-        />
-      )}
-
-      {selectedDecoration ? (
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            transform: `translate(${decorationOffsetX}px, ${decorationOffsetY}px)`,
-            pointerEvents: "none",
-            zIndex: 2,
-          }}
-        >
-          {selectedDecoration.mediaType === "webm" ? (
-            <video
-              src={selectedDecoration.imageUrl}
-              poster={
-                selectedDecoration.posterUrl || selectedDecoration.previewUrl || undefined
-              }
-              autoPlay
-              loop
-              muted
-              playsInline
-              style={{
-                width: `${decorationScale}%`,
-                height: `${decorationScale}%`,
-                objectFit: "contain",
-                filter: `drop-shadow(0 0 18px ${presenceGlow})`,
-              }}
-            />
-          ) : (
-            <img
-              src={selectedDecoration.previewUrl || selectedDecoration.imageUrl}
-              alt="Avatar decoration"
-              style={{
-                width: `${decorationScale}%`,
-                height: `${decorationScale}%`,
-                objectFit: "contain",
-                filter: `drop-shadow(0 0 18px ${presenceGlow})`,
-              }}
-            />
-          )}
-        </div>
-      ) : null}
-
-      <div
-        style={{
-          position: "absolute",
-          inset: `${frameInset}px`,
-          overflow: "hidden",
-          borderRadius: "999px",
-          border: minimal
-            ? "1px solid rgba(255,255,255,0.10)"
-            : `1px solid ${presenceRing}`,
-          background: "linear-gradient(180deg, rgba(11,14,20,0.98), rgba(7,10,16,0.98))",
-          boxShadow: minimal
-            ? "0 12px 24px rgba(0,0,0,0.18)"
-            : `0 18px 36px ${presenceGlow}`,
-          zIndex: 1,
-        }}
-      >
-        {avatarUrl ? (
-          <img
-            src={avatarUrl}
-            alt=""
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-            }}
-          />
-        ) : (
-          <div
-            style={{
-              width: "100%",
-              height: "100%",
-              display: "grid",
-              placeItems: "center",
-              background: `linear-gradient(145deg, ${withAlpha(themeColor, "ee")}, rgba(96,165,250,0.72))`,
-              color: "#ffffff",
-              fontSize: `${Math.round(size * 0.28)}px`,
-              fontWeight: 900,
-              letterSpacing: "-0.06em",
-            }}
-          >
-            {avatarInitials}
-          </div>
-        )}
-      </div>
-    </div>
+    <LivingAvatar
+      avatarUrl={avatarUrl}
+      avatarInitials={avatarInitials}
+      avatarAlt="Avatar"
+      selectedDecoration={selectedDecoration}
+      themeColor={themeColor}
+      accentColor={presenceAccent}
+      contrastColor={presenceContrast}
+      softColor={presenceSoft}
+      pulseColor={presencePulse}
+      auraBackground={presenceAura}
+      ringColor={presenceRing}
+      glowColor={presenceGlow}
+      size={size}
+      frameInset={frameInset}
+      decorationScale={decorationScale}
+      decorationOffsetX={decorationOffsetX}
+      decorationOffsetY={decorationOffsetY}
+      minimal={minimal}
+    />
   );
 }
 

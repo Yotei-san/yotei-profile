@@ -14,6 +14,7 @@ import {
 } from "@/app/dashboard/components/DashboardUI";
 import { redirectWithClearedSession, requireUser } from "@/app/lib/auth";
 import { getFeaturedPublicBadges } from "@/app/lib/badges";
+import { resolveEquippedDecoration } from "@/app/lib/decorations";
 import { readLiveEmbedMetadata } from "@/app/lib/live-embed";
 import { normalizeProfileMusic } from "@/app/lib/profile-music";
 import {
@@ -163,10 +164,15 @@ async function getDashboardProfileUser(userId: string) {
       selectedDecorationOffsetY: true,
       selectedDecoration: {
         select: {
+          id: true,
+          name: true,
+          slug: true,
           imageUrl: true,
           previewUrl: true,
           posterUrl: true,
           mediaType: true,
+          overlayScale: true,
+          overlayOffsetY: true,
         },
       },
       badges: {
@@ -223,10 +229,14 @@ function buildProfileRenderData(user: ProfileUserRecord) {
   const decorationOffsetY = user.selectedDecorationOffsetY ?? 0;
   const featuredBadgeShowcase = getFeaturedPublicBadges(user.badges, 4);
   const hasPremiumState = hasPremiumAccess(user);
+  const selectedDecoration = resolveEquippedDecoration(user.selectedDecoration, user);
 
   return {
     layout,
-    user,
+    user: {
+      ...user,
+      selectedDecoration,
+    },
     mood: normalizeProfileMood(user.profileMood),
     aura: normalizeProfileAura(user.profileAura),
     music: normalizeProfileMusic({

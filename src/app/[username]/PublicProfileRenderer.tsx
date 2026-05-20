@@ -10,6 +10,7 @@ import {
   type ProfileMood,
 } from "@/app/lib/profile-presence";
 import type { ProfileMusicData } from "@/app/lib/profile-music";
+import LivingAvatar from "@/app/components/LivingAvatar";
 import ProfileLayoutVariants, { type PublicProfileLayout } from "./ProfileLayoutVariants";
 import ProfileMusicCard from "./ProfileMusicCard";
 import ProfileHeroClient from "./ProfileHeroClient";
@@ -39,10 +40,14 @@ export type PublicProfileRenderUser = {
   selectedDecorationOffsetX?: number | null;
   selectedDecorationOffsetY?: number | null;
   selectedDecoration: {
+    name: string;
+    slug: string;
     imageUrl: string;
     previewUrl: string | null;
     posterUrl: string | null;
     mediaType: string;
+    overlayScale: number | null;
+    overlayOffsetY: number | null;
   } | null;
   links: Array<{
     id: string;
@@ -136,7 +141,6 @@ export default function PublicProfileRenderer({
   }
 
   const bannerUrl = user.bannerUrl?.trim() || null;
-  const avatarUrl = user.avatarUrl?.trim() || null;
   const presence = getProfilePresence({ mood, aura, themeColor });
 
   return (
@@ -788,55 +792,25 @@ export default function PublicProfileRenderer({
                     <div className="avatar-shell">
                       <div className="avatar-aura" />
 
-                      {user.selectedDecoration ? (
-                        <div
-                          className="avatar-decoration"
-                          style={{
-                            transform: `translate(${decorationOffsetX}px, ${decorationOffsetY}px)`,
-                          }}
-                        >
-                          {user.selectedDecoration.mediaType === "webm" ? (
-                            <video
-                              src={user.selectedDecoration.imageUrl}
-                              poster={
-                                user.selectedDecoration.posterUrl ||
-                                user.selectedDecoration.previewUrl ||
-                                undefined
-                              }
-                              autoPlay
-                              loop
-                              muted
-                              playsInline
-                              className="avatar-decoration-media"
-                              style={{
-                                width: `${decorationScale}%`,
-                                height: `${decorationScale}%`,
-                              }}
-                            />
-                          ) : (
-                            <img
-                              src={
-                                user.selectedDecoration.previewUrl ||
-                                user.selectedDecoration.imageUrl
-                              }
-                              alt="Avatar decoration"
-                              className="avatar-decoration-media"
-                              style={{
-                                width: `${decorationScale}%`,
-                                height: `${decorationScale}%`,
-                              }}
-                            />
-                          )}
-                        </div>
-                      ) : null}
-
-                      <div className="avatar-frame">
-                        {avatarUrl ? (
-                          <img src={avatarUrl} alt={user.username} className="avatar-image" />
-                        ) : (
-                          <div className="avatar-fallback">{avatarInitials}</div>
-                        )}
-                      </div>
+                      <LivingAvatar
+                        avatarUrl={user.avatarUrl?.trim() || null}
+                        avatarInitials={avatarInitials}
+                        avatarAlt={user.username}
+                        selectedDecoration={user.selectedDecoration}
+                        themeColor={themeColor}
+                        accentColor={presence.accent}
+                        contrastColor={presence.contrast}
+                        softColor={presence.soft}
+                        pulseColor={presence.pulse}
+                        auraBackground={presence.avatarAuraBackground}
+                        ringColor={presence.avatarRing}
+                        glowColor={presence.avatarGlow}
+                        size={182}
+                        frameInset={10}
+                        decorationScale={decorationScale}
+                        decorationOffsetX={decorationOffsetX}
+                        decorationOffsetY={decorationOffsetY}
+                      />
 
                       <div className="avatar-status" aria-label="Online">
                         <i />
