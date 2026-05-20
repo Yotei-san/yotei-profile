@@ -13,6 +13,7 @@ type Props = {
   initialDislikes: number;
   themeColor: string;
   initialMyReaction: MyReaction;
+  preview?: boolean;
 };
 
 function getDailyViewStorageKey(username: string) {
@@ -26,6 +27,7 @@ export default function ProfileHeroClient({
   initialDislikes,
   themeColor,
   initialMyReaction,
+  preview = false,
 }: Props) {
   const [views, setViews] = useState(initialViews);
   const [likes, setLikes] = useState(initialLikes);
@@ -44,6 +46,10 @@ export default function ProfileHeroClient({
   }, [initialViews, initialLikes, initialDislikes, initialMyReaction]);
 
   useEffect(() => {
+    if (preview) {
+      return;
+    }
+
     if (hasTrackedView.current) {
       return;
     }
@@ -82,9 +88,13 @@ export default function ProfileHeroClient({
       controller.abort();
       window.clearTimeout(timer);
     };
-  }, [username]);
+  }, [preview, username]);
 
   async function sendReaction(type: "like" | "dislike") {
+    if (preview) {
+      return;
+    }
+
     if (isSubmittingRef.current) {
       return;
     }
@@ -182,7 +192,7 @@ export default function ProfileHeroClient({
           value={likes}
           icon={<LuThumbsUp size={15} />}
           onClick={() => sendReaction("like")}
-          disabled={isSubmitting}
+          disabled={isSubmitting || preview}
           isActive={myReaction === "like"}
           accentColor={themeColor}
           background="rgba(69, 212, 131, 0.09)"
@@ -194,7 +204,7 @@ export default function ProfileHeroClient({
           value={dislikes}
           icon={<LuThumbsDown size={15} />}
           onClick={() => sendReaction("dislike")}
-          disabled={isSubmitting}
+          disabled={isSubmitting || preview}
           isActive={myReaction === "dislike"}
           accentColor={themeColor}
           background="rgba(248, 113, 113, 0.08)"

@@ -18,8 +18,8 @@ export async function saveProfileSettings(formData: FormData) {
 
   const displayName = String(formData.get("displayName") || "").trim();
   const bio = String(formData.get("bio") || "").trim();
-  const themeColor =
-    String(formData.get("themeColor") || "").trim() || "#f472b6";
+  const rawThemeColor = String(formData.get("themeColor") || "").trim();
+  const themeColor = normalizeThemeColor(rawThemeColor);
   const requestedProfileLayout = String(formData.get("profileLayout") || "").trim();
   const profileLayout = VALID_PROFILE_LAYOUTS.has(requestedProfileLayout)
     ? requestedProfileLayout
@@ -57,4 +57,22 @@ export async function saveProfileSettings(formData: FormData) {
   revalidatePath(`/${resolvedUser.username}`);
 
   redirect("/dashboard/profile?success=saved");
+}
+
+function normalizeThemeColor(value: string) {
+  const trimmed = value.trim();
+  const shortHexMatch = /^#([0-9a-fA-F]{3})$/.exec(trimmed);
+
+  if (shortHexMatch) {
+    return `#${shortHexMatch[1]
+      .split("")
+      .map((char) => `${char}${char}`)
+      .join("")}`;
+  }
+
+  if (/^#([0-9a-fA-F]{6})$/.test(trimmed)) {
+    return trimmed;
+  }
+
+  return "#f472b6";
 }

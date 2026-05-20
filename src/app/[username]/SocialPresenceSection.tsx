@@ -30,12 +30,14 @@ type Props = {
   blocks: PublicSocialBlock[];
   themeColor: string;
   compact?: boolean;
+  preview?: boolean;
 };
 
 export default function SocialPresenceSection({
   blocks,
   themeColor,
   compact = false,
+  preview = false,
 }: Props) {
   const visibleBlocks = [...blocks.filter((block) => block.isEnabled)].sort((left, right) => {
     const leftPriority = isLivePriority(left);
@@ -129,12 +131,13 @@ export default function SocialPresenceSection({
                 url={block.url}
                 openUrl={block.openUrl}
                 embedUrl={block.embedUrl}
-                accentColor={block.accentColor}
-                isLive={block.isLive}
-                compact={compact}
-              />
-            );
-          }
+              accentColor={block.accentColor}
+              isLive={block.isLive}
+              compact={compact}
+              preview={preview}
+            />
+          );
+        }
 
           return null;
         })}

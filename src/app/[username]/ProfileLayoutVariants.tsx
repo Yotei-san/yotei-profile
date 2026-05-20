@@ -69,6 +69,7 @@ type Props = {
   views: number;
   socialBlocks: PublicSocialBlock[];
   initialMyReaction: "like" | "dislike" | null;
+  preview?: boolean;
 };
 
 export default function ProfileLayoutVariants(props: Props) {
@@ -85,17 +86,18 @@ export default function ProfileLayoutVariants(props: Props) {
 
 function DefaultLayout(props: Props) {
   return (
-    <main style={defaultPageStyle(props.themeColor)}>
-      <section style={defaultShellStyle}>
+    <main style={defaultPageStyle(props.themeColor, props.preview)}>
+      <section style={defaultShellStyle(props.preview)}>
         <BannerSurface
           bannerUrl={props.user.bannerUrl}
           bannerKind={props.bannerKind}
           themeColor={props.themeColor}
           height={260}
           roundedTop
+          preview={props.preview}
         />
 
-        <div style={defaultContentStyle}>
+        <div style={defaultContentStyle(props.preview)}>
           <div style={defaultIdentityStyle}>
             <AvatarVisual
               avatarUrl={props.user.avatarUrl}
@@ -125,6 +127,7 @@ function DefaultLayout(props: Props) {
             initialDislikes={props.dislikes}
             themeColor={props.themeColor}
             initialMyReaction={props.initialMyReaction}
+            preview={props.preview}
           />
 
           <BadgeRail
@@ -132,7 +135,12 @@ function DefaultLayout(props: Props) {
             extraBadgeCount={props.extraBadgeCount}
             themeColor={props.themeColor}
           />
-          <SocialPresenceSection blocks={props.socialBlocks} themeColor={props.themeColor} compact />
+          <SocialPresenceSection
+            blocks={props.socialBlocks}
+            themeColor={props.themeColor}
+            compact
+            preview={props.preview}
+          />
           <LinksSection
             layout="default"
             links={props.user.links}
@@ -146,8 +154,8 @@ function DefaultLayout(props: Props) {
 
 function SimplisticLayout(props: Props) {
   return (
-    <main style={simplisticPageStyle}>
-      <div style={simplisticShellStyle}>
+    <main style={simplisticPageStyle(props.preview)}>
+      <div style={simplisticShellStyle(props.preview)}>
         <div style={simplisticHeaderStyle}>
           <AvatarVisual
             avatarUrl={props.user.avatarUrl}
@@ -173,12 +181,13 @@ function SimplisticLayout(props: Props) {
         <PillRow pills={props.heroPills} subtle />
 
         <div style={simplisticBannerWrapStyle}>
-          <BannerSurface
-            bannerUrl={props.user.bannerUrl}
-            bannerKind={props.bannerKind}
-            themeColor={props.themeColor}
-            height={160}
-          />
+        <BannerSurface
+          bannerUrl={props.user.bannerUrl}
+          bannerKind={props.bannerKind}
+          themeColor={props.themeColor}
+          height={160}
+          preview={props.preview}
+        />
         </div>
 
         <ProfileHeroClient
@@ -188,6 +197,7 @@ function SimplisticLayout(props: Props) {
           initialDislikes={props.dislikes}
           themeColor={props.themeColor}
           initialMyReaction={props.initialMyReaction}
+          preview={props.preview}
         />
 
         <BadgeRail
@@ -196,7 +206,12 @@ function SimplisticLayout(props: Props) {
           themeColor={props.themeColor}
           minimal
         />
-        <SocialPresenceSection blocks={props.socialBlocks} themeColor={props.themeColor} compact />
+        <SocialPresenceSection
+          blocks={props.socialBlocks}
+          themeColor={props.themeColor}
+          compact
+          preview={props.preview}
+        />
         <LinksSection
           layout="simplistic"
           links={props.user.links}
@@ -209,18 +224,19 @@ function SimplisticLayout(props: Props) {
 
 function PortfolioLayout(props: Props) {
   return (
-    <main style={portfolioPageStyle}>
-      <div style={portfolioBannerWrapStyle}>
+    <main style={portfolioPageStyle(props.preview)}>
+      <div style={portfolioBannerWrapStyle(props.preview)}>
         <BannerSurface
           bannerUrl={props.user.bannerUrl}
           bannerKind={props.bannerKind}
           themeColor={props.themeColor}
           height={220}
+          preview={props.preview}
         />
       </div>
 
-      <div style={portfolioShellStyle}>
-        <aside style={portfolioSidebarStyle}>
+      <div style={portfolioShellStyle(props.preview)}>
+        <aside style={portfolioSidebarStyle(props.preview)}>
           <div style={eyebrowStyle(props.themeColor)}>Portfolio</div>
           <AvatarVisual
             avatarUrl={props.user.avatarUrl}
@@ -249,6 +265,7 @@ function PortfolioLayout(props: Props) {
             initialDislikes={props.dislikes}
             themeColor={props.themeColor}
             initialMyReaction={props.initialMyReaction}
+            preview={props.preview}
           />
 
           <BadgeRail
@@ -258,8 +275,12 @@ function PortfolioLayout(props: Props) {
           />
         </aside>
 
-        <section style={portfolioMainStyle}>
-          <SocialPresenceSection blocks={props.socialBlocks} themeColor={props.themeColor} />
+        <section style={portfolioMainStyle(props.preview)}>
+          <SocialPresenceSection
+            blocks={props.socialBlocks}
+            themeColor={props.themeColor}
+            preview={props.preview}
+          />
           <LinksSection
             layout="portfolio"
             links={props.user.links}
@@ -277,12 +298,14 @@ function BannerSurface({
   themeColor,
   height,
   roundedTop = false,
+  preview = false,
 }: {
   bannerUrl: string | null;
   bannerKind: "image" | "video" | "unknown";
   themeColor: string;
   height: number;
   roundedTop?: boolean;
+  preview?: boolean;
 }) {
   return (
     <div
@@ -292,6 +315,7 @@ function BannerSurface({
         height: `${height}px`,
         borderRadius: roundedTop ? "30px 30px 0 0" : "26px",
         background: `linear-gradient(135deg, ${themeColor}, rgba(15,23,42,0.82), rgba(3,7,18,0.96))`,
+        isolation: preview ? "isolate" : undefined,
       }}
     >
       {bannerUrl ? (
@@ -777,15 +801,20 @@ const bannerMediaStyle: CSSProperties = {
   objectFit: "cover",
 };
 
-const defaultPageStyle = (themeColor: string): CSSProperties => ({
+const defaultPageStyle = (
+  themeColor: string,
+  preview = false,
+): CSSProperties => ({
   minHeight: "100vh",
-  padding: "32px 16px 40px",
+  height: preview ? "100%" : undefined,
+  minWidth: 0,
+  padding: preview ? "24px" : "32px 16px 40px",
   color: "#ffffff",
   fontFamily: '"Space Grotesk", Inter, Arial, Helvetica, sans-serif',
   background: `linear-gradient(180deg, rgba(5,6,10,0.98), rgba(3,4,7,1)), radial-gradient(circle at top, ${withAlpha(themeColor, "16")} 0%, transparent 28%)`,
 });
 
-const defaultShellStyle: CSSProperties = {
+const defaultShellStyle = (preview = false): CSSProperties => ({
   width: "min(1040px, 100%)",
   maxWidth: "1040px",
   margin: "0 auto",
@@ -794,15 +823,16 @@ const defaultShellStyle: CSSProperties = {
   border: "1px solid rgba(255,255,255,0.08)",
   background: "linear-gradient(180deg, rgba(10,11,16,0.98), rgba(7,8,12,0.98))",
   boxShadow: "0 28px 70px rgba(0,0,0,0.28)",
-};
+  minHeight: preview ? "100%" : undefined,
+});
 
-const defaultContentStyle: CSSProperties = {
+const defaultContentStyle = (preview = false): CSSProperties => ({
   display: "grid",
   gap: "22px",
-  padding: "0 26px 28px",
+  padding: preview ? "0 26px 32px" : "0 26px 28px",
   marginTop: "-54px",
   minWidth: 0,
-};
+});
 
 const defaultIdentityStyle: CSSProperties = {
   display: "grid",
@@ -833,22 +863,25 @@ const defaultBioStyle: CSSProperties = {
   whiteSpace: "pre-wrap",
 };
 
-const simplisticPageStyle: CSSProperties = {
+const simplisticPageStyle = (preview = false): CSSProperties => ({
   minHeight: "100vh",
-  padding: "42px 16px",
+  height: preview ? "100%" : undefined,
+  minWidth: 0,
+  padding: preview ? "28px 24px" : "42px 16px",
   color: "#ffffff",
   fontFamily: 'Inter, Arial, Helvetica, sans-serif',
   background: "#06070b",
-};
+});
 
-const simplisticShellStyle: CSSProperties = {
+const simplisticShellStyle = (preview = false): CSSProperties => ({
   width: "min(820px, 100%)",
   maxWidth: "820px",
   margin: "0 auto",
   display: "grid",
   gap: "18px",
   minWidth: 0,
-};
+  minHeight: preview ? "100%" : undefined,
+});
 
 const simplisticHeaderStyle: CSSProperties = {
   display: "grid",
@@ -878,21 +911,23 @@ const simplisticBannerWrapStyle: CSSProperties = {
   marginTop: "4px",
 };
 
-const portfolioPageStyle: CSSProperties = {
+const portfolioPageStyle = (preview = false): CSSProperties => ({
   minHeight: "100vh",
-  padding: "26px 16px 38px",
+  height: preview ? "100%" : undefined,
+  minWidth: 0,
+  padding: preview ? "24px" : "26px 16px 38px",
   color: "#ffffff",
   fontFamily: '"Space Grotesk", Inter, Arial, Helvetica, sans-serif',
   background: "linear-gradient(180deg, #071018 0%, #04070d 100%)",
-};
+});
 
-const portfolioBannerWrapStyle: CSSProperties = {
+const portfolioBannerWrapStyle = (preview = false): CSSProperties => ({
   width: "min(1160px, 100%)",
   maxWidth: "1160px",
-  margin: "0 auto 18px",
-};
+  margin: preview ? "0 auto 16px" : "0 auto 18px",
+});
 
-const portfolioShellStyle: CSSProperties = {
+const portfolioShellStyle = (preview = false): CSSProperties => ({
   width: "min(1160px, 100%)",
   maxWidth: "1160px",
   margin: "0 auto",
@@ -900,9 +935,10 @@ const portfolioShellStyle: CSSProperties = {
   gridTemplateColumns: "minmax(0, 320px) minmax(0, 1fr)",
   gap: "18px",
   minWidth: 0,
-};
+  minHeight: preview ? "calc(100% - 236px)" : undefined,
+});
 
-const portfolioSidebarStyle: CSSProperties = {
+const portfolioSidebarStyle = (preview = false): CSSProperties => ({
   display: "grid",
   alignContent: "start",
   gap: "18px",
@@ -912,9 +948,10 @@ const portfolioSidebarStyle: CSSProperties = {
   background: "linear-gradient(180deg, rgba(10,14,22,0.98), rgba(8,10,16,0.98))",
   minWidth: 0,
   overflow: "hidden",
-};
+  minHeight: preview ? "100%" : undefined,
+});
 
-const portfolioMainStyle: CSSProperties = {
+const portfolioMainStyle = (preview = false): CSSProperties => ({
   display: "grid",
   gap: "18px",
   padding: "22px",
@@ -923,7 +960,8 @@ const portfolioMainStyle: CSSProperties = {
   background: "linear-gradient(180deg, rgba(10,14,22,0.98), rgba(8,10,16,0.98))",
   minWidth: 0,
   overflow: "hidden",
-};
+  minHeight: preview ? "100%" : undefined,
+});
 
 const portfolioHeadingStyle: CSSProperties = {
   display: "grid",

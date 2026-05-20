@@ -187,7 +187,8 @@ export function isEmailVerificationEnforced() {
     return false;
   }
 
-  return process.env.NODE_ENV === "production";
+  // Early growth/testing phase keeps verification available but non-blocking by default.
+  return false;
 }
 
 function hashVerificationToken(token: string) {

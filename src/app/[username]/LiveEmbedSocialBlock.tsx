@@ -17,6 +17,7 @@ type Props = {
   accentColor: string | null;
   isLive: boolean;
   compact?: boolean;
+  preview?: boolean;
 };
 
 export default function LiveEmbedSocialBlock({
@@ -29,10 +30,14 @@ export default function LiveEmbedSocialBlock({
   accentColor,
   isLive,
   compact = false,
+  preview = false,
 }: Props) {
   const theme = getLiveEmbedTheme(platform, accentColor);
   const ctaUrl = openUrl ?? url;
-  const canEmbed = isLive && (platform === "twitch_live" ? Boolean(channelName) : Boolean(embedUrl));
+  const canEmbed =
+    !preview &&
+    isLive &&
+    (platform === "twitch_live" ? Boolean(channelName) : Boolean(embedUrl));
   const avatarText = (channelName || theme.shortLabel).slice(0, 2).toUpperCase();
 
   return (

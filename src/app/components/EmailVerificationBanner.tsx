@@ -14,26 +14,26 @@ export default function EmailVerificationBanner({
     <section style={bannerStyle}>
       <div style={{ display: "grid", gap: "12px", minWidth: 0 }}>
         <div style={badgeStyle}>
-          {isBlocking ? "Email Verification Required" : "Email Verification Available"}
+          {isBlocking ? "Email Verification" : "Verify Later"}
         </div>
         <div style={{ display: "grid", gap: "8px", minWidth: 0 }}>
           <h2 style={titleStyle}>
             {isBlocking
-              ? "Verify your email to unlock all Yotei features."
-              : "Verify your email whenever you are ready."}
+              ? "Verify your email to keep your account recovery stronger."
+              : "Verify your email whenever you feel ready."}
           </h2>
           <p style={textStyle}>
             {isBlocking ? (
               <>
-                Your account is active and you can keep editing your basic profile, but
-                some sensitive areas stay locked until <strong>{email}</strong> is
-                verified.
+                Your account is already active. Verifying <strong>{email}</strong>{" "}
+                adds an extra layer of recovery confidence and platform trust as your
+                profile grows.
               </>
             ) : (
               <>
-                Your account is already active and all dashboard features remain
-                available. Verifying <strong>{email}</strong> is still recommended, and
-                the full verification flow remains ready for production use.
+                Your account is fully usable today. Verify <strong>{email}</strong>{" "}
+                later to improve account recovery and platform trust while keeping
+                everything available during testing.
               </>
             )}
           </p>
