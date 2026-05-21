@@ -145,7 +145,7 @@ function DefaultLayout(props: Props) {
           bannerUrl={props.user.bannerUrl}
           bannerKind={props.bannerKind}
           themeColor={props.themeColor}
-          height={260}
+          height={props.preview ? 220 : 260}
           roundedTop
           preview={props.preview}
           presenceOverlay={presence.auraOverlay}
@@ -187,15 +187,17 @@ function DefaultLayout(props: Props) {
             </div>
           </div>
 
-          <ProfileHeroClient
-            username={props.user.username}
-            initialViews={props.views}
-            initialLikes={props.likes}
-            initialDislikes={props.dislikes}
-            themeColor={sceneAppearance.linkThemeColor}
-            initialMyReaction={props.initialMyReaction}
-            preview={props.preview}
-          />
+          {props.preview ? null : (
+            <ProfileHeroClient
+              username={props.user.username}
+              initialViews={props.views}
+              initialLikes={props.likes}
+              initialDislikes={props.dislikes}
+              themeColor={sceneAppearance.linkThemeColor}
+              initialMyReaction={props.initialMyReaction}
+              preview={props.preview}
+            />
+          )}
 
           <BadgeRail
             badges={props.featuredBadges}
@@ -295,22 +297,24 @@ function SimplisticLayout(props: Props) {
           bannerUrl={props.user.bannerUrl}
           bannerKind={props.bannerKind}
           themeColor={props.themeColor}
-          height={160}
+          height={props.preview ? 136 : 160}
           preview={props.preview}
           presenceOverlay={presence.auraOverlay}
           accentColor={presence.accent}
         />
         </div>
 
-        <ProfileHeroClient
-          username={props.user.username}
-          initialViews={props.views}
-          initialLikes={props.likes}
-          initialDislikes={props.dislikes}
-          themeColor={sceneAppearance.linkThemeColor}
-          initialMyReaction={props.initialMyReaction}
-          preview={props.preview}
-        />
+        {props.preview ? null : (
+          <ProfileHeroClient
+            username={props.user.username}
+            initialViews={props.views}
+            initialLikes={props.likes}
+            initialDislikes={props.dislikes}
+            themeColor={sceneAppearance.linkThemeColor}
+            initialMyReaction={props.initialMyReaction}
+            preview={props.preview}
+          />
+        )}
 
         <BadgeRail
           badges={props.featuredBadges}
@@ -373,7 +377,7 @@ function PortfolioLayout(props: Props) {
           bannerUrl={props.user.bannerUrl}
           bannerKind={props.bannerKind}
           themeColor={props.themeColor}
-          height={220}
+          height={props.preview ? 188 : 220}
           preview={props.preview}
           presenceOverlay={presence.auraOverlay}
           accentColor={presence.accent}
@@ -422,15 +426,17 @@ function PortfolioLayout(props: Props) {
 
           <PillRow pills={props.heroPills} subtle />
 
-          <ProfileHeroClient
-            username={props.user.username}
-            initialViews={props.views}
-            initialLikes={props.likes}
-            initialDislikes={props.dislikes}
-            themeColor={sceneAppearance.linkThemeColor}
-            initialMyReaction={props.initialMyReaction}
-            preview={props.preview}
-          />
+          {props.preview ? null : (
+            <ProfileHeroClient
+              username={props.user.username}
+              initialViews={props.views}
+              initialLikes={props.likes}
+              initialDislikes={props.dislikes}
+              themeColor={sceneAppearance.linkThemeColor}
+              initialMyReaction={props.initialMyReaction}
+              preview={props.preview}
+            />
+          )}
 
           <BadgeRail
             badges={props.featuredBadges}
@@ -921,8 +927,7 @@ const defaultPageStyle = (
   preview = false,
   stageGlow = "",
 ): CSSProperties => ({
-  minHeight: "100vh",
-  height: preview ? "100%" : undefined,
+  minHeight: preview ? "auto" : "100vh",
   minWidth: 0,
   position: "relative",
   overflow: "hidden",
@@ -934,7 +939,7 @@ const defaultPageStyle = (
 });
 
 const defaultShellStyle = (
-  preview = false,
+  _preview = false,
   panelGlow = "",
   surfaceBorder = "rgba(255,255,255,0.08)",
   surfaceBackground = "linear-gradient(180deg, rgba(10,11,16,0.98), rgba(7,8,12,0.98))",
@@ -949,7 +954,6 @@ const defaultShellStyle = (
   border: `1px solid ${surfaceBorder}`,
   background: surfaceBackground,
   boxShadow: panelGlow ? `${panelGlow}, 0 28px 70px rgba(0,0,0,0.24)` : "0 28px 70px rgba(0,0,0,0.28)",
-  minHeight: preview ? "100%" : undefined,
 });
 
 const defaultContentStyle = (preview = false): CSSProperties => ({
@@ -994,8 +998,7 @@ const simplisticPageStyle = (
   stageGlow = "",
   surfaceBackground = "rgba(6,7,11,0.96)",
 ): CSSProperties => ({
-  minHeight: "100vh",
-  height: preview ? "100%" : undefined,
+  minHeight: preview ? "auto" : "100vh",
   minWidth: 0,
   position: "relative",
   overflow: "hidden",
@@ -1006,7 +1009,7 @@ const simplisticPageStyle = (
   background: `${stageGlow}, ${surfaceBackground}`,
 });
 
-const simplisticShellStyle = (preview = false): CSSProperties => ({
+const simplisticShellStyle = (_preview = false): CSSProperties => ({
   width: "min(820px, 100%)",
   maxWidth: "820px",
   margin: "0 auto",
@@ -1015,7 +1018,6 @@ const simplisticShellStyle = (preview = false): CSSProperties => ({
   display: "grid",
   gap: "18px",
   minWidth: 0,
-  minHeight: preview ? "100%" : undefined,
 });
 
 const simplisticHeaderStyle: CSSProperties = {
@@ -1051,8 +1053,7 @@ const portfolioPageStyle = (
   stageGlow = "",
   surfaceBackground = "linear-gradient(180deg, #071018 0%, #04070d 100%)",
 ): CSSProperties => ({
-  minHeight: "100vh",
-  height: preview ? "100%" : undefined,
+  minHeight: preview ? "auto" : "100vh",
   minWidth: 0,
   position: "relative",
   overflow: "hidden",
@@ -1071,7 +1072,7 @@ const portfolioBannerWrapStyle = (preview = false): CSSProperties => ({
   margin: preview ? "0 auto 16px" : "0 auto 18px",
 });
 
-const portfolioShellStyle = (preview = false): CSSProperties => ({
+const portfolioShellStyle = (_preview = false): CSSProperties => ({
   width: "min(1160px, 100%)",
   maxWidth: "1160px",
   position: "relative",
@@ -1081,11 +1082,10 @@ const portfolioShellStyle = (preview = false): CSSProperties => ({
   gridTemplateColumns: "minmax(0, 320px) minmax(0, 1fr)",
   gap: "18px",
   minWidth: 0,
-  minHeight: preview ? "calc(100% - 236px)" : undefined,
 });
 
 const portfolioSidebarStyle = (
-  preview = false,
+  _preview = false,
   panelGlow = "",
   surfaceBorder = "rgba(255,255,255,0.08)",
   surfaceBackground = "linear-gradient(180deg, rgba(10,14,22,0.98), rgba(8,10,16,0.98))",
@@ -1100,11 +1100,10 @@ const portfolioSidebarStyle = (
   boxShadow: panelGlow,
   minWidth: 0,
   overflow: "hidden",
-  minHeight: preview ? "100%" : undefined,
 });
 
 const portfolioMainStyle = (
-  preview = false,
+  _preview = false,
   panelGlow = "",
   surfaceBorder = "rgba(255,255,255,0.08)",
   surfaceBackground = "linear-gradient(180deg, rgba(10,14,22,0.98), rgba(8,10,16,0.98))",
@@ -1118,7 +1117,6 @@ const portfolioMainStyle = (
   boxShadow: panelGlow,
   minWidth: 0,
   overflow: "hidden",
-  minHeight: preview ? "100%" : undefined,
 });
 
 const portfolioHeadingStyle: CSSProperties = {

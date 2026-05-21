@@ -1,6 +1,13 @@
 "use client";
 
-import { startTransition, useDeferredValue, useState, type CSSProperties } from "react";
+import {
+  startTransition,
+  useDeferredValue,
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react";
 import { LuCheck, LuLayoutTemplate, LuMusic4, LuSparkles } from "react-icons/lu";
 import FormActionButton from "@/app/components/FormActionButton";
 import {
@@ -130,6 +137,8 @@ export default function ProfileLayoutExperience({
   const [profileMusicProvider, setProfileMusicProvider] = useState<ProfileMusicProvider>(
     initialMusic.provider,
   );
+  const previewViewportRef = useRef<HTMLDivElement | null>(null);
+  const [previewViewportWidth, setPreviewViewportWidth] = useState(0);
   const sceneOptions = getProfileSceneOptions();
   const savedSceneName =
     sceneOptions.find((option) => option.value === savedScene)?.name || "Default";
@@ -168,6 +177,8 @@ export default function ProfileLayoutExperience({
     url: deferredProfileMusicUrl,
     provider: deferredProfileMusicProvider,
   });
+  const previewCanvasWidth = getPreviewCanvasWidth(deferredPreviewLayout);
+  const previewScale = getPreviewScale(previewViewportWidth, previewCanvasWidth);
   const isDirty =
     previewLayout !== savedLayout ||
     previewMood !== savedMood ||
@@ -181,6 +192,30 @@ export default function ProfileLayoutExperience({
     displayName !== initialDisplayName ||
     bio !== initialBio ||
     themeColor !== initialThemeColor;
+
+  useEffect(() => {
+    const viewportElement = previewViewportRef.current;
+
+    if (!viewportElement) {
+      return;
+    }
+
+    const updateWidth = () => {
+      setPreviewViewportWidth(viewportElement.clientWidth);
+    };
+
+    updateWidth();
+
+    const resizeObserver = new ResizeObserver(() => {
+      updateWidth();
+    });
+
+    resizeObserver.observe(viewportElement);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, []);
 
   return (
     <>
@@ -594,37 +629,37 @@ export default function ProfileLayoutExperience({
               </div>
             </div>
 
-            <div style={previewViewportStyle}>
+            <div ref={previewViewportRef} className="profile-preview-viewport" style={previewViewportStyle}>
               <div
-                key={deferredPreviewLayout}
-                className="profile-preview-canvas"
-                style={previewCanvasStyle}
+                style={previewCanvasScaleStyle(previewCanvasWidth, previewScale)}
               >
-                <PublicProfileRenderer
-                  layout={deferredPreviewLayout}
-                  user={livePreviewUser}
-                  displayName={resolvedDisplayName}
-                  themeColor={safeThemeColor}
-                  mood={deferredPreviewMood}
-                  aura={deferredPreviewAura}
-                  scene={deferredPreviewScene}
-                  music={livePreviewMusic}
-                  bannerKind={bannerKind}
-                  avatarInitials={avatarInitials}
-                  decorationScale={decorationScale}
-                  decorationOffsetX={decorationOffsetX}
-                  decorationOffsetY={decorationOffsetY}
-                  featuredBadges={featuredBadges}
-                  extraBadgeCount={extraBadgeCount}
-                  heroPills={heroPills}
-                  likes={likes}
-                  dislikes={dislikes}
-                  views={views}
-                  socialBlocks={socialBlocks}
-                  initialMyReaction={null}
-                  preview
-                  previewMessage="This is exactly how your live profile will look."
-                />
+                <div key={deferredPreviewLayout} className="profile-preview-canvas">
+                  <PublicProfileRenderer
+                    layout={deferredPreviewLayout}
+                    user={livePreviewUser}
+                    displayName={resolvedDisplayName}
+                    themeColor={safeThemeColor}
+                    mood={deferredPreviewMood}
+                    aura={deferredPreviewAura}
+                    scene={deferredPreviewScene}
+                    music={livePreviewMusic}
+                    bannerKind={bannerKind}
+                    avatarInitials={avatarInitials}
+                    decorationScale={decorationScale}
+                    decorationOffsetX={decorationOffsetX}
+                    decorationOffsetY={decorationOffsetY}
+                    featuredBadges={featuredBadges}
+                    extraBadgeCount={extraBadgeCount}
+                    heroPills={heroPills}
+                    likes={likes}
+                    dislikes={dislikes}
+                    views={views}
+                    socialBlocks={socialBlocks}
+                    initialMyReaction={null}
+                    preview
+                    previewMessage="This is exactly how your live profile will look."
+                  />
+                </div>
               </div>
             </div>
 
@@ -675,18 +710,22 @@ export default function ProfileLayoutExperience({
 
         .profile-preview-canvas {
           animation: preview-swap 260ms ease;
-          will-change: transform, opacity;
+          width: 100%;
+          will-change: opacity;
+        }
+
+        .profile-preview-viewport {
+          height: min(700px, 72vh);
+          max-height: 700px;
         }
 
         @keyframes preview-swap {
           0% {
             opacity: 0;
-            transform: scale(0.972) translateY(10px);
           }
 
           100% {
             opacity: 1;
-            transform: scale(1) translateY(0);
           }
         }
 
@@ -703,6 +742,18 @@ export default function ProfileLayoutExperience({
         @media (max-width: 1120px) {
           .profile-editor-grid {
             grid-template-columns: 1fr;
+          }
+
+          .profile-preview-viewport {
+            height: min(640px, 68vh);
+            max-height: 640px;
+          }
+        }
+
+        @media (max-width: 760px) {
+          .profile-preview-viewport {
+            height: min(500px, 58vh);
+            max-height: 500px;
           }
         }
       `}</style>
@@ -1133,18 +1184,23 @@ const previewViewportStyle: CSSProperties = {
   borderRadius: "24px",
   border: "1px solid rgba(255,255,255,0.08)",
   background: "#040508",
-  aspectRatio: "10 / 13",
+  width: "100%",
   minHeight: 0,
 };
 
-const previewCanvasStyle: CSSProperties = {
+function previewCanvasScaleStyle(
+  canvasWidth: number,
+  scale: number,
+): CSSProperties {
+  return {
   position: "absolute",
-  inset: 0,
-  width: "312.5%",
-  height: "312.5%",
-  transform: "scale(0.32)",
-  transformOrigin: "top left",
-};
+    top: 0,
+    left: "50%",
+    width: `${canvasWidth}px`,
+    transform: `translateX(-50%) scale(${scale})`,
+    transformOrigin: "top center",
+  };
+}
 
 const previewFooterStyle: CSSProperties = {
   display: "grid",
@@ -1180,4 +1236,28 @@ function normalizeThemeColor(value: string) {
 
 function withAlpha(hex: string, alpha: string) {
   return `${hex}${alpha}`;
+}
+
+function getPreviewCanvasWidth(layout: PublicProfileLayout) {
+  if (layout === "modern") {
+    return 1140;
+  }
+
+  if (layout === "portfolio") {
+    return 1080;
+  }
+
+  if (layout === "simplistic") {
+    return 860;
+  }
+
+  return 980;
+}
+
+function getPreviewScale(viewportWidth: number, canvasWidth: number) {
+  if (!viewportWidth) {
+    return 0.5;
+  }
+
+  return Math.min(Math.max((viewportWidth - 28) / canvasWidth, 0), 1);
 }

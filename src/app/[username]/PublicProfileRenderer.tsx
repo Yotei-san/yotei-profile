@@ -159,8 +159,7 @@ export default function PublicProfileRenderer({
   return (
     <main
       style={{
-        minHeight: preview ? "100%" : "100vh",
-        height: preview ? "100%" : undefined,
+        minHeight: preview ? "auto" : "100vh",
         position: "relative",
         overflow: "hidden",
         color: "#ffffff",
@@ -231,20 +230,19 @@ export default function PublicProfileRenderer({
 
         .profile-stage-blur {
           inset: auto 0 0 0;
-          height: 26vh;
+          height: ${preview ? "18%" : "26vh"};
           background: linear-gradient(180deg, rgba(4, 5, 9, 0), rgba(4, 5, 9, 0.4) 42%, rgba(4, 5, 9, 0.8) 100%);
         }
 
         .profile-shell {
-          width: min(1180px, calc(100% - 40px));
+          width: min(1180px, calc(100% - ${preview ? "28px" : "40px"}));
           max-width: 1180px;
-          min-height: 100%;
           margin: 0 auto;
           position: relative;
           z-index: 1;
           display: flex;
-          align-items: ${preview ? "stretch" : "flex-end"};
-          padding: ${preview ? "26px 0" : "34px 0"};
+          align-items: ${preview ? "flex-start" : "flex-end"};
+          padding: ${preview ? "18px 0 20px" : "34px 0"};
           box-sizing: border-box;
         }
 
@@ -279,19 +277,19 @@ export default function PublicProfileRenderer({
           display: grid;
           grid-template-columns: minmax(320px, 0.92fr) minmax(0, 1.08fr);
           min-width: 0;
-          min-height: 100%;
         }
 
         .profile-identity-column,
         .profile-links-column {
-          padding: 34px;
+          padding: ${preview ? "26px" : "34px"};
           min-width: 0;
         }
 
         .profile-identity-column {
           display: flex;
           flex-direction: column;
-          justify-content: space-between;
+          justify-content: ${preview ? "flex-start" : "space-between"};
+          gap: ${preview ? "18px" : "0"};
         }
 
         .profile-links-column {
@@ -357,7 +355,7 @@ export default function PublicProfileRenderer({
         }
 
         .identity-stack {
-          margin-top: 28px;
+          margin-top: ${preview ? "22px" : "28px"};
           min-width: 0;
         }
 
@@ -371,8 +369,8 @@ export default function PublicProfileRenderer({
 
         .avatar-shell {
           position: relative;
-          width: 182px;
-          height: 182px;
+          width: ${preview ? "156px" : "182px"};
+          height: ${preview ? "156px" : "182px"};
           flex-shrink: 0;
         }
 
@@ -473,7 +471,7 @@ export default function PublicProfileRenderer({
 
         .profile-name {
           margin: 16px 0 0;
-          font-size: clamp(44px, 6vw, 66px);
+          font-size: ${preview ? "clamp(36px, 5vw, 58px)" : "clamp(44px, 6vw, 66px)"};
           line-height: 0.9;
           letter-spacing: -0.08em;
           text-shadow: 0 16px 34px rgba(0, 0, 0, 0.28);
@@ -514,7 +512,7 @@ export default function PublicProfileRenderer({
         }
 
         .profile-bio {
-          margin-top: 24px;
+          margin-top: ${preview ? "18px" : "24px"};
           max-width: 560px;
           color: #e0e6f0;
           font-size: 15px;
@@ -569,7 +567,7 @@ export default function PublicProfileRenderer({
         .links-list {
           display: grid;
           gap: 12px;
-          margin-top: 24px;
+          margin-top: ${preview ? "18px" : "24px"};
           min-width: 0;
         }
 
@@ -880,15 +878,17 @@ export default function PublicProfileRenderer({
                     compact
                   />
 
-                  <ProfileHeroClient
-                    username={user.username}
-                    initialViews={views}
-                    initialLikes={likes}
-                    initialDislikes={dislikes}
-                    themeColor={sceneAppearance.linkThemeColor}
-                    initialMyReaction={initialMyReaction}
-                    preview={preview}
-                  />
+                  {preview ? null : (
+                    <ProfileHeroClient
+                      username={user.username}
+                      initialViews={views}
+                      initialLikes={likes}
+                      initialDislikes={dislikes}
+                      themeColor={sceneAppearance.linkThemeColor}
+                      initialMyReaction={initialMyReaction}
+                      preview={preview}
+                    />
+                  )}
 
                   {featuredBadges.length > 0 ? (
                     <div className="profile-badge-rail">
