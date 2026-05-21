@@ -31,6 +31,18 @@ import ProfileMusicCard from "@/app/[username]/ProfileMusicCard";
 import type { PublicProfileLayout } from "@/app/[username]/ProfileLayoutVariants";
 import type { PublicSocialBlock } from "@/app/[username]/SocialPresenceSection";
 import {
+  MAX_PROFILE_NAME_EFFECTS,
+  PROFILE_BACKGROUND_INTENSITY_OPTIONS,
+  PROFILE_BANNER_STYLE_OPTIONS,
+  PROFILE_GLASS_INTENSITY_OPTIONS,
+  PROFILE_NAME_EFFECT_OPTIONS,
+  isNameEffectAvailable,
+  type ProfileBackgroundIntensity,
+  type ProfileBannerStyle,
+  type ProfileGlassIntensity,
+  type ProfileNameEffect,
+} from "@/app/lib/profile-customization";
+import {
   normalizeProfileMusic,
   PROFILE_MUSIC_PROVIDERS,
   type ProfileMusicData,
@@ -84,6 +96,10 @@ type Props = {
   savedMood: ProfileMood;
   savedAura: ProfileAura;
   savedScene: ProfileScene;
+  savedNameEffects: ProfileNameEffect[];
+  savedBackgroundIntensity: ProfileBackgroundIntensity;
+  savedGlassIntensity: ProfileGlassIntensity;
+  savedBannerStyle: ProfileBannerStyle;
   initialMusic: ProfileMusicData;
   previewUser: PublicProfileRenderUser;
   bannerKind: "image" | "video" | "unknown";
@@ -98,6 +114,7 @@ type Props = {
   dislikes: number;
   views: number;
   socialBlocks: PublicSocialBlock[];
+  hasPremiumAccess: boolean;
 };
 
 export default function ProfileLayoutExperience({
@@ -108,6 +125,10 @@ export default function ProfileLayoutExperience({
   savedMood,
   savedAura,
   savedScene,
+  savedNameEffects,
+  savedBackgroundIntensity,
+  savedGlassIntensity,
+  savedBannerStyle,
   initialMusic,
   previewUser,
   bannerKind,
@@ -122,6 +143,7 @@ export default function ProfileLayoutExperience({
   dislikes,
   views,
   socialBlocks,
+  hasPremiumAccess,
 }: Props) {
   const [displayName, setDisplayName] = useState(initialDisplayName);
   const [bio, setBio] = useState(initialBio);
@@ -130,6 +152,15 @@ export default function ProfileLayoutExperience({
   const [previewMood, setPreviewMood] = useState<ProfileMood>(savedMood);
   const [previewAura, setPreviewAura] = useState<ProfileAura>(savedAura);
   const [previewScene, setPreviewScene] = useState<ProfileScene>(savedScene);
+  const [previewNameEffects, setPreviewNameEffects] = useState<ProfileNameEffect[]>(
+    savedNameEffects,
+  );
+  const [previewBackgroundIntensity, setPreviewBackgroundIntensity] =
+    useState<ProfileBackgroundIntensity>(savedBackgroundIntensity);
+  const [previewGlassIntensity, setPreviewGlassIntensity] =
+    useState<ProfileGlassIntensity>(savedGlassIntensity);
+  const [previewBannerStyle, setPreviewBannerStyle] =
+    useState<ProfileBannerStyle>(savedBannerStyle);
   const [profileMusicEnabled, setProfileMusicEnabled] = useState(initialMusic.enabled);
   const [profileMusicTitle, setProfileMusicTitle] = useState(initialMusic.title || "");
   const [profileMusicArtist, setProfileMusicArtist] = useState(initialMusic.artist || "");
@@ -150,6 +181,10 @@ export default function ProfileLayoutExperience({
   const deferredPreviewMood = useDeferredValue(previewMood);
   const deferredPreviewAura = useDeferredValue(previewAura);
   const deferredPreviewScene = useDeferredValue(previewScene);
+  const deferredPreviewNameEffects = useDeferredValue(previewNameEffects);
+  const deferredPreviewBackgroundIntensity = useDeferredValue(previewBackgroundIntensity);
+  const deferredPreviewGlassIntensity = useDeferredValue(previewGlassIntensity);
+  const deferredPreviewBannerStyle = useDeferredValue(previewBannerStyle);
   const deferredProfileMusicEnabled = useDeferredValue(profileMusicEnabled);
   const deferredProfileMusicTitle = useDeferredValue(profileMusicTitle);
   const deferredProfileMusicArtist = useDeferredValue(profileMusicArtist);
@@ -184,6 +219,10 @@ export default function ProfileLayoutExperience({
     previewMood !== savedMood ||
     previewAura !== savedAura ||
     previewScene !== savedScene ||
+    !areNameEffectsEqual(previewNameEffects, savedNameEffects) ||
+    previewBackgroundIntensity !== savedBackgroundIntensity ||
+    previewGlassIntensity !== savedGlassIntensity ||
+    previewBannerStyle !== savedBannerStyle ||
     profileMusicEnabled !== initialMusic.enabled ||
     profileMusicTitle !== (initialMusic.title || "") ||
     profileMusicArtist !== (initialMusic.artist || "") ||
@@ -216,6 +255,29 @@ export default function ProfileLayoutExperience({
       resizeObserver.disconnect();
     };
   }, []);
+
+  function toggleNameEffect(effect: ProfileNameEffect) {
+    if (effect === "none") {
+      setPreviewNameEffects([]);
+      return;
+    }
+
+    if (!isNameEffectAvailable(effect, hasPremiumAccess)) {
+      return;
+    }
+
+    setPreviewNameEffects((current) => {
+      if (current.includes(effect)) {
+        return current.filter((value) => value !== effect);
+      }
+
+      if (current.length >= MAX_PROFILE_NAME_EFFECTS) {
+        return current;
+      }
+
+      return [...current, effect];
+    });
+  }
 
   return (
     <>
@@ -266,6 +328,104 @@ export default function ProfileLayoutExperience({
                 Hex colors keep the preview and the live profile consistent.
               </span>
             </label>
+
+            <div style={{ display: "grid", gap: "14px" }}>
+              <DashboardSectionHeading
+                eyebrow="Username Effects"
+                title="Identity effects"
+                description="Layer up to two lightweight effects on the display name area."
+              />
+
+              {previewNameEffects.length === 0 ? (
+                <input type="hidden" name="profileNameEffects" value="none" readOnly />
+              ) : (
+                previewNameEffects.map((effect) => (
+                  <input
+                    key={effect}
+                    type="hidden"
+                    name="profileNameEffects"
+                    value={effect}
+                    readOnly
+                  />
+                ))
+              )}
+
+              <div style={effectsGridStyle}>
+                {PROFILE_NAME_EFFECT_OPTIONS.map((effectOption) => {
+                  const isSelected =
+                    effectOption.value === "none"
+                      ? previewNameEffects.length === 0
+                      : previewNameEffects.includes(effectOption.value);
+                  const isSaved =
+                    effectOption.value === "none"
+                      ? savedNameEffects.length === 0
+                      : savedNameEffects.includes(effectOption.value);
+                  const isLocked =
+                    effectOption.premium &&
+                    !isNameEffectAvailable(effectOption.value, hasPremiumAccess);
+                  const selectionCapReached =
+                    !isSelected &&
+                    effectOption.value !== "none" &&
+                    previewNameEffects.length >= MAX_PROFILE_NAME_EFFECTS;
+
+                  return (
+                    <button
+                      key={effectOption.value}
+                      type="button"
+                      className="living-card"
+                      aria-pressed={isSelected}
+                      onClick={() => toggleNameEffect(effectOption.value)}
+                      disabled={isLocked}
+                      style={effectCardStyle(
+                        isSelected,
+                        isSaved,
+                        isLocked,
+                        selectionCapReached,
+                        safeThemeColor,
+                      )}
+                    >
+                      <div style={effectCardTopStyle}>
+                        <span style={effectEffectTagStyle(effectOption.premium, safeThemeColor)}>
+                          {effectOption.premium ? "Premium" : "Free"}
+                        </span>
+                        {isSelected ? (
+                          <span style={selectedIndicatorStyle(safeThemeColor)}>
+                            Active
+                          </span>
+                        ) : isSaved ? (
+                          <span style={savedIndicatorStyle}>Saved</span>
+                        ) : null}
+                      </div>
+
+                      <div style={{ display: "grid", gap: "8px", minWidth: 0 }}>
+                        <div style={livingCardHeaderStyle}>
+                          <span>{effectOption.name}</span>
+                          {isSelected ? <LuCheck size={16} /> : null}
+                        </div>
+                        <div style={layoutCardDescriptionStyle}>
+                          {effectOption.description}
+                        </div>
+                        {selectionCapReached && !isLocked ? (
+                          <div style={dashboardMutedTextStyle}>
+                            Remove one active effect to add another.
+                          </div>
+                        ) : isLocked ? (
+                          <div style={dashboardMutedTextStyle}>
+                            Requires Premium.
+                          </div>
+                        ) : null}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div style={dashboardMutedTextStyle}>
+                {hasPremiumAccess
+                  ? "Pick up to two effects. Choosing None clears every active effect."
+                  : "Free users can use None and Glow. Premium unlocks Rainbow, Typewriter, Particles, Glitch, and Shimmer."}
+              </div>
+            </div>
 
             <div style={{ display: "grid", gap: "12px" }}>
               <DashboardSectionHeading
@@ -479,6 +639,146 @@ export default function ProfileLayoutExperience({
               </div>
             </div>
 
+            <div style={{ display: "grid", gap: "14px" }}>
+              <DashboardSectionHeading
+                eyebrow="Profile Atmosphere"
+                title="Background and banner tuning"
+                description="Control how visible the scene feels, how strong the glass reads, and how much the banner pushes through."
+              />
+
+              <input
+                type="hidden"
+                name="profileBackgroundIntensity"
+                value={previewBackgroundIntensity}
+                readOnly
+              />
+              <input
+                type="hidden"
+                name="profileGlassIntensity"
+                value={previewGlassIntensity}
+                readOnly
+              />
+              <input
+                type="hidden"
+                name="profileBannerStyle"
+                value={previewBannerStyle}
+                readOnly
+              />
+
+              <div style={{ display: "grid", gap: "12px" }}>
+                <div style={livingSectionTitleStyle}>Background intensity</div>
+                <div style={livingGridStyle}>
+                  {PROFILE_BACKGROUND_INTENSITY_OPTIONS.map((option) => {
+                    const isSelected = previewBackgroundIntensity === option.value;
+                    const isSaved = savedBackgroundIntensity === option.value;
+
+                    return (
+                      <button
+                        key={option.value}
+                        type="button"
+                        className="living-card"
+                        aria-pressed={isSelected}
+                        onClick={() => setPreviewBackgroundIntensity(option.value)}
+                        style={atmosphereCardStyle(isSelected, isSaved, safeThemeColor)}
+                      >
+                        <div style={atmospherePreviewStyle(option.value, safeThemeColor)} />
+                        <div style={{ display: "grid", gap: "8px", minWidth: 0 }}>
+                          <div style={livingCardHeaderStyle}>
+                            <span>{option.name}</span>
+                            {isSelected ? <LuCheck size={16} /> : null}
+                          </div>
+                          <div style={layoutCardDescriptionStyle}>{option.description}</div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div style={{ display: "grid", gap: "12px" }}>
+                <div style={livingSectionTitleStyle}>Glass intensity</div>
+                <div style={livingGridStyle}>
+                  {PROFILE_GLASS_INTENSITY_OPTIONS.map((option) => {
+                    const isSelected = previewGlassIntensity === option.value;
+                    const isSaved = savedGlassIntensity === option.value;
+
+                    return (
+                      <button
+                        key={option.value}
+                        type="button"
+                        className="living-card"
+                        aria-pressed={isSelected}
+                        onClick={() => setPreviewGlassIntensity(option.value)}
+                        style={atmosphereCardStyle(isSelected, isSaved, safeThemeColor)}
+                      >
+                        <div style={glassPreviewStyle(option.value, safeThemeColor)} />
+                        <div style={{ display: "grid", gap: "8px", minWidth: 0 }}>
+                          <div style={livingCardHeaderStyle}>
+                            <span>{option.name}</span>
+                            {isSelected ? <LuCheck size={16} /> : null}
+                          </div>
+                          <div style={layoutCardDescriptionStyle}>{option.description}</div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div style={{ display: "grid", gap: "12px" }}>
+                <div style={livingSectionTitleStyle}>Banner visibility</div>
+                <div style={livingGridStyle}>
+                  {PROFILE_BANNER_STYLE_OPTIONS.map((option) => {
+                    const isSelected = previewBannerStyle === option.value;
+                    const isSaved = savedBannerStyle === option.value;
+
+                    return (
+                      <button
+                        key={option.value}
+                        type="button"
+                        className="living-card"
+                        aria-pressed={isSelected}
+                        onClick={() => setPreviewBannerStyle(option.value)}
+                        style={atmosphereCardStyle(isSelected, isSaved, safeThemeColor)}
+                      >
+                        <div style={bannerPreviewStyle(option.value, safeThemeColor)} />
+                        <div style={{ display: "grid", gap: "8px", minWidth: 0 }}>
+                          <div style={livingCardHeaderStyle}>
+                            <span>{option.name}</span>
+                            {isSelected ? <LuCheck size={16} /> : null}
+                          </div>
+                          <div style={layoutCardDescriptionStyle}>{option.description}</div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div style={comingSoonCardStyle}>
+                <div style={comingSoonBadgeStyle}>
+                  <LuSparkles size={13} />
+                  Profile Props coming soon
+                </div>
+                <div style={{ display: "grid", gap: "8px" }}>
+                  <div style={comingSoonTitleStyle}>
+                    Future room objects and stickers are already on the roadmap.
+                  </div>
+                  <div style={layoutCardDescriptionStyle}>
+                    We&apos;re preparing a lightweight props layer for polaroids, stickers,
+                    floating icons, and room objects without dropping performance.
+                  </div>
+                </div>
+                <div style={comingSoonTagsStyle}>
+                  {["Polaroids", "Stickers", "Floating icons", "Room objects"].map((item) => (
+                    <span key={item} style={savedIndicatorStyle}>
+                      {item}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+
             <div style={musicSectionStyle}>
               <DashboardSectionHeading
                 eyebrow="Profile Music"
@@ -611,6 +911,20 @@ export default function ProfileLayoutExperience({
                 <span style={dashboardTagStyle("violet")}>
                   {previewSceneAppearance.scene.name}
                 </span>
+                <span style={dashboardTagStyle("violet")}>
+                  {deferredPreviewNameEffects.length > 0
+                    ? deferredPreviewNameEffects.join(" + ")
+                    : "No name effect"}
+                </span>
+                <span style={dashboardTagStyle("violet")}>
+                  {deferredPreviewBackgroundIntensity} bg
+                </span>
+                <span style={dashboardTagStyle("violet")}>
+                  {deferredPreviewGlassIntensity} glass
+                </span>
+                <span style={dashboardTagStyle("violet")}>
+                  {deferredPreviewBannerStyle} banner
+                </span>
                 <span style={dashboardTagStyle(isDirty ? "violet" : "green")}>
                   {isDirty ? "Unsaved changes" : "Saved state"}
                 </span>
@@ -642,6 +956,10 @@ export default function ProfileLayoutExperience({
                     mood={deferredPreviewMood}
                     aura={deferredPreviewAura}
                     scene={deferredPreviewScene}
+                    nameEffects={deferredPreviewNameEffects}
+                    backgroundIntensity={deferredPreviewBackgroundIntensity}
+                    glassIntensity={deferredPreviewGlassIntensity}
+                    bannerStyle={deferredPreviewBannerStyle}
                     music={livePreviewMusic}
                     bannerKind={bannerKind}
                     avatarInitials={avatarInitials}
@@ -785,6 +1103,12 @@ const sceneGridStyle: CSSProperties = {
   gap: "12px",
 };
 
+const effectsGridStyle: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 220px), 1fr))",
+  gap: "12px",
+};
+
 const musicSectionStyle: CSSProperties = {
   display: "grid",
   gap: "14px",
@@ -794,6 +1118,192 @@ const musicFieldsGridStyle: CSSProperties = {
   display: "grid",
   gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 220px), 1fr))",
   gap: "12px",
+};
+
+function effectCardStyle(
+  isSelected: boolean,
+  isSaved: boolean,
+  isLocked: boolean,
+  selectionCapReached: boolean,
+  accentColor: string,
+): CSSProperties {
+  return {
+    display: "grid",
+    gap: "14px",
+    minWidth: 0,
+    padding: "14px",
+    borderRadius: "20px",
+    textAlign: "left",
+    color: "#ffffff",
+    opacity: isLocked ? 0.6 : 1,
+    border: `1px solid ${
+      isSelected
+        ? `${accentColor}55`
+        : isSaved
+          ? "rgba(255,255,255,0.14)"
+          : "rgba(255,255,255,0.08)"
+    }`,
+    background: isSelected
+      ? `linear-gradient(180deg, ${withAlpha(accentColor, "1f")}, rgba(11,11,16,0.96))`
+      : isLocked
+        ? "linear-gradient(180deg, rgba(18,18,24,0.88), rgba(11,11,15,0.92))"
+        : "linear-gradient(180deg, rgba(20,20,24,0.96), rgba(12,12,16,0.96))",
+    boxShadow: isSelected
+      ? `0 18px 36px ${withAlpha(accentColor, "18")}`
+      : isSaved
+        ? "0 14px 28px rgba(0,0,0,0.18)"
+        : "inset 0 1px 0 rgba(255,255,255,0.03)",
+    cursor: isLocked || selectionCapReached ? "not-allowed" : "pointer",
+  };
+}
+
+const effectCardTopStyle: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  gap: "10px",
+  flexWrap: "wrap",
+};
+
+function effectEffectTagStyle(isPremium: boolean, accentColor: string): CSSProperties {
+  return {
+    display: "inline-flex",
+    alignItems: "center",
+    minHeight: "28px",
+    padding: "0 10px",
+    borderRadius: "999px",
+    border: `1px solid ${
+      isPremium ? withAlpha(accentColor, "2f") : "rgba(255,255,255,0.10)"
+    }`,
+    background: isPremium ? withAlpha(accentColor, "14") : "rgba(255,255,255,0.04)",
+    color: isPremium ? "#ffe6f2" : "#d4dbe7",
+    fontSize: "11px",
+    fontWeight: 900,
+    letterSpacing: "0.06em",
+    textTransform: "uppercase",
+  };
+}
+
+function atmosphereCardStyle(
+  isSelected: boolean,
+  isSaved: boolean,
+  accentColor: string,
+): CSSProperties {
+  return {
+    display: "grid",
+    gap: "12px",
+    minWidth: 0,
+    padding: "14px",
+    borderRadius: "18px",
+    textAlign: "left",
+    color: "#ffffff",
+    border: `1px solid ${
+      isSelected ? `${accentColor}55` : isSaved ? "rgba(255,255,255,0.14)" : "rgba(255,255,255,0.08)"
+    }`,
+    background: isSelected
+      ? `linear-gradient(180deg, ${withAlpha(accentColor, "18")}, rgba(11,11,16,0.96))`
+      : "linear-gradient(180deg, rgba(18,18,24,0.96), rgba(11,11,15,0.96))",
+    boxShadow: isSelected
+      ? `0 18px 34px ${withAlpha(accentColor, "18")}`
+      : isSaved
+        ? "0 14px 26px rgba(0,0,0,0.16)"
+        : "inset 0 1px 0 rgba(255,255,255,0.03)",
+    cursor: "pointer",
+  };
+}
+
+function atmospherePreviewStyle(
+  value: ProfileBackgroundIntensity,
+  accentColor: string,
+): CSSProperties {
+  const opacity = value === "low" ? "10" : value === "high" ? "32" : "1c";
+
+  return {
+    minHeight: "78px",
+    borderRadius: "16px",
+    border: "1px solid rgba(255,255,255,0.08)",
+    background: `radial-gradient(circle at 28% 26%, ${withAlpha(accentColor, opacity)}, transparent 42%), radial-gradient(circle at 76% 30%, rgba(125,211,252,0.18), transparent 32%), linear-gradient(180deg, rgba(12,12,18,0.98), rgba(6,7,12,0.98))`,
+    boxShadow: `0 12px 24px ${withAlpha(accentColor, "12")}`,
+  };
+}
+
+function glassPreviewStyle(
+  value: ProfileGlassIntensity,
+  accentColor: string,
+): CSSProperties {
+  const overlay =
+    value === "low" ? "rgba(255,255,255,0.03)" : value === "high" ? "rgba(255,255,255,0.10)" : "rgba(255,255,255,0.06)";
+  const blur = value === "low" ? "6px" : value === "high" ? "20px" : "12px";
+
+  return {
+    minHeight: "78px",
+    borderRadius: "16px",
+    border: "1px solid rgba(255,255,255,0.10)",
+    background: `linear-gradient(180deg, ${overlay}, rgba(255,255,255,0.01)), linear-gradient(135deg, ${withAlpha(accentColor, "18")}, rgba(8,9,14,0.96))`,
+    backdropFilter: `blur(${blur})`,
+    WebkitBackdropFilter: `blur(${blur})`,
+    boxShadow: `0 12px 24px ${withAlpha(accentColor, "10")}, inset 0 1px 0 rgba(255,255,255,0.06)`,
+  };
+}
+
+function bannerPreviewStyle(
+  value: ProfileBannerStyle,
+  accentColor: string,
+): CSSProperties {
+  const overlay =
+    value === "clean"
+      ? "linear-gradient(180deg, rgba(7,10,18,0.08), rgba(7,10,18,0.18) 48%, rgba(7,10,18,0.42) 100%)"
+      : value === "dark"
+        ? "linear-gradient(180deg, rgba(7,10,18,0.22), rgba(7,10,18,0.46) 48%, rgba(7,10,18,0.82) 100%)"
+        : "linear-gradient(180deg, rgba(7,10,18,0.14), rgba(7,10,18,0.30) 48%, rgba(7,10,18,0.62) 100%)";
+
+  return {
+    minHeight: "78px",
+    borderRadius: "16px",
+    border: "1px solid rgba(255,255,255,0.08)",
+    background: `${overlay}, linear-gradient(135deg, ${withAlpha(accentColor, "54")}, rgba(125,211,252,0.28), rgba(10,10,16,0.92))`,
+    boxShadow: `0 12px 24px ${withAlpha(accentColor, "10")}`,
+  };
+}
+
+const comingSoonCardStyle: CSSProperties = {
+  display: "grid",
+  gap: "14px",
+  padding: "16px",
+  borderRadius: "22px",
+  border: "1px solid rgba(255,255,255,0.08)",
+  background:
+    "radial-gradient(circle at top left, rgba(244,114,182,0.12), transparent 28%), linear-gradient(180deg, rgba(16,16,22,0.96), rgba(10,10,14,0.96))",
+  overflow: "hidden",
+};
+
+const comingSoonBadgeStyle: CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  gap: "8px",
+  width: "fit-content",
+  minHeight: "30px",
+  padding: "0 11px",
+  borderRadius: "999px",
+  border: "1px solid rgba(244,114,182,0.18)",
+  background: "rgba(244,114,182,0.10)",
+  color: "#f9a8d4",
+  fontSize: "11px",
+  fontWeight: 900,
+  letterSpacing: "0.08em",
+  textTransform: "uppercase",
+};
+
+const comingSoonTitleStyle: CSSProperties = {
+  color: "#ffffff",
+  fontSize: "15px",
+  fontWeight: 900,
+};
+
+const comingSoonTagsStyle: CSSProperties = {
+  display: "flex",
+  gap: "10px",
+  flexWrap: "wrap",
 };
 
 function musicToggleStyle(isEnabled: boolean, accentColor: string): CSSProperties {
@@ -1260,4 +1770,15 @@ function getPreviewScale(viewportWidth: number, canvasWidth: number) {
   }
 
   return Math.min(Math.max((viewportWidth - 28) / canvasWidth, 0), 1);
+}
+
+function areNameEffectsEqual(
+  left: ProfileNameEffect[],
+  right: ProfileNameEffect[],
+) {
+  if (left.length !== right.length) {
+    return false;
+  }
+
+  return left.every((effect, index) => effect === right[index]);
 }

@@ -5,6 +5,13 @@ import { revalidatePath } from "next/cache";
 import { redirectWithClearedSession, requireUser } from "@/app/lib/auth";
 import { normalizeProfileMusic } from "@/app/lib/profile-music";
 import {
+  isMissingProfileCustomizationColumnError,
+  normalizeProfileBackgroundIntensity,
+  normalizeProfileBannerStyle,
+  normalizeProfileGlassIntensity,
+  normalizeProfileNameEffectsForUser,
+} from "@/app/lib/profile-customization";
+import {
   isMissingProfileSceneColumnError,
   normalizeProfileScene,
 } from "@/app/lib/profile-scenes";
@@ -39,6 +46,18 @@ export async function saveProfileSettings(formData: FormData) {
   const profileScene = normalizeProfileScene(
     String(formData.get("profileScene") || "").trim(),
   );
+  const requestedProfileNameEffects = formData.getAll("profileNameEffects").map((value) =>
+    typeof value === "string" ? value : String(value),
+  );
+  const profileBackgroundIntensity = normalizeProfileBackgroundIntensity(
+    String(formData.get("profileBackgroundIntensity") || "").trim(),
+  );
+  const profileGlassIntensity = normalizeProfileGlassIntensity(
+    String(formData.get("profileGlassIntensity") || "").trim(),
+  );
+  const profileBannerStyle = normalizeProfileBannerStyle(
+    String(formData.get("profileBannerStyle") || "").trim(),
+  );
   const profileMusic = normalizeProfileMusic({
     enabled: parseBooleanFormValue(formData.get("profileMusicEnabled")),
     title: String(formData.get("profileMusicTitle") || ""),
@@ -55,10 +74,19 @@ export async function saveProfileSettings(formData: FormData) {
     select: {
       id: true,
       username: true,
+      role: true,
+      plan: true,
+      premiumBadge: true,
+      premiumUntil: true,
+      subscriptionStatus: true,
     },
   });
 
   const resolvedUser = currentUser ?? (await redirectWithClearedSession());
+  const normalizedNameEffects = normalizeProfileNameEffectsForUser(
+    requestedProfileNameEffects,
+    resolvedUser,
+  );
 
   try {
     try {
@@ -72,6 +100,10 @@ export async function saveProfileSettings(formData: FormData) {
           profileMood,
           profileAura,
           profileScene,
+          profileNameEffects: normalizedNameEffects,
+          profileBackgroundIntensity,
+          profileGlassIntensity,
+          profileBannerStyle,
           profileMusicTitle: profileMusic.title,
           profileMusicArtist: profileMusic.artist,
           profileMusicUrl: profileMusic.url,
@@ -80,7 +112,10 @@ export async function saveProfileSettings(formData: FormData) {
         },
       });
     } catch (error) {
-      if (!isMissingProfileSceneColumnError(error)) {
+      if (
+        !isMissingProfileSceneColumnError(error) &&
+        !isMissingProfileCustomizationColumnError(error)
+      ) {
         throw error;
       }
 
@@ -93,6 +128,15 @@ export async function saveProfileSettings(formData: FormData) {
           profileLayout,
           profileMood,
           profileAura,
+          ...(isMissingProfileSceneColumnError(error) ? {} : { profileScene }),
+          ...(isMissingProfileCustomizationColumnError(error)
+            ? {}
+            : {
+                profileNameEffects: normalizedNameEffects,
+                profileBackgroundIntensity,
+                profileGlassIntensity,
+                profileBannerStyle,
+              }),
           profileMusicTitle: profileMusic.title,
           profileMusicArtist: profileMusic.artist,
           profileMusicUrl: profileMusic.url,

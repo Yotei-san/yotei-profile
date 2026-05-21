@@ -9,10 +9,19 @@ import {
 } from "@/app/lib/profile-presence";
 import type { ProfileMusicData } from "@/app/lib/profile-music";
 import {
+  getProfileBannerStyleTokens,
+  getProfileGlassTokens,
+  type ProfileBackgroundIntensity,
+  type ProfileBannerStyle,
+  type ProfileGlassIntensity,
+  type ProfileNameEffect,
+} from "@/app/lib/profile-customization";
+import {
   getProfileSceneAppearance,
   type ProfileScene,
 } from "@/app/lib/profile-scenes";
 import LivingProfileBackground from "./LivingProfileBackground";
+import ProfileNamePlate from "./ProfileNamePlate";
 import ProfileHeroClient from "./ProfileHeroClient";
 import ProfileMusicCard from "./ProfileMusicCard";
 import SocialPresenceSection, {
@@ -75,6 +84,10 @@ type Props = {
   mood: ProfileMood;
   aura: ProfileAura;
   scene: ProfileScene;
+  nameEffects: ProfileNameEffect[];
+  backgroundIntensity: ProfileBackgroundIntensity;
+  glassIntensity: ProfileGlassIntensity;
+  bannerStyle: ProfileBannerStyle;
   music: ProfileMusicData;
   bannerKind: "image" | "video" | "unknown";
   avatarInitials: string;
@@ -117,6 +130,7 @@ function DefaultLayout(props: Props) {
     themeColor: props.themeColor,
   });
   const { presence } = sceneAppearance;
+  const glassTokens = getProfileGlassTokens(props.glassIntensity);
 
   return (
     <main
@@ -132,13 +146,16 @@ function DefaultLayout(props: Props) {
         themeColor={props.themeColor}
         scene={props.scene}
         previewMode={props.preview}
+        intensity={props.backgroundIntensity}
       />
       <section
         style={defaultShellStyle(
           props.preview,
           presence.panelGlow,
           sceneAppearance.surfaceBorder,
-          sceneAppearance.surfaceBackground,
+          getLayeredSurfaceBackground(sceneAppearance.surfaceBackground, glassTokens.backgroundLayer),
+          glassTokens.backdropFilter,
+          glassTokens.shadowBoost,
         )}
       >
         <BannerSurface
@@ -150,6 +167,7 @@ function DefaultLayout(props: Props) {
           preview={props.preview}
           presenceOverlay={presence.auraOverlay}
           accentColor={presence.accent}
+          bannerStyle={props.bannerStyle}
         />
 
         <div style={defaultContentStyle(props.preview)}>
@@ -177,8 +195,13 @@ function DefaultLayout(props: Props) {
               <div style={eyebrowStyle(sceneAppearance.linkThemeColor)}>
                 {sceneAppearance.scene.name}
               </div>
-              <h1 style={defaultNameStyle}>{props.displayName}</h1>
-              <div style={usernameStyle}>@{props.user.username}</div>
+              <ProfileNamePlate
+                displayName={props.displayName}
+                username={props.user.username}
+                effects={props.nameEffects}
+                nameStyle={defaultNameStyle}
+                usernameStyle={usernameStyle}
+              />
               <div style={presenceChipStyle(presence.presenceBackground, presence.presenceBorder)}>
                 {presence.statusLabel}
               </div>
@@ -239,6 +262,7 @@ function SimplisticLayout(props: Props) {
     themeColor: props.themeColor,
   });
   const { presence } = sceneAppearance;
+  const glassTokens = getProfileGlassTokens(props.glassIntensity);
 
   return (
     <main
@@ -254,8 +278,9 @@ function SimplisticLayout(props: Props) {
         themeColor={props.themeColor}
         scene={props.scene}
         previewMode={props.preview}
+        intensity={props.backgroundIntensity}
       />
-      <div style={simplisticShellStyle(props.preview)}>
+      <div style={simplisticShellStyle(props.preview, glassTokens.backdropFilter)}>
         <div style={simplisticHeaderStyle}>
           <AvatarVisual
             avatarUrl={props.user.avatarUrl}
@@ -281,8 +306,13 @@ function SimplisticLayout(props: Props) {
             <div style={simpleKickerStyle(sceneAppearance.linkThemeColor)}>
               {sceneAppearance.scene.name}
             </div>
-            <h1 style={simplisticNameStyle}>{props.displayName}</h1>
-            <div style={usernameStyle}>@{props.user.username}</div>
+            <ProfileNamePlate
+              displayName={props.displayName}
+              username={props.user.username}
+              effects={props.nameEffects}
+              nameStyle={simplisticNameStyle}
+              usernameStyle={usernameStyle}
+            />
             <div style={presenceChipStyle(presence.presenceBackground, presence.presenceBorder)}>
               {presence.statusLabel}
             </div>
@@ -301,6 +331,7 @@ function SimplisticLayout(props: Props) {
           preview={props.preview}
           presenceOverlay={presence.auraOverlay}
           accentColor={presence.accent}
+          bannerStyle={props.bannerStyle}
         />
         </div>
 
@@ -356,6 +387,7 @@ function PortfolioLayout(props: Props) {
     themeColor: props.themeColor,
   });
   const { presence } = sceneAppearance;
+  const glassTokens = getProfileGlassTokens(props.glassIntensity);
 
   return (
     <main
@@ -371,6 +403,7 @@ function PortfolioLayout(props: Props) {
         themeColor={props.themeColor}
         scene={props.scene}
         previewMode={props.preview}
+        intensity={props.backgroundIntensity}
       />
       <div style={portfolioBannerWrapStyle(props.preview)}>
         <BannerSurface
@@ -381,6 +414,7 @@ function PortfolioLayout(props: Props) {
           preview={props.preview}
           presenceOverlay={presence.auraOverlay}
           accentColor={presence.accent}
+          bannerStyle={props.bannerStyle}
         />
       </div>
 
@@ -390,7 +424,9 @@ function PortfolioLayout(props: Props) {
             props.preview,
             presence.panelGlow,
             sceneAppearance.surfaceBorder,
-            sceneAppearance.surfaceBackground,
+            getLayeredSurfaceBackground(sceneAppearance.surfaceBackground, glassTokens.backgroundLayer),
+            glassTokens.backdropFilter,
+            glassTokens.shadowBoost,
           )}
         >
           <div style={eyebrowStyle(sceneAppearance.linkThemeColor)}>
@@ -416,8 +452,13 @@ function PortfolioLayout(props: Props) {
           />
 
           <div style={{ display: "grid", gap: "8px" }}>
-            <h1 style={portfolioNameStyle}>{props.displayName}</h1>
-            <div style={usernameStyle}>@{props.user.username}</div>
+            <ProfileNamePlate
+              displayName={props.displayName}
+              username={props.user.username}
+              effects={props.nameEffects}
+              nameStyle={portfolioNameStyle}
+              usernameStyle={usernameStyle}
+            />
             <div style={presenceChipStyle(presence.presenceBackground, presence.presenceBorder)}>
               {presence.statusLabel}
             </div>
@@ -459,7 +500,9 @@ function PortfolioLayout(props: Props) {
             props.preview,
             presence.panelGlow,
             sceneAppearance.surfaceBorder,
-            sceneAppearance.surfaceBackground,
+            getLayeredSurfaceBackground(sceneAppearance.surfaceBackground, glassTokens.backgroundLayer),
+            glassTokens.backdropFilter,
+            glassTokens.shadowBoost,
           )}
         >
           <SocialPresenceSection
@@ -489,6 +532,7 @@ function BannerSurface({
   preview = false,
   presenceOverlay,
   accentColor,
+  bannerStyle,
 }: {
   bannerUrl: string | null;
   bannerKind: "image" | "video" | "unknown";
@@ -498,7 +542,10 @@ function BannerSurface({
   preview?: boolean;
   presenceOverlay: string;
   accentColor: string;
+  bannerStyle: ProfileBannerStyle;
 }) {
+  const bannerStyleTokens = getProfileBannerStyleTokens(bannerStyle);
+
   return (
     <div
       style={{
@@ -518,12 +565,22 @@ function BannerSurface({
             loop
             playsInline
             preload="metadata"
-            style={bannerMediaStyle}
+            style={bannerMediaStyle(
+              bannerStyleTokens.mediaScale,
+              bannerStyleTokens.mediaFilter,
+            )}
           >
             <source src={bannerUrl} />
           </video>
         ) : (
-          <img src={bannerUrl} alt="" style={bannerMediaStyle} />
+          <img
+            src={bannerUrl}
+            alt=""
+            style={bannerMediaStyle(
+              bannerStyleTokens.mediaScale,
+              bannerStyleTokens.mediaFilter,
+            )}
+          />
         )
       ) : null}
 
@@ -532,7 +589,12 @@ function BannerSurface({
           position: "absolute",
           inset: 0,
           background:
-            `linear-gradient(180deg, rgba(6,8,12,0.10), rgba(6,8,12,0.28) 48%, rgba(6,8,12,0.68) 100%), ${presenceOverlay}`,
+            `linear-gradient(
+              180deg,
+              rgba(6,8,12,${bannerStyleTokens.surfaceOverlayTop}) 0%,
+              rgba(6,8,12,${bannerStyleTokens.surfaceOverlayMid}) 48%,
+              rgba(6,8,12,${bannerStyleTokens.surfaceOverlayBottom}) 100%
+            ), ${presenceOverlay}`,
         }}
       />
     </div>
@@ -914,13 +976,19 @@ function getLinkHostname(url: string) {
   }
 }
 
-const bannerMediaStyle: CSSProperties = {
+function getLayeredSurfaceBackground(base: string, overlay: string) {
+  return `${overlay}, ${base}`;
+}
+
+const bannerMediaStyle = (scale: number, filter: string): CSSProperties => ({
   position: "absolute",
   inset: 0,
   width: "100%",
   height: "100%",
   objectFit: "cover",
-};
+  transform: `scale(${scale})`,
+  filter,
+});
 
 const defaultPageStyle = (
   themeColor: string,
@@ -943,6 +1011,8 @@ const defaultShellStyle = (
   panelGlow = "",
   surfaceBorder = "rgba(255,255,255,0.08)",
   surfaceBackground = "linear-gradient(180deg, rgba(10,11,16,0.98), rgba(7,8,12,0.98))",
+  glassBackdrop = "blur(20px) saturate(128%)",
+  shadowBoost = "0 24px 56px rgba(0,0,0,0.24)",
 ): CSSProperties => ({
   width: "min(1040px, 100%)",
   maxWidth: "1040px",
@@ -953,7 +1023,11 @@ const defaultShellStyle = (
   overflow: "hidden",
   border: `1px solid ${surfaceBorder}`,
   background: surfaceBackground,
-  boxShadow: panelGlow ? `${panelGlow}, 0 28px 70px rgba(0,0,0,0.24)` : "0 28px 70px rgba(0,0,0,0.28)",
+  boxShadow: panelGlow
+    ? `${panelGlow}, ${shadowBoost}, 0 28px 70px rgba(0,0,0,0.24)`
+    : `${shadowBoost}, 0 28px 70px rgba(0,0,0,0.28)`,
+  backdropFilter: glassBackdrop,
+  WebkitBackdropFilter: glassBackdrop,
 });
 
 const defaultContentStyle = (preview = false): CSSProperties => ({
@@ -1009,7 +1083,10 @@ const simplisticPageStyle = (
   background: `${stageGlow}, ${surfaceBackground}`,
 });
 
-const simplisticShellStyle = (_preview = false): CSSProperties => ({
+const simplisticShellStyle = (
+  _preview = false,
+  glassBackdrop = "blur(20px) saturate(128%)",
+): CSSProperties => ({
   width: "min(820px, 100%)",
   maxWidth: "820px",
   margin: "0 auto",
@@ -1018,6 +1095,8 @@ const simplisticShellStyle = (_preview = false): CSSProperties => ({
   display: "grid",
   gap: "18px",
   minWidth: 0,
+  backdropFilter: glassBackdrop,
+  WebkitBackdropFilter: glassBackdrop,
 });
 
 const simplisticHeaderStyle: CSSProperties = {
@@ -1089,6 +1168,8 @@ const portfolioSidebarStyle = (
   panelGlow = "",
   surfaceBorder = "rgba(255,255,255,0.08)",
   surfaceBackground = "linear-gradient(180deg, rgba(10,14,22,0.98), rgba(8,10,16,0.98))",
+  glassBackdrop = "blur(20px) saturate(128%)",
+  shadowBoost = "0 24px 56px rgba(0,0,0,0.24)",
 ): CSSProperties => ({
   display: "grid",
   alignContent: "start",
@@ -1097,9 +1178,11 @@ const portfolioSidebarStyle = (
   borderRadius: "28px",
   border: `1px solid ${surfaceBorder}`,
   background: surfaceBackground,
-  boxShadow: panelGlow,
+  boxShadow: panelGlow ? `${panelGlow}, ${shadowBoost}` : shadowBoost,
   minWidth: 0,
   overflow: "hidden",
+  backdropFilter: glassBackdrop,
+  WebkitBackdropFilter: glassBackdrop,
 });
 
 const portfolioMainStyle = (
@@ -1107,6 +1190,8 @@ const portfolioMainStyle = (
   panelGlow = "",
   surfaceBorder = "rgba(255,255,255,0.08)",
   surfaceBackground = "linear-gradient(180deg, rgba(10,14,22,0.98), rgba(8,10,16,0.98))",
+  glassBackdrop = "blur(20px) saturate(128%)",
+  shadowBoost = "0 24px 56px rgba(0,0,0,0.24)",
 ): CSSProperties => ({
   display: "grid",
   gap: "18px",
@@ -1114,9 +1199,11 @@ const portfolioMainStyle = (
   borderRadius: "28px",
   border: `1px solid ${surfaceBorder}`,
   background: surfaceBackground,
-  boxShadow: panelGlow,
+  boxShadow: panelGlow ? `${panelGlow}, ${shadowBoost}` : shadowBoost,
   minWidth: 0,
   overflow: "hidden",
+  backdropFilter: glassBackdrop,
+  WebkitBackdropFilter: glassBackdrop,
 });
 
 const portfolioHeadingStyle: CSSProperties = {

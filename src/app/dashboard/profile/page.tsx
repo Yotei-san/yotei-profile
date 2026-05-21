@@ -18,6 +18,13 @@ import { resolveEquippedDecoration } from "@/app/lib/decorations";
 import { readLiveEmbedMetadata } from "@/app/lib/live-embed";
 import { normalizeProfileMusic } from "@/app/lib/profile-music";
 import {
+  isMissingProfileCustomizationColumnError,
+  normalizeProfileBackgroundIntensity,
+  normalizeProfileBannerStyle,
+  normalizeProfileGlassIntensity,
+  normalizeProfileNameEffects,
+} from "@/app/lib/profile-customization";
+import {
   isMissingProfileSceneColumnError,
   normalizeProfileScene,
 } from "@/app/lib/profile-scenes";
@@ -124,6 +131,10 @@ export default async function ProfileSettingsPage({ searchParams }: PageProps) {
         savedMood={profileData.mood}
         savedAura={profileData.aura}
         savedScene={profileData.scene}
+        savedNameEffects={profileData.nameEffects}
+        savedBackgroundIntensity={profileData.backgroundIntensity}
+        savedGlassIntensity={profileData.glassIntensity}
+        savedBannerStyle={profileData.bannerStyle}
         initialMusic={profileData.music}
         previewUser={profileData.user}
         bannerKind={profileData.bannerKind}
@@ -138,6 +149,7 @@ export default async function ProfileSettingsPage({ searchParams }: PageProps) {
         dislikes={profileData.dislikes}
         views={profileData.views}
         socialBlocks={profileData.socialBlocks}
+        hasPremiumAccess={profileData.hasPremiumState}
       />
     </main>
   );
@@ -147,17 +159,20 @@ async function getDashboardProfileUser(userId: string) {
   try {
     return await prisma.user.findUnique({
       where: { id: userId },
-      select: buildDashboardProfileUserSelect(true),
+      select: buildDashboardProfileUserSelect(true, true),
     });
   } catch (error) {
-    if (!isMissingProfileSceneColumnError(error)) {
-      throw error;
+    if (
+      isMissingProfileSceneColumnError(error) ||
+      isMissingProfileCustomizationColumnError(error)
+    ) {
+      return prisma.user.findUnique({
+        where: { id: userId },
+        select: buildDashboardProfileUserSelect(false, false),
+      });
     }
 
-    return prisma.user.findUnique({
-      where: { id: userId },
-      select: buildDashboardProfileUserSelect(false),
-    });
+    throw error;
   }
 }
 
@@ -188,6 +203,19 @@ function buildProfileRenderData(user: ProfileUserRecord) {
     mood: normalizeProfileMood(user.profileMood),
     aura: normalizeProfileAura(user.profileAura),
     scene: normalizeProfileScene("profileScene" in user ? user.profileScene : undefined),
+    nameEffects: normalizeProfileNameEffects(
+      "profileNameEffects" in user ? user.profileNameEffects : [],
+      hasPremiumState,
+    ),
+    backgroundIntensity: normalizeProfileBackgroundIntensity(
+      "profileBackgroundIntensity" in user ? user.profileBackgroundIntensity : undefined,
+    ),
+    glassIntensity: normalizeProfileGlassIntensity(
+      "profileGlassIntensity" in user ? user.profileGlassIntensity : undefined,
+    ),
+    bannerStyle: normalizeProfileBannerStyle(
+      "profileBannerStyle" in user ? user.profileBannerStyle : undefined,
+    ),
     music: normalizeProfileMusic({
       enabled: user.profileMusicEnabled,
       title: user.profileMusicTitle,
@@ -213,10 +241,14 @@ function buildProfileRenderData(user: ProfileUserRecord) {
     ),
     views: user.profileViews.length,
     socialBlocks: mapSocialBlocks(user.socialBlocks),
+    hasPremiumState,
   };
 }
 
-function buildDashboardProfileUserSelect(includeProfileScene: boolean) {
+function buildDashboardProfileUserSelect(
+  includeProfileScene: boolean,
+  includeCustomization: boolean,
+) {
   return {
     username: true,
     displayName: true,
@@ -228,6 +260,14 @@ function buildDashboardProfileUserSelect(includeProfileScene: boolean) {
     profileMood: true,
     profileAura: true,
     ...(includeProfileScene ? { profileScene: true } : {}),
+    ...(includeCustomization
+      ? {
+          profileNameEffects: true,
+          profileBackgroundIntensity: true,
+          profileGlassIntensity: true,
+          profileBannerStyle: true,
+        }
+      : {}),
     profileMusicTitle: true,
     profileMusicArtist: true,
     profileMusicUrl: true,
@@ -298,6 +338,7 @@ function buildDashboardProfileUserSelect(includeProfileScene: boolean) {
     },
   };
 }
+
 
 function buildHeroPills(
   user: Pick<ProfileUserRecord, "role" | "status">,

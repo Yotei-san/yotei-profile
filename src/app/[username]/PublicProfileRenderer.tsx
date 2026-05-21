@@ -10,11 +10,20 @@ import {
 } from "@/app/lib/profile-presence";
 import type { ProfileMusicData } from "@/app/lib/profile-music";
 import {
+  getProfileBannerStyleTokens,
+  getProfileGlassTokens,
+  type ProfileBackgroundIntensity,
+  type ProfileBannerStyle,
+  type ProfileGlassIntensity,
+  type ProfileNameEffect,
+} from "@/app/lib/profile-customization";
+import {
   getProfileSceneAppearance,
   type ProfileScene,
 } from "@/app/lib/profile-scenes";
 import LivingAvatar from "@/app/components/LivingAvatar";
 import LivingProfileBackground from "./LivingProfileBackground";
+import ProfileNamePlate from "./ProfileNamePlate";
 import ProfileLayoutVariants, { type PublicProfileLayout } from "./ProfileLayoutVariants";
 import ProfileMusicCard from "./ProfileMusicCard";
 import ProfileHeroClient from "./ProfileHeroClient";
@@ -75,6 +84,10 @@ type Props = {
   mood: ProfileMood;
   aura: ProfileAura;
   scene: ProfileScene;
+  nameEffects: ProfileNameEffect[];
+  backgroundIntensity: ProfileBackgroundIntensity;
+  glassIntensity: ProfileGlassIntensity;
+  bannerStyle: ProfileBannerStyle;
   music: ProfileMusicData;
   bannerKind: "image" | "video" | "unknown";
   avatarInitials: string;
@@ -101,6 +114,10 @@ export default function PublicProfileRenderer({
   mood,
   aura,
   scene = "default",
+  nameEffects,
+  backgroundIntensity,
+  glassIntensity,
+  bannerStyle,
   music,
   bannerKind,
   avatarInitials,
@@ -128,6 +145,10 @@ export default function PublicProfileRenderer({
         mood={mood}
         aura={aura}
         scene={scene}
+        nameEffects={nameEffects}
+        backgroundIntensity={backgroundIntensity}
+        glassIntensity={glassIntensity}
+        bannerStyle={bannerStyle}
         music={music}
         bannerKind={bannerKind}
         avatarInitials={avatarInitials}
@@ -155,6 +176,8 @@ export default function PublicProfileRenderer({
     themeColor,
   });
   const { presence } = sceneAppearance;
+  const glassTokens = getProfileGlassTokens(glassIntensity);
+  const bannerStyleTokens = getProfileBannerStyleTokens(bannerStyle);
 
   return (
     <main
@@ -195,20 +218,43 @@ export default function PublicProfileRenderer({
           width: 100%;
           height: 100%;
           object-fit: cover;
-          transform: scale(1.05);
-          filter: saturate(1.04) contrast(1.04);
+          transform: scale(${bannerStyleTokens.mediaScale});
+          filter: ${bannerStyleTokens.mediaFilter};
         }
 
         .profile-stage-overlay {
           background:
-            linear-gradient(180deg, rgba(4, 5, 9, 0.18) 0%, rgba(4, 5, 9, 0.36) 28%, rgba(4, 5, 9, 0.74) 72%, rgba(4, 5, 9, 0.92) 100%),
-            radial-gradient(circle at 50% 16%, ${withAlpha(presence.accent, "22")} 0%, transparent 44%);
+            linear-gradient(
+              180deg,
+              rgba(4, 5, 9, ${bannerStyleTokens.stageOverlayTop}) 0%,
+              rgba(4, 5, 9, ${bannerStyleTokens.stageOverlayMid}) 28%,
+              rgba(4, 5, 9, ${bannerStyleTokens.stageOverlayBottom}) 72%,
+              rgba(4, 5, 9, ${Math.min(bannerStyleTokens.stageOverlayBottom + 0.14, 0.96)}) 100%
+            ),
+            radial-gradient(
+              circle at 50% 16%,
+              ${withAlpha(
+                presence.accent,
+                decimalOpacityToHex(bannerStyleTokens.stageAccentOpacity),
+              )} 0%,
+              transparent 44%
+            );
         }
 
         .profile-stage-vignette {
           background:
-            radial-gradient(circle at center, rgba(0, 0, 0, 0) 42%, rgba(0, 0, 0, 0.38) 100%),
-            linear-gradient(90deg, rgba(3, 4, 8, 0.46) 0%, rgba(3, 4, 8, 0.08) 22%, rgba(3, 4, 8, 0.08) 78%, rgba(3, 4, 8, 0.42) 100%);
+            radial-gradient(
+              circle at center,
+              rgba(0, 0, 0, 0) 42%,
+              rgba(0, 0, 0, ${bannerStyleTokens.vignetteOpacity}) 100%
+            ),
+            linear-gradient(
+              90deg,
+              rgba(3, 4, 8, ${bannerStyleTokens.sideShadeOpacity}) 0%,
+              rgba(3, 4, 8, 0.08) 22%,
+              rgba(3, 4, 8, 0.08) 78%,
+              rgba(3, 4, 8, ${bannerStyleTokens.sideShadeOpacity}) 100%
+            );
         }
 
         .profile-stage-noise {
@@ -230,7 +276,9 @@ export default function PublicProfileRenderer({
 
         .profile-stage-blur {
           inset: auto 0 0 0;
-          height: ${preview ? "18%" : "26vh"};
+          height: ${preview
+            ? bannerStyleTokens.previewStageBlurHeight
+            : bannerStyleTokens.stageBlurHeight};
           background: linear-gradient(180deg, rgba(4, 5, 9, 0), rgba(4, 5, 9, 0.4) 42%, rgba(4, 5, 9, 0.8) 100%);
         }
 
@@ -251,13 +299,16 @@ export default function PublicProfileRenderer({
           max-width: 100%;
           position: relative;
           border-radius: 34px;
-          background: ${sceneAppearance.shellBackground};
+          background: ${glassTokens.backgroundLayer}, ${sceneAppearance.shellBackground};
           border: 1px solid ${sceneAppearance.surfaceBorder};
           box-shadow:
             ${presence.panelGlow},
+            ${glassTokens.shadowBoost},
             0 34px 80px rgba(0, 0, 0, 0.30),
             inset 0 1px 0 rgba(255, 255, 255, 0.05);
           overflow: hidden;
+          backdrop-filter: ${glassTokens.backdropFilter};
+          -webkit-backdrop-filter: ${glassTokens.backdropFilter};
         }
 
         .profile-floating-panel::before {
@@ -294,7 +345,9 @@ export default function PublicProfileRenderer({
 
         .profile-links-column {
           border-left: 1px solid ${sceneAppearance.surfaceBorder};
-          background: ${sceneAppearance.surfaceBackground};
+          background: ${glassTokens.backgroundLayer}, ${sceneAppearance.surfaceBackground};
+          backdrop-filter: ${glassTokens.backdropFilter};
+          -webkit-backdrop-filter: ${glassTokens.backdropFilter};
         }
 
         .panel-topbar,
@@ -752,6 +805,7 @@ export default function PublicProfileRenderer({
         themeColor={themeColor}
         scene={scene}
         previewMode={preview}
+        intensity={backgroundIntensity}
       />
 
       <div className="profile-stage" aria-hidden>
@@ -840,8 +894,13 @@ export default function PublicProfileRenderer({
                         {sceneAppearance.scene.name}
                       </div>
 
-                      <h1 className="profile-name">{displayName}</h1>
-                      <div className="profile-username">@{user.username}</div>
+                      <ProfileNamePlate
+                        displayName={displayName}
+                        username={user.username}
+                        effects={nameEffects}
+                        nameClassName="profile-name"
+                        usernameClassName="profile-username"
+                      />
                       <div className="presence-chip">
                         <LuMoonStar size={13} />
                         {presence.statusLabel}
@@ -1073,4 +1132,11 @@ function getLinkHostname(url: string) {
 
 function withAlpha(hex: string, alpha: string) {
   return `${hex}${alpha}`;
+}
+
+function decimalOpacityToHex(value: number) {
+  const clamped = Math.max(0, Math.min(1, value));
+  return Math.round(clamped * 255)
+    .toString(16)
+    .padStart(2, "0");
 }

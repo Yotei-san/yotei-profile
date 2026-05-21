@@ -1,5 +1,11 @@
 import type { CSSProperties } from "react";
 import {
+  getProfileBackgroundSaturation,
+  getProfileBackgroundVisibility,
+  normalizeProfileBackgroundIntensity,
+  type ProfileBackgroundIntensity,
+} from "@/app/lib/profile-customization";
+import {
   getProfileSceneDefinition,
   type ProfileScene,
 } from "@/app/lib/profile-scenes";
@@ -17,6 +23,7 @@ type Props = {
   themeColor: string;
   scene?: ProfileScene;
   previewMode?: boolean;
+  intensity?: ProfileBackgroundIntensity;
 };
 
 type LivingBackgroundVariant =
@@ -33,6 +40,7 @@ export default function LivingProfileBackground({
   themeColor,
   scene = "default",
   previewMode = false,
+  intensity = "medium",
 }: Props) {
   const resolvedMood = normalizeProfileMood(mood);
   const resolvedAura = normalizeProfileAura(aura);
@@ -41,6 +49,7 @@ export default function LivingProfileBackground({
     aura: resolvedAura,
     themeColor,
   });
+  const resolvedIntensity = normalizeProfileBackgroundIntensity(intensity);
   const variant = resolveLivingBackgroundVariant(scene, resolvedMood, resolvedAura);
   const config = getLivingBackgroundConfig(variant, presence, themeColor);
 
@@ -53,7 +62,11 @@ export default function LivingProfileBackground({
         "--living-bg-soft": presence.soft,
         "--living-bg-pulse": presence.pulse,
         "--living-bg-theme": themeColor,
-        "--living-bg-opacity": previewMode ? 0.84 : 1,
+        "--living-bg-opacity": getProfileBackgroundVisibility(
+          resolvedIntensity,
+          previewMode,
+        ),
+        "--living-bg-saturate": getProfileBackgroundSaturation(resolvedIntensity),
       } as CSSProperties}
       aria-hidden
     >
@@ -228,6 +241,7 @@ const livingBackgroundStyles = `
     overflow: hidden;
     opacity: var(--living-bg-opacity, 1);
     isolation: isolate;
+    filter: saturate(var(--living-bg-saturate, 1));
   }
 
   .living-profile-layer {

@@ -8,6 +8,13 @@ import { resolveEquippedDecoration } from "@/app/lib/decorations";
 import { readLiveEmbedMetadata } from "@/app/lib/live-embed";
 import { normalizeProfileMusic } from "@/app/lib/profile-music";
 import {
+  isMissingProfileCustomizationColumnError,
+  normalizeProfileBackgroundIntensity,
+  normalizeProfileBannerStyle,
+  normalizeProfileGlassIntensity,
+  normalizeProfileNameEffects,
+} from "@/app/lib/profile-customization";
+import {
   isMissingProfileSceneColumnError,
   normalizeProfileScene,
 } from "@/app/lib/profile-scenes";
@@ -75,17 +82,20 @@ async function getProfileUser(username: string) {
   try {
     return await prisma.user.findUnique({
       where: { username: username.toLowerCase() },
-      select: buildProfileUserSelect(true),
+      select: buildProfileUserSelect(true, true),
     });
   } catch (error) {
-    if (!isMissingProfileSceneColumnError(error)) {
-      throw error;
+    if (
+      isMissingProfileSceneColumnError(error) ||
+      isMissingProfileCustomizationColumnError(error)
+    ) {
+      return prisma.user.findUnique({
+        where: { username: username.toLowerCase() },
+        select: buildProfileUserSelect(false, false),
+      });
     }
 
-    return prisma.user.findUnique({
-      where: { username: username.toLowerCase() },
-      select: buildProfileUserSelect(false),
-    });
+    throw error;
   }
 }
 
@@ -118,6 +128,19 @@ function buildProfileRenderData(user: ProfileUserRecord) {
     mood: normalizeProfileMood(user.profileMood),
     aura: normalizeProfileAura(user.profileAura),
     scene: normalizeProfileScene("profileScene" in user ? user.profileScene : undefined),
+    nameEffects: normalizeProfileNameEffects(
+      "profileNameEffects" in user ? user.profileNameEffects : [],
+      hasPremiumState,
+    ),
+    backgroundIntensity: normalizeProfileBackgroundIntensity(
+      "profileBackgroundIntensity" in user ? user.profileBackgroundIntensity : undefined,
+    ),
+    glassIntensity: normalizeProfileGlassIntensity(
+      "profileGlassIntensity" in user ? user.profileGlassIntensity : undefined,
+    ),
+    bannerStyle: normalizeProfileBannerStyle(
+      "profileBannerStyle" in user ? user.profileBannerStyle : undefined,
+    ),
     music: normalizeProfileMusic({
       enabled: user.profileMusicEnabled,
       title: user.profileMusicTitle,
@@ -146,7 +169,10 @@ function buildProfileRenderData(user: ProfileUserRecord) {
   };
 }
 
-function buildProfileUserSelect(includeProfileScene: boolean) {
+function buildProfileUserSelect(
+  includeProfileScene: boolean,
+  includeCustomization: boolean,
+) {
   return {
     id: true,
     username: true,
@@ -159,6 +185,14 @@ function buildProfileUserSelect(includeProfileScene: boolean) {
     profileMood: true,
     profileAura: true,
     ...(includeProfileScene ? { profileScene: true } : {}),
+    ...(includeCustomization
+      ? {
+          profileNameEffects: true,
+          profileBackgroundIntensity: true,
+          profileGlassIntensity: true,
+          profileBannerStyle: true,
+        }
+      : {}),
     profileMusicTitle: true,
     profileMusicArtist: true,
     profileMusicUrl: true,

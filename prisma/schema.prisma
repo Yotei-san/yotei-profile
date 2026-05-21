@@ -33,6 +33,10 @@ model User {
   profileMood               String   @default("locked-in")
   profileAura               String   @default("neon")
   profileScene              String   @default("default")
+  profileNameEffects        String[] @default([])
+  profileBackgroundIntensity String  @default("medium")
+  profileGlassIntensity     String   @default("medium")
+  profileBannerStyle        String   @default("cinematic")
   profileMusicTitle         String?
   profileMusicArtist        String?
   profileMusicUrl           String?
