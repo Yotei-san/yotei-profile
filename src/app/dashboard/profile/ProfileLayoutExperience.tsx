@@ -34,12 +34,20 @@ import {
   MAX_PROFILE_NAME_EFFECTS,
   PROFILE_BACKGROUND_INTENSITY_OPTIONS,
   PROFILE_BANNER_STYLE_OPTIONS,
+  PROFILE_CARD_STYLE_OPTIONS,
+  PROFILE_CORNER_STYLE_OPTIONS,
+  PROFILE_DENSITY_OPTIONS,
   PROFILE_GLASS_INTENSITY_OPTIONS,
+  PROFILE_MOTION_LEVEL_OPTIONS,
   PROFILE_NAME_EFFECT_OPTIONS,
   isNameEffectAvailable,
   type ProfileBackgroundIntensity,
   type ProfileBannerStyle,
+  type ProfileCardStyle,
+  type ProfileCornerStyle,
+  type ProfileDensity,
   type ProfileGlassIntensity,
+  type ProfileMotionLevel,
   type ProfileNameEffect,
 } from "@/app/lib/profile-customization";
 import {
@@ -100,6 +108,10 @@ type Props = {
   savedBackgroundIntensity: ProfileBackgroundIntensity;
   savedGlassIntensity: ProfileGlassIntensity;
   savedBannerStyle: ProfileBannerStyle;
+  savedDensity: ProfileDensity;
+  savedCardStyle: ProfileCardStyle;
+  savedCornerStyle: ProfileCornerStyle;
+  savedMotionLevel: ProfileMotionLevel;
   initialMusic: ProfileMusicData;
   previewUser: PublicProfileRenderUser;
   bannerKind: "image" | "video" | "unknown";
@@ -129,6 +141,10 @@ export default function ProfileLayoutExperience({
   savedBackgroundIntensity,
   savedGlassIntensity,
   savedBannerStyle,
+  savedDensity,
+  savedCardStyle,
+  savedCornerStyle,
+  savedMotionLevel,
   initialMusic,
   previewUser,
   bannerKind,
@@ -161,6 +177,12 @@ export default function ProfileLayoutExperience({
     useState<ProfileGlassIntensity>(savedGlassIntensity);
   const [previewBannerStyle, setPreviewBannerStyle] =
     useState<ProfileBannerStyle>(savedBannerStyle);
+  const [previewDensity, setPreviewDensity] = useState<ProfileDensity>(savedDensity);
+  const [previewCardStyle, setPreviewCardStyle] = useState<ProfileCardStyle>(savedCardStyle);
+  const [previewCornerStyle, setPreviewCornerStyle] =
+    useState<ProfileCornerStyle>(savedCornerStyle);
+  const [previewMotionLevel, setPreviewMotionLevel] =
+    useState<ProfileMotionLevel>(savedMotionLevel);
   const [profileMusicEnabled, setProfileMusicEnabled] = useState(initialMusic.enabled);
   const [profileMusicTitle, setProfileMusicTitle] = useState(initialMusic.title || "");
   const [profileMusicArtist, setProfileMusicArtist] = useState(initialMusic.artist || "");
@@ -185,6 +207,10 @@ export default function ProfileLayoutExperience({
   const deferredPreviewBackgroundIntensity = useDeferredValue(previewBackgroundIntensity);
   const deferredPreviewGlassIntensity = useDeferredValue(previewGlassIntensity);
   const deferredPreviewBannerStyle = useDeferredValue(previewBannerStyle);
+  const deferredPreviewDensity = useDeferredValue(previewDensity);
+  const deferredPreviewCardStyle = useDeferredValue(previewCardStyle);
+  const deferredPreviewCornerStyle = useDeferredValue(previewCornerStyle);
+  const deferredPreviewMotionLevel = useDeferredValue(previewMotionLevel);
   const deferredProfileMusicEnabled = useDeferredValue(profileMusicEnabled);
   const deferredProfileMusicTitle = useDeferredValue(profileMusicTitle);
   const deferredProfileMusicArtist = useDeferredValue(profileMusicArtist);
@@ -223,6 +249,10 @@ export default function ProfileLayoutExperience({
     previewBackgroundIntensity !== savedBackgroundIntensity ||
     previewGlassIntensity !== savedGlassIntensity ||
     previewBannerStyle !== savedBannerStyle ||
+    previewDensity !== savedDensity ||
+    previewCardStyle !== savedCardStyle ||
+    previewCornerStyle !== savedCornerStyle ||
+    previewMotionLevel !== savedMotionLevel ||
     profileMusicEnabled !== initialMusic.enabled ||
     profileMusicTitle !== (initialMusic.title || "") ||
     profileMusicArtist !== (initialMusic.artist || "") ||
@@ -664,6 +694,10 @@ export default function ProfileLayoutExperience({
                 value={previewBannerStyle}
                 readOnly
               />
+              <input type="hidden" name="profileDensity" value={previewDensity} readOnly />
+              <input type="hidden" name="profileCardStyle" value={previewCardStyle} readOnly />
+              <input type="hidden" name="profileCornerStyle" value={previewCornerStyle} readOnly />
+              <input type="hidden" name="profileMotionLevel" value={previewMotionLevel} readOnly />
 
               <div style={{ display: "grid", gap: "12px" }}>
                 <div style={livingSectionTitleStyle}>Background intensity</div>
@@ -752,6 +786,134 @@ export default function ProfileLayoutExperience({
                       </button>
                     );
                   })}
+                </div>
+              </div>
+
+              <div style={{ display: "grid", gap: "14px" }}>
+                <DashboardSectionHeading
+                  eyebrow="Profile Creator"
+                  title="Shape the layout feel"
+                  description="These controls tune spacing, surfaces, corners, and motion without rebuilding the layout from scratch."
+                />
+
+                <div style={{ display: "grid", gap: "12px" }}>
+                  <div style={livingSectionTitleStyle}>Profile density</div>
+                  <div style={livingGridStyle}>
+                    {PROFILE_DENSITY_OPTIONS.map((option) => {
+                      const isSelected = previewDensity === option.value;
+                      const isSaved = savedDensity === option.value;
+
+                      return (
+                        <button
+                          key={option.value}
+                          type="button"
+                          className="living-card"
+                          aria-pressed={isSelected}
+                          onClick={() => setPreviewDensity(option.value)}
+                          style={atmosphereCardStyle(isSelected, isSaved, safeThemeColor)}
+                        >
+                          <div style={densityPreviewStyle(option.value, safeThemeColor)} />
+                          <div style={{ display: "grid", gap: "8px", minWidth: 0 }}>
+                            <div style={livingCardHeaderStyle}>
+                              <span>{option.name}</span>
+                              {isSelected ? <LuCheck size={16} /> : null}
+                            </div>
+                            <div style={layoutCardDescriptionStyle}>{option.description}</div>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div style={{ display: "grid", gap: "12px" }}>
+                  <div style={livingSectionTitleStyle}>Card style</div>
+                  <div style={livingGridStyle}>
+                    {PROFILE_CARD_STYLE_OPTIONS.map((option) => {
+                      const isSelected = previewCardStyle === option.value;
+                      const isSaved = savedCardStyle === option.value;
+
+                      return (
+                        <button
+                          key={option.value}
+                          type="button"
+                          className="living-card"
+                          aria-pressed={isSelected}
+                          onClick={() => setPreviewCardStyle(option.value)}
+                          style={atmosphereCardStyle(isSelected, isSaved, safeThemeColor)}
+                        >
+                          <div style={cardStylePreviewStyle(option.value, safeThemeColor)} />
+                          <div style={{ display: "grid", gap: "8px", minWidth: 0 }}>
+                            <div style={livingCardHeaderStyle}>
+                              <span>{option.name}</span>
+                              {isSelected ? <LuCheck size={16} /> : null}
+                            </div>
+                            <div style={layoutCardDescriptionStyle}>{option.description}</div>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div style={{ display: "grid", gap: "12px" }}>
+                  <div style={livingSectionTitleStyle}>Corner style</div>
+                  <div style={livingGridStyle}>
+                    {PROFILE_CORNER_STYLE_OPTIONS.map((option) => {
+                      const isSelected = previewCornerStyle === option.value;
+                      const isSaved = savedCornerStyle === option.value;
+
+                      return (
+                        <button
+                          key={option.value}
+                          type="button"
+                          className="living-card"
+                          aria-pressed={isSelected}
+                          onClick={() => setPreviewCornerStyle(option.value)}
+                          style={atmosphereCardStyle(isSelected, isSaved, safeThemeColor)}
+                        >
+                          <div style={cornerPreviewStyle(option.value, safeThemeColor)} />
+                          <div style={{ display: "grid", gap: "8px", minWidth: 0 }}>
+                            <div style={livingCardHeaderStyle}>
+                              <span>{option.name}</span>
+                              {isSelected ? <LuCheck size={16} /> : null}
+                            </div>
+                            <div style={layoutCardDescriptionStyle}>{option.description}</div>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div style={{ display: "grid", gap: "12px" }}>
+                  <div style={livingSectionTitleStyle}>Motion level</div>
+                  <div style={livingGridStyle}>
+                    {PROFILE_MOTION_LEVEL_OPTIONS.map((option) => {
+                      const isSelected = previewMotionLevel === option.value;
+                      const isSaved = savedMotionLevel === option.value;
+
+                      return (
+                        <button
+                          key={option.value}
+                          type="button"
+                          className="living-card"
+                          aria-pressed={isSelected}
+                          onClick={() => setPreviewMotionLevel(option.value)}
+                          style={atmosphereCardStyle(isSelected, isSaved, safeThemeColor)}
+                        >
+                          <div style={motionPreviewStyle(option.value, safeThemeColor)} />
+                          <div style={{ display: "grid", gap: "8px", minWidth: 0 }}>
+                            <div style={livingCardHeaderStyle}>
+                              <span>{option.name}</span>
+                              {isSelected ? <LuCheck size={16} /> : null}
+                            </div>
+                            <div style={layoutCardDescriptionStyle}>{option.description}</div>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
 
@@ -925,6 +1087,18 @@ export default function ProfileLayoutExperience({
                 <span style={dashboardTagStyle("violet")}>
                   {deferredPreviewBannerStyle} banner
                 </span>
+                <span style={dashboardTagStyle("violet")}>
+                  {deferredPreviewDensity} density
+                </span>
+                <span style={dashboardTagStyle("violet")}>
+                  {deferredPreviewCardStyle} cards
+                </span>
+                <span style={dashboardTagStyle("violet")}>
+                  {deferredPreviewCornerStyle} corners
+                </span>
+                <span style={dashboardTagStyle("violet")}>
+                  {deferredPreviewMotionLevel} motion
+                </span>
                 <span style={dashboardTagStyle(isDirty ? "violet" : "green")}>
                   {isDirty ? "Unsaved changes" : "Saved state"}
                 </span>
@@ -960,6 +1134,10 @@ export default function ProfileLayoutExperience({
                     backgroundIntensity={deferredPreviewBackgroundIntensity}
                     glassIntensity={deferredPreviewGlassIntensity}
                     bannerStyle={deferredPreviewBannerStyle}
+                    density={deferredPreviewDensity}
+                    cardStyle={deferredPreviewCardStyle}
+                    cornerStyle={deferredPreviewCornerStyle}
+                    motionLevel={deferredPreviewMotionLevel}
                     music={livePreviewMusic}
                     bannerKind={bannerKind}
                     avatarInitials={avatarInitials}
@@ -1262,6 +1440,76 @@ function bannerPreviewStyle(
     borderRadius: "16px",
     border: "1px solid rgba(255,255,255,0.08)",
     background: `${overlay}, linear-gradient(135deg, ${withAlpha(accentColor, "54")}, rgba(125,211,252,0.28), rgba(10,10,16,0.92))`,
+    boxShadow: `0 12px 24px ${withAlpha(accentColor, "10")}`,
+  };
+}
+
+function densityPreviewStyle(
+  value: ProfileDensity,
+  accentColor: string,
+): CSSProperties {
+  const gap =
+    value === "compact" ? "8px" : value === "spacious" ? "16px" : "12px";
+
+  return {
+    minHeight: "78px",
+    borderRadius: "16px",
+    border: "1px solid rgba(255,255,255,0.08)",
+    background: `linear-gradient(180deg, ${withAlpha(accentColor, "10")}, rgba(8,9,14,0.94))`,
+    padding: "14px",
+    display: "grid",
+    alignContent: "center",
+    gap,
+    boxShadow: `0 12px 24px ${withAlpha(accentColor, "10")}`,
+  };
+}
+
+function cardStylePreviewStyle(
+  value: ProfileCardStyle,
+  accentColor: string,
+): CSSProperties {
+  const background =
+    value === "solid"
+      ? "linear-gradient(180deg, rgba(18,18,24,0.98), rgba(9,9,14,0.98))"
+      : value === "minimal"
+        ? "linear-gradient(180deg, rgba(15,15,20,0.78), rgba(9,9,14,0.72))"
+        : `linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02)), linear-gradient(135deg, ${withAlpha(accentColor, "12")}, rgba(8,9,14,0.92))`;
+
+  return {
+    minHeight: "78px",
+    borderRadius: "16px",
+    border: "1px solid rgba(255,255,255,0.10)",
+    background,
+    boxShadow: `0 12px 24px ${withAlpha(accentColor, "10")}, inset 0 1px 0 rgba(255,255,255,0.05)`,
+  };
+}
+
+function cornerPreviewStyle(
+  value: ProfileCornerStyle,
+  accentColor: string,
+): CSSProperties {
+  const radius = value === "soft" ? "24px" : value === "sharp" ? "10px" : "18px";
+
+  return {
+    minHeight: "78px",
+    borderRadius: radius,
+    border: "1px solid rgba(255,255,255,0.10)",
+    background: `linear-gradient(135deg, ${withAlpha(accentColor, "18")}, rgba(8,9,14,0.96))`,
+    boxShadow: `0 12px 24px ${withAlpha(accentColor, "10")}`,
+  };
+}
+
+function motionPreviewStyle(
+  value: ProfileMotionLevel,
+  accentColor: string,
+): CSSProperties {
+  const opacity = value === "off" ? "10" : value === "alive" ? "34" : "1e";
+
+  return {
+    minHeight: "78px",
+    borderRadius: "16px",
+    border: "1px solid rgba(255,255,255,0.08)",
+    background: `radial-gradient(circle at 26% 32%, ${withAlpha(accentColor, opacity)}, transparent 38%), linear-gradient(135deg, rgba(13,13,19,0.98), rgba(7,8,12,0.98))`,
     boxShadow: `0 12px 24px ${withAlpha(accentColor, "10")}`,
   };
 }

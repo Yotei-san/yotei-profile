@@ -10,10 +10,18 @@ import {
 import type { ProfileMusicData } from "@/app/lib/profile-music";
 import {
   getProfileBannerStyleTokens,
+  getProfileCardStyleTokens,
+  getProfileCornerTokens,
+  getProfileDensityTokens,
   getProfileGlassTokens,
+  getProfileMotionTokens,
   type ProfileBackgroundIntensity,
   type ProfileBannerStyle,
+  type ProfileCardStyle,
+  type ProfileCornerStyle,
+  type ProfileDensity,
   type ProfileGlassIntensity,
+  type ProfileMotionLevel,
   type ProfileNameEffect,
 } from "@/app/lib/profile-customization";
 import {
@@ -88,6 +96,10 @@ type Props = {
   backgroundIntensity: ProfileBackgroundIntensity;
   glassIntensity: ProfileGlassIntensity;
   bannerStyle: ProfileBannerStyle;
+  density: ProfileDensity;
+  cardStyle: ProfileCardStyle;
+  cornerStyle: ProfileCornerStyle;
+  motionLevel: ProfileMotionLevel;
   music: ProfileMusicData;
   bannerKind: "image" | "video" | "unknown";
   avatarInitials: string;
@@ -131,6 +143,18 @@ function DefaultLayout(props: Props) {
   });
   const { presence } = sceneAppearance;
   const glassTokens = getProfileGlassTokens(props.glassIntensity);
+  const densityTokens = getProfileDensityTokens(props.density);
+  const cardStyleTokens = getProfileCardStyleTokens(props.cardStyle);
+  const cornerTokens = getProfileCornerTokens(props.cornerStyle);
+  const motionTokens = getProfileMotionTokens(props.motionLevel);
+  const resolvedBackdrop =
+    props.cardStyle === "glass" ? glassTokens.backdropFilter : cardStyleTokens.backdropFilter;
+  const resolvedSurfaceBackground = getLayeredSurfaceBackground(
+    sceneAppearance.surfaceBackground,
+    glassTokens.backgroundLayer,
+    cardStyleTokens.shellOverlay,
+    props.cardStyle === "glass",
+  );
 
   return (
     <main
@@ -138,6 +162,7 @@ function DefaultLayout(props: Props) {
         sceneAppearance.linkThemeColor,
         props.preview,
         presence.stageGlow,
+        densityTokens,
       )}
     >
       <LivingProfileBackground
@@ -147,30 +172,33 @@ function DefaultLayout(props: Props) {
         scene={props.scene}
         previewMode={props.preview}
         intensity={props.backgroundIntensity}
+        motionLevel={props.motionLevel}
       />
       <section
         style={defaultShellStyle(
           props.preview,
           presence.panelGlow,
           sceneAppearance.surfaceBorder,
-          getLayeredSurfaceBackground(sceneAppearance.surfaceBackground, glassTokens.backgroundLayer),
-          glassTokens.backdropFilter,
+          resolvedSurfaceBackground,
+          resolvedBackdrop,
           glassTokens.shadowBoost,
+          cornerTokens,
         )}
       >
         <BannerSurface
           bannerUrl={props.user.bannerUrl}
           bannerKind={props.bannerKind}
           themeColor={props.themeColor}
-          height={props.preview ? 220 : 260}
+          height={Math.round((props.preview ? 220 : 260) * densityTokens.bannerScale)}
           roundedTop
           preview={props.preview}
           presenceOverlay={presence.auraOverlay}
           accentColor={presence.accent}
           bannerStyle={props.bannerStyle}
+          cornerRadius={cornerTokens.shellRadius}
         />
 
-        <div style={defaultContentStyle(props.preview)}>
+        <div style={defaultContentStyle(props.preview, densityTokens)}>
           <div style={defaultIdentityStyle}>
             <AvatarVisual
               avatarUrl={props.user.avatarUrl}
@@ -199,14 +227,21 @@ function DefaultLayout(props: Props) {
                 displayName={props.displayName}
                 username={props.user.username}
                 effects={props.nameEffects}
-                nameStyle={defaultNameStyle}
+                motionLevel={props.motionLevel}
+                nameStyle={defaultNameStyle(densityTokens)}
                 usernameStyle={usernameStyle}
               />
-              <div style={presenceChipStyle(presence.presenceBackground, presence.presenceBorder)}>
+              <div
+                style={presenceChipStyle(
+                  presence.presenceBackground,
+                  presence.presenceBorder,
+                  cornerTokens,
+                )}
+              >
                 {presence.statusLabel}
               </div>
               <PillRow pills={props.heroPills} compact />
-              {props.user.bio ? <p style={defaultBioStyle}>{props.user.bio}</p> : null}
+              {props.user.bio ? <p style={defaultBioStyle(densityTokens)}>{props.user.bio}</p> : null}
             </div>
           </div>
 
@@ -247,6 +282,10 @@ function DefaultLayout(props: Props) {
             themeColor={sceneAppearance.linkThemeColor}
             surfaceBackground={sceneAppearance.surfaceBackground}
             surfaceBorder={sceneAppearance.surfaceBorder}
+            density={densityTokens}
+            cardStyle={props.cardStyle}
+            cornerTokens={cornerTokens}
+            motionTokens={motionTokens}
           />
         </div>
       </section>
@@ -263,6 +302,11 @@ function SimplisticLayout(props: Props) {
   });
   const { presence } = sceneAppearance;
   const glassTokens = getProfileGlassTokens(props.glassIntensity);
+  const densityTokens = getProfileDensityTokens(props.density);
+  const cardStyleTokens = getProfileCardStyleTokens(props.cardStyle);
+  const cornerTokens = getProfileCornerTokens(props.cornerStyle);
+  const resolvedBackdrop =
+    props.cardStyle === "glass" ? glassTokens.backdropFilter : cardStyleTokens.backdropFilter;
 
   return (
     <main
@@ -270,6 +314,7 @@ function SimplisticLayout(props: Props) {
         props.preview,
         presence.stageGlow,
         sceneAppearance.surfaceBackground,
+        densityTokens,
       )}
     >
       <LivingProfileBackground
@@ -279,9 +324,10 @@ function SimplisticLayout(props: Props) {
         scene={props.scene}
         previewMode={props.preview}
         intensity={props.backgroundIntensity}
+        motionLevel={props.motionLevel}
       />
-      <div style={simplisticShellStyle(props.preview, glassTokens.backdropFilter)}>
-        <div style={simplisticHeaderStyle}>
+      <div style={simplisticShellStyle(props.preview, resolvedBackdrop, densityTokens)}>
+        <div style={simplisticHeaderStyle(densityTokens)}>
           <AvatarVisual
             avatarUrl={props.user.avatarUrl}
             avatarInitials={props.avatarInitials}
@@ -310,13 +356,20 @@ function SimplisticLayout(props: Props) {
               displayName={props.displayName}
               username={props.user.username}
               effects={props.nameEffects}
-              nameStyle={simplisticNameStyle}
+              motionLevel={props.motionLevel}
+              nameStyle={simplisticNameStyle(densityTokens)}
               usernameStyle={usernameStyle}
             />
-            <div style={presenceChipStyle(presence.presenceBackground, presence.presenceBorder)}>
+            <div
+              style={presenceChipStyle(
+                presence.presenceBackground,
+                presence.presenceBorder,
+                cornerTokens,
+              )}
+            >
               {presence.statusLabel}
             </div>
-            {props.user.bio ? <p style={simplisticBioStyle}>{props.user.bio}</p> : null}
+            {props.user.bio ? <p style={simplisticBioStyle(densityTokens)}>{props.user.bio}</p> : null}
           </div>
         </div>
 
@@ -327,11 +380,12 @@ function SimplisticLayout(props: Props) {
           bannerUrl={props.user.bannerUrl}
           bannerKind={props.bannerKind}
           themeColor={props.themeColor}
-          height={props.preview ? 136 : 160}
+          height={Math.round((props.preview ? 136 : 160) * densityTokens.bannerScale)}
           preview={props.preview}
           presenceOverlay={presence.auraOverlay}
           accentColor={presence.accent}
           bannerStyle={props.bannerStyle}
+          cornerRadius={cornerTokens.panelRadius}
         />
         </div>
 
@@ -373,6 +427,10 @@ function SimplisticLayout(props: Props) {
           themeColor={sceneAppearance.linkThemeColor}
           surfaceBackground={sceneAppearance.surfaceBackground}
           surfaceBorder={sceneAppearance.surfaceBorder}
+          density={densityTokens}
+          cardStyle={props.cardStyle}
+          cornerTokens={cornerTokens}
+          motionTokens={getProfileMotionTokens(props.motionLevel)}
         />
       </div>
     </main>
@@ -388,6 +446,18 @@ function PortfolioLayout(props: Props) {
   });
   const { presence } = sceneAppearance;
   const glassTokens = getProfileGlassTokens(props.glassIntensity);
+  const densityTokens = getProfileDensityTokens(props.density);
+  const cardStyleTokens = getProfileCardStyleTokens(props.cardStyle);
+  const cornerTokens = getProfileCornerTokens(props.cornerStyle);
+  const motionTokens = getProfileMotionTokens(props.motionLevel);
+  const resolvedBackdrop =
+    props.cardStyle === "glass" ? glassTokens.backdropFilter : cardStyleTokens.backdropFilter;
+  const resolvedSurfaceBackground = getLayeredSurfaceBackground(
+    sceneAppearance.surfaceBackground,
+    glassTokens.backgroundLayer,
+    cardStyleTokens.shellOverlay,
+    props.cardStyle === "glass",
+  );
 
   return (
     <main
@@ -395,6 +465,7 @@ function PortfolioLayout(props: Props) {
         props.preview,
         presence.stageGlow,
         sceneAppearance.surfaceBackground,
+        densityTokens,
       )}
     >
       <LivingProfileBackground
@@ -404,29 +475,32 @@ function PortfolioLayout(props: Props) {
         scene={props.scene}
         previewMode={props.preview}
         intensity={props.backgroundIntensity}
+        motionLevel={props.motionLevel}
       />
-      <div style={portfolioBannerWrapStyle(props.preview)}>
+      <div style={portfolioBannerWrapStyle(props.preview, densityTokens)}>
         <BannerSurface
           bannerUrl={props.user.bannerUrl}
           bannerKind={props.bannerKind}
           themeColor={props.themeColor}
-          height={props.preview ? 188 : 220}
+          height={Math.round((props.preview ? 188 : 220) * densityTokens.bannerScale)}
           preview={props.preview}
           presenceOverlay={presence.auraOverlay}
           accentColor={presence.accent}
           bannerStyle={props.bannerStyle}
+          cornerRadius={cornerTokens.panelRadius}
         />
       </div>
 
-      <div style={portfolioShellStyle(props.preview)}>
+      <div style={portfolioShellStyle(props.preview, densityTokens)}>
         <aside
           style={portfolioSidebarStyle(
             props.preview,
             presence.panelGlow,
             sceneAppearance.surfaceBorder,
-            getLayeredSurfaceBackground(sceneAppearance.surfaceBackground, glassTokens.backgroundLayer),
-            glassTokens.backdropFilter,
+            resolvedSurfaceBackground,
+            resolvedBackdrop,
             glassTokens.shadowBoost,
+            cornerTokens,
           )}
         >
           <div style={eyebrowStyle(sceneAppearance.linkThemeColor)}>
@@ -456,13 +530,20 @@ function PortfolioLayout(props: Props) {
               displayName={props.displayName}
               username={props.user.username}
               effects={props.nameEffects}
-              nameStyle={portfolioNameStyle}
+              motionLevel={props.motionLevel}
+              nameStyle={portfolioNameStyle(densityTokens)}
               usernameStyle={usernameStyle}
             />
-            <div style={presenceChipStyle(presence.presenceBackground, presence.presenceBorder)}>
+            <div
+              style={presenceChipStyle(
+                presence.presenceBackground,
+                presence.presenceBorder,
+                cornerTokens,
+              )}
+            >
               {presence.statusLabel}
             </div>
-            {props.user.bio ? <p style={portfolioBioStyle}>{props.user.bio}</p> : null}
+            {props.user.bio ? <p style={portfolioBioStyle(densityTokens)}>{props.user.bio}</p> : null}
           </div>
 
           <PillRow pills={props.heroPills} subtle />
@@ -500,9 +581,10 @@ function PortfolioLayout(props: Props) {
             props.preview,
             presence.panelGlow,
             sceneAppearance.surfaceBorder,
-            getLayeredSurfaceBackground(sceneAppearance.surfaceBackground, glassTokens.backgroundLayer),
-            glassTokens.backdropFilter,
+            resolvedSurfaceBackground,
+            resolvedBackdrop,
             glassTokens.shadowBoost,
+            cornerTokens,
           )}
         >
           <SocialPresenceSection
@@ -516,6 +598,10 @@ function PortfolioLayout(props: Props) {
             themeColor={sceneAppearance.linkThemeColor}
             surfaceBackground={sceneAppearance.surfaceBackground}
             surfaceBorder={sceneAppearance.surfaceBorder}
+            density={densityTokens}
+            cardStyle={props.cardStyle}
+            cornerTokens={cornerTokens}
+            motionTokens={motionTokens}
           />
         </section>
       </div>
@@ -533,6 +619,7 @@ function BannerSurface({
   presenceOverlay,
   accentColor,
   bannerStyle,
+  cornerRadius = 26,
 }: {
   bannerUrl: string | null;
   bannerKind: "image" | "video" | "unknown";
@@ -543,6 +630,7 @@ function BannerSurface({
   presenceOverlay: string;
   accentColor: string;
   bannerStyle: ProfileBannerStyle;
+  cornerRadius?: number;
 }) {
   const bannerStyleTokens = getProfileBannerStyleTokens(bannerStyle);
 
@@ -552,7 +640,9 @@ function BannerSurface({
         position: "relative",
         overflow: "hidden",
         height: `${height}px`,
-        borderRadius: roundedTop ? "30px 30px 0 0" : "26px",
+        borderRadius: roundedTop
+          ? `${cornerRadius}px ${cornerRadius}px 0 0`
+          : `${cornerRadius}px`,
         background: `linear-gradient(135deg, ${themeColor}, ${withAlpha(accentColor, "c0")}, rgba(3,7,18,0.96))`,
         isolation: preview ? "isolate" : undefined,
       }}
@@ -841,18 +931,26 @@ function LinksSection({
   themeColor,
   surfaceBackground,
   surfaceBorder,
+  density,
+  cardStyle,
+  cornerTokens,
+  motionTokens,
 }: {
   layout: "default" | "simplistic" | "portfolio";
   links: LinkEntry[];
   themeColor: string;
   surfaceBackground: string;
   surfaceBorder: string;
+  density: ReturnType<typeof getProfileDensityTokens>;
+  cardStyle: ProfileCardStyle;
+  cornerTokens: ReturnType<typeof getProfileCornerTokens>;
+  motionTokens: ReturnType<typeof getProfileMotionTokens>;
 }) {
   return (
     <section
       style={{
         display: "grid",
-        gap: "12px",
+        gap: `${Math.round(12 * density.sectionGap)}px`,
       }}
     >
       <div style={{ display: "grid", gap: "8px" }}>
@@ -862,7 +960,7 @@ function LinksSection({
         </div>
       </div>
 
-      <div style={{ display: "grid", gap: "12px" }}>
+      <div style={{ display: "grid", gap: `${Math.round(12 * density.sectionGap)}px` }}>
         {links.length > 0 ? (
           links.map((link) => {
             const platform = getLinkPlatform(link.url, link.title);
@@ -883,14 +981,25 @@ function LinksSection({
                     : layout === "portfolio"
                       ? portfolioLinkCardStyle
                       : defaultLinkCardStyle),
-                  background: surfaceBackground,
+                  borderRadius: `${cornerTokens.cardRadius}px`,
+                  background:
+                    cardStyle === "solid"
+                      ? "linear-gradient(180deg, rgba(255,255,255,0.02), rgba(8,10,15,0.94))"
+                      : cardStyle === "minimal"
+                        ? "rgba(255,255,255,0.02)"
+                        : surfaceBackground,
                   borderColor: withAlpha(color, layout === "simplistic" ? "14" : "22"),
-                  boxShadow: `0 18px 34px ${withAlpha(color, "10")}, inset 0 1px 0 ${surfaceBorder}`,
+                  boxShadow: `0 18px 34px ${withAlpha(
+                    color,
+                    motionTokens.hoverShadowBoost > 0.8 ? "12" : "0d",
+                  )}, inset 0 1px 0 ${surfaceBorder}`,
+                  transition: `transform ${motionTokens.transitionDurationMs}ms ease, box-shadow ${motionTokens.transitionDurationMs}ms ease`,
                 }}
               >
                 <div
                   style={{
                     ...linkIconStyle,
+                    borderRadius: `${Math.max(cornerTokens.cardRadius - 4, 12)}px`,
                     background: withAlpha(color, layout === "simplistic" ? "12" : "16"),
                     color,
                   }}
@@ -916,7 +1025,7 @@ function LinksSection({
                         alignItems: "center",
                         minHeight: "24px",
                         padding: "0 8px",
-                        borderRadius: "999px",
+                        borderRadius: `${cornerTokens.chipRadius}px`,
                         border: "1px solid currentColor",
                         color,
                         background: withAlpha(color, "0f"),
@@ -941,7 +1050,7 @@ function LinksSection({
                   style={{
                     width: "38px",
                     height: "38px",
-                    borderRadius: "14px",
+                    borderRadius: `${Math.max(cornerTokens.cardRadius - 8, 10)}px`,
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -957,7 +1066,7 @@ function LinksSection({
             );
           })
         ) : (
-          <div style={emptyLinksStyle}>No links added yet.</div>
+          <div style={emptyLinksStyle(cornerTokens)}>No links added yet.</div>
         )}
       </div>
     </section>
@@ -976,8 +1085,13 @@ function getLinkHostname(url: string) {
   }
 }
 
-function getLayeredSurfaceBackground(base: string, overlay: string) {
-  return `${overlay}, ${base}`;
+function getLayeredSurfaceBackground(
+  base: string,
+  overlay: string,
+  cardOverlay = "",
+  includeGlass = true,
+) {
+  return [includeGlass ? overlay : "", cardOverlay, base].filter(Boolean).join(", ");
 }
 
 const bannerMediaStyle = (scale: number, filter: string): CSSProperties => ({
@@ -994,13 +1108,16 @@ const defaultPageStyle = (
   themeColor: string,
   preview = false,
   stageGlow = "",
+  densityTokens = getProfileDensityTokens("balanced"),
 ): CSSProperties => ({
   minHeight: preview ? "auto" : "100vh",
   minWidth: 0,
   position: "relative",
   overflow: "hidden",
   isolation: "isolate",
-  padding: preview ? "24px" : "32px 16px 40px",
+  padding: preview
+    ? `${Math.round(24 * densityTokens.shellPadding)}px`
+    : `${Math.round(32 * densityTokens.shellPadding)}px 16px ${Math.round(40 * densityTokens.shellPadding)}px`,
   color: "#ffffff",
   fontFamily: '"Space Grotesk", Inter, Arial, Helvetica, sans-serif',
   background: `${stageGlow}, linear-gradient(180deg, rgba(5,6,10,0.98), rgba(3,4,7,1)), radial-gradient(circle at top, ${withAlpha(themeColor, "16")} 0%, transparent 28%)`,
@@ -1013,13 +1130,14 @@ const defaultShellStyle = (
   surfaceBackground = "linear-gradient(180deg, rgba(10,11,16,0.98), rgba(7,8,12,0.98))",
   glassBackdrop = "blur(20px) saturate(128%)",
   shadowBoost = "0 24px 56px rgba(0,0,0,0.24)",
+  cornerTokens = getProfileCornerTokens("rounded"),
 ): CSSProperties => ({
   width: "min(1040px, 100%)",
   maxWidth: "1040px",
   margin: "0 auto",
   position: "relative",
   zIndex: 1,
-  borderRadius: "30px",
+  borderRadius: `${cornerTokens.shellRadius}px`,
   overflow: "hidden",
   border: `1px solid ${surfaceBorder}`,
   background: surfaceBackground,
@@ -1030,10 +1148,15 @@ const defaultShellStyle = (
   WebkitBackdropFilter: glassBackdrop,
 });
 
-const defaultContentStyle = (preview = false): CSSProperties => ({
+const defaultContentStyle = (
+  preview = false,
+  densityTokens = getProfileDensityTokens("balanced"),
+): CSSProperties => ({
   display: "grid",
-  gap: "22px",
-  padding: preview ? "0 26px 32px" : "0 26px 28px",
+  gap: `${Math.round(22 * densityTokens.sectionGap)}px`,
+  padding: preview
+    ? `0 ${Math.round(26 * densityTokens.contentPadding)}px ${Math.round(32 * densityTokens.contentPadding)}px`
+    : `0 ${Math.round(26 * densityTokens.contentPadding)}px ${Math.round(28 * densityTokens.contentPadding)}px`,
   marginTop: "-54px",
   minWidth: 0,
 });
@@ -1046,12 +1169,14 @@ const defaultIdentityStyle: CSSProperties = {
   minWidth: 0,
 };
 
-const defaultNameStyle: CSSProperties = {
+const defaultNameStyle = (
+  densityTokens = getProfileDensityTokens("balanced"),
+): CSSProperties => ({
   margin: 0,
-  fontSize: "46px",
+  fontSize: `${Math.round(46 * densityTokens.bannerScale)}px`,
   lineHeight: 0.96,
   letterSpacing: "-0.06em",
-};
+});
 
 const usernameStyle: CSSProperties = {
   color: "#9ca3af",
@@ -1059,25 +1184,30 @@ const usernameStyle: CSSProperties = {
   fontWeight: 700,
 };
 
-const defaultBioStyle: CSSProperties = {
+const defaultBioStyle = (
+  densityTokens = getProfileDensityTokens("balanced"),
+): CSSProperties => ({
   margin: 0,
   color: "#d4d4d8",
-  lineHeight: 1.8,
+  lineHeight: densityTokens.bioLineHeight,
   fontSize: "15px",
   whiteSpace: "pre-wrap",
-};
+});
 
 const simplisticPageStyle = (
   preview = false,
   stageGlow = "",
   surfaceBackground = "rgba(6,7,11,0.96)",
+  densityTokens = getProfileDensityTokens("balanced"),
 ): CSSProperties => ({
   minHeight: preview ? "auto" : "100vh",
   minWidth: 0,
   position: "relative",
   overflow: "hidden",
   isolation: "isolate",
-  padding: preview ? "28px 24px" : "42px 16px",
+  padding: preview
+    ? `${Math.round(28 * densityTokens.shellPadding)}px 24px`
+    : `${Math.round(42 * densityTokens.shellPadding)}px 16px`,
   color: "#ffffff",
   fontFamily: 'Inter, Arial, Helvetica, sans-serif',
   background: `${stageGlow}, ${surfaceBackground}`,
@@ -1086,6 +1216,7 @@ const simplisticPageStyle = (
 const simplisticShellStyle = (
   _preview = false,
   glassBackdrop = "blur(20px) saturate(128%)",
+  densityTokens = getProfileDensityTokens("balanced"),
 ): CSSProperties => ({
   width: "min(820px, 100%)",
   maxWidth: "820px",
@@ -1093,35 +1224,41 @@ const simplisticShellStyle = (
   position: "relative",
   zIndex: 1,
   display: "grid",
-  gap: "18px",
+  gap: `${Math.round(18 * densityTokens.sectionGap)}px`,
   minWidth: 0,
   backdropFilter: glassBackdrop,
   WebkitBackdropFilter: glassBackdrop,
 });
 
-const simplisticHeaderStyle: CSSProperties = {
+const simplisticHeaderStyle = (
+  densityTokens = getProfileDensityTokens("balanced"),
+): CSSProperties => ({
   display: "grid",
   gridTemplateColumns: "auto minmax(0, 1fr)",
-  gap: "18px",
+  gap: `${Math.round(18 * densityTokens.sectionGap)}px`,
   alignItems: "center",
-  padding: "22px 0 4px",
+  padding: `${Math.round(22 * densityTokens.contentPadding)}px 0 4px`,
   minWidth: 0,
-};
+});
 
-const simplisticNameStyle: CSSProperties = {
+const simplisticNameStyle = (
+  densityTokens = getProfileDensityTokens("balanced"),
+): CSSProperties => ({
   margin: 0,
-  fontSize: "44px",
+  fontSize: `${Math.round(44 * densityTokens.bannerScale)}px`,
   lineHeight: 0.96,
   letterSpacing: "-0.05em",
-};
+});
 
-const simplisticBioStyle: CSSProperties = {
+const simplisticBioStyle = (
+  densityTokens = getProfileDensityTokens("balanced"),
+): CSSProperties => ({
   margin: 0,
   color: "#c4c7cf",
-  lineHeight: 1.75,
+  lineHeight: densityTokens.bioLineHeight,
   fontSize: "15px",
   whiteSpace: "pre-wrap",
-};
+});
 
 const simplisticBannerWrapStyle: CSSProperties = {
   marginTop: "4px",
@@ -1131,27 +1268,38 @@ const portfolioPageStyle = (
   preview = false,
   stageGlow = "",
   surfaceBackground = "linear-gradient(180deg, #071018 0%, #04070d 100%)",
+  densityTokens = getProfileDensityTokens("balanced"),
 ): CSSProperties => ({
   minHeight: preview ? "auto" : "100vh",
   minWidth: 0,
   position: "relative",
   overflow: "hidden",
   isolation: "isolate",
-  padding: preview ? "24px" : "26px 16px 38px",
+  padding: preview
+    ? `${Math.round(24 * densityTokens.shellPadding)}px`
+    : `${Math.round(26 * densityTokens.shellPadding)}px 16px ${Math.round(38 * densityTokens.shellPadding)}px`,
   color: "#ffffff",
   fontFamily: '"Space Grotesk", Inter, Arial, Helvetica, sans-serif',
   background: `${stageGlow}, ${surfaceBackground}`,
 });
 
-const portfolioBannerWrapStyle = (preview = false): CSSProperties => ({
+const portfolioBannerWrapStyle = (
+  preview = false,
+  densityTokens = getProfileDensityTokens("balanced"),
+): CSSProperties => ({
   width: "min(1160px, 100%)",
   maxWidth: "1160px",
   position: "relative",
   zIndex: 1,
-  margin: preview ? "0 auto 16px" : "0 auto 18px",
+  margin: preview
+    ? `0 auto ${Math.round(16 * densityTokens.sectionGap)}px`
+    : `0 auto ${Math.round(18 * densityTokens.sectionGap)}px`,
 });
 
-const portfolioShellStyle = (_preview = false): CSSProperties => ({
+const portfolioShellStyle = (
+  _preview = false,
+  densityTokens = getProfileDensityTokens("balanced"),
+): CSSProperties => ({
   width: "min(1160px, 100%)",
   maxWidth: "1160px",
   position: "relative",
@@ -1159,7 +1307,7 @@ const portfolioShellStyle = (_preview = false): CSSProperties => ({
   margin: "0 auto",
   display: "grid",
   gridTemplateColumns: "minmax(0, 320px) minmax(0, 1fr)",
-  gap: "18px",
+  gap: `${Math.round(18 * densityTokens.sectionGap)}px`,
   minWidth: 0,
 });
 
@@ -1170,12 +1318,13 @@ const portfolioSidebarStyle = (
   surfaceBackground = "linear-gradient(180deg, rgba(10,14,22,0.98), rgba(8,10,16,0.98))",
   glassBackdrop = "blur(20px) saturate(128%)",
   shadowBoost = "0 24px 56px rgba(0,0,0,0.24)",
+  cornerTokens = getProfileCornerTokens("rounded"),
 ): CSSProperties => ({
   display: "grid",
   alignContent: "start",
   gap: "18px",
   padding: "22px",
-  borderRadius: "28px",
+  borderRadius: `${cornerTokens.panelRadius}px`,
   border: `1px solid ${surfaceBorder}`,
   background: surfaceBackground,
   boxShadow: panelGlow ? `${panelGlow}, ${shadowBoost}` : shadowBoost,
@@ -1192,11 +1341,12 @@ const portfolioMainStyle = (
   surfaceBackground = "linear-gradient(180deg, rgba(10,14,22,0.98), rgba(8,10,16,0.98))",
   glassBackdrop = "blur(20px) saturate(128%)",
   shadowBoost = "0 24px 56px rgba(0,0,0,0.24)",
+  cornerTokens = getProfileCornerTokens("rounded"),
 ): CSSProperties => ({
   display: "grid",
   gap: "18px",
   padding: "22px",
-  borderRadius: "28px",
+  borderRadius: `${cornerTokens.panelRadius}px`,
   border: `1px solid ${surfaceBorder}`,
   background: surfaceBackground,
   boxShadow: panelGlow ? `${panelGlow}, ${shadowBoost}` : shadowBoost,
@@ -1211,20 +1361,24 @@ const portfolioHeadingStyle: CSSProperties = {
   gap: "10px",
 };
 
-const portfolioNameStyle: CSSProperties = {
+const portfolioNameStyle = (
+  densityTokens = getProfileDensityTokens("balanced"),
+): CSSProperties => ({
   margin: 0,
-  fontSize: "40px",
+  fontSize: `${Math.round(40 * densityTokens.bannerScale)}px`,
   lineHeight: 0.96,
   letterSpacing: "-0.05em",
-};
+});
 
-const portfolioBioStyle: CSSProperties = {
+const portfolioBioStyle = (
+  densityTokens = getProfileDensityTokens("balanced"),
+): CSSProperties => ({
   margin: 0,
   color: "#cbd5e1",
-  lineHeight: 1.8,
+  lineHeight: densityTokens.bioLineHeight,
   fontSize: "14px",
   whiteSpace: "pre-wrap",
-};
+});
 
 const portfolioSectionTitleStyle: CSSProperties = {
   margin: 0,
@@ -1276,11 +1430,12 @@ const eyebrowStyle = (themeColor: string): CSSProperties => ({
 const presenceChipStyle = (
   background: string,
   borderColor: string,
+  cornerTokens = getProfileCornerTokens("rounded"),
 ): CSSProperties => ({
   width: "fit-content",
   minHeight: "32px",
   padding: "0 12px",
-  borderRadius: "999px",
+  borderRadius: `${cornerTokens.chipRadius}px`,
   display: "inline-flex",
   alignItems: "center",
   color: "#f8fafc",
@@ -1335,11 +1490,13 @@ const linkIconStyle: CSSProperties = {
   flexShrink: 0,
 };
 
-const emptyLinksStyle: CSSProperties = {
-  borderRadius: "22px",
+const emptyLinksStyle = (
+  cornerTokens = getProfileCornerTokens("rounded"),
+): CSSProperties => ({
+  borderRadius: `${cornerTokens.cardRadius}px`,
   border: "1px dashed rgba(255,255,255,0.16)",
   padding: "26px 18px",
   textAlign: "center",
   color: "#a1a1aa",
   background: "rgba(255,255,255,0.02)",
-};
+});

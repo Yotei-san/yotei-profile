@@ -16,6 +16,7 @@ const DISABLED_ROUTES = new Set([
   "/register",
   "/verify-email",
 ]);
+const PUBLIC_PROFILE_ROUTE_PATTERN = /^\/[^/]+$/;
 
 export default function CustomCursor() {
   const pathname = usePathname();
@@ -23,8 +24,13 @@ export default function CustomCursor() {
   const ringRef = useRef<HTMLDivElement | null>(null);
   const trailRefs = useRef<(HTMLDivElement | null)[]>([]);
   const rafRef = useRef<number | null>(null);
+  const isPublicProfileRoute =
+    PUBLIC_PROFILE_ROUTE_PATTERN.test(pathname) &&
+    !DISABLED_ROUTES.has(pathname);
   const shouldDisable =
-    pathname.startsWith("/dashboard") || DISABLED_ROUTES.has(pathname);
+    pathname.startsWith("/dashboard") ||
+    DISABLED_ROUTES.has(pathname) ||
+    isPublicProfileRoute;
 
   useEffect(() => {
     if (shouldDisable || typeof window === "undefined") {

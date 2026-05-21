@@ -5,10 +5,18 @@ import { revalidatePath } from "next/cache";
 import { redirectWithClearedSession, requireUser } from "@/app/lib/auth";
 import { normalizeProfileMusic } from "@/app/lib/profile-music";
 import {
+  getStoredAvatarPosition,
+  getStoredButtonStyle,
+  getStoredLayoutStyle,
+  getStoredLinksStyle,
   isMissingProfileCustomizationColumnError,
   normalizeProfileBackgroundIntensity,
   normalizeProfileBannerStyle,
+  normalizeProfileCardStyle,
+  normalizeProfileCornerStyle,
+  normalizeProfileDensity,
   normalizeProfileGlassIntensity,
+  normalizeProfileMotionLevel,
   normalizeProfileNameEffectsForUser,
 } from "@/app/lib/profile-customization";
 import {
@@ -51,6 +59,18 @@ export async function saveProfileSettings(formData: FormData) {
   );
   const profileBackgroundIntensity = normalizeProfileBackgroundIntensity(
     String(formData.get("profileBackgroundIntensity") || "").trim(),
+  );
+  const profileDensity = normalizeProfileDensity(
+    String(formData.get("profileDensity") || "").trim(),
+  );
+  const profileCardStyle = normalizeProfileCardStyle(
+    String(formData.get("profileCardStyle") || "").trim(),
+  );
+  const profileCornerStyle = normalizeProfileCornerStyle(
+    String(formData.get("profileCornerStyle") || "").trim(),
+  );
+  const profileMotionLevel = normalizeProfileMotionLevel(
+    String(formData.get("profileMotionLevel") || "").trim(),
   );
   const profileGlassIntensity = normalizeProfileGlassIntensity(
     String(formData.get("profileGlassIntensity") || "").trim(),
@@ -104,6 +124,10 @@ export async function saveProfileSettings(formData: FormData) {
           profileBackgroundIntensity,
           profileGlassIntensity,
           profileBannerStyle,
+          layoutStyle: getStoredLayoutStyle(profileDensity),
+          buttonStyle: getStoredButtonStyle(profileCardStyle),
+          linksStyle: getStoredLinksStyle(profileCornerStyle),
+          avatarPosition: getStoredAvatarPosition(profileMotionLevel),
           profileMusicTitle: profileMusic.title,
           profileMusicArtist: profileMusic.artist,
           profileMusicUrl: profileMusic.url,
@@ -136,6 +160,10 @@ export async function saveProfileSettings(formData: FormData) {
                 profileBackgroundIntensity,
                 profileGlassIntensity,
                 profileBannerStyle,
+                layoutStyle: getStoredLayoutStyle(profileDensity),
+                buttonStyle: getStoredButtonStyle(profileCardStyle),
+                linksStyle: getStoredLinksStyle(profileCornerStyle),
+                avatarPosition: getStoredAvatarPosition(profileMotionLevel),
               }),
           profileMusicTitle: profileMusic.title,
           profileMusicArtist: profileMusic.artist,

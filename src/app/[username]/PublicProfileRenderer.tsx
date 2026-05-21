@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { LuArrowUpRight, LuBadgeCheck, LuMoonStar, LuSparkles } from "react-icons/lu";
 import BadgeVisual from "@/app/dashboard/components/BadgeVisual";
 import { getLinkPlatform } from "@/app/lib/link-icons";
@@ -11,10 +11,18 @@ import {
 import type { ProfileMusicData } from "@/app/lib/profile-music";
 import {
   getProfileBannerStyleTokens,
+  getProfileCardStyleTokens,
+  getProfileCornerTokens,
+  getProfileDensityTokens,
   getProfileGlassTokens,
+  getProfileMotionTokens,
   type ProfileBackgroundIntensity,
   type ProfileBannerStyle,
+  type ProfileCardStyle,
+  type ProfileCornerStyle,
+  type ProfileDensity,
   type ProfileGlassIntensity,
+  type ProfileMotionLevel,
   type ProfileNameEffect,
 } from "@/app/lib/profile-customization";
 import {
@@ -88,6 +96,10 @@ type Props = {
   backgroundIntensity: ProfileBackgroundIntensity;
   glassIntensity: ProfileGlassIntensity;
   bannerStyle: ProfileBannerStyle;
+  density: ProfileDensity;
+  cardStyle: ProfileCardStyle;
+  cornerStyle: ProfileCornerStyle;
+  motionLevel: ProfileMotionLevel;
   music: ProfileMusicData;
   bannerKind: "image" | "video" | "unknown";
   avatarInitials: string;
@@ -118,6 +130,10 @@ export default function PublicProfileRenderer({
   backgroundIntensity,
   glassIntensity,
   bannerStyle,
+  density,
+  cardStyle,
+  cornerStyle,
+  motionLevel,
   music,
   bannerKind,
   avatarInitials,
@@ -149,6 +165,10 @@ export default function PublicProfileRenderer({
         backgroundIntensity={backgroundIntensity}
         glassIntensity={glassIntensity}
         bannerStyle={bannerStyle}
+        density={density}
+        cardStyle={cardStyle}
+        cornerStyle={cornerStyle}
+        motionLevel={motionLevel}
         music={music}
         bannerKind={bannerKind}
         avatarInitials={avatarInitials}
@@ -178,6 +198,47 @@ export default function PublicProfileRenderer({
   const { presence } = sceneAppearance;
   const glassTokens = getProfileGlassTokens(glassIntensity);
   const bannerStyleTokens = getProfileBannerStyleTokens(bannerStyle);
+  const densityTokens = getProfileDensityTokens(density);
+  const cardStyleTokens = getProfileCardStyleTokens(cardStyle);
+  const cornerTokens = getProfileCornerTokens(cornerStyle);
+  const motionTokens = getProfileMotionTokens(motionLevel);
+  const panelBackdropFilter =
+    cardStyle === "glass" ? glassTokens.backdropFilter : cardStyleTokens.backdropFilter;
+  const panelBackground = [
+    cardStyle === "glass" ? glassTokens.backgroundLayer : "",
+    cardStyleTokens.shellOverlay,
+    sceneAppearance.shellBackground,
+  ]
+    .filter(Boolean)
+    .join(", ");
+  const surfaceBackground = [
+    cardStyle === "glass" ? glassTokens.backgroundLayer : "",
+    cardStyleTokens.shellOverlay,
+    sceneAppearance.surfaceBackground,
+  ]
+    .filter(Boolean)
+    .join(", ");
+  const shellPadding = preview
+    ? `${Math.round(18 * densityTokens.shellPadding)}px 0 ${Math.round(20 * densityTokens.shellPadding)}px`
+    : `${Math.round(34 * densityTokens.shellPadding)}px 0`;
+  const columnPadding = preview
+    ? `${Math.round(26 * densityTokens.contentPadding)}px`
+    : `${Math.round(34 * densityTokens.contentPadding)}px`;
+  const stageGlowBlur = motionLevel === "alive" ? 22 : motionLevel === "subtle" ? 16 : 12;
+  const stageGlowOpacity = motionLevel === "alive" ? 0.92 : motionLevel === "subtle" ? 0.64 : 0.4;
+  const linkHoverLift = preview ? 0 : motionTokens.hoverLiftPx;
+  const linkHoverScale = preview ? 1 : motionTokens.hoverScale;
+  const linkTransition = preview ? 0 : motionTokens.transitionDurationMs;
+  const avatarAuraAnimation = motionTokens.allowDecorativeMotion
+    ? motionLevel === "subtle"
+      ? "profile-aura 6.2s ease-in-out infinite"
+      : "profile-aura 4.8s ease-in-out infinite"
+    : "none";
+  const statusPulseAnimation = motionTokens.allowDecorativeMotion
+    ? motionLevel === "subtle"
+      ? "online-pulse 3.4s ease-in-out infinite"
+      : "online-pulse 2.2s ease-in-out infinite"
+    : "none";
 
   return (
     <main
@@ -195,7 +256,13 @@ export default function PublicProfileRenderer({
         `,
         pointerEvents: preview ? "none" : undefined,
         isolation: "isolate",
-      }}
+        "--profile-panel-radius": `${cornerTokens.shellRadius + 4}px`,
+        "--profile-card-radius": `${cornerTokens.cardRadius}px`,
+        "--profile-chip-radius": `${cornerTokens.chipRadius}px`,
+        "--profile-link-hover-lift": `${linkHoverLift}px`,
+        "--profile-link-hover-scale": `${linkHoverScale}`,
+        "--profile-transition-duration": `${linkTransition}ms`,
+      } as CSSProperties}
     >
       <style>{`
         .profile-stage,
@@ -270,8 +337,8 @@ export default function PublicProfileRenderer({
 
         .profile-stage-glow {
           background: ${presence.stageGlow};
-          filter: blur(22px);
-          opacity: 0.92;
+          filter: blur(${stageGlowBlur}px);
+          opacity: ${stageGlowOpacity};
         }
 
         .profile-stage-blur {
@@ -290,7 +357,7 @@ export default function PublicProfileRenderer({
           z-index: 1;
           display: flex;
           align-items: ${preview ? "flex-start" : "flex-end"};
-          padding: ${preview ? "18px 0 20px" : "34px 0"};
+          padding: ${shellPadding};
           box-sizing: border-box;
         }
 
@@ -298,8 +365,8 @@ export default function PublicProfileRenderer({
           width: 100%;
           max-width: 100%;
           position: relative;
-          border-radius: 34px;
-          background: ${glassTokens.backgroundLayer}, ${sceneAppearance.shellBackground};
+          border-radius: var(--profile-panel-radius);
+          background: ${panelBackground};
           border: 1px solid ${sceneAppearance.surfaceBorder};
           box-shadow:
             ${presence.panelGlow},
@@ -307,8 +374,8 @@ export default function PublicProfileRenderer({
             0 34px 80px rgba(0, 0, 0, 0.30),
             inset 0 1px 0 rgba(255, 255, 255, 0.05);
           overflow: hidden;
-          backdrop-filter: ${glassTokens.backdropFilter};
-          -webkit-backdrop-filter: ${glassTokens.backdropFilter};
+          backdrop-filter: ${panelBackdropFilter};
+          -webkit-backdrop-filter: ${panelBackdropFilter};
         }
 
         .profile-floating-panel::before {
@@ -332,7 +399,7 @@ export default function PublicProfileRenderer({
 
         .profile-identity-column,
         .profile-links-column {
-          padding: ${preview ? "26px" : "34px"};
+          padding: ${columnPadding};
           min-width: 0;
         }
 
@@ -340,14 +407,12 @@ export default function PublicProfileRenderer({
           display: flex;
           flex-direction: column;
           justify-content: ${preview ? "flex-start" : "space-between"};
-          gap: ${preview ? "18px" : "0"};
+          gap: ${preview ? `${Math.round(18 * densityTokens.sectionGap)}px` : "0"};
         }
 
         .profile-links-column {
           border-left: 1px solid ${sceneAppearance.surfaceBorder};
-          background: ${glassTokens.backgroundLayer}, ${sceneAppearance.surfaceBackground};
-          backdrop-filter: ${glassTokens.backdropFilter};
-          -webkit-backdrop-filter: ${glassTokens.backdropFilter};
+          background: ${surfaceBackground};
         }
 
         .panel-topbar,
@@ -365,7 +430,7 @@ export default function PublicProfileRenderer({
         .preview-callout {
           min-height: 36px;
           padding: 0 14px;
-          border-radius: 999px;
+          border-radius: var(--profile-chip-radius);
           display: inline-flex;
           align-items: center;
           gap: 8px;
@@ -394,7 +459,7 @@ export default function PublicProfileRenderer({
           min-height: 34px;
           margin-top: 14px;
           padding: 0 12px;
-          border-radius: 999px;
+          border-radius: var(--profile-chip-radius);
           display: inline-flex;
           align-items: center;
           gap: 8px;
@@ -408,14 +473,14 @@ export default function PublicProfileRenderer({
         }
 
         .identity-stack {
-          margin-top: ${preview ? "22px" : "28px"};
+          margin-top: ${preview ? `${Math.round(22 * densityTokens.sectionGap)}px` : `${Math.round(28 * densityTokens.sectionGap)}px`};
           min-width: 0;
         }
 
         .avatar-and-copy {
           display: grid;
           grid-template-columns: auto minmax(0, 1fr);
-          gap: 22px;
+          gap: ${Math.round(22 * densityTokens.sectionGap)}px;
           align-items: center;
           min-width: 0;
         }
@@ -434,7 +499,7 @@ export default function PublicProfileRenderer({
           background: ${presence.avatarAuraBackground};
           filter: blur(18px);
           transform: scale(1.12);
-          animation: profile-aura 4.8s ease-in-out infinite;
+          animation: ${avatarAuraAnimation};
         }
 
         .avatar-decoration {
@@ -513,7 +578,7 @@ export default function PublicProfileRenderer({
           background: ${presence.presenceDot};
           box-shadow: 0 0 0 4px ${withAlpha(presence.pulse, "20")};
           display: inline-block;
-          animation: online-pulse 2.2s ease-in-out infinite;
+          animation: ${statusPulseAnimation};
         }
 
         .identity-copy,
@@ -524,7 +589,9 @@ export default function PublicProfileRenderer({
 
         .profile-name {
           margin: 16px 0 0;
-          font-size: ${preview ? "clamp(36px, 5vw, 58px)" : "clamp(44px, 6vw, 66px)"};
+          font-size: ${preview
+            ? `clamp(${Math.round(34 * densityTokens.bannerScale)}px, 5vw, ${Math.round(58 * densityTokens.bannerScale)}px)`
+            : `clamp(${Math.round(42 * densityTokens.bannerScale)}px, 6vw, ${Math.round(66 * densityTokens.bannerScale)}px)`};
           line-height: 0.9;
           letter-spacing: -0.08em;
           text-shadow: 0 16px 34px rgba(0, 0, 0, 0.28);
@@ -547,13 +614,13 @@ export default function PublicProfileRenderer({
           display: flex;
           gap: 10px;
           flex-wrap: wrap;
-          margin-top: 20px;
+          margin-top: ${Math.round(20 * densityTokens.sectionGap)}px;
         }
 
         .profile-pill {
           min-height: 34px;
           padding: 0 12px;
-          border-radius: 999px;
+          border-radius: var(--profile-chip-radius);
           display: inline-flex;
           align-items: center;
           gap: 8px;
@@ -565,11 +632,11 @@ export default function PublicProfileRenderer({
         }
 
         .profile-bio {
-          margin-top: ${preview ? "18px" : "24px"};
+          margin-top: ${preview ? `${Math.round(18 * densityTokens.sectionGap)}px` : `${Math.round(24 * densityTokens.sectionGap)}px`};
           max-width: 560px;
           color: #e0e6f0;
           font-size: 15px;
-          line-height: 1.95;
+          line-height: ${densityTokens.bioLineHeight};
           white-space: pre-wrap;
           overflow-wrap: anywhere;
         }
@@ -577,7 +644,7 @@ export default function PublicProfileRenderer({
         .profile-badge-pill {
           min-height: 38px;
           padding: 0 12px;
-          border-radius: 999px;
+          border-radius: var(--profile-chip-radius);
           display: inline-flex;
           align-items: center;
           gap: 10px;
@@ -620,7 +687,7 @@ export default function PublicProfileRenderer({
         .links-list {
           display: grid;
           gap: 12px;
-          margin-top: ${preview ? "18px" : "24px"};
+          margin-top: ${preview ? `${Math.round(18 * densityTokens.sectionGap)}px` : `${Math.round(24 * densityTokens.sectionGap)}px`};
           min-width: 0;
         }
 
@@ -637,7 +704,7 @@ export default function PublicProfileRenderer({
           align-items: center;
           gap: 16px;
           padding: 16px 16px 16px 14px;
-          border-radius: 22px;
+          border-radius: var(--profile-card-radius);
           background:
             linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.016)),
             linear-gradient(180deg, rgba(10, 12, 18, 0.58), rgba(9, 10, 16, 0.68));
@@ -646,9 +713,14 @@ export default function PublicProfileRenderer({
             0 16px 32px rgba(0, 0, 0, 0.18),
             inset 0 1px 0 rgba(255, 255, 255, 0.04);
           transition:
-            transform 180ms ease,
-            border-color 180ms ease,
-            box-shadow 180ms ease;
+            transform var(--profile-transition-duration) ease,
+            border-color var(--profile-transition-duration) ease,
+            box-shadow var(--profile-transition-duration) ease;
+        }
+
+        .profile-link-card:hover,
+        .profile-link-card:focus-visible {
+          transform: translateY(var(--profile-link-hover-lift)) scale(var(--profile-link-hover-scale));
         }
 
         .profile-link-glow {
@@ -662,7 +734,7 @@ export default function PublicProfileRenderer({
         .profile-link-icon {
           width: 52px;
           height: 52px;
-          border-radius: 18px;
+          border-radius: calc(var(--profile-card-radius) - 4px);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -691,7 +763,7 @@ export default function PublicProfileRenderer({
         .profile-link-platform {
           min-height: 24px;
           padding: 0 8px;
-          border-radius: 999px;
+          border-radius: var(--profile-chip-radius);
           display: inline-flex;
           align-items: center;
           font-size: 11px;
@@ -723,7 +795,7 @@ export default function PublicProfileRenderer({
         .profile-link-arrow {
           width: 40px;
           height: 40px;
-          border-radius: 15px;
+          border-radius: calc(var(--profile-card-radius) - 7px);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -738,7 +810,7 @@ export default function PublicProfileRenderer({
 
         .empty-links {
           border: 1px dashed rgba(255, 255, 255, 0.16);
-          border-radius: 24px;
+          border-radius: var(--profile-card-radius);
           padding: 28px 18px;
           text-align: center;
           color: #95a2bc;
@@ -772,12 +844,12 @@ export default function PublicProfileRenderer({
 
         @media (max-width: 760px) {
           .profile-floating-panel {
-            border-radius: 28px;
+            border-radius: calc(var(--profile-panel-radius) - 6px);
           }
 
           .profile-identity-column,
           .profile-links-column {
-            padding: 22px 18px 20px;
+            padding: ${Math.round(22 * densityTokens.contentPadding)}px 18px 20px;
           }
 
           .avatar-and-copy {
@@ -806,6 +878,7 @@ export default function PublicProfileRenderer({
         scene={scene}
         previewMode={preview}
         intensity={backgroundIntensity}
+        motionLevel={motionLevel}
       />
 
       <div className="profile-stage" aria-hidden>
@@ -898,6 +971,7 @@ export default function PublicProfileRenderer({
                         displayName={displayName}
                         username={user.username}
                         effects={nameEffects}
+                        motionLevel={motionLevel}
                         nameClassName="profile-name"
                         usernameClassName="profile-username"
                       />

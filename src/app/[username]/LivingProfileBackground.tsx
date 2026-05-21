@@ -2,8 +2,11 @@ import type { CSSProperties } from "react";
 import {
   getProfileBackgroundSaturation,
   getProfileBackgroundVisibility,
+  getProfileMotionTokens,
   normalizeProfileBackgroundIntensity,
+  normalizeProfileMotionLevel,
   type ProfileBackgroundIntensity,
+  type ProfileMotionLevel,
 } from "@/app/lib/profile-customization";
 import {
   getProfileSceneDefinition,
@@ -24,6 +27,7 @@ type Props = {
   scene?: ProfileScene;
   previewMode?: boolean;
   intensity?: ProfileBackgroundIntensity;
+  motionLevel?: ProfileMotionLevel;
 };
 
 type LivingBackgroundVariant =
@@ -41,6 +45,7 @@ export default function LivingProfileBackground({
   scene = "default",
   previewMode = false,
   intensity = "medium",
+  motionLevel = "alive",
 }: Props) {
   const resolvedMood = normalizeProfileMood(mood);
   const resolvedAura = normalizeProfileAura(aura);
@@ -50,12 +55,14 @@ export default function LivingProfileBackground({
     themeColor,
   });
   const resolvedIntensity = normalizeProfileBackgroundIntensity(intensity);
+  const resolvedMotionLevel = normalizeProfileMotionLevel(motionLevel);
+  const motionTokens = getProfileMotionTokens(resolvedMotionLevel);
   const variant = resolveLivingBackgroundVariant(scene, resolvedMood, resolvedAura);
   const config = getLivingBackgroundConfig(variant, presence, themeColor);
 
   return (
     <div
-      className={`living-profile-background variant-${variant}${previewMode ? " is-preview" : ""}`}
+      className={`living-profile-background variant-${variant} motion-${resolvedMotionLevel}${previewMode ? " is-preview" : ""}`}
       style={{
         "--living-bg-accent": presence.accent,
         "--living-bg-contrast": presence.contrast,
@@ -67,6 +74,26 @@ export default function LivingProfileBackground({
           previewMode,
         ),
         "--living-bg-saturate": getProfileBackgroundSaturation(resolvedIntensity),
+        "--living-bg-ambient-opacity":
+          resolvedMotionLevel === "off"
+            ? 0.62
+            : resolvedMotionLevel === "subtle"
+              ? 0.78
+              : 0.88,
+        "--living-bg-pattern-opacity":
+          resolvedMotionLevel === "off"
+            ? 0.18
+            : resolvedMotionLevel === "subtle"
+              ? 0.38
+              : 0.5,
+        "--living-bg-particle-opacity":
+          resolvedMotionLevel === "off"
+            ? 0.12
+            : resolvedMotionLevel === "subtle"
+              ? 0.28
+              : 0.42,
+        "--living-bg-motion-scale":
+          motionTokens.allowAmbientMotion ? (resolvedMotionLevel === "subtle" ? 0.82 : 1) : 0,
       } as CSSProperties}
       aria-hidden
     >
@@ -254,20 +281,20 @@ const livingBackgroundStyles = `
 
   .living-profile-layer-ambient {
     z-index: 1;
-    opacity: 0.88;
+    opacity: var(--living-bg-ambient-opacity, 0.88);
     mix-blend-mode: screen;
   }
 
   .living-profile-layer-pattern {
     z-index: 2;
-    opacity: 0.5;
+    opacity: var(--living-bg-pattern-opacity, 0.5);
     background-repeat: repeat;
     background-size: 160px 160px;
   }
 
   .living-profile-layer-particles {
     z-index: 3;
-    opacity: 0.42;
+    opacity: var(--living-bg-particle-opacity, 0.42);
     background-repeat: repeat;
     background-size: 220px 220px;
   }
@@ -370,6 +397,25 @@ const livingBackgroundStyles = `
 
   .living-profile-background.is-preview .living-profile-layer-particles {
     opacity: 0.34;
+  }
+
+  .living-profile-background.motion-off .living-profile-layer-ambient,
+  .living-profile-background.motion-off .living-profile-layer-pattern,
+  .living-profile-background.motion-off .living-profile-layer-particles {
+    animation: none !important;
+    transform: none !important;
+  }
+
+  .living-profile-background.motion-off .living-profile-layer-pattern {
+    background-size: 200px 200px;
+  }
+
+  .living-profile-background.motion-subtle .living-profile-layer-pattern {
+    background-size: 176px 176px;
+  }
+
+  .living-profile-background.motion-subtle .living-profile-layer-particles {
+    background-size: 240px 240px;
   }
 
   @keyframes living-bg-breathe {

@@ -11,7 +11,11 @@ import {
   isMissingProfileCustomizationColumnError,
   normalizeProfileBackgroundIntensity,
   normalizeProfileBannerStyle,
+  normalizeProfileCardStyle,
+  normalizeProfileCornerStyle,
+  normalizeProfileDensity,
   normalizeProfileGlassIntensity,
+  normalizeProfileMotionLevel,
   normalizeProfileNameEffects,
 } from "@/app/lib/profile-customization";
 import {
@@ -141,6 +145,16 @@ function buildProfileRenderData(user: ProfileUserRecord) {
     bannerStyle: normalizeProfileBannerStyle(
       "profileBannerStyle" in user ? user.profileBannerStyle : undefined,
     ),
+    density: normalizeProfileDensity("layoutStyle" in user ? user.layoutStyle : undefined),
+    cardStyle: normalizeProfileCardStyle(
+      "buttonStyle" in user ? user.buttonStyle : undefined,
+    ),
+    cornerStyle: normalizeProfileCornerStyle(
+      "linksStyle" in user ? user.linksStyle : undefined,
+    ),
+    motionLevel: normalizeProfileMotionLevel(
+      "avatarPosition" in user ? user.avatarPosition : undefined,
+    ),
     music: normalizeProfileMusic({
       enabled: user.profileMusicEnabled,
       title: user.profileMusicTitle,
@@ -191,6 +205,10 @@ function buildProfileUserSelect(
           profileBackgroundIntensity: true,
           profileGlassIntensity: true,
           profileBannerStyle: true,
+          layoutStyle: true,
+          buttonStyle: true,
+          linksStyle: true,
+          avatarPosition: true,
         }
       : {}),
     profileMusicTitle: true,
