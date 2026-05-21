@@ -6,12 +6,23 @@ import { logServerError } from "@/app/lib/server-log";
 export async function POST(req: Request) {
   try {
     const user = await requireUser();
-    const body = await req.json();
+    const body = await req.json().catch(() => null);
+
+    if (!body || typeof body !== "object") {
+      return NextResponse.json({ error: "Payload invalido." }, { status: 400 });
+    }
 
     const avatarUrl =
       typeof body.avatarUrl === "string" ? body.avatarUrl.trim() : undefined;
     const bannerUrl =
       typeof body.bannerUrl === "string" ? body.bannerUrl.trim() : undefined;
+
+    if (avatarUrl === undefined && bannerUrl === undefined) {
+      return NextResponse.json(
+        { error: "Nenhuma alteracao de media foi enviada." },
+        { status: 400 }
+      );
+    }
 
     await prisma.user.update({
       where: { id: user.id },

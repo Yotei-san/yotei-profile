@@ -1,16 +1,20 @@
 "use client";
 
+import { upload } from "@vercel/blob/client";
 import type { CSSProperties, DragEvent, PointerEvent, ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 import {
+  PROFILE_AVATAR_MAX_BYTES,
   PROFILE_BANNER_ACCEPT,
+  PROFILE_BANNER_IMAGE_MAX_BYTES,
   PROFILE_BANNER_VIDEO_MAX_BYTES,
-  PROFILE_BANNER_VIDEO_MIME_TYPES,
   PROFILE_IMAGE_ACCEPT,
-  PROFILE_IMAGE_MAX_BYTES,
-  PROFILE_IMAGE_MIME_TYPES,
-  formatBytes,
   getMediaKind,
+  getProfileMediaSizeError,
+  getProfileMediaTypeError,
+  isProfileBannerVideoMimeType,
+  isProfileImageMimeType,
+  type ProfileMediaPurpose,
 } from "@/app/lib/profile-media";
 
 type Props = {
@@ -74,6 +78,7 @@ export default function ProfileMediaUploader({
       : "unknown";
   const activePreviewKind = sourceUrl ? sourceKind : currentKind;
   const isVideoBannerPreview = !isAvatar && activePreviewKind === "video";
+  const isBusy = isUploading || isSaving;
   useEffect(() => {
     return () => {
       if (sourceUrl?.startsWith("blob:")) {
@@ -83,6 +88,7 @@ export default function ProfileMediaUploader({
   }, [sourceUrl]);
 
   function openPicker() {
+    if (isBusy) return;
     fileInputRef.current?.click();
   }
 
@@ -115,39 +121,16 @@ export default function ProfileMediaUploader({
   }
 
   async function onPickFile(file: File | null) {
-    if (!file) return;
-
-    const mimeType = file.type.toLowerCase();
-    const isImage = PROFILE_IMAGE_MIME_TYPES.includes(
-      mimeType as (typeof PROFILE_IMAGE_MIME_TYPES)[number]
-    );
-    const isVideo =
-      !isAvatar &&
-      PROFILE_BANNER_VIDEO_MIME_TYPES.includes(
-        mimeType as (typeof PROFILE_BANNER_VIDEO_MIME_TYPES)[number]
-      );
-
-    if (!isImage && !isVideo) {
-      setError(
-        isAvatar
-          ? "Avatar aceita apenas PNG, JPG, WEBP ou GIF."
-          : "Banner aceita imagem, GIF ou video MP4/WebM/MOV."
-      );
-      return;
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
     }
 
-    const maxSize = isVideo ? PROFILE_BANNER_VIDEO_MAX_BYTES : PROFILE_IMAGE_MAX_BYTES;
+    if (!file || isBusy) return;
 
-    if (file.size > maxSize) {
-      setError(
-        isVideo
-          ? `Video muito grande. O limite do banner em video e ${formatBytes(
-              PROFILE_BANNER_VIDEO_MAX_BYTES
-            )}.`
-          : `Arquivo muito grande. O limite para imagem e ${formatBytes(
-              PROFILE_IMAGE_MAX_BYTES
-            )}.`
-      );
+    const validationError = validateSelectedFile(file, type);
+
+    if (validationError) {
+      setError(validationError);
       return;
     }
 
@@ -171,6 +154,7 @@ export default function ProfileMediaUploader({
 
   function onDropzoneDragOver(e: DragEvent<HTMLDivElement>) {
     e.preventDefault();
+    if (isBusy) return;
     setIsDraggingFile(true);
   }
 
@@ -182,12 +166,13 @@ export default function ProfileMediaUploader({
   async function onDropzoneDrop(e: DragEvent<HTMLDivElement>) {
     e.preventDefault();
     setIsDraggingFile(false);
+    if (isBusy) return;
     const file = e.dataTransfer.files?.[0] ?? null;
     await onPickFile(file);
   }
 
   function onPointerDown(e: PointerEvent<HTMLDivElement>) {
-    if (isVideoBannerPreview) return;
+    if (isVideoBannerPreview || isBusy) return;
 
     dragRef.current = {
       startX: e.clientX,
@@ -216,32 +201,24 @@ export default function ProfileMediaUploader({
   }
 
   async function removeMedia() {
+    if (isBusy) return;
+
     setIsSaving(true);
     setError(null);
 
     try {
-      const res = await fetch("/api/profile/media", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(isAvatar ? { avatarUrl: "" } : { bannerUrl: "" }),
-      });
-
-      if (!res.ok) {
-        throw new Error("Falha ao remover media.");
-      }
+      await saveProfileMedia(isAvatar ? { avatarUrl: "" } : { bannerUrl: "" });
 
       window.location.reload();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Falha ao remover media.");
+      setError(getClientUploadErrorMessage(err, "Falha ao remover media."));
     } finally {
       setIsSaving(false);
     }
   }
 
   async function uploadEdited() {
-    if (!sourceUrl || !sourceFile) return;
+    if (!sourceUrl || !sourceFile || isBusy) return;
 
     setIsUploading(true);
     setUploadProgress(8);
@@ -249,6 +226,7 @@ export default function ProfileMediaUploader({
 
     try {
       let fileToUpload: File;
+      const purpose: ProfileMediaPurpose = isAvatar ? "avatar" : "banner";
       const isVideo = sourceFile.type.startsWith("video/");
 
       if (isVideo || sourceFile.type === "image/gif") {
@@ -263,39 +241,40 @@ export default function ProfileMediaUploader({
         });
       }
 
-      const uploadForm = new FormData();
-      uploadForm.append("file", fileToUpload);
-      uploadForm.append("purpose", isAvatar ? "avatar" : "banner");
+      const uploadValidationError = validateSelectedFile(fileToUpload, type);
 
-      const uploadJson = await uploadWithProgress("/api/upload", uploadForm, (progress) => {
-        const mapped = 40 + Math.round(progress * 0.45);
-        setUploadProgress(Math.min(mapped, 88));
+      if (uploadValidationError) {
+        throw new Error(uploadValidationError);
+      }
+
+      setUploadProgress(56);
+
+      const uploadResult = await upload(sanitizeUploadFilename(type, fileToUpload), fileToUpload, {
+        access: "public",
+        contentType: fileToUpload.type,
+        handleUploadUrl: "/api/upload/client",
+        clientPayload: JSON.stringify({
+          purpose,
+          contentType: fileToUpload.type,
+        }),
+        multipart:
+          fileToUpload.size >= 10 * 1024 * 1024 || fileToUpload.type.startsWith("video/"),
       });
 
-      if (!uploadJson?.url) {
-        throw new Error(uploadJson?.error || "Falha no upload.");
+      if (!uploadResult?.url) {
+        throw new Error("Falha no upload.");
       }
 
       setUploadProgress(92);
 
-      const saveRes = await fetch("/api/profile/media", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(
-          isAvatar ? { avatarUrl: uploadJson.url } : { bannerUrl: uploadJson.url }
-        ),
-      });
-
-      if (!saveRes.ok) {
-        throw new Error("Falha ao salvar no perfil.");
-      }
+      await saveProfileMedia(
+        isAvatar ? { avatarUrl: uploadResult.url } : { bannerUrl: uploadResult.url }
+      );
 
       setUploadProgress(100);
       window.location.reload();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Falha no upload.");
+      setError(getClientUploadErrorMessage(err, "Falha no upload."));
       setUploadProgress(0);
     } finally {
       setIsUploading(false);
@@ -360,9 +339,10 @@ export default function ProfileMediaUploader({
             ? `linear-gradient(180deg, ${accent}14, rgba(10,10,14,0.96))`
             : "linear-gradient(180deg, rgba(18,18,22,0.96), rgba(10,10,14,0.96))",
           padding: "22px",
-          cursor: "pointer",
+          cursor: isBusy ? "not-allowed" : "pointer",
           transition: "all 180ms ease",
           boxShadow: isDraggingFile ? `0 0 0 4px ${accent}12` : "none",
+          opacity: isBusy ? 0.72 : 1,
         }}
       >
         <div
@@ -397,6 +377,11 @@ export default function ProfileMediaUploader({
           </div>
 
           <div style={{ color: "#71717a", fontSize: "12px" }}>{dropzoneFormats}</div>
+          <div style={{ color: "#71717a", fontSize: "12px" }}>
+            {isAvatar
+              ? "Maximo 8MB."
+              : "Imagem/GIF ate 15MB. Video ate 30MB."}
+          </div>
         </div>
       </div>
 
@@ -611,15 +596,20 @@ export default function ProfileMediaUploader({
       )}
 
       <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
-        <button type="button" onClick={openPicker} style={primaryButtonStyle}>
-          {pickActionLabel}
+        <button
+          type="button"
+          onClick={openPicker}
+          disabled={isBusy}
+          style={buttonStyleForState(primaryButtonStyle, isBusy)}
+        >
+          {isBusy ? "Aguarde..." : pickActionLabel}
         </button>
 
         <button
           type="button"
           onClick={uploadEdited}
-          disabled={!sourceUrl || isUploading}
-          style={primaryButtonStyle}
+          disabled={!sourceUrl || isBusy}
+          style={buttonStyleForState(primaryButtonStyle, !sourceUrl || isBusy)}
         >
           {isUploading ? "Salvando..." : uploadActionLabel}
         </button>
@@ -627,8 +617,11 @@ export default function ProfileMediaUploader({
         <button
           type="button"
           onClick={resetEditor}
-          disabled={!sourceUrl || isVideoBannerPreview}
-          style={ghostButtonStyle}
+          disabled={!sourceUrl || isVideoBannerPreview || isBusy}
+          style={buttonStyleForState(
+            ghostButtonStyle,
+            !sourceUrl || isVideoBannerPreview || isBusy
+          )}
         >
           Resetar ajuste
         </button>
@@ -636,8 +629,8 @@ export default function ProfileMediaUploader({
         <button
           type="button"
           onClick={resetAll}
-          disabled={!sourceUrl}
-          style={ghostButtonStyle}
+          disabled={!sourceUrl || isBusy}
+          style={buttonStyleForState(ghostButtonStyle, !sourceUrl || isBusy)}
         >
           Limpar editor
         </button>
@@ -645,8 +638,8 @@ export default function ProfileMediaUploader({
         <button
           type="button"
           onClick={removeMedia}
-          disabled={isSaving}
-          style={dangerButtonStyle}
+          disabled={isBusy}
+          style={buttonStyleForState(dangerButtonStyle, isBusy)}
         >
           {isSaving ? "Removendo..." : "Remover"}
         </button>
@@ -671,6 +664,7 @@ export default function ProfileMediaUploader({
         type="file"
         accept={accept}
         style={{ display: "none" }}
+        disabled={isBusy}
         onChange={(e) => onPickFile(e.target.files?.[0] ?? null)}
       />
     </section>
@@ -1254,37 +1248,147 @@ function getImageLayout(
   };
 }
 
-function uploadWithProgress(
-  url: string,
-  formData: FormData,
-  onProgress: (progress: number) => void
-): Promise<any> {
-  return new Promise((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    xhr.open("POST", url);
+function validateSelectedFile(file: File, type: "avatar" | "banner") {
+  const mimeType = file.type.toLowerCase();
+  const purpose: ProfileMediaPurpose = type;
+  const isImage = isProfileImageMimeType(mimeType);
+  const isBannerVideo = purpose === "banner" && isProfileBannerVideoMimeType(mimeType);
 
-    xhr.upload.onprogress = (event) => {
-      if (!event.lengthComputable) return;
-      const progress = Math.round((event.loaded / event.total) * 100);
-      onProgress(progress);
-    };
+  if (!isImage && !isBannerVideo) {
+    return getProfileMediaTypeError(purpose);
+  }
 
-    xhr.onload = () => {
-      try {
-        const json = JSON.parse(xhr.responseText || "{}");
-        if (xhr.status >= 200 && xhr.status < 300) {
-          resolve(json);
-        } else {
-          reject(new Error(json?.error || "Falha no upload."));
-        }
-      } catch {
-        reject(new Error("Resposta invalida do upload."));
-      }
-    };
+  const maxBytes =
+    purpose === "avatar"
+      ? PROFILE_AVATAR_MAX_BYTES
+      : isBannerVideo
+        ? PROFILE_BANNER_VIDEO_MAX_BYTES
+        : PROFILE_BANNER_IMAGE_MAX_BYTES;
 
-    xhr.onerror = () => reject(new Error("Falha de rede no upload."));
-    xhr.send(formData);
+  if (file.size > maxBytes) {
+    return isBannerVideo
+      ? "Arquivo muito grande. Use vídeo até 30MB ou comprima antes de enviar."
+      : getProfileMediaSizeError(purpose, mimeType);
+  }
+
+  return null;
+}
+
+async function saveProfileMedia(payload: { avatarUrl?: string; bannerUrl?: string }) {
+  const response = await fetch("/api/profile/media", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
   });
+
+  const data = await readResponseJson(response);
+
+  if (!response.ok) {
+    throw new Error(getStatusMessage(response.status, data, "Falha ao salvar no perfil."));
+  }
+}
+
+async function readResponseJson(response: Response) {
+  const contentType = response.headers.get("content-type") || "";
+
+  if (!contentType.toLowerCase().includes("application/json")) {
+    return null;
+  }
+
+  try {
+    return await response.json();
+  } catch {
+    return null;
+  }
+}
+
+function getStatusMessage(status: number, data: unknown, fallback: string) {
+  const payloadError =
+    data && typeof data === "object" && "error" in data && typeof data.error === "string"
+      ? data.error
+      : null;
+
+  if (payloadError) {
+    return payloadError;
+  }
+
+  if (status === 400) {
+    return "Arquivo inválido. Revise o formato e tente novamente.";
+  }
+
+  if (status === 413) {
+    return "Arquivo muito grande. Use vídeo até 30MB ou comprima antes de enviar.";
+  }
+
+  if (status >= 500) {
+    return "Erro interno no upload. Tente novamente em instantes.";
+  }
+
+  return fallback;
+}
+
+function sanitizeUploadFilename(type: "avatar" | "banner", file: File) {
+  const extension = getUploadExtension(file);
+  const baseName = file.name
+    .replace(/\.[^.]+$/, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9-_]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 48);
+
+  return `${type}-${baseName || "media"}-${Date.now()}${extension}`;
+}
+
+function getUploadExtension(file: File) {
+  const mimeType = file.type.toLowerCase();
+
+  if (mimeType === "image/png") return ".png";
+  if (mimeType === "image/jpeg") return ".jpg";
+  if (mimeType === "image/webp") return ".webp";
+  if (mimeType === "image/gif") return ".gif";
+  if (mimeType === "video/mp4") return ".mp4";
+  if (mimeType === "video/webm") return ".webm";
+  if (mimeType === "video/quicktime") return ".mov";
+
+  return "";
+}
+
+function buttonStyleForState(baseStyle: CSSProperties, disabled: boolean): CSSProperties {
+  return {
+    ...baseStyle,
+    cursor: disabled ? "not-allowed" : "pointer",
+    opacity: disabled ? 0.68 : 1,
+  };
+}
+
+function getClientUploadErrorMessage(error: unknown, fallback: string) {
+  if (!(error instanceof Error)) {
+    return fallback;
+  }
+
+  const message = error.message.trim();
+  const normalized = message.toLowerCase();
+
+  if (
+    normalized.includes("413") ||
+    normalized.includes("too large") ||
+    normalized.includes("payload too large") ||
+    normalized.includes("content too large")
+  ) {
+    return "Arquivo muito grande. Use vídeo até 30MB ou comprima antes de enviar.";
+  }
+
+  if (normalized.includes("400")) {
+    return "Arquivo inválido. Revise o formato e tente novamente.";
+  }
+
+  if (normalized.includes("500")) {
+    return "Erro interno no upload. Tente novamente em instantes.";
+  }
+
+  return message || fallback;
 }
 
 const labelStyle: CSSProperties = {
