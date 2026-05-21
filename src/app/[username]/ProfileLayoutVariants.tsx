@@ -26,12 +26,15 @@ import {
 } from "@/app/lib/profile-customization";
 import {
   getProfileSceneAppearance,
+  type ProfileSceneDepth,
   type ProfileScene,
 } from "@/app/lib/profile-scenes";
 import LivingProfileBackground from "./LivingProfileBackground";
+import ProfileBannerMedia from "./ProfileBannerMedia";
 import ProfileNamePlate from "./ProfileNamePlate";
 import ProfileHeroClient from "./ProfileHeroClient";
 import ProfileMusicCard from "./ProfileMusicCard";
+import ProfileRenderBoundary from "./ProfileRenderBoundary";
 import SocialPresenceSection, {
   type PublicSocialBlock,
 } from "./SocialPresenceSection";
@@ -141,7 +144,7 @@ function DefaultLayout(props: Props) {
     aura: props.aura,
     themeColor: props.themeColor,
   });
-  const { presence } = sceneAppearance;
+  const { presence, depth } = sceneAppearance;
   const glassTokens = getProfileGlassTokens(props.glassIntensity);
   const densityTokens = getProfileDensityTokens(props.density);
   const cardStyleTokens = getProfileCardStyleTokens(props.cardStyle);
@@ -163,6 +166,7 @@ function DefaultLayout(props: Props) {
         props.preview,
         presence.stageGlow,
         densityTokens,
+        depth,
       )}
     >
       <LivingProfileBackground
@@ -183,6 +187,7 @@ function DefaultLayout(props: Props) {
           resolvedBackdrop,
           glassTokens.shadowBoost,
           cornerTokens,
+          depth,
         )}
       >
         <BannerSurface
@@ -198,8 +203,8 @@ function DefaultLayout(props: Props) {
           cornerRadius={cornerTokens.shellRadius}
         />
 
-        <div style={defaultContentStyle(props.preview, densityTokens)}>
-          <div style={defaultIdentityStyle}>
+        <div style={defaultContentStyle(props.preview, densityTokens, depth)}>
+          <div style={defaultIdentityStyle(depth)}>
             <AvatarVisual
               avatarUrl={props.user.avatarUrl}
               avatarInitials={props.avatarInitials}
@@ -262,20 +267,29 @@ function DefaultLayout(props: Props) {
             extraBadgeCount={props.extraBadgeCount}
             themeColor={sceneAppearance.linkThemeColor}
           />
-          <ProfileMusicCard
-            music={props.music}
-            themeColor={sceneAppearance.linkThemeColor}
-            accentColor={presence.accent}
-            contrastColor={presence.contrast}
-            softColor={presence.soft}
-            compact
-          />
-          <SocialPresenceSection
-            blocks={props.socialBlocks}
-            themeColor={sceneAppearance.socialThemeColor}
-            compact
-            preview={props.preview}
-          />
+          <DetachedWidget depth={depth}>
+            <ProfileRenderBoundary label="Music card" compact resetKey={props.user.username}>
+              <ProfileMusicCard
+                music={props.music}
+                themeColor={sceneAppearance.linkThemeColor}
+                accentColor={presence.accent}
+                contrastColor={presence.contrast}
+                softColor={presence.soft}
+                compact
+                motionLevel={props.motionLevel}
+              />
+            </ProfileRenderBoundary>
+          </DetachedWidget>
+          <DetachedWidget depth={depth} accent={presence.soft}>
+            <ProfileRenderBoundary label="Social presence" compact resetKey={props.user.username}>
+              <SocialPresenceSection
+                blocks={props.socialBlocks}
+                themeColor={sceneAppearance.socialThemeColor}
+                compact
+                preview={props.preview}
+              />
+            </ProfileRenderBoundary>
+          </DetachedWidget>
           <LinksSection
             layout="default"
             links={props.user.links}
@@ -286,6 +300,7 @@ function DefaultLayout(props: Props) {
             cardStyle={props.cardStyle}
             cornerTokens={cornerTokens}
             motionTokens={motionTokens}
+            depth={depth}
           />
         </div>
       </section>
@@ -300,7 +315,7 @@ function SimplisticLayout(props: Props) {
     aura: props.aura,
     themeColor: props.themeColor,
   });
-  const { presence } = sceneAppearance;
+  const { presence, depth } = sceneAppearance;
   const glassTokens = getProfileGlassTokens(props.glassIntensity);
   const densityTokens = getProfileDensityTokens(props.density);
   const cardStyleTokens = getProfileCardStyleTokens(props.cardStyle);
@@ -315,6 +330,7 @@ function SimplisticLayout(props: Props) {
         presence.stageGlow,
         sceneAppearance.surfaceBackground,
         densityTokens,
+        depth,
       )}
     >
       <LivingProfileBackground
@@ -326,8 +342,8 @@ function SimplisticLayout(props: Props) {
         intensity={props.backgroundIntensity}
         motionLevel={props.motionLevel}
       />
-      <div style={simplisticShellStyle(props.preview, resolvedBackdrop, densityTokens)}>
-        <div style={simplisticHeaderStyle(densityTokens)}>
+      <div style={simplisticShellStyle(props.preview, resolvedBackdrop, densityTokens, depth)}>
+        <div style={simplisticHeaderStyle(densityTokens, depth)}>
           <AvatarVisual
             avatarUrl={props.user.avatarUrl}
             avatarInitials={props.avatarInitials}
@@ -375,18 +391,18 @@ function SimplisticLayout(props: Props) {
 
         <PillRow pills={props.heroPills} subtle />
 
-        <div style={simplisticBannerWrapStyle}>
-        <BannerSurface
-          bannerUrl={props.user.bannerUrl}
-          bannerKind={props.bannerKind}
-          themeColor={props.themeColor}
-          height={Math.round((props.preview ? 136 : 160) * densityTokens.bannerScale)}
-          preview={props.preview}
-          presenceOverlay={presence.auraOverlay}
-          accentColor={presence.accent}
-          bannerStyle={props.bannerStyle}
-          cornerRadius={cornerTokens.panelRadius}
-        />
+        <div style={simplisticBannerWrapStyle(depth)}>
+          <BannerSurface
+            bannerUrl={props.user.bannerUrl}
+            bannerKind={props.bannerKind}
+            themeColor={props.themeColor}
+            height={Math.round((props.preview ? 136 : 160) * densityTokens.bannerScale)}
+            preview={props.preview}
+            presenceOverlay={presence.auraOverlay}
+            accentColor={presence.accent}
+            bannerStyle={props.bannerStyle}
+            cornerRadius={cornerTokens.panelRadius}
+          />
         </div>
 
         {props.preview ? null : (
@@ -407,20 +423,29 @@ function SimplisticLayout(props: Props) {
           themeColor={sceneAppearance.linkThemeColor}
           minimal
         />
-        <ProfileMusicCard
-          music={props.music}
-          themeColor={sceneAppearance.linkThemeColor}
-          accentColor={presence.accent}
-          contrastColor={presence.contrast}
-          softColor={presence.soft}
-          compact
-        />
-        <SocialPresenceSection
-          blocks={props.socialBlocks}
-          themeColor={sceneAppearance.socialThemeColor}
-          compact
-          preview={props.preview}
-        />
+        <DetachedWidget depth={depth}>
+          <ProfileRenderBoundary label="Music card" compact resetKey={props.user.username}>
+            <ProfileMusicCard
+              music={props.music}
+              themeColor={sceneAppearance.linkThemeColor}
+              accentColor={presence.accent}
+              contrastColor={presence.contrast}
+              softColor={presence.soft}
+              compact
+              motionLevel={props.motionLevel}
+            />
+          </ProfileRenderBoundary>
+        </DetachedWidget>
+        <DetachedWidget depth={depth} accent={presence.soft}>
+          <ProfileRenderBoundary label="Social presence" compact resetKey={props.user.username}>
+            <SocialPresenceSection
+              blocks={props.socialBlocks}
+              themeColor={sceneAppearance.socialThemeColor}
+              compact
+              preview={props.preview}
+            />
+          </ProfileRenderBoundary>
+        </DetachedWidget>
         <LinksSection
           layout="simplistic"
           links={props.user.links}
@@ -431,6 +456,7 @@ function SimplisticLayout(props: Props) {
           cardStyle={props.cardStyle}
           cornerTokens={cornerTokens}
           motionTokens={getProfileMotionTokens(props.motionLevel)}
+          depth={depth}
         />
       </div>
     </main>
@@ -444,7 +470,7 @@ function PortfolioLayout(props: Props) {
     aura: props.aura,
     themeColor: props.themeColor,
   });
-  const { presence } = sceneAppearance;
+  const { presence, depth } = sceneAppearance;
   const glassTokens = getProfileGlassTokens(props.glassIntensity);
   const densityTokens = getProfileDensityTokens(props.density);
   const cardStyleTokens = getProfileCardStyleTokens(props.cardStyle);
@@ -466,6 +492,7 @@ function PortfolioLayout(props: Props) {
         presence.stageGlow,
         sceneAppearance.surfaceBackground,
         densityTokens,
+        depth,
       )}
     >
       <LivingProfileBackground
@@ -477,7 +504,7 @@ function PortfolioLayout(props: Props) {
         intensity={props.backgroundIntensity}
         motionLevel={props.motionLevel}
       />
-      <div style={portfolioBannerWrapStyle(props.preview, densityTokens)}>
+      <div style={portfolioBannerWrapStyle(props.preview, densityTokens, depth)}>
         <BannerSurface
           bannerUrl={props.user.bannerUrl}
           bannerKind={props.bannerKind}
@@ -491,7 +518,7 @@ function PortfolioLayout(props: Props) {
         />
       </div>
 
-      <div style={portfolioShellStyle(props.preview, densityTokens)}>
+      <div style={portfolioShellStyle(props.preview, densityTokens, depth)}>
         <aside
           style={portfolioSidebarStyle(
             props.preview,
@@ -501,6 +528,7 @@ function PortfolioLayout(props: Props) {
             resolvedBackdrop,
             glassTokens.shadowBoost,
             cornerTokens,
+            depth,
           )}
         >
           <div style={eyebrowStyle(sceneAppearance.linkThemeColor)}>
@@ -566,14 +594,19 @@ function PortfolioLayout(props: Props) {
             themeColor={sceneAppearance.linkThemeColor}
           />
 
-          <ProfileMusicCard
-            music={props.music}
-            themeColor={sceneAppearance.linkThemeColor}
-            accentColor={presence.accent}
-            contrastColor={presence.contrast}
-            softColor={presence.soft}
-            compact
-          />
+          <DetachedWidget depth={depth}>
+            <ProfileRenderBoundary label="Music card" compact resetKey={props.user.username}>
+              <ProfileMusicCard
+                music={props.music}
+                themeColor={sceneAppearance.linkThemeColor}
+                accentColor={presence.accent}
+                contrastColor={presence.contrast}
+                softColor={presence.soft}
+                compact
+                motionLevel={props.motionLevel}
+              />
+            </ProfileRenderBoundary>
+          </DetachedWidget>
         </aside>
 
         <section
@@ -585,13 +618,18 @@ function PortfolioLayout(props: Props) {
             resolvedBackdrop,
             glassTokens.shadowBoost,
             cornerTokens,
+            depth,
           )}
         >
-          <SocialPresenceSection
-            blocks={props.socialBlocks}
-            themeColor={sceneAppearance.socialThemeColor}
-            preview={props.preview}
-          />
+          <DetachedWidget depth={depth} accent={presence.soft}>
+            <ProfileRenderBoundary label="Social presence" compact resetKey={props.user.username}>
+              <SocialPresenceSection
+                blocks={props.socialBlocks}
+                themeColor={sceneAppearance.socialThemeColor}
+                preview={props.preview}
+              />
+            </ProfileRenderBoundary>
+          </DetachedWidget>
           <LinksSection
             layout="portfolio"
             links={props.user.links}
@@ -602,6 +640,7 @@ function PortfolioLayout(props: Props) {
             cardStyle={props.cardStyle}
             cornerTokens={cornerTokens}
             motionTokens={motionTokens}
+            depth={depth}
           />
         </section>
       </div>
@@ -647,32 +686,14 @@ function BannerSurface({
         isolation: preview ? "isolate" : undefined,
       }}
     >
-      {bannerUrl ? (
-        bannerKind === "video" ? (
-          <video
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="metadata"
-            style={bannerMediaStyle(
-              bannerStyleTokens.mediaScale,
-              bannerStyleTokens.mediaFilter,
-            )}
-          >
-            <source src={bannerUrl} />
-          </video>
-        ) : (
-          <img
-            src={bannerUrl}
-            alt=""
-            style={bannerMediaStyle(
-              bannerStyleTokens.mediaScale,
-              bannerStyleTokens.mediaFilter,
-            )}
-          />
-        )
-      ) : null}
+      <ProfileBannerMedia
+        url={bannerUrl}
+        kind={bannerKind}
+        style={bannerMediaStyle(
+          bannerStyleTokens.mediaScale,
+          bannerStyleTokens.mediaFilter,
+        )}
+      />
 
       <div
         style={{
@@ -687,6 +708,38 @@ function BannerSurface({
             ), ${presenceOverlay}`,
         }}
       />
+    </div>
+  );
+}
+
+function DetachedWidget({
+  children,
+  depth,
+  accent = "#ffffff",
+}: {
+  children: ReactNode;
+  depth: ProfileSceneDepth;
+  accent?: string;
+}) {
+  return (
+    <div
+      style={{
+        position: "relative",
+        minWidth: 0,
+      }}
+    >
+      <div
+        style={{
+          position: "absolute",
+          inset: "-10px",
+          borderRadius: "28px",
+          background: `radial-gradient(circle at 18% 18%, ${withAlpha(accent, "10")} 0%, transparent 32%)`,
+          opacity: Math.min(0.92, 0.42 + depth.lightingOpacity),
+          zIndex: -1,
+          pointerEvents: "none",
+        }}
+      />
+      {children}
     </div>
   );
 }
@@ -935,6 +988,7 @@ function LinksSection({
   cardStyle,
   cornerTokens,
   motionTokens,
+  depth,
 }: {
   layout: "default" | "simplistic" | "portfolio";
   links: LinkEntry[];
@@ -945,6 +999,7 @@ function LinksSection({
   cardStyle: ProfileCardStyle;
   cornerTokens: ReturnType<typeof getProfileCornerTokens>;
   motionTokens: ReturnType<typeof getProfileMotionTokens>;
+  depth: ProfileSceneDepth;
 }) {
   return (
     <section
@@ -960,9 +1015,9 @@ function LinksSection({
         </div>
       </div>
 
-      <div style={{ display: "grid", gap: `${Math.round(12 * density.sectionGap)}px` }}>
+      <div style={{ display: "grid", gap: `${Math.round(14 * density.sectionGap * depth.spacingScale)}px` }}>
         {links.length > 0 ? (
-          links.map((link) => {
+          links.map((link, index) => {
             const platform = getLinkPlatform(link.url, link.title);
             const color = platform.color || themeColor;
             const PlatformIcon = platform.icon;
@@ -994,6 +1049,16 @@ function LinksSection({
                     motionTokens.hoverShadowBoost > 0.8 ? "12" : "0d",
                   )}, inset 0 1px 0 ${surfaceBorder}`,
                   transition: `transform ${motionTokens.transitionDurationMs}ms ease, box-shadow ${motionTokens.transitionDurationMs}ms ease`,
+                  marginInlineStart:
+                    layout === "portfolio"
+                      ? "0"
+                      : index % 2 === 0
+                        ? "0"
+                        : `${Math.round(16 * depth.spacingScale)}px`,
+                  marginInlineEnd:
+                    layout === "portfolio" || index % 2 === 1
+                      ? "0"
+                      : `${Math.round(12 * depth.spacingScale)}px`,
                 }}
               >
                 <div
@@ -1109,6 +1174,12 @@ const defaultPageStyle = (
   preview = false,
   stageGlow = "",
   densityTokens = getProfileDensityTokens("balanced"),
+  depth = getProfileSceneAppearance({
+    scene: "default",
+    mood: "locked-in",
+    aura: "none",
+    themeColor: "#f472b6",
+  }).depth,
 ): CSSProperties => ({
   minHeight: preview ? "auto" : "100vh",
   minWidth: 0,
@@ -1116,8 +1187,8 @@ const defaultPageStyle = (
   overflow: "hidden",
   isolation: "isolate",
   padding: preview
-    ? `${Math.round(24 * densityTokens.shellPadding)}px`
-    : `${Math.round(32 * densityTokens.shellPadding)}px 16px ${Math.round(40 * densityTokens.shellPadding)}px`,
+    ? `${Math.round(24 * densityTokens.shellPadding * depth.spacingScale)}px`
+    : `${Math.round(32 * densityTokens.shellPadding * depth.spacingScale)}px 16px ${Math.round(40 * densityTokens.shellPadding * depth.spacingScale)}px`,
   color: "#ffffff",
   fontFamily: '"Space Grotesk", Inter, Arial, Helvetica, sans-serif',
   background: `${stageGlow}, linear-gradient(180deg, rgba(5,6,10,0.98), rgba(3,4,7,1)), radial-gradient(circle at top, ${withAlpha(themeColor, "16")} 0%, transparent 28%)`,
@@ -1131,9 +1202,15 @@ const defaultShellStyle = (
   glassBackdrop = "blur(20px) saturate(128%)",
   shadowBoost = "0 24px 56px rgba(0,0,0,0.24)",
   cornerTokens = getProfileCornerTokens("rounded"),
+  depth = getProfileSceneAppearance({
+    scene: "default",
+    mood: "locked-in",
+    aura: "none",
+    themeColor: "#f472b6",
+  }).depth,
 ): CSSProperties => ({
-  width: "min(1040px, 100%)",
-  maxWidth: "1040px",
+  width: `min(${depth.shellMaxWidth}px, 100%)`,
+  maxWidth: `${depth.shellMaxWidth}px`,
   margin: "0 auto",
   position: "relative",
   zIndex: 1,
@@ -1142,8 +1219,8 @@ const defaultShellStyle = (
   border: `1px solid ${surfaceBorder}`,
   background: surfaceBackground,
   boxShadow: panelGlow
-    ? `${panelGlow}, ${shadowBoost}, 0 28px 70px rgba(0,0,0,0.24)`
-    : `${shadowBoost}, 0 28px 70px rgba(0,0,0,0.28)`,
+    ? `${panelGlow}, ${shadowBoost}, 0 ${Math.round(28 * depth.shadowDepth)}px ${Math.round(70 * depth.shadowDepth)}px rgba(0,0,0,0.24)`
+    : `${shadowBoost}, 0 ${Math.round(28 * depth.shadowDepth)}px ${Math.round(70 * depth.shadowDepth)}px rgba(0,0,0,0.28)`,
   backdropFilter: glassBackdrop,
   WebkitBackdropFilter: glassBackdrop,
 });
@@ -1151,9 +1228,15 @@ const defaultShellStyle = (
 const defaultContentStyle = (
   preview = false,
   densityTokens = getProfileDensityTokens("balanced"),
+  depth = getProfileSceneAppearance({
+    scene: "default",
+    mood: "locked-in",
+    aura: "none",
+    themeColor: "#f472b6",
+  }).depth,
 ): CSSProperties => ({
   display: "grid",
-  gap: `${Math.round(22 * densityTokens.sectionGap)}px`,
+  gap: `${Math.round(24 * densityTokens.sectionGap * depth.spacingScale)}px`,
   padding: preview
     ? `0 ${Math.round(26 * densityTokens.contentPadding)}px ${Math.round(32 * densityTokens.contentPadding)}px`
     : `0 ${Math.round(26 * densityTokens.contentPadding)}px ${Math.round(28 * densityTokens.contentPadding)}px`,
@@ -1161,13 +1244,20 @@ const defaultContentStyle = (
   minWidth: 0,
 });
 
-const defaultIdentityStyle: CSSProperties = {
+const defaultIdentityStyle = (
+  depth = getProfileSceneAppearance({
+    scene: "default",
+    mood: "locked-in",
+    aura: "none",
+    themeColor: "#f472b6",
+  }).depth,
+): CSSProperties => ({
   display: "grid",
   gridTemplateColumns: "auto minmax(0, 1fr)",
-  gap: "18px",
+  gap: `${Math.round(18 * depth.spacingScale)}px`,
   alignItems: "end",
   minWidth: 0,
-};
+});
 
 const defaultNameStyle = (
   densityTokens = getProfileDensityTokens("balanced"),
@@ -1199,6 +1289,12 @@ const simplisticPageStyle = (
   stageGlow = "",
   surfaceBackground = "rgba(6,7,11,0.96)",
   densityTokens = getProfileDensityTokens("balanced"),
+  depth = getProfileSceneAppearance({
+    scene: "default",
+    mood: "locked-in",
+    aura: "none",
+    themeColor: "#f472b6",
+  }).depth,
 ): CSSProperties => ({
   minHeight: preview ? "auto" : "100vh",
   minWidth: 0,
@@ -1206,8 +1302,8 @@ const simplisticPageStyle = (
   overflow: "hidden",
   isolation: "isolate",
   padding: preview
-    ? `${Math.round(28 * densityTokens.shellPadding)}px 24px`
-    : `${Math.round(42 * densityTokens.shellPadding)}px 16px`,
+    ? `${Math.round(26 * densityTokens.shellPadding * depth.spacingScale)}px 24px`
+    : `${Math.round(40 * densityTokens.shellPadding * depth.spacingScale)}px 16px`,
   color: "#ffffff",
   fontFamily: 'Inter, Arial, Helvetica, sans-serif',
   background: `${stageGlow}, ${surfaceBackground}`,
@@ -1217,14 +1313,20 @@ const simplisticShellStyle = (
   _preview = false,
   glassBackdrop = "blur(20px) saturate(128%)",
   densityTokens = getProfileDensityTokens("balanced"),
+  depth = getProfileSceneAppearance({
+    scene: "default",
+    mood: "locked-in",
+    aura: "none",
+    themeColor: "#f472b6",
+  }).depth,
 ): CSSProperties => ({
-  width: "min(820px, 100%)",
-  maxWidth: "820px",
+  width: `min(${Math.min(depth.shellMaxWidth, 860)}px, 100%)`,
+  maxWidth: `${Math.min(depth.shellMaxWidth, 860)}px`,
   margin: "0 auto",
   position: "relative",
   zIndex: 1,
   display: "grid",
-  gap: `${Math.round(18 * densityTokens.sectionGap)}px`,
+  gap: `${Math.round(20 * densityTokens.sectionGap * depth.spacingScale)}px`,
   minWidth: 0,
   backdropFilter: glassBackdrop,
   WebkitBackdropFilter: glassBackdrop,
@@ -1232,10 +1334,16 @@ const simplisticShellStyle = (
 
 const simplisticHeaderStyle = (
   densityTokens = getProfileDensityTokens("balanced"),
+  depth = getProfileSceneAppearance({
+    scene: "default",
+    mood: "locked-in",
+    aura: "none",
+    themeColor: "#f472b6",
+  }).depth,
 ): CSSProperties => ({
   display: "grid",
   gridTemplateColumns: "auto minmax(0, 1fr)",
-  gap: `${Math.round(18 * densityTokens.sectionGap)}px`,
+  gap: `${Math.round(18 * densityTokens.sectionGap * depth.spacingScale)}px`,
   alignItems: "center",
   padding: `${Math.round(22 * densityTokens.contentPadding)}px 0 4px`,
   minWidth: 0,
@@ -1260,15 +1368,28 @@ const simplisticBioStyle = (
   whiteSpace: "pre-wrap",
 });
 
-const simplisticBannerWrapStyle: CSSProperties = {
-  marginTop: "4px",
-};
+const simplisticBannerWrapStyle = (
+  depth = getProfileSceneAppearance({
+    scene: "default",
+    mood: "locked-in",
+    aura: "none",
+    themeColor: "#f472b6",
+  }).depth,
+): CSSProperties => ({
+  marginTop: `${Math.round(4 * depth.spacingScale)}px`,
+});
 
 const portfolioPageStyle = (
   preview = false,
   stageGlow = "",
   surfaceBackground = "linear-gradient(180deg, #071018 0%, #04070d 100%)",
   densityTokens = getProfileDensityTokens("balanced"),
+  depth = getProfileSceneAppearance({
+    scene: "default",
+    mood: "locked-in",
+    aura: "none",
+    themeColor: "#f472b6",
+  }).depth,
 ): CSSProperties => ({
   minHeight: preview ? "auto" : "100vh",
   minWidth: 0,
@@ -1276,8 +1397,8 @@ const portfolioPageStyle = (
   overflow: "hidden",
   isolation: "isolate",
   padding: preview
-    ? `${Math.round(24 * densityTokens.shellPadding)}px`
-    : `${Math.round(26 * densityTokens.shellPadding)}px 16px ${Math.round(38 * densityTokens.shellPadding)}px`,
+    ? `${Math.round(24 * densityTokens.shellPadding * depth.spacingScale)}px`
+    : `${Math.round(24 * densityTokens.shellPadding * depth.spacingScale)}px 16px ${Math.round(38 * densityTokens.shellPadding * depth.spacingScale)}px`,
   color: "#ffffff",
   fontFamily: '"Space Grotesk", Inter, Arial, Helvetica, sans-serif',
   background: `${stageGlow}, ${surfaceBackground}`,
@@ -1286,9 +1407,15 @@ const portfolioPageStyle = (
 const portfolioBannerWrapStyle = (
   preview = false,
   densityTokens = getProfileDensityTokens("balanced"),
+  depth = getProfileSceneAppearance({
+    scene: "default",
+    mood: "locked-in",
+    aura: "none",
+    themeColor: "#f472b6",
+  }).depth,
 ): CSSProperties => ({
-  width: "min(1160px, 100%)",
-  maxWidth: "1160px",
+  width: `min(${Math.min(depth.shellMaxWidth + 80, 1160)}px, 100%)`,
+  maxWidth: `${Math.min(depth.shellMaxWidth + 80, 1160)}px`,
   position: "relative",
   zIndex: 1,
   margin: preview
@@ -1299,15 +1426,21 @@ const portfolioBannerWrapStyle = (
 const portfolioShellStyle = (
   _preview = false,
   densityTokens = getProfileDensityTokens("balanced"),
+  depth = getProfileSceneAppearance({
+    scene: "default",
+    mood: "locked-in",
+    aura: "none",
+    themeColor: "#f472b6",
+  }).depth,
 ): CSSProperties => ({
-  width: "min(1160px, 100%)",
-  maxWidth: "1160px",
+  width: `min(${Math.min(depth.shellMaxWidth + 80, 1160)}px, 100%)`,
+  maxWidth: `${Math.min(depth.shellMaxWidth + 80, 1160)}px`,
   position: "relative",
   zIndex: 1,
   margin: "0 auto",
   display: "grid",
   gridTemplateColumns: "minmax(0, 320px) minmax(0, 1fr)",
-  gap: `${Math.round(18 * densityTokens.sectionGap)}px`,
+  gap: `${Math.round(20 * densityTokens.sectionGap * depth.spacingScale)}px`,
   minWidth: 0,
 });
 
@@ -1319,15 +1452,23 @@ const portfolioSidebarStyle = (
   glassBackdrop = "blur(20px) saturate(128%)",
   shadowBoost = "0 24px 56px rgba(0,0,0,0.24)",
   cornerTokens = getProfileCornerTokens("rounded"),
+  depth = getProfileSceneAppearance({
+    scene: "default",
+    mood: "locked-in",
+    aura: "none",
+    themeColor: "#f472b6",
+  }).depth,
 ): CSSProperties => ({
   display: "grid",
   alignContent: "start",
-  gap: "18px",
+  gap: `${Math.round(18 * depth.spacingScale)}px`,
   padding: "22px",
   borderRadius: `${cornerTokens.panelRadius}px`,
   border: `1px solid ${surfaceBorder}`,
   background: surfaceBackground,
-  boxShadow: panelGlow ? `${panelGlow}, ${shadowBoost}` : shadowBoost,
+  boxShadow: panelGlow
+    ? `${panelGlow}, ${shadowBoost}, 0 ${Math.round(24 * depth.shadowDepth)}px ${Math.round(56 * depth.shadowDepth)}px rgba(0,0,0,0.24)`
+    : `${shadowBoost}, 0 ${Math.round(24 * depth.shadowDepth)}px ${Math.round(56 * depth.shadowDepth)}px rgba(0,0,0,0.24)`,
   minWidth: 0,
   overflow: "hidden",
   backdropFilter: glassBackdrop,
@@ -1342,14 +1483,22 @@ const portfolioMainStyle = (
   glassBackdrop = "blur(20px) saturate(128%)",
   shadowBoost = "0 24px 56px rgba(0,0,0,0.24)",
   cornerTokens = getProfileCornerTokens("rounded"),
+  depth = getProfileSceneAppearance({
+    scene: "default",
+    mood: "locked-in",
+    aura: "none",
+    themeColor: "#f472b6",
+  }).depth,
 ): CSSProperties => ({
   display: "grid",
-  gap: "18px",
+  gap: `${Math.round(18 * depth.spacingScale)}px`,
   padding: "22px",
   borderRadius: `${cornerTokens.panelRadius}px`,
   border: `1px solid ${surfaceBorder}`,
   background: surfaceBackground,
-  boxShadow: panelGlow ? `${panelGlow}, ${shadowBoost}` : shadowBoost,
+  boxShadow: panelGlow
+    ? `${panelGlow}, ${shadowBoost}, 0 ${Math.round(24 * depth.shadowDepth)}px ${Math.round(56 * depth.shadowDepth)}px rgba(0,0,0,0.24)`
+    : `${shadowBoost}, 0 ${Math.round(24 * depth.shadowDepth)}px ${Math.round(56 * depth.shadowDepth)}px rgba(0,0,0,0.24)`,
   minWidth: 0,
   overflow: "hidden",
   backdropFilter: glassBackdrop,

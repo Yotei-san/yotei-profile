@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
 import { LuArrowUpRight, LuMusic4, LuRadio } from "react-icons/lu";
+import type { ProfileMotionLevel } from "@/app/lib/profile-customization";
 import {
   getProfileMusicArtist,
   getProfileMusicCtaLabel,
@@ -17,6 +18,7 @@ type Props = {
   softColor: string;
   compact?: boolean;
   showPlaceholder?: boolean;
+  motionLevel?: ProfileMotionLevel;
 };
 
 export default function ProfileMusicCard({
@@ -27,6 +29,7 @@ export default function ProfileMusicCard({
   softColor,
   compact = false,
   showPlaceholder = false,
+  motionLevel = "subtle",
 }: Props) {
   if (!shouldRenderProfileMusic(music)) {
     if (!showPlaceholder) {
@@ -54,8 +57,15 @@ export default function ProfileMusicCard({
   }
 
   return (
-    <section style={cardStyle(themeColor, accentColor, contrastColor, compact)}>
-      <style>{`
+      <section
+        className={`profile-music-card motion-${motionLevel}`}
+        style={cardStyle(themeColor, accentColor, contrastColor, compact)}
+      >
+        <style>{`
+        .profile-music-card {
+          position: relative;
+        }
+
         .profile-music-card-row {
           display: grid;
           grid-template-columns: auto minmax(0, 1fr) auto;
@@ -98,6 +108,16 @@ export default function ProfileMusicCard({
         .profile-music-eq span:nth-child(4) {
           height: 24px;
           animation-delay: 0.54s;
+        }
+
+        .profile-music-card.motion-subtle .profile-music-eq span {
+          animation-duration: 1.8s;
+        }
+
+        .profile-music-card.motion-off .profile-music-eq span {
+          animation: none;
+          opacity: 0.72;
+          transform: scaleY(0.68);
         }
 
         @keyframes profile-music-bar {

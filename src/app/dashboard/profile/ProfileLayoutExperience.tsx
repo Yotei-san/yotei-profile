@@ -1047,6 +1047,7 @@ export default function ProfileLayoutExperience({
                   softColor={previewPresence.soft}
                   compact
                   showPlaceholder
+                  motionLevel={deferredPreviewMotionLevel}
                 />
               </div>
             </div>
@@ -1211,8 +1212,8 @@ export default function ProfileLayoutExperience({
         }
 
         .profile-preview-viewport {
-          height: min(700px, 72vh);
-          max-height: 700px;
+          height: min(680px, 70vh);
+          max-height: 680px;
         }
 
         @keyframes preview-swap {
@@ -1241,15 +1242,15 @@ export default function ProfileLayoutExperience({
           }
 
           .profile-preview-viewport {
-            height: min(640px, 68vh);
-            max-height: 640px;
+            height: min(600px, 64vh);
+            max-height: 600px;
           }
         }
 
         @media (max-width: 760px) {
           .profile-preview-viewport {
-            height: min(500px, 58vh);
-            max-height: 500px;
+            height: min(460px, 54vh);
+            max-height: 460px;
           }
         }
       `}</style>
@@ -1899,6 +1900,12 @@ const layoutCardDescriptionStyle: CSSProperties = {
 const previewFrameStyle: CSSProperties = {
   display: "grid",
   gap: "14px",
+  padding: "14px",
+  borderRadius: "24px",
+  border: "1px solid rgba(255,255,255,0.08)",
+  background:
+    "linear-gradient(180deg, rgba(14,12,22,0.96), rgba(7,8,13,0.98)), radial-gradient(circle at top left, rgba(244,114,182,0.12), transparent 28%)",
+  boxShadow: "0 24px 60px rgba(0,0,0,0.22)",
 };
 
 function previewChromeStyle(accent: string, contrast: string): CSSProperties {
@@ -1906,10 +1913,11 @@ function previewChromeStyle(accent: string, contrast: string): CSSProperties {
     display: "grid",
     gap: "8px",
     padding: "16px",
-    borderRadius: "18px",
+    borderRadius: "20px",
     border: "1px solid rgba(255,255,255,0.08)",
     background:
       `radial-gradient(circle at top left, ${withAlpha(accent, "24")}, transparent 24%), radial-gradient(circle at 86% 18%, ${withAlpha(contrast, "18")}, transparent 18%), linear-gradient(180deg, rgba(17,15,24,0.96), rgba(9,9,13,0.96))`,
+    boxShadow: `0 18px 34px ${withAlpha(accent, "14")}`,
   };
 }
 
@@ -1939,11 +1947,13 @@ const previewChromeTextStyle: CSSProperties = {
 const previewViewportStyle: CSSProperties = {
   position: "relative",
   overflow: "hidden",
-  borderRadius: "24px",
+  borderRadius: "28px",
   border: "1px solid rgba(255,255,255,0.08)",
-  background: "#040508",
+  background:
+    "linear-gradient(180deg, rgba(5,6,10,1), rgba(3,4,8,1)), radial-gradient(circle at top, rgba(129,140,248,0.12), transparent 24%)",
   width: "100%",
   minHeight: 0,
+  boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04)",
 };
 
 function previewCanvasScaleStyle(

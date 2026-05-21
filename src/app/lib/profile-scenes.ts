@@ -13,6 +13,36 @@ export const PROFILE_SCENES = [
 export type ProfileScene = (typeof PROFILE_SCENES)[number];
 export const DEFAULT_PROFILE_SCENE: ProfileScene = "default";
 
+export const PROFILE_AMBIENT_TYPES = [
+  "rain",
+  "snow",
+  "embers",
+  "stars",
+  "petals",
+  "cyber",
+  "dust",
+  "none",
+] as const;
+
+export type ProfileAmbientType = (typeof PROFILE_AMBIENT_TYPES)[number];
+
+export type ProfileSceneDepth = {
+  ambientType: ProfileAmbientType;
+  ambientDensity: number;
+  mobileAmbientDensity: number;
+  overlayStrength: number;
+  vignetteStrength: number;
+  foregroundHazeOpacity: number;
+  lightingOpacity: number;
+  shellShadeOpacity: number;
+  surfaceShadeOpacity: number;
+  spacingScale: number;
+  stageGlowOpacity: number;
+  stageGlowBlur: number;
+  shadowDepth: number;
+  shellMaxWidth: number;
+};
+
 type ProfileSceneDefinition = {
   value: ProfileScene;
   name: string;
@@ -33,6 +63,7 @@ type ProfileSceneDefinition = {
     | "fire"
     | "frost"
     | "neon";
+  depth: ProfileSceneDepth;
 };
 
 const PROFILE_SCENE_DEFINITIONS: Record<ProfileScene, ProfileSceneDefinition> = {
@@ -51,6 +82,22 @@ const PROFILE_SCENE_DEFINITIONS: Record<ProfileScene, ProfileSceneDefinition> = 
       "linear-gradient(180deg, rgba(10,11,18,0.96), rgba(8,9,15,0.98))",
     surfaceBorder: "rgba(255,255,255,0.08)",
     backgroundVariant: "mood-driven",
+    depth: {
+      ambientType: "none",
+      ambientDensity: 0,
+      mobileAmbientDensity: 0,
+      overlayStrength: 0.78,
+      vignetteStrength: 0.5,
+      foregroundHazeOpacity: 0.24,
+      lightingOpacity: 0.28,
+      shellShadeOpacity: 0.06,
+      surfaceShadeOpacity: 0.12,
+      spacingScale: 1,
+      stageGlowOpacity: 0.46,
+      stageGlowBlur: 18,
+      shadowDepth: 0.92,
+      shellMaxWidth: 1040,
+    },
   },
   "cyber-tokyo": {
     value: "cyber-tokyo",
@@ -67,6 +114,22 @@ const PROFILE_SCENE_DEFINITIONS: Record<ProfileScene, ProfileSceneDefinition> = 
       "linear-gradient(180deg, rgba(8,15,24,0.96), rgba(6,10,18,0.98))",
     surfaceBorder: "rgba(34,211,238,0.18)",
     backgroundVariant: "cyber",
+    depth: {
+      ambientType: "cyber",
+      ambientDensity: 0.9,
+      mobileAmbientDensity: 0.52,
+      overlayStrength: 0.64,
+      vignetteStrength: 0.42,
+      foregroundHazeOpacity: 0.18,
+      lightingOpacity: 0.38,
+      shellShadeOpacity: 0.02,
+      surfaceShadeOpacity: 0.08,
+      spacingScale: 0.9,
+      stageGlowOpacity: 0.72,
+      stageGlowBlur: 14,
+      shadowDepth: 0.84,
+      shellMaxWidth: 1000,
+    },
   },
   "void-core": {
     value: "void-core",
@@ -83,6 +146,22 @@ const PROFILE_SCENE_DEFINITIONS: Record<ProfileScene, ProfileSceneDefinition> = 
       "linear-gradient(180deg, rgba(9,8,18,0.96), rgba(5,6,14,0.98))",
     surfaceBorder: "rgba(139,92,246,0.16)",
     backgroundVariant: "void",
+    depth: {
+      ambientType: "stars",
+      ambientDensity: 0.38,
+      mobileAmbientDensity: 0.2,
+      overlayStrength: 0.88,
+      vignetteStrength: 0.72,
+      foregroundHazeOpacity: 0.12,
+      lightingOpacity: 0.16,
+      shellShadeOpacity: 0.12,
+      surfaceShadeOpacity: 0.2,
+      spacingScale: 1.08,
+      stageGlowOpacity: 0.4,
+      stageGlowBlur: 24,
+      shadowDepth: 1.18,
+      shellMaxWidth: 960,
+    },
   },
   "galaxy-room": {
     value: "galaxy-room",
@@ -99,6 +178,22 @@ const PROFILE_SCENE_DEFINITIONS: Record<ProfileScene, ProfileSceneDefinition> = 
       "linear-gradient(180deg, rgba(8,10,24,0.96), rgba(7,9,18,0.98))",
     surfaceBorder: "rgba(129,140,248,0.18)",
     backgroundVariant: "galaxy",
+    depth: {
+      ambientType: "stars",
+      ambientDensity: 0.8,
+      mobileAmbientDensity: 0.48,
+      overlayStrength: 0.62,
+      vignetteStrength: 0.42,
+      foregroundHazeOpacity: 0.32,
+      lightingOpacity: 0.46,
+      shellShadeOpacity: 0.04,
+      surfaceShadeOpacity: 0.08,
+      spacingScale: 1.12,
+      stageGlowOpacity: 0.68,
+      stageGlowBlur: 18,
+      shadowDepth: 0.94,
+      shellMaxWidth: 1080,
+    },
   },
   "inferno-live": {
     value: "inferno-live",
@@ -115,6 +210,22 @@ const PROFILE_SCENE_DEFINITIONS: Record<ProfileScene, ProfileSceneDefinition> = 
       "linear-gradient(180deg, rgba(22,10,10,0.96), rgba(16,8,8,0.98))",
     surfaceBorder: "rgba(251,113,133,0.18)",
     backgroundVariant: "fire",
+    depth: {
+      ambientType: "embers",
+      ambientDensity: 0.84,
+      mobileAmbientDensity: 0.5,
+      overlayStrength: 0.82,
+      vignetteStrength: 0.56,
+      foregroundHazeOpacity: 0.2,
+      lightingOpacity: 0.48,
+      shellShadeOpacity: 0.04,
+      surfaceShadeOpacity: 0.1,
+      spacingScale: 0.96,
+      stageGlowOpacity: 0.76,
+      stageGlowBlur: 18,
+      shadowDepth: 1.02,
+      shellMaxWidth: 1010,
+    },
   },
   "frost-byte": {
     value: "frost-byte",
@@ -131,6 +242,22 @@ const PROFILE_SCENE_DEFINITIONS: Record<ProfileScene, ProfileSceneDefinition> = 
       "linear-gradient(180deg, rgba(8,15,24,0.96), rgba(6,11,18,0.98))",
     surfaceBorder: "rgba(103,232,249,0.18)",
     backgroundVariant: "frost",
+    depth: {
+      ambientType: "snow",
+      ambientDensity: 0.72,
+      mobileAmbientDensity: 0.42,
+      overlayStrength: 0.68,
+      vignetteStrength: 0.38,
+      foregroundHazeOpacity: 0.28,
+      lightingOpacity: 0.34,
+      shellShadeOpacity: 0.05,
+      surfaceShadeOpacity: 0.08,
+      spacingScale: 1.04,
+      stageGlowOpacity: 0.56,
+      stageGlowBlur: 16,
+      shadowDepth: 0.9,
+      shellMaxWidth: 1030,
+    },
   },
   "arcade-night": {
     value: "arcade-night",
@@ -147,6 +274,22 @@ const PROFILE_SCENE_DEFINITIONS: Record<ProfileScene, ProfileSceneDefinition> = 
       "linear-gradient(180deg, rgba(18,10,24,0.96), rgba(10,8,18,0.98))",
     surfaceBorder: "rgba(244,114,182,0.18)",
     backgroundVariant: "neon",
+    depth: {
+      ambientType: "dust",
+      ambientDensity: 0.56,
+      mobileAmbientDensity: 0.34,
+      overlayStrength: 0.66,
+      vignetteStrength: 0.44,
+      foregroundHazeOpacity: 0.2,
+      lightingOpacity: 0.32,
+      shellShadeOpacity: 0.04,
+      surfaceShadeOpacity: 0.08,
+      spacingScale: 1.02,
+      stageGlowOpacity: 0.62,
+      stageGlowBlur: 16,
+      shadowDepth: 0.92,
+      shellMaxWidth: 1050,
+    },
   },
 };
 
@@ -182,11 +325,28 @@ export function getProfileSceneAppearance(input: {
     aura: input.aura,
     themeColor: input.themeColor,
   });
+  const ambientType =
+    scene.value === "default"
+      ? getDefaultAmbientType(input.mood, input.aura)
+      : scene.depth.ambientType;
+  const depth =
+    scene.value === "default"
+      ? {
+          ...scene.depth,
+          ambientType,
+          ambientDensity: ambientType === "none" ? 0 : 0.46,
+          mobileAmbientDensity: ambientType === "none" ? 0 : 0.28,
+          foregroundHazeOpacity:
+            ambientType === "none" ? 0.18 : scene.depth.foregroundHazeOpacity,
+          lightingOpacity: ambientType === "none" ? 0.24 : scene.depth.lightingOpacity,
+        }
+      : scene.depth;
 
   if (scene.value === "default") {
     return {
       scene,
       presence: basePresence,
+      depth,
       shellBackground: scene.shellBackground,
       surfaceBackground: scene.surfaceBackground,
       surfaceBorder: scene.surfaceBorder,
@@ -212,12 +372,8 @@ export function getProfileSceneAppearance(input: {
       highlight: input.themeColor,
       badgeBackground: `linear-gradient(135deg, ${withAlpha(accent, "18")}, ${withAlpha(contrast, "12")})`,
       badgeBorder: withAlpha(accent, "34"),
-      stageGlow: [
-        `radial-gradient(circle at 16% 18%, ${withAlpha(accent, "22")} 0%, transparent 28%)`,
-        `radial-gradient(circle at 82% 72%, ${withAlpha(contrast, "18")} 0%, transparent 30%)`,
-        `radial-gradient(circle at 76% 16%, ${withAlpha(soft, "14")} 0%, transparent 22%)`,
-      ].join(", "),
-      panelGlow: `0 0 0 1px ${withAlpha(accent, "18")}, 0 32px 84px ${withAlpha(contrast, "14")}`,
+      stageGlow: getSceneStageGlow(scene.value, accent, contrast, soft, pulse),
+      panelGlow: getScenePanelGlow(scene.value, accent, contrast, soft, pulse),
       avatarAuraBackground: `radial-gradient(circle, ${withAlpha(accent, "22")} 0%, ${withAlpha(contrast, "12")} 56%, transparent 76%)`,
       avatarRing: withAlpha(accent, "58"),
       avatarGlow: withAlpha(contrast, "32"),
@@ -230,6 +386,7 @@ export function getProfileSceneAppearance(input: {
           ? `linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(180deg, rgba(255,255,255,0.02) 1px, transparent 1px)`
           : basePresence.ambientGrid,
     },
+    depth,
     shellBackground: scene.shellBackground,
     surfaceBackground: scene.surfaceBackground,
     surfaceBorder: scene.surfaceBorder,
@@ -241,6 +398,110 @@ export function getProfileSceneAppearance(input: {
 
 function withAlpha(hex: string, alpha: string) {
   return /^#([0-9a-fA-F]{6})$/.test(hex.trim()) ? `${hex}${alpha}` : hex;
+}
+
+function getDefaultAmbientType(mood: ProfileMood, aura: ProfileAura): ProfileAmbientType {
+  if (aura === "galaxy") {
+    return "stars";
+  }
+
+  if (aura === "fire" || mood === "streaming") {
+    return "embers";
+  }
+
+  if (aura === "frost" || mood === "chilling") {
+    return "snow";
+  }
+
+  if (aura === "cyber" || mood === "coding") {
+    return "cyber";
+  }
+
+  if (mood === "night") {
+    return "rain";
+  }
+
+  if (aura === "void" || mood === "afk") {
+    return "dust";
+  }
+
+  return "none";
+}
+
+function getSceneStageGlow(
+  scene: ProfileScene,
+  accent: string,
+  contrast: string,
+  soft: string,
+  pulse: string,
+) {
+  if (scene === "cyber-tokyo") {
+    return [
+      `radial-gradient(circle at 16% 20%, ${withAlpha(accent, "2c")} 0%, transparent 24%)`,
+      `radial-gradient(circle at 82% 74%, ${withAlpha(contrast, "1e")} 0%, transparent 26%)`,
+      `linear-gradient(180deg, transparent 12%, ${withAlpha(accent, "12")} 52%, transparent 88%)`,
+    ].join(", ");
+  }
+
+  if (scene === "void-core") {
+    return [
+      `radial-gradient(circle at 50% 18%, ${withAlpha(soft, "12")} 0%, transparent 24%)`,
+      `radial-gradient(circle at 22% 70%, ${withAlpha(accent, "18")} 0%, transparent 30%)`,
+      `radial-gradient(circle at 78% 82%, ${withAlpha(contrast, "12")} 0%, transparent 32%)`,
+    ].join(", ");
+  }
+
+  if (scene === "inferno-live") {
+    return [
+      `radial-gradient(circle at 18% 18%, ${withAlpha(contrast, "2c")} 0%, transparent 26%)`,
+      `radial-gradient(circle at 78% 22%, ${withAlpha(accent, "28")} 0%, transparent 28%)`,
+      `radial-gradient(circle at 52% 82%, ${withAlpha(pulse, "16")} 0%, transparent 30%)`,
+    ].join(", ");
+  }
+
+  if (scene === "galaxy-room") {
+    return [
+      `radial-gradient(circle at 18% 18%, ${withAlpha(accent, "22")} 0%, transparent 26%)`,
+      `radial-gradient(circle at 78% 22%, ${withAlpha(contrast, "22")} 0%, transparent 28%)`,
+      `radial-gradient(circle at 56% 72%, ${withAlpha(soft, "18")} 0%, transparent 34%)`,
+    ].join(", ");
+  }
+
+  return [
+    `radial-gradient(circle at 16% 18%, ${withAlpha(accent, "22")} 0%, transparent 28%)`,
+    `radial-gradient(circle at 82% 72%, ${withAlpha(contrast, "18")} 0%, transparent 30%)`,
+    `radial-gradient(circle at 76% 16%, ${withAlpha(soft, "14")} 0%, transparent 22%)`,
+  ].join(", ");
+}
+
+function getScenePanelGlow(
+  scene: ProfileScene,
+  accent: string,
+  contrast: string,
+  soft: string,
+  pulse: string,
+) {
+  if (scene === "cyber-tokyo") {
+    return `0 0 0 1px ${withAlpha(accent, "24")}, 0 24px 60px ${withAlpha(accent, "14")}, 0 0 28px ${withAlpha(soft, "12")}`;
+  }
+
+  if (scene === "void-core") {
+    return `0 0 0 1px ${withAlpha(accent, "18")}, 0 34px 88px rgba(0,0,0,0.42), 0 0 24px ${withAlpha(contrast, "12")}`;
+  }
+
+  if (scene === "galaxy-room") {
+    return `0 0 0 1px ${withAlpha(accent, "1c")}, 0 28px 72px ${withAlpha(contrast, "16")}, 0 0 36px ${withAlpha(soft, "12")}`;
+  }
+
+  if (scene === "inferno-live") {
+    return `0 0 0 1px ${withAlpha(accent, "22")}, 0 30px 74px ${withAlpha(contrast, "1a")}, 0 0 34px ${withAlpha(pulse, "14")}`;
+  }
+
+  if (scene === "frost-byte") {
+    return `0 0 0 1px ${withAlpha(accent, "18")}, 0 22px 58px ${withAlpha(contrast, "12")}, 0 0 24px ${withAlpha(soft, "12")}`;
+  }
+
+  return `0 0 0 1px ${withAlpha(accent, "18")}, 0 26px 64px ${withAlpha(contrast, "14")}, 0 0 28px ${withAlpha(soft, "10")}`;
 }
 
 export function isMissingProfileSceneColumnError(error: unknown) {
