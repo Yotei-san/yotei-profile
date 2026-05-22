@@ -5,14 +5,12 @@ import { LuArrowUpRight, LuBadgeCheck, LuMoonStar, LuSparkles } from "react-icon
 import BadgeVisual from "@/app/dashboard/components/BadgeVisual";
 import { getLinkPlatform } from "@/app/lib/link-icons";
 import {
-  DEFAULT_PROFILE_COMPOSITION,
   getProfileCompositionSpacingScale,
   getRenderableCompositionOrder,
   normalizeProfileComposition,
   partitionSocialBlocks,
   type ProfileComposition,
   type ProfileCompositionBlock,
-  type ProfileCompositionDensity,
   type ProfileCompositionLinksStyle,
 } from "@/app/lib/profile-composition";
 import {
@@ -281,11 +279,11 @@ export default function PublicProfileRenderer({
     .filter(Boolean)
     .join(", ");
   const shellPadding = preview
-    ? `${Math.round(16 * densityTokens.shellPadding * depth.spacingScale)}px 0 ${Math.round(18 * densityTokens.shellPadding * depth.spacingScale)}px`
-    : `${Math.round(34 * densityTokens.shellPadding * depth.spacingScale)}px 0 ${Math.round(14 * densityTokens.shellPadding * depth.spacingScale)}px`;
+    ? `${Math.round(12 * densityTokens.shellPadding * depth.spacingScale)}px 0 ${Math.round(14 * densityTokens.shellPadding * depth.spacingScale)}px`
+    : `${Math.round(24 * densityTokens.shellPadding * depth.spacingScale)}px 0 ${Math.round(8 * densityTokens.shellPadding * depth.spacingScale)}px`;
   const columnPadding = preview
-    ? `${Math.round(24 * densityTokens.contentPadding * depth.spacingScale)}px`
-    : `${Math.round(30 * densityTokens.contentPadding * depth.spacingScale)}px`;
+    ? `${Math.round(18 * densityTokens.contentPadding * depth.spacingScale)}px`
+    : `${Math.round(22 * densityTokens.contentPadding * depth.spacingScale)}px`;
   const stageGlowBlur =
     safeMotionLevel === "alive"
       ? depth.stageGlowBlur
@@ -348,7 +346,7 @@ export default function PublicProfileRenderer({
         "--profile-link-hover-lift": `${linkHoverLift}px`,
         "--profile-link-hover-scale": `${linkHoverScale}`,
         "--profile-transition-duration": `${linkTransition}ms`,
-        "--profile-stack-gap": `${Math.round(18 * spacingScale)}px`,
+        "--profile-stack-gap": `${Math.round(14 * spacingScale)}px`,
       } as CSSProperties}
     >
       <style>{`
@@ -464,8 +462,8 @@ export default function PublicProfileRenderer({
         }
 
         .profile-shell {
-          width: min(${preview ? Math.min(depth.shellMaxWidth, 920) : depth.shellMaxWidth}px, calc(100% - ${preview ? "32px" : "112px"}));
-          max-width: ${preview ? Math.min(depth.shellMaxWidth, 920) : depth.shellMaxWidth}px;
+          width: min(${preview ? Math.min(depth.shellMaxWidth, 860) : depth.shellMaxWidth}px, calc(100% - ${preview ? "24px" : "148px"}));
+          max-width: ${preview ? Math.min(depth.shellMaxWidth, 860) : depth.shellMaxWidth}px;
           margin: 0 auto;
           position: relative;
           z-index: 1;
@@ -479,22 +477,22 @@ export default function PublicProfileRenderer({
 
         .profile-shell-orb {
           inset: auto;
-          width: 136px;
-          height: 136px;
+          width: 104px;
+          height: 104px;
           border-radius: 999px;
           background: radial-gradient(circle, ${withAlpha(presence.accent, "12")} 0%, transparent 72%);
-          opacity: ${preview ? 0.34 : 0.5};
+          opacity: ${preview ? 0.28 : 0.42};
           z-index: 0;
         }
 
         .profile-shell-orb.left {
-          left: -24px;
-          top: 20px;
+          left: -16px;
+          top: 18px;
         }
 
         .profile-shell-orb.right {
-          right: -18px;
-          bottom: 12px;
+          right: -14px;
+          bottom: 10px;
           background: radial-gradient(circle, ${withAlpha(presence.soft, "12")} 0%, transparent 72%);
         }
 
@@ -508,7 +506,7 @@ export default function PublicProfileRenderer({
           box-shadow:
             ${presence.panelGlow},
             ${glassTokens.shadowBoost},
-            0 ${Math.round(32 * depth.shadowDepth)}px ${Math.round(72 * depth.shadowDepth)}px rgba(0, 0, 0, ${Math.min(0.4, 0.22 + depth.shadowDepth * 0.1)}),
+            0 ${Math.round(24 * depth.shadowDepth)}px ${Math.round(54 * depth.shadowDepth)}px rgba(0, 0, 0, ${Math.min(0.32, 0.18 + depth.shadowDepth * 0.08)}),
             inset 0 1px 0 rgba(255, 255, 255, 0.05);
           overflow: hidden;
           backdrop-filter: ${resolvedPanelBackdropFilter};
@@ -530,8 +528,8 @@ export default function PublicProfileRenderer({
           position: relative;
           z-index: 1;
           display: grid;
-          grid-template-columns: minmax(280px, 0.78fr) minmax(0, 1fr);
-          gap: ${preview ? "0" : `${Math.round(16 * spacingScale)}px`};
+          grid-template-columns: minmax(248px, 0.72fr) minmax(0, 0.92fr);
+          gap: ${preview ? "0" : `${Math.round(10 * spacingScale)}px`};
           min-width: 0;
         }
 
@@ -545,12 +543,14 @@ export default function PublicProfileRenderer({
           display: flex;
           flex-direction: column;
           justify-content: ${preview ? "flex-start" : "space-between"};
-          gap: ${preview ? `${Math.round(18 * spacingScale)}px` : `${Math.round(8 * spacingScale)}px`};
+          gap: ${preview ? `${Math.round(12 * spacingScale)}px` : `${Math.round(6 * spacingScale)}px`};
         }
 
         .profile-links-column {
-          border-left: 1px solid ${withAlpha(presence.accent, "16")};
-          background: ${surfaceBackground};
+          border-left: 1px solid ${withAlpha(presence.accent, "12")};
+          background:
+            linear-gradient(180deg, rgba(255,255,255,0.018), transparent 22%),
+            ${surfaceBackground};
         }
 
         .panel-topbar,
@@ -566,19 +566,19 @@ export default function PublicProfileRenderer({
         .profile-kicker,
         .links-count,
         .preview-callout {
-          min-height: 36px;
-          padding: 0 14px;
+          min-height: 30px;
+          padding: 0 11px;
           border-radius: var(--profile-chip-radius);
           display: inline-flex;
           align-items: center;
-          gap: 8px;
+          gap: 7px;
           color: #edf2fb;
           background: rgba(255, 255, 255, 0.04);
           border: 1px solid rgba(255, 255, 255, 0.08);
-          font-size: 12px;
+          font-size: 11px;
           font-weight: 800;
           letter-spacing: 0.02em;
-          box-shadow: 0 14px 24px rgba(0, 0, 0, 0.14);
+          box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12);
           backdrop-filter: blur(10px);
           -webkit-backdrop-filter: blur(10px);
         }
@@ -597,39 +597,39 @@ export default function PublicProfileRenderer({
 
         .presence-chip {
           width: fit-content;
-          min-height: 34px;
-          margin-top: 14px;
-          padding: 0 12px;
+          min-height: 30px;
+          margin-top: 10px;
+          padding: 0 11px;
           border-radius: var(--profile-chip-radius);
           display: inline-flex;
           align-items: center;
-          gap: 8px;
+          gap: 7px;
           color: #f7fbff;
           background: ${presence.presenceBackground};
           border: 1px solid ${presence.presenceBorder};
-          box-shadow: 0 14px 26px ${withAlpha(presence.accent, "12")};
-          font-size: 12px;
+          box-shadow: 0 10px 22px ${withAlpha(presence.accent, "10")};
+          font-size: 11px;
           font-weight: 800;
           letter-spacing: 0.02em;
         }
 
         .identity-stack {
-          margin-top: ${preview ? `${Math.round(20 * spacingScale)}px` : `${Math.round(26 * spacingScale)}px`};
+          margin-top: ${preview ? `${Math.round(14 * spacingScale)}px` : `${Math.round(18 * spacingScale)}px`};
           min-width: 0;
         }
 
         .avatar-and-copy {
           display: grid;
           grid-template-columns: auto minmax(0, 1fr);
-          gap: ${Math.round(20 * spacingScale)}px;
+          gap: ${Math.round(16 * spacingScale)}px;
           align-items: flex-start;
           min-width: 0;
         }
 
         .avatar-shell {
           position: relative;
-          width: ${preview ? "156px" : "182px"};
-          height: ${preview ? "156px" : "182px"};
+          width: ${preview ? "144px" : "168px"};
+          height: ${preview ? "144px" : "168px"};
           flex-shrink: 0;
         }
 
@@ -729,10 +729,10 @@ export default function PublicProfileRenderer({
         }
 
         .profile-name {
-          margin: 16px 0 0;
+          margin: 12px 0 0;
           font-size: ${preview
-            ? `clamp(${Math.round(34 * densityTokens.bannerScale)}px, 5vw, ${Math.round(58 * densityTokens.bannerScale)}px)`
-            : `clamp(${Math.round(42 * densityTokens.bannerScale)}px, 6vw, ${Math.round(66 * densityTokens.bannerScale)}px)`};
+            ? `clamp(${Math.round(30 * densityTokens.bannerScale)}px, 4.6vw, ${Math.round(50 * densityTokens.bannerScale)}px)`
+            : `clamp(${Math.round(36 * densityTokens.bannerScale)}px, 5vw, ${Math.round(56 * densityTokens.bannerScale)}px)`};
           line-height: 0.9;
           letter-spacing: -0.08em;
           text-shadow: 0 16px 34px rgba(0, 0, 0, 0.28);
@@ -744,8 +744,8 @@ export default function PublicProfileRenderer({
         }
 
         .profile-username {
-          margin-top: 12px;
-          font-size: 16px;
+          margin-top: 10px;
+          font-size: 14px;
           font-weight: 700;
           letter-spacing: 0.02em;
         }
@@ -753,19 +753,19 @@ export default function PublicProfileRenderer({
         .profile-pill-row,
         .profile-badge-rail {
           display: flex;
-          gap: 10px;
+          gap: 8px;
           flex-wrap: wrap;
-          margin-top: ${Math.round(18 * spacingScale)}px;
+          margin-top: ${Math.round(14 * spacingScale)}px;
         }
 
         .profile-pill {
-          min-height: 34px;
-          padding: 0 12px;
+          min-height: 30px;
+          padding: 0 10px;
           border-radius: var(--profile-chip-radius);
           display: inline-flex;
           align-items: center;
-          gap: 8px;
-          font-size: 12px;
+          gap: 7px;
+          font-size: 11px;
           font-weight: 800;
           letter-spacing: 0.02em;
           border: 1px solid rgba(255, 255, 255, 0.08);
@@ -773,10 +773,10 @@ export default function PublicProfileRenderer({
         }
 
         .profile-bio {
-          margin-top: ${preview ? `${Math.round(16 * spacingScale)}px` : `${Math.round(20 * spacingScale)}px`};
-          max-width: 520px;
+          margin-top: ${preview ? `${Math.round(12 * spacingScale)}px` : `${Math.round(16 * spacingScale)}px`};
+          max-width: 460px;
           color: #e0e6f0;
-          font-size: 15px;
+          font-size: 14px;
           line-height: ${densityTokens.bioLineHeight};
           white-space: pre-wrap;
           overflow-wrap: anywhere;
@@ -786,35 +786,54 @@ export default function PublicProfileRenderer({
           position: relative;
           min-width: 0;
           transform: translate3d(0, 0, 0);
+          margin-inline: 0;
         }
 
         .widget-shell.music {
-          margin-top: ${Math.round(6 * spacingScale)}px;
+          margin-top: ${Math.round(4 * spacingScale)}px;
+          transform: translate3d(10px, 0, 0);
         }
 
         .widget-shell.social {
-          margin-bottom: ${Math.round(8 * spacingScale)}px;
+          margin-bottom: ${Math.round(4 * spacingScale)}px;
+          transform: translate3d(-8px, 0, 0);
+        }
+
+        .widget-shell.live {
+          transform: translate3d(12px, 0, 0);
+        }
+
+        .widget-shell.links {
+          transform: translate3d(18px, 0, 0);
+        }
+
+        .widget-shell.badges {
+          transform: translate3d(-4px, 0, 0);
+        }
+
+        .widget-shell.stats {
+          transform: translate3d(8px, 0, 0);
         }
 
         .widget-shell::before {
           content: "";
           position: absolute;
-          inset: -10px;
-          border-radius: calc(var(--profile-card-radius) + 12px);
+          inset: -6px;
+          border-radius: calc(var(--profile-card-radius) + 8px);
           background:
             radial-gradient(circle at 16% 18%, ${withAlpha(presence.accent, "0e")} 0%, transparent 34%),
             radial-gradient(circle at 84% 72%, ${withAlpha(presence.soft, "0c")} 0%, transparent 30%);
-          opacity: 0.9;
+          opacity: 0.72;
           z-index: -1;
         }
 
         .profile-badge-pill {
-          min-height: 38px;
-          padding: 0 12px;
+          min-height: 32px;
+          padding: 0 10px;
           border-radius: var(--profile-chip-radius);
           display: inline-flex;
           align-items: center;
-          gap: 10px;
+          gap: 8px;
           border: 1px solid rgba(255, 255, 255, 0.08);
           background: rgba(255, 255, 255, 0.04);
           max-width: 100%;
@@ -831,30 +850,30 @@ export default function PublicProfileRenderer({
         }
 
         .profile-badge-label {
-          font-size: 12px;
+          font-size: 11px;
           font-weight: 800;
           overflow-wrap: anywhere;
         }
 
         .links-copy h2 {
-          margin: 16px 0 0;
-          font-size: clamp(26px, 4vw, 36px);
+          margin: 12px 0 0;
+          font-size: clamp(22px, 3vw, 30px);
           line-height: 0.96;
           letter-spacing: -0.06em;
         }
 
         .links-copy p {
-          margin: 12px 0 0;
-          max-width: 420px;
+          margin: 10px 0 0;
+          max-width: 340px;
           color: #adb9d1;
-          font-size: 14px;
-          line-height: 1.75;
+          font-size: 13px;
+          line-height: 1.62;
         }
 
         .links-list {
           display: grid;
-          gap: ${Math.round(14 * spacingScale)}px;
-          margin-top: ${preview ? `${Math.round(16 * spacingScale)}px` : `${Math.round(24 * spacingScale)}px`};
+          gap: ${Math.round(12 * spacingScale)}px;
+          margin-top: ${preview ? `${Math.round(12 * spacingScale)}px` : `${Math.round(18 * spacingScale)}px`};
           min-width: 0;
         }
 
@@ -869,15 +888,15 @@ export default function PublicProfileRenderer({
           display: grid;
           grid-template-columns: auto minmax(0, 1fr) auto;
           align-items: center;
-          gap: 16px;
-          padding: 16px 16px 16px 14px;
+          gap: 14px;
+          padding: 14px 14px 14px 13px;
           border-radius: var(--profile-card-radius);
           background:
             linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.016)),
             linear-gradient(180deg, rgba(10, 12, 18, 0.58), rgba(9, 10, 16, 0.68));
           border: 1px solid rgba(255, 255, 255, 0.07);
           box-shadow:
-            0 16px 32px rgba(0, 0, 0, 0.18),
+            0 12px 24px rgba(0, 0, 0, 0.16),
             inset 0 1px 0 rgba(255, 255, 255, 0.04);
           transition:
             transform var(--profile-transition-duration) ease,
@@ -892,11 +911,11 @@ export default function PublicProfileRenderer({
         }
 
         .profile-link-card.float-a {
-          margin-inline-end: 16px;
+          margin-inline-end: 10px;
         }
 
         .profile-link-card.float-b {
-          margin-inline-start: 22px;
+          margin-inline-start: 14px;
         }
 
         .profile-link-glow {
@@ -908,8 +927,8 @@ export default function PublicProfileRenderer({
         }
 
         .profile-link-icon {
-          width: 52px;
-          height: 52px;
+          width: 46px;
+          height: 46px;
           border-radius: calc(var(--profile-card-radius) - 4px);
           display: flex;
           align-items: center;
@@ -930,7 +949,7 @@ export default function PublicProfileRenderer({
         }
 
         .profile-link-top strong {
-          font-size: 17px;
+          font-size: 15px;
           letter-spacing: -0.03em;
           color: #ffffff;
           overflow-wrap: anywhere;
@@ -955,22 +974,22 @@ export default function PublicProfileRenderer({
         }
 
         .profile-link-host {
-          margin-top: 6px;
+          margin-top: 5px;
           color: #9eabc6;
-          font-size: 13px;
+          font-size: 12px;
           line-height: 1.55;
         }
 
         .profile-link-url {
           margin-top: 4px;
           color: #7f8ca7;
-          font-size: 12px;
+          font-size: 11px;
           line-height: 1.55;
         }
 
         .profile-link-arrow {
-          width: 40px;
-          height: 40px;
+          width: 34px;
+          height: 34px;
           border-radius: calc(var(--profile-card-radius) - 7px);
           display: flex;
           align-items: center;
@@ -987,7 +1006,7 @@ export default function PublicProfileRenderer({
         .empty-links {
           border: 1px dashed rgba(255, 255, 255, 0.16);
           border-radius: var(--profile-card-radius);
-          padding: 28px 18px;
+          padding: 20px 16px;
           text-align: center;
           color: #95a2bc;
           background: rgba(255, 255, 255, 0.02);
@@ -1005,7 +1024,7 @@ export default function PublicProfileRenderer({
 
         @media (max-width: 980px) {
           .profile-shell {
-            width: min(100% - 28px, ${preview ? Math.min(depth.shellMaxWidth, 920) : depth.shellMaxWidth}px);
+            width: min(100% - 22px, ${preview ? Math.min(depth.shellMaxWidth, 860) : depth.shellMaxWidth}px);
           }
 
           .profile-floating-grid {
@@ -1019,8 +1038,15 @@ export default function PublicProfileRenderer({
           }
 
           .profile-link-card.float-a,
-          .profile-link-card.float-b {
+          .profile-link-card.float-b,
+          .widget-shell.music,
+          .widget-shell.social,
+          .widget-shell.live,
+          .widget-shell.links,
+          .widget-shell.badges,
+          .widget-shell.stats {
             margin-inline: 0;
+            transform: none;
           }
         }
 
@@ -1033,18 +1059,18 @@ export default function PublicProfileRenderer({
 
           .profile-identity-column,
           .profile-links-column {
-            padding: ${Math.round(20 * densityTokens.contentPadding)}px 18px 20px;
+            padding: ${Math.round(16 * densityTokens.contentPadding)}px 16px 16px;
           }
 
           .avatar-and-copy {
             grid-template-columns: 1fr;
-            gap: 18px;
+            gap: 14px;
             text-align: center;
           }
 
           .avatar-shell {
-            width: 156px;
-            height: 156px;
+            width: 144px;
+            height: 144px;
             margin: 0 auto;
           }
 
@@ -1055,6 +1081,15 @@ export default function PublicProfileRenderer({
 
           .profile-shell-orb {
             display: none;
+          }
+
+          .links-copy h2 {
+            font-size: 24px;
+          }
+
+          .profile-link-card {
+            gap: 12px;
+            padding: 13px 12px;
           }
         }
 
@@ -1142,8 +1177,8 @@ export default function PublicProfileRenderer({
                         auraBackground={presence.avatarAuraBackground}
                         ringColor={presence.avatarRing}
                         glowColor={presence.avatarGlow}
-                        size={182}
-                        frameInset={10}
+                        size={168}
+                        frameInset={9}
                         decorationScale={decorationScale}
                         decorationOffsetX={decorationOffsetX}
                         decorationOffsetY={decorationOffsetY}
@@ -1299,7 +1334,7 @@ function renderModernCompositionBlock(
 
   if (block === "live") {
     return (
-      <div key={block} className="widget-shell social">
+      <div key={block} className="widget-shell social live">
         <ProfileRenderBoundary label="Live presence" compact resetKey={`${input.username}-${block}`}>
           <SocialPresenceSection
             blocks={input.liveSocialBlocks}
@@ -1316,7 +1351,7 @@ function renderModernCompositionBlock(
 
   if (block === "links") {
     return (
-      <div key={block}>
+      <div key={block} className="widget-shell links">
         <div className="links-header">
           <div className="links-copy">
             <div className="profile-kicker">
@@ -1340,7 +1375,7 @@ function renderModernCompositionBlock(
 
   if (block === "badges") {
     return (
-      <div key={block}>
+      <div key={block} className="widget-shell badges">
         <div className="profile-kicker" style={{ marginBottom: "14px", width: "fit-content" }}>
           <LuBadgeCheck size={13} />
           Badges
@@ -1392,7 +1427,7 @@ function renderModernCompositionBlock(
   }
 
   return (
-    <div key={block}>
+    <div key={block} className="widget-shell stats">
       {input.preview ? (
         <div className="empty-links">
           <strong style={{ display: "block", color: "#ffffff", marginBottom: "8px" }}>

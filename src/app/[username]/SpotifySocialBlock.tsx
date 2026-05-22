@@ -21,7 +21,7 @@ export default function SpotifySocialBlock({
   compact = false,
 }: Props) {
   return (
-    <article style={{ ...cardStyle, padding: compact ? "18px" : "22px" }}>
+    <article style={{ ...cardStyle, padding: compact ? "16px" : "18px" }}>
       <div style={glowStyle(themeColor)} />
 
       <div style={topRowStyle}>
@@ -42,7 +42,7 @@ export default function SpotifySocialBlock({
 
         <div style={{ minWidth: 0, display: "grid", gap: "6px" }}>
           <div style={nowPlayingLabelStyle}>Now playing</div>
-          <div style={{ fontSize: compact ? "21px" : "24px", fontWeight: 900, letterSpacing: "-0.04em" }}>
+          <div style={{ fontSize: compact ? "18px" : "21px", fontWeight: 900, letterSpacing: "-0.04em" }}>
             {trackName || "Track title"}
           </div>
           <div style={artistStyle}>{artistName || "Artist name"}</div>
@@ -76,16 +76,16 @@ const cardStyle: CSSProperties = {
   position: "relative",
   overflow: "hidden",
   display: "grid",
-  gap: "16px",
+  gap: "14px",
   width: "100%",
   maxWidth: "100%",
   minWidth: 0,
   boxSizing: "border-box",
-  borderRadius: "24px",
+  borderRadius: "20px",
   border: "1px solid rgba(30,215,96,0.24)",
   background:
     "linear-gradient(155deg, rgba(30,215,96,0.16), rgba(12,18,16,0.98) 36%, rgba(7,11,10,0.98) 100%)",
-  boxShadow: "0 22px 48px rgba(0,0,0,0.28)",
+  boxShadow: "0 14px 28px rgba(0,0,0,0.22)",
 };
 
 const glowStyle = (themeColor: string): CSSProperties => ({
@@ -111,9 +111,9 @@ const topRowStyle: CSSProperties = {
 };
 
 const brandWrapStyle: CSSProperties = {
-  width: "48px",
-  height: "48px",
-  borderRadius: "16px",
+  width: "42px",
+  height: "42px",
+  borderRadius: "14px",
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
@@ -133,10 +133,10 @@ const badgeRowStyle: CSSProperties = {
 const chipBaseStyle: CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
-  minHeight: "30px",
-  padding: "0 12px",
+  minHeight: "26px",
+  padding: "0 10px",
   borderRadius: "999px",
-  fontSize: "11px",
+  fontSize: "10px",
   fontWeight: 800,
   letterSpacing: "0.06em",
   textTransform: "uppercase",
@@ -160,17 +160,17 @@ const playerShellStyle: CSSProperties = {
   position: "relative",
   zIndex: 1,
   display: "grid",
-  gridTemplateColumns: "86px minmax(0, 1fr)",
-  gap: "14px",
+  gridTemplateColumns: "72px minmax(0, 1fr)",
+  gap: "12px",
   alignItems: "center",
   minWidth: 0,
 };
 
 const coverArtStyle: CSSProperties = {
   position: "relative",
-  width: "86px",
-  height: "86px",
-  borderRadius: "20px",
+  width: "72px",
+  height: "72px",
+  borderRadius: "16px",
   overflow: "hidden",
   background:
     "radial-gradient(circle at 30% 20%, rgba(255,255,255,0.22), transparent 18%), linear-gradient(145deg, #1ed760 0%, #0f172a 58%, #05070b 100%)",
@@ -189,7 +189,7 @@ const vinylGlowStyle: CSSProperties = {
 
 const nowPlayingLabelStyle: CSSProperties = {
   color: "#86efac",
-  fontSize: "11px",
+  fontSize: "10px",
   fontWeight: 800,
   letterSpacing: "0.08em",
   textTransform: "uppercase",
@@ -197,7 +197,7 @@ const nowPlayingLabelStyle: CSSProperties = {
 
 const artistStyle: CSSProperties = {
   color: "#d1fae5",
-  fontSize: "14px",
+  fontSize: "13px",
   fontWeight: 700,
   lineHeight: 1.5,
   overflowWrap: "anywhere",
@@ -206,7 +206,7 @@ const artistStyle: CSSProperties = {
 
 const usernameStyle: CSSProperties = {
   color: "#9fb3a8",
-  fontSize: "13px",
+  fontSize: "12px",
   fontWeight: 700,
   overflowWrap: "anywhere",
 };
@@ -214,8 +214,8 @@ const usernameStyle: CSSProperties = {
 const copyStyle: CSSProperties = {
   margin: 0,
   color: "#d0e5d7",
-  fontSize: "14px",
-  lineHeight: 1.7,
+  fontSize: "13px",
+  lineHeight: 1.58,
   overflowWrap: "anywhere",
   wordBreak: "break-word",
 };
@@ -235,13 +235,13 @@ const metaLineStyle: CSSProperties = {
   alignItems: "center",
   gap: "10px",
   color: "#dcfce7",
-  fontSize: "13px",
+  fontSize: "12px",
   fontWeight: 700,
 };
 
 const statusDotStyle: CSSProperties = {
-  width: "10px",
-  height: "10px",
+  width: "8px",
+  height: "8px",
   borderRadius: "999px",
   backgroundColor: "#1ed760",
   boxShadow: "0 0 12px rgba(30,215,96,0.52)",
@@ -250,14 +250,14 @@ const statusDotStyle: CSSProperties = {
 
 const ctaStyle: CSSProperties = {
   textDecoration: "none",
-  minHeight: "38px",
-  padding: "0 14px",
+  minHeight: "34px",
+  padding: "0 12px",
   borderRadius: "999px",
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
   color: "#04110a",
-  fontSize: "13px",
+  fontSize: "12px",
   fontWeight: 900,
   background: "linear-gradient(135deg, rgba(30,215,96,0.98), rgba(74,222,128,0.92))",
   boxShadow: "0 16px 28px rgba(30,215,96,0.20)",
@@ -265,7 +265,7 @@ const ctaStyle: CSSProperties = {
 
 const hintStyle: CSSProperties = {
   color: "#98b5a5",
-  fontSize: "13px",
+  fontSize: "12px",
   fontWeight: 700,
   overflowWrap: "anywhere",
 };

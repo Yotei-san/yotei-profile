@@ -218,7 +218,7 @@ function DefaultLayout(props: Props) {
           bannerUrl={props.user.bannerUrl}
           bannerKind={props.bannerKind}
           themeColor={props.themeColor}
-          height={Math.round((props.preview ? 220 : 260) * densityTokens.bannerScale)}
+          height={Math.round((props.preview ? 204 : 232) * densityTokens.bannerScale)}
           roundedTop
           preview={props.preview}
           presenceOverlay={presence.auraOverlay}
@@ -244,8 +244,8 @@ function DefaultLayout(props: Props) {
               decorationScale={props.decorationScale}
               decorationOffsetX={props.decorationOffsetX}
               decorationOffsetY={props.decorationOffsetY}
-              size={126}
-              frameInset={8}
+              size={114}
+              frameInset={7}
               presenceAccent={presence.accent}
               presenceContrast={presence.contrast}
               presenceSoft={presence.soft}
@@ -380,7 +380,7 @@ function SimplisticLayout(props: Props) {
             decorationScale={props.decorationScale}
             decorationOffsetX={props.decorationOffsetX}
             decorationOffsetY={props.decorationOffsetY}
-            size={92}
+            size={84}
             frameInset={6}
             minimal
             presenceAccent={presence.accent}
@@ -424,7 +424,7 @@ function SimplisticLayout(props: Props) {
             bannerUrl={props.user.bannerUrl}
             bannerKind={props.bannerKind}
             themeColor={props.themeColor}
-            height={Math.round((props.preview ? 136 : 160) * densityTokens.bannerScale)}
+            height={Math.round((props.preview ? 122 : 146) * densityTokens.bannerScale)}
             preview={props.preview}
             presenceOverlay={presence.auraOverlay}
             accentColor={presence.accent}
@@ -525,7 +525,7 @@ function PortfolioLayout(props: Props) {
           bannerUrl={props.user.bannerUrl}
           bannerKind={props.bannerKind}
           themeColor={props.themeColor}
-          height={Math.round((props.preview ? 188 : 220) * densityTokens.bannerScale)}
+          height={Math.round((props.preview ? 174 : 204) * densityTokens.bannerScale)}
           preview={props.preview}
           presenceOverlay={presence.auraOverlay}
           accentColor={presence.accent}
@@ -565,8 +565,8 @@ function PortfolioLayout(props: Props) {
             decorationScale={props.decorationScale}
             decorationOffsetX={props.decorationOffsetX}
             decorationOffsetY={props.decorationOffsetY}
-            size={108}
-            frameInset={7}
+            size={96}
+            frameInset={6}
             presenceAccent={presence.accent}
             presenceContrast={presence.contrast}
             presenceSoft={presence.soft}
@@ -729,10 +729,10 @@ function DetachedWidget({
       <div
         style={{
           position: "absolute",
-          inset: "-10px",
-          borderRadius: "28px",
+          inset: "-6px",
+          borderRadius: "24px",
           background: `radial-gradient(circle at 18% 18%, ${withAlpha(accent, "10")} 0%, transparent 32%)`,
-          opacity: Math.min(0.92, 0.42 + depth.lightingOpacity),
+          opacity: Math.min(0.78, 0.3 + depth.lightingOpacity * 0.72),
           zIndex: -1,
           pointerEvents: "none",
         }}
@@ -962,13 +962,13 @@ function PillRow({
             display: "inline-flex",
             alignItems: "center",
             gap: "8px",
-            minHeight: compact ? "32px" : "34px",
-            padding: compact ? "0 11px" : "0 12px",
+            minHeight: compact ? "28px" : "30px",
+            padding: compact ? "0 10px" : "0 11px",
             borderRadius: "999px",
             color: pill.color,
             background: subtle ? "rgba(255,255,255,0.04)" : withAlpha(pill.color, "14"),
             border: `1px solid ${subtle ? "rgba(255,255,255,0.08)" : withAlpha(pill.color, "24")}`,
-            fontSize: compact ? "11px" : "12px",
+            fontSize: "11px",
             fontWeight: 800,
             letterSpacing: "0.02em",
           }}
@@ -997,7 +997,7 @@ function BadgeRail({
   }
 
   return (
-    <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+    <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
       {badges.map((item) => {
         const visual = getBadgeVisual(item.badge, themeColor, minimal);
 
@@ -1008,39 +1008,39 @@ function BadgeRail({
             style={{
               display: "inline-flex",
               alignItems: "center",
-              gap: "10px",
-              minHeight: "38px",
-              padding: "0 12px",
+              gap: "8px",
+              minHeight: "32px",
+              padding: "0 10px",
               borderRadius: "999px",
               border: `1px solid ${visual.pillBorder}`,
               background: visual.pillBackground,
               boxShadow: visual.pillShadow,
             }}
           >
-          <div
-            style={{
-              width: "auto",
-              minWidth: "26px",
-              height: "26px",
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0,
-            }}
-          >
-            <BadgeVisual
-              slug={item.badge.slug}
-              color={item.badge.color || themeColor}
-              rarity={item.badge.rarity}
-              category={item.badge.category}
-              size={30}
-              compact
-            />
+            <div
+              style={{
+                width: "auto",
+                minWidth: "24px",
+                height: "24px",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+              }}
+            >
+              <BadgeVisual
+                slug={item.badge.slug}
+                color={item.badge.color || themeColor}
+                rarity={item.badge.rarity}
+                category={item.badge.category}
+                size={28}
+                compact
+              />
+            </div>
+            <span style={{ fontSize: "11px", fontWeight: 800, color: visual.labelColor }}>
+              {item.badge.name}
+            </span>
           </div>
-          <span style={{ fontSize: "12px", fontWeight: 800, color: visual.labelColor }}>
-            {item.badge.name}
-          </span>
-        </div>
         );
       })}
       {extraBadgeCount > 0 ? (
@@ -1049,9 +1049,9 @@ function BadgeRail({
           style={{
             display: "inline-flex",
             alignItems: "center",
-            gap: "10px",
-            minHeight: "38px",
-            padding: "0 12px",
+            gap: "8px",
+            minHeight: "32px",
+            padding: "0 10px",
             borderRadius: "999px",
             border: "1px solid rgba(255,255,255,0.08)",
             background: minimal ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.04)",
@@ -1061,7 +1061,7 @@ function BadgeRail({
           <div
             style={{
               width: "26px",
-              height: "26px",
+              height: "24px",
               borderRadius: "999px",
               display: "inline-flex",
               alignItems: "center",
@@ -1069,14 +1069,14 @@ function BadgeRail({
               color: "#ffffff",
               background: withAlpha(themeColor, "18"),
               boxShadow: `0 10px 18px ${withAlpha(themeColor, "14")}`,
-              fontSize: "11px",
+              fontSize: "10px",
               fontWeight: 900,
               flexShrink: 0,
             }}
           >
             +{extraBadgeCount}
           </div>
-          <span style={{ fontSize: "12px", fontWeight: 800, color: "#f4f4f5" }}>
+          <span style={{ fontSize: "11px", fontWeight: 800, color: "#f4f4f5" }}>
             More
           </span>
         </div>
@@ -1140,7 +1140,7 @@ function LinksSection({
     <section
       style={{
         display: "grid",
-        gap: `${Math.round(12 * density.sectionGap)}px`,
+        gap: `${Math.round(10 * density.sectionGap)}px`,
       }}
     >
       <div style={{ display: "grid", gap: "8px" }}>
@@ -1150,7 +1150,7 @@ function LinksSection({
         </div>
       </div>
 
-      <div style={{ display: "grid", gap: `${Math.round(14 * density.sectionGap * depth.spacingScale)}px` }}>
+      <div style={{ display: "grid", gap: `${Math.round(10 * density.sectionGap * depth.spacingScale)}px` }}>
         {links.length > 0 ? (
           links.map((link, index) => {
             const platform = getLinkPlatform(link.url, link.title);
@@ -1189,7 +1189,7 @@ function LinksSection({
                     motionTokens.hoverShadowBoost > 0.8 ? "12" : "0d",
                   )}, inset 0 1px 0 ${surfaceBorder}`,
                   transition: `transform ${motionTokens.transitionDurationMs}ms ease, box-shadow ${motionTokens.transitionDurationMs}ms ease`,
-                  padding: isPill ? "12px 14px" : isStacked ? "16px" : undefined,
+                  padding: isPill ? "10px 12px" : isStacked ? "14px" : "12px",
                   marginInlineStart:
                     layout === "portfolio"
                       ? "0"
@@ -1197,11 +1197,11 @@ function LinksSection({
                         ? "0"
                         : index % 2 === 0
                         ? "0"
-                        : `${Math.round(16 * depth.spacingScale)}px`,
+                        : `${Math.round(10 * depth.spacingScale)}px`,
                   marginInlineEnd:
                     layout === "portfolio" || isStacked || isPill || index % 2 === 1
                       ? "0"
-                      : `${Math.round(12 * depth.spacingScale)}px`,
+                      : `${Math.round(8 * depth.spacingScale)}px`,
                 }}
               >
                 <div
@@ -1210,11 +1210,11 @@ function LinksSection({
                     borderRadius: `${Math.max(cornerTokens.cardRadius - 4, 12)}px`,
                     background: withAlpha(color, layout === "simplistic" ? "12" : "16"),
                     color,
-                    width: isPill ? "42px" : "48px",
-                    height: isPill ? "42px" : "48px",
+                    width: isPill ? "38px" : "42px",
+                    height: isPill ? "38px" : "42px",
                   }}
                 >
-                  <PlatformIcon size={isPill ? 18 : 20} color={color} aria-hidden="true" />
+                  <PlatformIcon size={isPill ? 16 : 18} color={color} aria-hidden="true" />
                 </div>
 
                 <div style={{ minWidth: 0 }}>
@@ -1222,24 +1222,24 @@ function LinksSection({
                     style={{
                       display: "flex",
                       alignItems: "center",
-                      gap: "10px",
+                      gap: "8px",
                       flexWrap: "wrap",
                     }}
                   >
-                    <strong style={{ fontSize: "17px", color: "#ffffff" }}>
+                    <strong style={{ fontSize: "15px", color: "#ffffff" }}>
                       {link.title || platform.name}
                     </strong>
                     <span
                       style={{
                         display: "inline-flex",
                         alignItems: "center",
-                        minHeight: "24px",
-                        padding: "0 8px",
+                        minHeight: "22px",
+                        padding: "0 7px",
                         borderRadius: `${cornerTokens.chipRadius}px`,
                         border: "1px solid currentColor",
                         color,
                         background: withAlpha(color, "0f"),
-                        fontSize: "11px",
+                        fontSize: "10px",
                         fontWeight: 800,
                         letterSpacing: "0.03em",
                       }}
@@ -1248,11 +1248,11 @@ function LinksSection({
                     </span>
                   </div>
 
-                  <div style={{ color: "#a1a1aa", fontSize: "13px", marginTop: "6px" }}>
+                  <div style={{ color: "#a1a1aa", fontSize: "12px", marginTop: "5px" }}>
                     {hostname}
                   </div>
                   {isPill ? null : (
-                    <div style={{ color: "#71717a", fontSize: "12px", marginTop: "4px" }}>
+                    <div style={{ color: "#71717a", fontSize: "11px", marginTop: "4px" }}>
                       {link.url}
                     </div>
                   )}
@@ -1260,8 +1260,8 @@ function LinksSection({
 
                 <div
                   style={{
-                    width: "38px",
-                    height: "38px",
+                    width: "32px",
+                    height: "32px",
                     borderRadius: `${Math.max(cornerTokens.cardRadius - 8, 10)}px`,
                     display: "flex",
                     alignItems: "center",
@@ -1272,9 +1272,9 @@ function LinksSection({
                     flexShrink: 0,
                   }}
                 >
-                  <LuArrowUpRight size={16} />
-                </div>
-              </a>
+                    <LuArrowUpRight size={14} />
+                  </div>
+                </a>
             );
           })
         ) : (
@@ -1334,8 +1334,8 @@ const defaultPageStyle = (
   overflow: "hidden",
   isolation: "isolate",
   padding: preview
-    ? `${Math.round(24 * densityTokens.shellPadding * depth.spacingScale)}px`
-    : `${Math.round(32 * densityTokens.shellPadding * depth.spacingScale)}px 16px ${Math.round(40 * densityTokens.shellPadding * depth.spacingScale)}px`,
+    ? `${Math.round(18 * densityTokens.shellPadding * depth.spacingScale)}px`
+    : `${Math.round(24 * densityTokens.shellPadding * depth.spacingScale)}px 12px ${Math.round(28 * densityTokens.shellPadding * depth.spacingScale)}px`,
   color: "#ffffff",
   fontFamily: '"Space Grotesk", Inter, Arial, Helvetica, sans-serif',
   background: `${stageGlow}, linear-gradient(180deg, rgba(5,6,10,0.98), rgba(3,4,7,1)), radial-gradient(circle at top, ${withAlpha(themeColor, "16")} 0%, transparent 28%)`,
@@ -1356,8 +1356,8 @@ const defaultShellStyle = (
     themeColor: "#f472b6",
   }).depth,
 ): CSSProperties => ({
-  width: `min(${depth.shellMaxWidth}px, 100%)`,
-  maxWidth: `${depth.shellMaxWidth}px`,
+  width: `min(${Math.min(depth.shellMaxWidth, 860)}px, 100%)`,
+  maxWidth: `${Math.min(depth.shellMaxWidth, 860)}px`,
   margin: "0 auto",
   position: "relative",
   zIndex: 1,
@@ -1384,11 +1384,11 @@ const defaultContentStyle = (
   compositionSpacingScale = 1,
 ): CSSProperties => ({
   display: "grid",
-  gap: `${Math.round(24 * densityTokens.sectionGap * depth.spacingScale * compositionSpacingScale)}px`,
+  gap: `${Math.round(18 * densityTokens.sectionGap * depth.spacingScale * compositionSpacingScale)}px`,
   padding: preview
-    ? `0 ${Math.round(26 * densityTokens.contentPadding)}px ${Math.round(32 * densityTokens.contentPadding)}px`
-    : `0 ${Math.round(26 * densityTokens.contentPadding)}px ${Math.round(28 * densityTokens.contentPadding)}px`,
-  marginTop: "-54px",
+    ? `0 ${Math.round(20 * densityTokens.contentPadding)}px ${Math.round(24 * densityTokens.contentPadding)}px`
+    : `0 ${Math.round(20 * densityTokens.contentPadding)}px ${Math.round(22 * densityTokens.contentPadding)}px`,
+  marginTop: "-42px",
   minWidth: 0,
 });
 
@@ -1402,7 +1402,7 @@ const defaultIdentityStyle = (
 ): CSSProperties => ({
   display: "grid",
   gridTemplateColumns: "auto minmax(0, 1fr)",
-  gap: `${Math.round(18 * depth.spacingScale)}px`,
+  gap: `${Math.round(14 * depth.spacingScale)}px`,
   alignItems: "end",
   minWidth: 0,
 });
@@ -1411,7 +1411,7 @@ const defaultNameStyle = (
   densityTokens = getProfileDensityTokens("balanced"),
 ): CSSProperties => ({
   margin: 0,
-  fontSize: `${Math.round(46 * densityTokens.bannerScale)}px`,
+  fontSize: `${Math.round(40 * densityTokens.bannerScale)}px`,
   lineHeight: 0.96,
   letterSpacing: "-0.06em",
 });
@@ -1428,7 +1428,7 @@ const defaultBioStyle = (
   margin: 0,
   color: "#d4d4d8",
   lineHeight: densityTokens.bioLineHeight,
-  fontSize: "15px",
+  fontSize: "14px",
   whiteSpace: "pre-wrap",
 });
 
@@ -1450,8 +1450,8 @@ const simplisticPageStyle = (
   overflow: "hidden",
   isolation: "isolate",
   padding: preview
-    ? `${Math.round(26 * densityTokens.shellPadding * depth.spacingScale)}px 24px`
-    : `${Math.round(40 * densityTokens.shellPadding * depth.spacingScale)}px 16px`,
+    ? `${Math.round(18 * densityTokens.shellPadding * depth.spacingScale)}px 20px`
+    : `${Math.round(28 * densityTokens.shellPadding * depth.spacingScale)}px 12px`,
   color: "#ffffff",
   fontFamily: 'Inter, Arial, Helvetica, sans-serif',
   background: `${stageGlow}, ${surfaceBackground}`,
@@ -1469,13 +1469,13 @@ const simplisticShellStyle = (
   }).depth,
   compositionSpacingScale = 1,
 ): CSSProperties => ({
-  width: `min(${Math.min(depth.shellMaxWidth, 860)}px, 100%)`,
-  maxWidth: `${Math.min(depth.shellMaxWidth, 860)}px`,
+  width: `min(${Math.min(depth.shellMaxWidth, 620)}px, 100%)`,
+  maxWidth: `${Math.min(depth.shellMaxWidth, 620)}px`,
   margin: "0 auto",
   position: "relative",
   zIndex: 1,
   display: "grid",
-  gap: `${Math.round(20 * densityTokens.sectionGap * depth.spacingScale * compositionSpacingScale)}px`,
+  gap: `${Math.round(16 * densityTokens.sectionGap * depth.spacingScale * compositionSpacingScale)}px`,
   minWidth: 0,
   backdropFilter: glassBackdrop,
   WebkitBackdropFilter: glassBackdrop,
@@ -1493,9 +1493,9 @@ const simplisticHeaderStyle = (
 ): CSSProperties => ({
   display: "grid",
   gridTemplateColumns: "auto minmax(0, 1fr)",
-  gap: `${Math.round(18 * densityTokens.sectionGap * depth.spacingScale * compositionSpacingScale)}px`,
+  gap: `${Math.round(14 * densityTokens.sectionGap * depth.spacingScale * compositionSpacingScale)}px`,
   alignItems: "center",
-  padding: `${Math.round(22 * densityTokens.contentPadding)}px 0 4px`,
+  padding: `${Math.round(18 * densityTokens.contentPadding)}px 0 2px`,
   minWidth: 0,
 });
 
@@ -1503,7 +1503,7 @@ const simplisticNameStyle = (
   densityTokens = getProfileDensityTokens("balanced"),
 ): CSSProperties => ({
   margin: 0,
-  fontSize: `${Math.round(44 * densityTokens.bannerScale)}px`,
+  fontSize: `${Math.round(38 * densityTokens.bannerScale)}px`,
   lineHeight: 0.96,
   letterSpacing: "-0.05em",
 });
@@ -1514,7 +1514,7 @@ const simplisticBioStyle = (
   margin: 0,
   color: "#c4c7cf",
   lineHeight: densityTokens.bioLineHeight,
-  fontSize: "15px",
+  fontSize: "14px",
   whiteSpace: "pre-wrap",
 });
 
@@ -1547,8 +1547,8 @@ const portfolioPageStyle = (
   overflow: "hidden",
   isolation: "isolate",
   padding: preview
-    ? `${Math.round(24 * densityTokens.shellPadding * depth.spacingScale)}px`
-    : `${Math.round(24 * densityTokens.shellPadding * depth.spacingScale)}px 16px ${Math.round(38 * densityTokens.shellPadding * depth.spacingScale)}px`,
+    ? `${Math.round(18 * densityTokens.shellPadding * depth.spacingScale)}px`
+    : `${Math.round(18 * densityTokens.shellPadding * depth.spacingScale)}px 12px ${Math.round(28 * densityTokens.shellPadding * depth.spacingScale)}px`,
   color: "#ffffff",
   fontFamily: '"Space Grotesk", Inter, Arial, Helvetica, sans-serif',
   background: `${stageGlow}, ${surfaceBackground}`,
@@ -1564,8 +1564,8 @@ const portfolioBannerWrapStyle = (
     themeColor: "#f472b6",
   }).depth,
 ): CSSProperties => ({
-  width: `min(${Math.min(depth.shellMaxWidth + 80, 1160)}px, 100%)`,
-  maxWidth: `${Math.min(depth.shellMaxWidth + 80, 1160)}px`,
+  width: `min(${Math.min(depth.shellMaxWidth + 40, 980)}px, 100%)`,
+  maxWidth: `${Math.min(depth.shellMaxWidth + 40, 980)}px`,
   position: "relative",
   zIndex: 1,
   margin: preview
@@ -1584,14 +1584,14 @@ const portfolioShellStyle = (
   }).depth,
   compositionSpacingScale = 1,
 ): CSSProperties => ({
-  width: `min(${Math.min(depth.shellMaxWidth + 80, 1160)}px, 100%)`,
-  maxWidth: `${Math.min(depth.shellMaxWidth + 80, 1160)}px`,
+  width: `min(${Math.min(depth.shellMaxWidth + 40, 980)}px, 100%)`,
+  maxWidth: `${Math.min(depth.shellMaxWidth + 40, 980)}px`,
   position: "relative",
   zIndex: 1,
   margin: "0 auto",
   display: "grid",
-  gridTemplateColumns: "minmax(0, 320px) minmax(0, 1fr)",
-  gap: `${Math.round(20 * densityTokens.sectionGap * depth.spacingScale * compositionSpacingScale)}px`,
+  gridTemplateColumns: "minmax(0, 280px) minmax(0, 1fr)",
+  gap: `${Math.round(16 * densityTokens.sectionGap * depth.spacingScale * compositionSpacingScale)}px`,
   minWidth: 0,
 });
 
@@ -1612,8 +1612,8 @@ const portfolioSidebarStyle = (
 ): CSSProperties => ({
   display: "grid",
   alignContent: "start",
-  gap: `${Math.round(18 * depth.spacingScale)}px`,
-  padding: "22px",
+  gap: `${Math.round(14 * depth.spacingScale)}px`,
+  padding: "18px",
   borderRadius: `${cornerTokens.panelRadius}px`,
   border: `1px solid ${surfaceBorder}`,
   background: surfaceBackground,
@@ -1642,8 +1642,8 @@ const portfolioMainStyle = (
   }).depth,
 ): CSSProperties => ({
   display: "grid",
-  gap: `${Math.round(18 * depth.spacingScale)}px`,
-  padding: "22px",
+  gap: `${Math.round(14 * depth.spacingScale)}px`,
+  padding: "18px",
   borderRadius: `${cornerTokens.panelRadius}px`,
   border: `1px solid ${surfaceBorder}`,
   background: surfaceBackground,
@@ -1665,7 +1665,7 @@ const portfolioNameStyle = (
   densityTokens = getProfileDensityTokens("balanced"),
 ): CSSProperties => ({
   margin: 0,
-  fontSize: `${Math.round(40 * densityTokens.bannerScale)}px`,
+  fontSize: `${Math.round(34 * densityTokens.bannerScale)}px`,
   lineHeight: 0.96,
   letterSpacing: "-0.05em",
 });
@@ -1676,13 +1676,13 @@ const portfolioBioStyle = (
   margin: 0,
   color: "#cbd5e1",
   lineHeight: densityTokens.bioLineHeight,
-  fontSize: "14px",
+  fontSize: "13px",
   whiteSpace: "pre-wrap",
 });
 
 const portfolioSectionTitleStyle: CSSProperties = {
   margin: 0,
-  fontSize: "36px",
+  fontSize: "30px",
   lineHeight: 0.98,
   letterSpacing: "-0.05em",
 };
@@ -1690,8 +1690,8 @@ const portfolioSectionTitleStyle: CSSProperties = {
 const portfolioSectionTextStyle: CSSProperties = {
   margin: 0,
   color: "#aab4c8",
-  lineHeight: 1.75,
-  fontSize: "14px",
+  lineHeight: 1.65,
+  fontSize: "13px",
   maxWidth: "62ch",
 };
 
@@ -1700,13 +1700,13 @@ const simpleKickerStyle = (themeColor: string): CSSProperties => ({
   alignItems: "center",
   gap: "8px",
   width: "fit-content",
-  minHeight: "34px",
-  padding: "0 12px",
+  minHeight: "30px",
+  padding: "0 10px",
   borderRadius: "999px",
   border: `1px solid ${withAlpha(themeColor, "24")}`,
   background: withAlpha(themeColor, "12"),
   color: "#f1f5f9",
-  fontSize: "12px",
+  fontSize: "11px",
   fontWeight: 800,
   letterSpacing: "0.02em",
 });
@@ -1714,14 +1714,14 @@ const simpleKickerStyle = (themeColor: string): CSSProperties => ({
 const eyebrowStyle = (themeColor: string): CSSProperties => ({
   display: "inline-flex",
   width: "fit-content",
-  minHeight: "34px",
+  minHeight: "30px",
   alignItems: "center",
-  padding: "0 12px",
+  padding: "0 10px",
   borderRadius: "999px",
   color: "#f9a8d4",
   background: withAlpha(themeColor, "12"),
   border: `1px solid ${withAlpha(themeColor, "24")}`,
-  fontSize: "12px",
+  fontSize: "11px",
   fontWeight: 800,
   letterSpacing: "0.06em",
   textTransform: "uppercase",
@@ -1733,16 +1733,16 @@ const presenceChipStyle = (
   cornerTokens = getProfileCornerTokens("rounded"),
 ): CSSProperties => ({
   width: "fit-content",
-  minHeight: "32px",
-  padding: "0 12px",
+  minHeight: "28px",
+  padding: "0 10px",
   borderRadius: `${cornerTokens.chipRadius}px`,
   display: "inline-flex",
   alignItems: "center",
   color: "#f8fafc",
   background,
   border: `1px solid ${borderColor}`,
-  boxShadow: "0 12px 22px rgba(0,0,0,0.16)",
-  fontSize: "12px",
+  boxShadow: "0 10px 18px rgba(0,0,0,0.14)",
+  fontSize: "11px",
   fontWeight: 800,
   letterSpacing: "0.02em",
 });
@@ -1752,8 +1752,8 @@ const linkCardBaseStyle: CSSProperties = {
   display: "grid",
   gridTemplateColumns: "auto minmax(0, 1fr) auto",
   alignItems: "center",
-  gap: "14px",
-  borderRadius: "22px",
+  gap: "12px",
+  borderRadius: "18px",
   width: "100%",
   maxWidth: "100%",
   minWidth: 0,
@@ -1762,27 +1762,27 @@ const linkCardBaseStyle: CSSProperties = {
 };
 
 const defaultLinkCardStyle: CSSProperties = {
-  padding: "14px",
+  padding: "12px",
   background: "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015))",
   border: "1px solid rgba(255,255,255,0.08)",
 };
 
 const simplisticLinkCardStyle: CSSProperties = {
-  padding: "14px",
+  padding: "12px",
   background: "rgba(255,255,255,0.02)",
   border: "1px solid rgba(255,255,255,0.06)",
 };
 
 const portfolioLinkCardStyle: CSSProperties = {
-  padding: "16px",
+  padding: "13px",
   background: "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.018))",
   border: "1px solid rgba(255,255,255,0.08)",
 };
 
 const linkIconStyle: CSSProperties = {
-  width: "48px",
-  height: "48px",
-  borderRadius: "18px",
+  width: "42px",
+  height: "42px",
+  borderRadius: "14px",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
@@ -1795,7 +1795,7 @@ const emptyLinksStyle = (
 ): CSSProperties => ({
   borderRadius: `${cornerTokens.cardRadius}px`,
   border: "1px dashed rgba(255,255,255,0.16)",
-  padding: "26px 18px",
+  padding: "20px 16px",
   textAlign: "center",
   color: "#a1a1aa",
   background: "rgba(255,255,255,0.02)",

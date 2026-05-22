@@ -19,7 +19,7 @@ export default function GitHubSocialBlock({
   compact = false,
 }: Props) {
   return (
-    <article style={{ ...cardStyle, padding: compact ? "18px" : "22px" }}>
+    <article style={{ ...cardStyle, padding: compact ? "16px" : "18px" }}>
       <div style={glowStyle(themeColor)} />
 
       <div style={topRowStyle}>
@@ -34,7 +34,7 @@ export default function GitHubSocialBlock({
       </div>
 
       <div style={{ position: "relative", zIndex: 1, display: "grid", gap: "8px" }}>
-        <div style={{ fontSize: compact ? "22px" : "26px", fontWeight: 900, letterSpacing: "-0.04em" }}>
+        <div style={{ fontSize: compact ? "19px" : "22px", fontWeight: 900, letterSpacing: "-0.04em" }}>
           {username ? `@${username.replace(/^@+/, "")}` : "GitHub"}
         </div>
         <p style={copyStyle}>
@@ -71,16 +71,16 @@ const cardStyle: CSSProperties = {
   position: "relative",
   overflow: "hidden",
   display: "grid",
-  gap: "16px",
+  gap: "14px",
   width: "100%",
   maxWidth: "100%",
   minWidth: 0,
   boxSizing: "border-box",
-  borderRadius: "24px",
+  borderRadius: "20px",
   border: "1px solid rgba(148,163,184,0.22)",
   background:
     "linear-gradient(155deg, rgba(148,163,184,0.16), rgba(15,18,28,0.98) 36%, rgba(7,9,15,0.98) 100%)",
-  boxShadow: "0 22px 48px rgba(0,0,0,0.28)",
+  boxShadow: "0 14px 28px rgba(0,0,0,0.22)",
 };
 
 const glowStyle = (themeColor: string): CSSProperties => ({
@@ -106,9 +106,9 @@ const topRowStyle: CSSProperties = {
 };
 
 const brandWrapStyle: CSSProperties = {
-  width: "48px",
-  height: "48px",
-  borderRadius: "16px",
+  width: "42px",
+  height: "42px",
+  borderRadius: "14px",
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
@@ -128,10 +128,10 @@ const badgeRowStyle: CSSProperties = {
 const chipBaseStyle: CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
-  minHeight: "30px",
-  padding: "0 12px",
+  minHeight: "26px",
+  padding: "0 10px",
   borderRadius: "999px",
-  fontSize: "11px",
+  fontSize: "10px",
   fontWeight: 800,
   letterSpacing: "0.06em",
   textTransform: "uppercase",
@@ -154,8 +154,8 @@ const connectedBadgeStyle: CSSProperties = {
 const copyStyle: CSSProperties = {
   margin: 0,
   color: "#cdd6e6",
-  fontSize: "14px",
-  lineHeight: 1.7,
+  fontSize: "13px",
+  lineHeight: 1.58,
   overflowWrap: "anywhere",
   wordBreak: "break-word",
 };
@@ -165,15 +165,15 @@ const repoCardStyle: CSSProperties = {
   zIndex: 1,
   display: "grid",
   gap: "6px",
-  padding: "14px 16px",
-  borderRadius: "18px",
+  padding: "12px 14px",
+  borderRadius: "16px",
   border: "1px solid rgba(255,255,255,0.07)",
   backgroundColor: "rgba(255,255,255,0.035)",
 };
 
 const repoLabelStyle: CSSProperties = {
   color: "#94a3b8",
-  fontSize: "11px",
+  fontSize: "10px",
   fontWeight: 800,
   letterSpacing: "0.06em",
   textTransform: "uppercase",
@@ -181,7 +181,7 @@ const repoLabelStyle: CSSProperties = {
 
 const repoValueStyle: CSSProperties = {
   color: "#ffffff",
-  fontSize: "15px",
+  fontSize: "14px",
   fontWeight: 800,
   letterSpacing: "-0.02em",
   overflowWrap: "anywhere",
@@ -203,13 +203,13 @@ const metaLineStyle: CSSProperties = {
   alignItems: "center",
   gap: "10px",
   color: "#e2e8f0",
-  fontSize: "13px",
+  fontSize: "12px",
   fontWeight: 700,
 };
 
 const statusDotStyle: CSSProperties = {
-  width: "10px",
-  height: "10px",
+  width: "8px",
+  height: "8px",
   borderRadius: "999px",
   backgroundColor: "#93c5fd",
   boxShadow: "0 0 12px rgba(147,197,253,0.44)",
@@ -218,14 +218,14 @@ const statusDotStyle: CSSProperties = {
 
 const ctaStyle: CSSProperties = {
   textDecoration: "none",
-  minHeight: "38px",
-  padding: "0 14px",
+  minHeight: "34px",
+  padding: "0 12px",
   borderRadius: "999px",
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
   color: "#ffffff",
-  fontSize: "13px",
+  fontSize: "12px",
   fontWeight: 800,
   background: "linear-gradient(135deg, rgba(30,41,59,0.96), rgba(71,85,105,0.92))",
   boxShadow: "0 16px 28px rgba(15,23,42,0.28)",
@@ -233,7 +233,7 @@ const ctaStyle: CSSProperties = {
 
 const hintStyle: CSSProperties = {
   color: "#98a3bf",
-  fontSize: "13px",
+  fontSize: "12px",
   fontWeight: 700,
   overflowWrap: "anywhere",
 };

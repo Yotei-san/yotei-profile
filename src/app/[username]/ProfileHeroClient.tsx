@@ -137,11 +137,11 @@ export default function ProfileHeroClient({
   }
 
   return (
-    <div style={{ marginTop: "20px" }}>
+    <div style={{ marginTop: "14px" }}>
       <style>{`
         .profile-hero-metrics {
           display: flex;
-          gap: 12px;
+          gap: 10px;
           flex-wrap: wrap;
         }
 
@@ -318,12 +318,12 @@ function reactionButtonStyle(
 }
 
 const chipBaseStyle: CSSProperties = {
-  minHeight: "52px",
-  padding: "0 15px",
-  borderRadius: "18px",
+  minHeight: "44px",
+  padding: "0 13px",
+  borderRadius: "14px",
   display: "inline-flex",
   alignItems: "center",
-  gap: "12px",
+  gap: "10px",
   boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04)",
   width: "100%",
   maxWidth: "100%",
@@ -332,9 +332,9 @@ const chipBaseStyle: CSSProperties = {
 };
 
 const iconWrapStyle: CSSProperties = {
-  width: "32px",
-  height: "32px",
-  borderRadius: "12px",
+  width: "28px",
+  height: "28px",
+  borderRadius: "10px",
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
@@ -350,7 +350,7 @@ const copyWrapStyle: CSSProperties = {
 };
 
 const valueStyle: CSSProperties = {
-  fontSize: "15px",
+  fontSize: "14px",
   lineHeight: 1,
   letterSpacing: "-0.03em",
 };
@@ -358,7 +358,7 @@ const valueStyle: CSSProperties = {
 const labelStyle: CSSProperties = {
   marginTop: "5px",
   color: "#9dabc6",
-  fontSize: "11px",
+  fontSize: "10px",
   fontWeight: 800,
   letterSpacing: "0.04em",
   textTransform: "uppercase",

@@ -448,56 +448,56 @@ export function getProfileGlassTokens(intensity: ProfileGlassIntensity) {
   if (intensity === "low") {
     return {
       backgroundLayer:
-        "linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01))",
-      backdropFilter: "blur(12px) saturate(112%)",
-      shadowBoost: "0 20px 46px rgba(0,0,0,0.22)",
+        "linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.006))",
+      backdropFilter: "blur(10px) saturate(108%)",
+      shadowBoost: "0 14px 30px rgba(0,0,0,0.18)",
     };
   }
 
   if (intensity === "high") {
     return {
       backgroundLayer:
-        "linear-gradient(180deg, rgba(255,255,255,0.09), rgba(255,255,255,0.03))",
-      backdropFilter: "blur(28px) saturate(145%)",
-      shadowBoost: "0 28px 62px rgba(0,0,0,0.28)",
+        "linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.022))",
+      backdropFilter: "blur(22px) saturate(136%)",
+      shadowBoost: "0 20px 44px rgba(0,0,0,0.24)",
     };
   }
 
   return {
     backgroundLayer:
-      "linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02))",
-    backdropFilter: "blur(20px) saturate(128%)",
-    shadowBoost: "0 24px 56px rgba(0,0,0,0.24)",
+      "linear-gradient(180deg, rgba(255,255,255,0.036), rgba(255,255,255,0.014))",
+    backdropFilter: "blur(16px) saturate(122%)",
+    shadowBoost: "0 18px 38px rgba(0,0,0,0.2)",
   };
 }
 
 export function getProfileDensityTokens(density: ProfileDensity) {
   if (density === "compact") {
     return {
-      sectionGap: 0.86,
-      shellPadding: 0.88,
-      contentPadding: 0.9,
-      bannerScale: 0.92,
-      bioLineHeight: 1.72,
+      sectionGap: 0.76,
+      shellPadding: 0.74,
+      contentPadding: 0.78,
+      bannerScale: 0.88,
+      bioLineHeight: 1.64,
     };
   }
 
   if (density === "spacious") {
     return {
-      sectionGap: 1.12,
-      shellPadding: 1.08,
-      contentPadding: 1.12,
-      bannerScale: 1.08,
-      bioLineHeight: 2.05,
+      sectionGap: 1,
+      shellPadding: 0.96,
+      contentPadding: 1,
+      bannerScale: 1.02,
+      bioLineHeight: 1.86,
     };
   }
 
   return {
-    sectionGap: 1,
-    shellPadding: 1,
-    contentPadding: 1,
-    bannerScale: 1,
-    bioLineHeight: 1.9,
+    sectionGap: 0.88,
+    shellPadding: 0.84,
+    contentPadding: 0.88,
+    bannerScale: 0.94,
+    bioLineHeight: 1.76,
   };
 }
 

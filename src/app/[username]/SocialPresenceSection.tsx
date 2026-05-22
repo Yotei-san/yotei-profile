@@ -216,7 +216,7 @@ function isLivePriority(block: PublicSocialBlock) {
 
 const sectionStyle: CSSProperties = {
   display: "grid",
-  gap: "12px",
+  gap: "10px",
   minWidth: 0,
 };
 
@@ -225,13 +225,13 @@ const kickerStyle: CSSProperties = {
   alignItems: "center",
   gap: "8px",
   width: "fit-content",
-  minHeight: "34px",
-  padding: "0 12px",
+  minHeight: "28px",
+  padding: "0 10px",
   borderRadius: "999px",
   border: "1px solid rgba(255,255,255,0.08)",
   background: "rgba(255,255,255,0.04)",
   color: "#e4e4e7",
-  fontSize: "12px",
+  fontSize: "11px",
   fontWeight: 800,
   letterSpacing: "0.02em",
 };
@@ -243,8 +243,8 @@ function gridStyle(
   if (displayStyle === "grid" && !compact) {
     return {
       display: "grid",
-      gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))",
-      gap: "12px",
+      gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 248px), 1fr))",
+      gap: "10px",
       minWidth: 0,
       alignItems: "start",
     };
@@ -252,7 +252,7 @@ function gridStyle(
 
   return {
     display: "grid",
-    gap: displayStyle === "spotlight" ? "14px" : "12px",
+    gap: displayStyle === "spotlight" ? "12px" : "10px",
     minWidth: 0,
   };
 }
@@ -271,7 +271,7 @@ function socialItemStyle(
       : {
           display: "grid",
           minWidth: 0,
-          marginInlineStart: compact ? "0" : "14px",
+          marginInlineStart: compact ? "0" : "10px",
         };
   }
 

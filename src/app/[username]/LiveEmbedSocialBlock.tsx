@@ -44,10 +44,10 @@ export default function LiveEmbedSocialBlock({
     <article
       style={{
         ...cardStyle,
-        padding: compact ? "18px" : "24px",
+        padding: compact ? "16px" : "20px",
         border: `1px solid ${theme.border}`,
         background: theme.background,
-        boxShadow: `0 26px 62px ${withAlpha(theme.accent, 0.16)}`,
+        boxShadow: `0 18px 38px ${withAlpha(theme.accent, 0.12)}`,
       }}
     >
       <div style={glowStyle(theme.glow)} />
@@ -76,7 +76,7 @@ export default function LiveEmbedSocialBlock({
           <div style={{ minWidth: 0, display: "grid", gap: "6px" }}>
             <div
               style={{
-                fontSize: compact ? "26px" : "32px",
+                fontSize: compact ? "22px" : "28px",
                 fontWeight: 900,
                 letterSpacing: "-0.05em",
                 overflowWrap: "anywhere",
@@ -146,10 +146,10 @@ const cardStyle: CSSProperties = {
   position: "relative",
   overflow: "hidden",
   display: "grid",
-  gap: "18px",
+  gap: "16px",
   width: "100%",
   minWidth: 0,
-  borderRadius: "30px",
+  borderRadius: "24px",
   boxSizing: "border-box",
 };
 
@@ -157,11 +157,11 @@ const glowStyle = (color: string): CSSProperties => ({
   position: "absolute",
   top: "-26%",
   right: "-8%",
-  width: "280px",
-  height: "280px",
+  width: "220px",
+  height: "220px",
   borderRadius: "999px",
   background: `radial-gradient(circle, ${color} 0%, transparent 70%)`,
-  filter: "blur(28px)",
+  filter: "blur(20px)",
   pointerEvents: "none",
 });
 
@@ -169,7 +169,7 @@ const headerStyle: CSSProperties = {
   position: "relative",
   zIndex: 1,
   display: "grid",
-  gap: "14px",
+  gap: "12px",
 };
 
 const badgeRowStyle: CSSProperties = {
@@ -181,10 +181,10 @@ const badgeRowStyle: CSSProperties = {
 const chipBaseStyle: CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
-  minHeight: "30px",
-  padding: "0 12px",
+  minHeight: "26px",
+  padding: "0 10px",
   borderRadius: "999px",
-  fontSize: "11px",
+  fontSize: "10px",
   fontWeight: 900,
   letterSpacing: "0.08em",
   textTransform: "uppercase",
@@ -208,16 +208,16 @@ const platformBadgeStyle: CSSProperties = {
 
 const identityRowStyle: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "64px minmax(0, 1fr)",
-  gap: "14px",
+  gridTemplateColumns: "56px minmax(0, 1fr)",
+  gap: "12px",
   alignItems: "center",
   minWidth: 0,
 };
 
 const avatarShellStyle: CSSProperties = {
-  width: "64px",
-  height: "64px",
-  borderRadius: "20px",
+  width: "56px",
+  height: "56px",
+  borderRadius: "16px",
   display: "grid",
   placeItems: "center",
   color: "#ffffff",
@@ -226,15 +226,15 @@ const avatarShellStyle: CSSProperties = {
 };
 
 const avatarTextStyle: CSSProperties = {
-  fontSize: "22px",
+  fontSize: "18px",
   fontWeight: 900,
   letterSpacing: "0.08em",
 };
 
 const streamTitleStyle: CSSProperties = {
   color: "#e4e4e7",
-  fontSize: "14px",
-  lineHeight: 1.7,
+  fontSize: "13px",
+  lineHeight: 1.58,
   overflowWrap: "anywhere",
 };
 
@@ -246,8 +246,8 @@ const fallbackShellStyle: CSSProperties = {
 const fallbackCardStyle = (accent: string): CSSProperties => ({
   display: "grid",
   gap: "12px",
-  padding: "18px",
-  borderRadius: "22px",
+  padding: "14px",
+  borderRadius: "18px",
   border: "1px solid rgba(255,255,255,0.08)",
   background: `linear-gradient(145deg, ${withAlpha(accent, 0.18)}, rgba(255,255,255,0.03) 44%, rgba(10,10,14,0.48))`,
 });
@@ -268,8 +268,8 @@ const viewerTagStyle = (isLive: boolean): CSSProperties => ({
 });
 
 const pulseStyle = (accent: string, isLive: boolean): CSSProperties => ({
-  width: "12px",
-  height: "12px",
+  width: "10px",
+  height: "10px",
   borderRadius: "999px",
   backgroundColor: isLive ? "#ef4444" : accent,
   boxShadow: isLive ? "0 0 18px rgba(239,68,68,0.9)" : `0 0 18px ${accent}`,
@@ -277,14 +277,14 @@ const pulseStyle = (accent: string, isLive: boolean): CSSProperties => ({
 
 const fallbackTitleStyle: CSSProperties = {
   color: "#ffffff",
-  fontSize: "16px",
+  fontSize: "14px",
   fontWeight: 800,
   lineHeight: 1.55,
 };
 
 const fallbackCaptionStyle: CSSProperties = {
   color: "#d4d4d8",
-  fontSize: "13px",
+  fontSize: "12px",
   lineHeight: 1.65,
 };
 
@@ -303,13 +303,13 @@ const metaStyle: CSSProperties = {
   alignItems: "center",
   gap: "10px",
   color: "#f4f4f5",
-  fontSize: "13px",
+  fontSize: "12px",
   fontWeight: 800,
 };
 
 const statusDotStyle = (accent: string, isLive: boolean): CSSProperties => ({
-  width: "10px",
-  height: "10px",
+  width: "8px",
+  height: "8px",
   borderRadius: "999px",
   backgroundColor: isLive ? "#ef4444" : accent,
   boxShadow: isLive ? "0 0 14px rgba(239,68,68,0.92)" : `0 0 14px ${accent}`,
@@ -318,14 +318,14 @@ const statusDotStyle = (accent: string, isLive: boolean): CSSProperties => ({
 
 const ctaStyle = (background: string): CSSProperties => ({
   textDecoration: "none",
-  minHeight: "42px",
-  padding: "0 16px",
+  minHeight: "36px",
+  padding: "0 12px",
   borderRadius: "999px",
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
   color: "#ffffff",
-  fontSize: "13px",
+  fontSize: "12px",
   fontWeight: 900,
   background,
   boxShadow: "0 16px 28px rgba(0,0,0,0.22)",
@@ -333,6 +333,6 @@ const ctaStyle = (background: string): CSSProperties => ({
 
 const hintStyle: CSSProperties = {
   color: "#a1a1aa",
-  fontSize: "13px",
+  fontSize: "12px",
   fontWeight: 700,
 };

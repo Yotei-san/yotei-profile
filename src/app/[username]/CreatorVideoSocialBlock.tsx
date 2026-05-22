@@ -26,7 +26,7 @@ export default function CreatorVideoSocialBlock({
     <article
       style={{
         ...cardStyle,
-        padding: compact ? "18px" : "22px",
+        padding: compact ? "16px" : "18px",
         border: `1px solid ${theme.border}`,
         background: theme.background,
       }}
@@ -51,7 +51,7 @@ export default function CreatorVideoSocialBlock({
 
         <div style={{ minWidth: 0, display: "grid", gap: "6px" }}>
           <div style={channelLabelStyle}>Creator channel</div>
-          <div style={{ fontSize: compact ? "21px" : "24px", fontWeight: 900, letterSpacing: "-0.04em" }}>
+          <div style={{ fontSize: compact ? "18px" : "21px", fontWeight: 900, letterSpacing: "-0.04em" }}>
             {channelName || `${theme.label} channel`}
           </div>
           <div style={headlineStyle}>
@@ -115,13 +115,13 @@ const cardStyle: CSSProperties = {
   position: "relative",
   overflow: "hidden",
   display: "grid",
-  gap: "16px",
+  gap: "14px",
   width: "100%",
   maxWidth: "100%",
   minWidth: 0,
   boxSizing: "border-box",
-  borderRadius: "24px",
-  boxShadow: "0 22px 48px rgba(0,0,0,0.28)",
+  borderRadius: "20px",
+  boxShadow: "0 14px 28px rgba(0,0,0,0.22)",
 };
 
 const glowStyle = (color: string): CSSProperties => ({
@@ -147,9 +147,9 @@ const topRowStyle: CSSProperties = {
 };
 
 const brandWrapStyle: CSSProperties = {
-  width: "48px",
-  height: "48px",
-  borderRadius: "16px",
+  width: "42px",
+  height: "42px",
+  borderRadius: "14px",
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
@@ -166,10 +166,10 @@ const badgeRowStyle: CSSProperties = {
 const chipBaseStyle: CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
-  minHeight: "30px",
-  padding: "0 12px",
+  minHeight: "26px",
+  padding: "0 10px",
   borderRadius: "999px",
-  fontSize: "11px",
+  fontSize: "10px",
   fontWeight: 800,
   letterSpacing: "0.06em",
   textTransform: "uppercase",
@@ -193,17 +193,17 @@ const videoShellStyle: CSSProperties = {
   position: "relative",
   zIndex: 1,
   display: "grid",
-  gridTemplateColumns: "118px minmax(0, 1fr)",
-  gap: "14px",
+  gridTemplateColumns: "98px minmax(0, 1fr)",
+  gap: "12px",
   alignItems: "center",
   minWidth: 0,
 };
 
 const thumbnailStyle = (background: string): CSSProperties => ({
   position: "relative",
-  width: "118px",
-  height: "86px",
-  borderRadius: "18px",
+  width: "98px",
+  height: "74px",
+  borderRadius: "16px",
   overflow: "hidden",
   background,
   border: "1px solid rgba(255,255,255,0.08)",
@@ -213,21 +213,21 @@ const thumbnailStyle = (background: string): CSSProperties => ({
 const thumbnailPlayStyle: CSSProperties = {
   position: "absolute",
   inset: "auto 12px 12px auto",
-  width: "34px",
-  height: "34px",
+  width: "28px",
+  height: "28px",
   borderRadius: "999px",
   display: "grid",
   placeItems: "center",
   background: "rgba(255,255,255,0.16)",
   color: "#ffffff",
-  fontSize: "14px",
+  fontSize: "12px",
   fontWeight: 900,
   backdropFilter: "blur(8px)",
 };
 
 const channelLabelStyle: CSSProperties = {
   color: "#d4d4d8",
-  fontSize: "11px",
+  fontSize: "10px",
   fontWeight: 800,
   letterSpacing: "0.08em",
   textTransform: "uppercase",
@@ -235,15 +235,15 @@ const channelLabelStyle: CSSProperties = {
 
 const headlineStyle: CSSProperties = {
   color: "#d4d4d8",
-  fontSize: "14px",
-  lineHeight: 1.65,
+  fontSize: "13px",
+  lineHeight: 1.56,
   overflowWrap: "anywhere",
   wordBreak: "break-word",
 };
 
 const featuredVideoStyle: CSSProperties = {
   color: "#c4b5fd",
-  fontSize: "13px",
+  fontSize: "12px",
   fontWeight: 700,
   lineHeight: 1.5,
   overflowWrap: "anywhere",
@@ -265,13 +265,13 @@ const metaLineStyle: CSSProperties = {
   alignItems: "center",
   gap: "10px",
   color: "#f4f4f5",
-  fontSize: "13px",
+  fontSize: "12px",
   fontWeight: 700,
 };
 
 const statusDotStyle = (color: string): CSSProperties => ({
-  width: "10px",
-  height: "10px",
+  width: "8px",
+  height: "8px",
   borderRadius: "999px",
   backgroundColor: color,
   boxShadow: `0 0 12px ${color}`,
@@ -280,14 +280,14 @@ const statusDotStyle = (color: string): CSSProperties => ({
 
 const ctaStyle = (background: string): CSSProperties => ({
   textDecoration: "none",
-  minHeight: "38px",
-  padding: "0 14px",
+  minHeight: "34px",
+  padding: "0 12px",
   borderRadius: "999px",
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
   color: "#ffffff",
-  fontSize: "13px",
+  fontSize: "12px",
   fontWeight: 900,
   background,
   boxShadow: "0 16px 28px rgba(0,0,0,0.20)",
@@ -295,7 +295,7 @@ const ctaStyle = (background: string): CSSProperties => ({
 
 const hintStyle: CSSProperties = {
   color: "#a1a1aa",
-  fontSize: "13px",
+  fontSize: "12px",
   fontWeight: 700,
   overflowWrap: "anywhere",
 };

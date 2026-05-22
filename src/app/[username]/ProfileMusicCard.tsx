@@ -70,15 +70,15 @@ export default function ProfileMusicCard({
           display: grid;
           grid-template-columns: auto minmax(0, 1fr) auto;
           align-items: center;
-          gap: 14px;
+          gap: 12px;
         }
 
         .profile-music-eq {
           display: inline-flex;
           align-items: end;
           gap: 4px;
-          min-width: 26px;
-          height: 28px;
+          min-width: 22px;
+          height: 24px;
         }
 
         .profile-music-eq span {
@@ -204,15 +204,15 @@ function cardStyle(
     overflow: "hidden",
     display: "grid",
     minWidth: 0,
-    padding: compact ? "16px" : "18px",
-    borderRadius: compact ? "22px" : "24px",
+    padding: compact ? "14px" : "16px",
+    borderRadius: compact ? "18px" : "20px",
     border: `1px solid ${withAlpha(accentColor, "26")}`,
     background: `
       radial-gradient(circle at top left, ${withAlpha(themeColor, "18")} 0%, transparent 34%),
       radial-gradient(circle at 84% 16%, ${withAlpha(contrastColor, "14")} 0%, transparent 24%),
       linear-gradient(180deg, rgba(18, 20, 30, 0.96), rgba(10, 11, 18, 0.98))
     `,
-    boxShadow: `0 20px 38px ${withAlpha(accentColor, "14")}`,
+    boxShadow: `0 14px 28px ${withAlpha(accentColor, "12")}`,
   };
 }
 
@@ -238,14 +238,14 @@ function glowStyle(accentColor: string, contrastColor: string): CSSProperties {
 const leadingWrapStyle: CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
-  gap: "12px",
+  gap: "10px",
 };
 
 function iconBadgeStyle(color: string): CSSProperties {
   return {
-    width: "40px",
-    height: "40px",
-    borderRadius: "14px",
+    width: "34px",
+    height: "34px",
+    borderRadius: "12px",
     display: "inline-flex",
     alignItems: "center",
     justifyContent: "center",
@@ -259,7 +259,7 @@ function iconBadgeStyle(color: string): CSSProperties {
 
 const copyWrapStyle: CSSProperties = {
   display: "grid",
-  gap: "6px",
+  gap: "5px",
   minWidth: 0,
 };
 
@@ -274,13 +274,13 @@ function providerBadgeStyle(color: string): CSSProperties {
   return {
     display: "inline-flex",
     alignItems: "center",
-    minHeight: "24px",
-    padding: "0 10px",
+    minHeight: "22px",
+    padding: "0 8px",
     borderRadius: "999px",
     color: "#ffffff",
     background: withAlpha(color, "18"),
     border: `1px solid ${withAlpha(color, "30")}`,
-    fontSize: "11px",
+    fontSize: "10px",
     fontWeight: 900,
     letterSpacing: "0.06em",
     textTransform: "uppercase",
@@ -291,13 +291,13 @@ function statusBadgeStyle(color: string): CSSProperties {
   return {
     display: "inline-flex",
     alignItems: "center",
-    minHeight: "24px",
-    padding: "0 10px",
+    minHeight: "22px",
+    padding: "0 8px",
     borderRadius: "999px",
     color: "#d8e0f2",
     background: withAlpha(color, "14"),
     border: `1px solid ${withAlpha(color, "24")}`,
-    fontSize: "11px",
+    fontSize: "10px",
     fontWeight: 800,
     letterSpacing: "0.04em",
   };
@@ -306,7 +306,7 @@ function statusBadgeStyle(color: string): CSSProperties {
 function titleStyle(compact: boolean): CSSProperties {
   return {
     color: "#ffffff",
-    fontSize: compact ? "16px" : "17px",
+    fontSize: compact ? "14px" : "15px",
     lineHeight: 1.25,
     letterSpacing: "-0.03em",
     overflowWrap: "anywhere",
@@ -315,8 +315,8 @@ function titleStyle(compact: boolean): CSSProperties {
 
 const artistStyle: CSSProperties = {
   color: "#abb8d3",
-  fontSize: "13px",
-  lineHeight: 1.6,
+  fontSize: "12px",
+  lineHeight: 1.5,
   overflowWrap: "anywhere",
 };
 
@@ -326,15 +326,15 @@ function ctaStyle(accentColor: string, contrastColor: string): CSSProperties {
     alignItems: "center",
     justifyContent: "center",
     gap: "8px",
-    minHeight: "40px",
-    padding: "0 14px",
-    borderRadius: "14px",
+    minHeight: "34px",
+    padding: "0 12px",
+    borderRadius: "12px",
     color: "#ffffff",
     textDecoration: "none",
     background: `linear-gradient(135deg, ${withAlpha(accentColor, "f2")}, ${withAlpha(contrastColor, "d8")})`,
     border: `1px solid ${withAlpha(accentColor, "38")}`,
     boxShadow: `0 16px 28px ${withAlpha(accentColor, "18")}`,
-    fontSize: "13px",
+    fontSize: "12px",
     fontWeight: 800,
     whiteSpace: "nowrap",
   };
@@ -344,13 +344,13 @@ const disabledCtaStyle: CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
-  minHeight: "40px",
-  padding: "0 14px",
-  borderRadius: "14px",
+  minHeight: "34px",
+  padding: "0 12px",
+  borderRadius: "12px",
   color: "#8b97b0",
   background: "rgba(255,255,255,0.03)",
   border: "1px solid rgba(255,255,255,0.08)",
-  fontSize: "13px",
+  fontSize: "12px",
   fontWeight: 700,
   whiteSpace: "nowrap",
 };
@@ -365,20 +365,20 @@ const placeholderHeaderStyle: CSSProperties = {
   display: "grid",
   gridTemplateColumns: "auto minmax(0, 1fr)",
   alignItems: "center",
-  gap: "12px",
+  gap: "10px",
   minWidth: 0,
 };
 
 const placeholderTitleStyle: CSSProperties = {
   color: "#ffffff",
-  fontSize: "15px",
+  fontSize: "14px",
   lineHeight: 1.3,
 };
 
 const placeholderTextStyle: CSSProperties = {
   color: "#a6b3cd",
-  fontSize: "13px",
-  lineHeight: 1.7,
+  fontSize: "12px",
+  lineHeight: 1.55,
 };
 
 function withAlpha(hex: string, alpha: string) {
