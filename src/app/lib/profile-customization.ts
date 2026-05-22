@@ -13,6 +13,7 @@ export const PROFILE_NAME_EFFECTS = [
 export const PROFILE_BACKGROUND_INTENSITIES = ["low", "medium", "high"] as const;
 export const PROFILE_GLASS_INTENSITIES = ["low", "medium", "high"] as const;
 export const PROFILE_BANNER_STYLES = ["clean", "cinematic", "dark"] as const;
+export const PROFILE_INTRO_MODES = ["off", "minimal", "cinematic"] as const;
 export const PROFILE_DENSITIES = ["compact", "balanced", "spacious"] as const;
 export const PROFILE_CARD_STYLES = ["glass", "solid", "minimal"] as const;
 export const PROFILE_CORNER_STYLES = ["soft", "rounded", "sharp"] as const;
@@ -23,6 +24,7 @@ export type ProfileBackgroundIntensity =
   (typeof PROFILE_BACKGROUND_INTENSITIES)[number];
 export type ProfileGlassIntensity = (typeof PROFILE_GLASS_INTENSITIES)[number];
 export type ProfileBannerStyle = (typeof PROFILE_BANNER_STYLES)[number];
+export type ProfileIntroMode = (typeof PROFILE_INTRO_MODES)[number];
 export type ProfileDensity = (typeof PROFILE_DENSITIES)[number];
 export type ProfileCardStyle = (typeof PROFILE_CARD_STYLES)[number];
 export type ProfileCornerStyle = (typeof PROFILE_CORNER_STYLES)[number];
@@ -151,6 +153,28 @@ export const PROFILE_BANNER_STYLE_OPTIONS = [
   },
 ] as const satisfies ReadonlyArray<{
   value: ProfileBannerStyle;
+  name: string;
+  description: string;
+}>;
+
+export const PROFILE_INTRO_MODE_OPTIONS = [
+  {
+    value: "off",
+    name: "Off",
+    description: "Keep the current single-stage profile layout and flow.",
+  },
+  {
+    value: "minimal",
+    name: "Minimal",
+    description: "Show a compact identity landing stage before the rest of the profile.",
+  },
+  {
+    value: "cinematic",
+    name: "Cinematic",
+    description: "Let the scene lead with a stronger intro stage and compact modules below.",
+  },
+] as const satisfies ReadonlyArray<{
+  value: ProfileIntroMode;
   name: string;
   description: string;
 }>;
@@ -336,6 +360,10 @@ export function normalizeProfileBannerStyle(
     PROFILE_BANNER_STYLES,
     "cinematic",
   );
+}
+
+export function normalizeProfileIntroMode(value: string | null | undefined) {
+  return normalizeEnumValue(value, PROFILE_INTRO_MODES, "off");
 }
 
 export function normalizeProfileDensity(value: string | null | undefined) {
@@ -679,6 +707,7 @@ export function isMissingProfileCustomizationColumnError(error: unknown) {
       "profileBackgroundIntensity",
       "profileGlassIntensity",
       "profileBannerStyle",
+      "profileIntroMode",
     ].some((field) => column.includes(field) || message.includes(field))
   );
 }

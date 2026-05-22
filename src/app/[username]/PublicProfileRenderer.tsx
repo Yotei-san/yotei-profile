@@ -1,7 +1,14 @@
 "use client";
 
 import type { CSSProperties, ReactNode } from "react";
-import { LuArrowUpRight, LuBadgeCheck, LuMoonStar, LuSparkles } from "react-icons/lu";
+import {
+  LuArrowUpRight,
+  LuBadgeCheck,
+  LuChevronDown,
+  LuMoonStar,
+  LuMusic4,
+  LuSparkles,
+} from "react-icons/lu";
 import BadgeVisual from "@/app/dashboard/components/BadgeVisual";
 import { getLinkPlatform } from "@/app/lib/link-icons";
 import {
@@ -29,6 +36,7 @@ import {
   normalizeProfileDensity,
   normalizeProfileMotionLevel,
   normalizeProfileNameEffects,
+  normalizeProfileIntroMode,
   getProfileBannerStyleTokens,
   getProfileCardStyleTokens,
   getProfileCornerTokens,
@@ -41,6 +49,7 @@ import {
   type ProfileCornerStyle,
   type ProfileDensity,
   type ProfileGlassIntensity,
+  type ProfileIntroMode,
   type ProfileMotionLevel,
   type ProfileNameEffect,
 } from "@/app/lib/profile-customization";
@@ -118,6 +127,7 @@ type Props = {
   backgroundIntensity: ProfileBackgroundIntensity;
   glassIntensity: ProfileGlassIntensity;
   bannerStyle: ProfileBannerStyle;
+  introMode: ProfileIntroMode;
   density: ProfileDensity;
   cardStyle: ProfileCardStyle;
   cornerStyle: ProfileCornerStyle;
@@ -153,6 +163,7 @@ export default function PublicProfileRenderer({
   backgroundIntensity,
   glassIntensity,
   bannerStyle,
+  introMode,
   density,
   cardStyle,
   cornerStyle,
@@ -181,6 +192,7 @@ export default function PublicProfileRenderer({
   const safeBackgroundIntensity = normalizeProfileBackgroundIntensity(backgroundIntensity);
   const safeGlassIntensity = glassIntensity;
   const safeBannerStyle = normalizeProfileBannerStyle(bannerStyle);
+  const safeIntroMode = normalizeProfileIntroMode(introMode);
   const safeDensity = normalizeProfileDensity(density);
   const safeCardStyle = normalizeProfileCardStyle(cardStyle);
   const safeCornerStyle = normalizeProfileCornerStyle(cornerStyle);
@@ -196,44 +208,6 @@ export default function PublicProfileRenderer({
     safeFeaturedBadges.length === 0 ? 0 : Math.max(0, extraBadgeCount);
   const safeBannerUrl = sanitizeRenderableUrl(safeUser.bannerUrl);
   const safeBannerKind = safeBannerUrl ? bannerKind : "unknown";
-
-  if (safeLayout !== "modern") {
-    return (
-      <ProfileLayoutVariants
-        layout={safeLayout}
-        user={safeUser}
-        displayName={safeDisplayName}
-        themeColor={safeThemeColor}
-        mood={mood}
-        aura={aura}
-        scene={safeScene}
-        nameEffects={safeNameEffects}
-        backgroundIntensity={safeBackgroundIntensity}
-        glassIntensity={safeGlassIntensity}
-        bannerStyle={safeBannerStyle}
-        density={safeDensity}
-        cardStyle={safeCardStyle}
-        cornerStyle={safeCornerStyle}
-        motionLevel={safeMotionLevel}
-        music={music}
-        bannerKind={safeBannerKind}
-        avatarInitials={avatarInitials}
-        decorationScale={decorationScale}
-        decorationOffsetX={decorationOffsetX}
-        decorationOffsetY={decorationOffsetY}
-        featuredBadges={safeFeaturedBadges}
-        extraBadgeCount={safeExtraBadgeCount}
-        heroPills={safeHeroPills}
-        likes={likes}
-        dislikes={dislikes}
-        views={views}
-        socialBlocks={safeSocialBlocks}
-        composition={safeComposition}
-        initialMyReaction={initialMyReaction}
-        preview={preview}
-      />
-    );
-  }
 
   const sceneAppearance = getProfileSceneAppearance({
     scene: safeScene,
@@ -314,6 +288,8 @@ export default function PublicProfileRenderer({
   const orderedContentBlocks = renderableCompositionOrder.filter(
     (block) => block !== "hero",
   );
+  const isFloatingComposition = safeComposition.mode === "floating";
+  const hasIntroDetails = Boolean(safeUser.bio) || orderedContentBlocks.length > 0;
   const avatarAuraAnimation = motionTokens.allowDecorativeMotion
     ? safeMotionLevel === "subtle"
       ? "profile-aura 6.2s ease-in-out infinite"
@@ -324,6 +300,121 @@ export default function PublicProfileRenderer({
       ? "online-pulse 3.4s ease-in-out infinite"
       : "online-pulse 2.2s ease-in-out infinite"
     : "none";
+
+  if (safeIntroMode !== "off") {
+    return (
+      <IntroProfileStage
+        mode={safeIntroMode}
+        floating={isFloatingComposition}
+        preview={preview}
+        previewMessage={previewMessage}
+        displayName={safeDisplayName}
+        user={safeUser}
+        themeColor={safeThemeColor}
+        mood={mood}
+        aura={aura}
+        sceneAppearance={sceneAppearance}
+        nameEffects={safeNameEffects}
+        backgroundIntensity={safeBackgroundIntensity}
+        densityTokens={densityTokens}
+        cardStyle={safeCardStyle}
+        motionLevel={safeMotionLevel}
+        music={music}
+        bannerKind={safeBannerKind}
+        avatarInitials={avatarInitials}
+        decorationScale={decorationScale}
+        decorationOffsetX={decorationOffsetX}
+        decorationOffsetY={decorationOffsetY}
+        featuredBadges={safeFeaturedBadges}
+        extraBadgeCount={safeExtraBadgeCount}
+        heroPills={safeHeroPills}
+        likes={likes}
+        dislikes={dislikes}
+        views={views}
+        initialMyReaction={initialMyReaction}
+        regularSocialBlocks={partitionedSocialBlocks.socials}
+        liveSocialBlocks={partitionedSocialBlocks.live}
+        composition={safeComposition}
+        orderedContentBlocks={orderedContentBlocks}
+        hasDetails={hasIntroDetails}
+      />
+    );
+  }
+
+  if (isFloatingComposition) {
+    return (
+      <FloatingProfileScene
+        preview={preview}
+        displayName={safeDisplayName}
+        user={safeUser}
+        themeColor={safeThemeColor}
+        mood={mood}
+        aura={aura}
+        sceneAppearance={sceneAppearance}
+        nameEffects={safeNameEffects}
+        backgroundIntensity={safeBackgroundIntensity}
+        densityTokens={densityTokens}
+        cardStyle={safeCardStyle}
+        cornerTokens={cornerTokens}
+        motionLevel={safeMotionLevel}
+        music={music}
+        bannerKind={safeBannerKind}
+        avatarInitials={avatarInitials}
+        decorationScale={decorationScale}
+        decorationOffsetX={decorationOffsetX}
+        decorationOffsetY={decorationOffsetY}
+        featuredBadges={safeFeaturedBadges}
+        extraBadgeCount={safeExtraBadgeCount}
+        heroPills={safeHeroPills}
+        likes={likes}
+        dislikes={dislikes}
+        views={views}
+        initialMyReaction={initialMyReaction}
+        regularSocialBlocks={partitionedSocialBlocks.socials}
+        liveSocialBlocks={partitionedSocialBlocks.live}
+        composition={safeComposition}
+        orderedContentBlocks={orderedContentBlocks}
+      />
+    );
+  }
+
+  if (safeLayout !== "modern") {
+    return (
+      <ProfileLayoutVariants
+        layout={safeLayout}
+        user={safeUser}
+        displayName={safeDisplayName}
+        themeColor={safeThemeColor}
+        mood={mood}
+        aura={aura}
+        scene={safeScene}
+        nameEffects={safeNameEffects}
+        backgroundIntensity={safeBackgroundIntensity}
+        glassIntensity={safeGlassIntensity}
+        bannerStyle={safeBannerStyle}
+        density={safeDensity}
+        cardStyle={safeCardStyle}
+        cornerStyle={safeCornerStyle}
+        motionLevel={safeMotionLevel}
+        music={music}
+        bannerKind={safeBannerKind}
+        avatarInitials={avatarInitials}
+        decorationScale={decorationScale}
+        decorationOffsetX={decorationOffsetX}
+        decorationOffsetY={decorationOffsetY}
+        featuredBadges={safeFeaturedBadges}
+        extraBadgeCount={safeExtraBadgeCount}
+        heroPills={safeHeroPills}
+        likes={likes}
+        dislikes={dislikes}
+        views={views}
+        socialBlocks={safeSocialBlocks}
+        composition={safeComposition}
+        initialMyReaction={initialMyReaction}
+        preview={preview}
+      />
+    );
+  }
 
   return (
     <main
@@ -1253,6 +1344,1196 @@ export default function PublicProfileRenderer({
   );
 }
 
+function FloatingProfileScene({
+  preview,
+  displayName,
+  user,
+  themeColor,
+  mood,
+  aura,
+  sceneAppearance,
+  nameEffects,
+  backgroundIntensity,
+  densityTokens,
+  cardStyle,
+  cornerTokens,
+  motionLevel,
+  music,
+  bannerKind,
+  avatarInitials,
+  decorationScale,
+  decorationOffsetX,
+  decorationOffsetY,
+  featuredBadges,
+  extraBadgeCount,
+  heroPills,
+  likes,
+  dislikes,
+  views,
+  initialMyReaction,
+  regularSocialBlocks,
+  liveSocialBlocks,
+  composition,
+  orderedContentBlocks,
+}: {
+  preview: boolean;
+  displayName: string;
+  user: PublicProfileRenderUser;
+  themeColor: string;
+  mood: ProfileMood;
+  aura: ProfileAura;
+  sceneAppearance: ReturnType<typeof getProfileSceneAppearance>;
+  nameEffects: ProfileNameEffect[];
+  backgroundIntensity: ProfileBackgroundIntensity;
+  densityTokens: ReturnType<typeof getProfileDensityTokens>;
+  cardStyle: ProfileCardStyle;
+  cornerTokens: ReturnType<typeof getProfileCornerTokens>;
+  motionLevel: ProfileMotionLevel;
+  music: ProfileMusicData;
+  bannerKind: "image" | "video" | "unknown";
+  avatarInitials: string;
+  decorationScale: number;
+  decorationOffsetX: number;
+  decorationOffsetY: number;
+  featuredBadges: PublicProfileBadgeEntry[];
+  extraBadgeCount: number;
+  heroPills: PublicProfileHeroPill[];
+  likes: number;
+  dislikes: number;
+  views: number;
+  initialMyReaction: PublicProfileReaction;
+  regularSocialBlocks: PublicSocialBlock[];
+  liveSocialBlocks: PublicSocialBlock[];
+  composition: ProfileComposition;
+  orderedContentBlocks: ProfileCompositionBlock[];
+}) {
+  const { presence, depth, socialThemeColor, linkThemeColor } = sceneAppearance;
+  const resolvedBannerUrl = sanitizeRenderableUrl(user.bannerUrl);
+  const floatingAvatarSize = Math.max(108, Math.round(132 * densityTokens.avatarScale));
+  const identityWidth = Math.min(
+    Math.round(depth.shellMaxWidth * densityTokens.stageWidthScale * 0.58),
+    500,
+  );
+  const stageWidth = Math.min(
+    Math.round(depth.shellMaxWidth * densityTokens.stageWidthScale),
+    860,
+  );
+  const compactPills = heroPills.slice(0, 3);
+
+  return (
+    <main
+      style={{
+        minHeight: preview ? "auto" : "100vh",
+        position: "relative",
+        overflowX: "hidden",
+        color: "#ffffff",
+        fontFamily:
+          '"Space Grotesk", Inter, Arial, Helvetica, system-ui, sans-serif',
+        background: `
+          radial-gradient(circle at top, ${withAlpha(linkThemeColor, "22")} 0%, transparent 30%),
+          radial-gradient(circle at 84% 16%, ${withAlpha(presence.accent, "16")} 0%, transparent 20%),
+          linear-gradient(180deg, #05060a 0%, #040508 46%, #030407 100%)
+        `,
+        pointerEvents: preview ? "none" : undefined,
+        isolation: "isolate",
+      }}
+    >
+      <style>{`
+        .floating-profile-stage,
+        .floating-profile-stage-media,
+        .floating-profile-stage-overlay,
+        .floating-profile-stage-glow,
+        .floating-profile-stage-vignette {
+          position: absolute;
+          inset: 0;
+          pointer-events: none;
+        }
+
+        .floating-profile-stage-media {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          transform: scale(1.05);
+          filter: brightness(0.82) saturate(1.02);
+        }
+
+        .floating-profile-stage-overlay {
+          background:
+            linear-gradient(180deg, rgba(4,5,9,0.22) 0%, rgba(4,5,9,0.44) 36%, rgba(4,5,9,0.78) 100%),
+            radial-gradient(circle at 50% 18%, ${withAlpha(presence.accent, "26")} 0%, transparent 38%);
+        }
+
+        .floating-profile-stage-glow {
+          background: ${presence.stageGlow};
+          filter: blur(${Math.max(14, depth.stageGlowBlur)}px);
+          opacity: ${Math.max(0.34, depth.stageGlowOpacity * 0.62)};
+        }
+
+        .floating-profile-stage-vignette {
+          background:
+            radial-gradient(circle at center, rgba(0, 0, 0, 0) 40%, rgba(0, 0, 0, 0.44) 100%),
+            linear-gradient(90deg, rgba(4,5,9,0.28) 0%, rgba(4,5,9,0.06) 24%, rgba(4,5,9,0.06) 76%, rgba(4,5,9,0.28) 100%);
+        }
+
+        .floating-profile-body {
+          position: relative;
+          z-index: 1;
+          width: min(${stageWidth}px, calc(100% - 28px));
+          max-width: ${stageWidth}px;
+          margin: 0 auto;
+          padding: ${preview ? "26px 0 18px" : "34px 0 30px"};
+          display: grid;
+          gap: 18px;
+        }
+
+        .floating-identity-block {
+          width: min(${identityWidth}px, 100%);
+          justify-self: center;
+          display: grid;
+          justify-items: center;
+          gap: 12px;
+          text-align: center;
+          padding: 18px 16px;
+          border-radius: ${Math.max(cornerTokens.panelRadius, 20)}px;
+          border: 1px solid rgba(255,255,255,0.06);
+          background:
+            linear-gradient(180deg, rgba(255,255,255,0.03), rgba(7,9,14,0.4)),
+            ${cardStyle === "glass"
+              ? "linear-gradient(180deg, rgba(255,255,255,0.025), rgba(255,255,255,0.01))"
+              : "none"};
+          box-shadow:
+            0 20px 48px rgba(0,0,0,0.18),
+            inset 0 1px 0 rgba(255,255,255,0.04);
+          backdrop-filter: ${cardStyle === "glass" ? "blur(10px) saturate(108%)" : "none"};
+          -webkit-backdrop-filter: ${cardStyle === "glass" ? "blur(10px) saturate(108%)" : "none"};
+        }
+
+        .floating-chip-row,
+        .floating-pill-row,
+        .floating-badge-row {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          flex-wrap: wrap;
+          min-width: 0;
+        }
+
+        .floating-chip {
+          min-height: 26px;
+          padding: 0 9px;
+          border-radius: 999px;
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          color: #eef2fb;
+          background: rgba(255,255,255,0.05);
+          border: 1px solid rgba(255,255,255,0.08);
+          font-size: 10px;
+          font-weight: 800;
+          letter-spacing: 0.04em;
+          text-transform: uppercase;
+        }
+
+        .floating-chip.accent {
+          background: ${presence.presenceBackground};
+          border-color: ${presence.presenceBorder};
+          color: #fff2fb;
+        }
+
+        .floating-name {
+          margin: 0;
+          font-size: clamp(30px, 4.4vw, 48px);
+          line-height: 0.92;
+          letter-spacing: -0.08em;
+          text-shadow: 0 18px 40px rgba(0,0,0,0.3);
+        }
+
+        .floating-username {
+          margin-top: -4px;
+          color: #afbbd2;
+          font-size: 13px;
+          font-weight: 700;
+          letter-spacing: 0.04em;
+        }
+
+        .floating-pill {
+          min-height: 26px;
+          padding: 0 9px;
+          border-radius: 999px;
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          font-size: 10px;
+          font-weight: 800;
+          border: 1px solid rgba(255,255,255,0.08);
+          background: rgba(255,255,255,0.05);
+        }
+
+        .floating-bio-strip {
+          justify-self: center;
+          width: min(640px, 100%);
+          padding: 12px 14px;
+          border-radius: ${Math.max(cornerTokens.cardRadius, 16)}px;
+          border: 1px solid rgba(255,255,255,0.06);
+          background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(7,9,14,0.66));
+          color: #dfe7f6;
+          font-size: 13px;
+          line-height: ${densityTokens.bioLineHeight};
+          text-align: center;
+          white-space: pre-wrap;
+          overflow-wrap: anywhere;
+          box-shadow: 0 16px 32px rgba(0,0,0,0.16);
+        }
+
+        .floating-modules-grid {
+          display: grid;
+          grid-template-columns: repeat(12, minmax(0, 1fr));
+          gap: 14px;
+          align-items: start;
+        }
+
+        .floating-module {
+          position: relative;
+          min-width: 0;
+          overflow: hidden;
+          border-radius: ${Math.max(cornerTokens.cardRadius - 2, 16)}px;
+          border: 1px solid rgba(255,255,255,0.05);
+          background:
+            linear-gradient(180deg, rgba(255,255,255,0.028), rgba(8,10,16,0.72)),
+            ${sceneAppearance.surfaceBackground};
+          box-shadow:
+            0 16px 30px rgba(0,0,0,0.14),
+            inset 0 1px 0 rgba(255,255,255,0.03);
+          padding: 12px;
+          backdrop-filter: ${cardStyle === "glass" ? "blur(8px) saturate(106%)" : "none"};
+          -webkit-backdrop-filter: ${cardStyle === "glass" ? "blur(8px) saturate(106%)" : "none"};
+        }
+
+        .floating-module::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background:
+            radial-gradient(circle at top right, ${withAlpha(presence.accent, "0f")} 0%, transparent 28%),
+            linear-gradient(120deg, rgba(255,255,255,0.04), transparent 18%);
+          pointer-events: none;
+        }
+
+        .floating-module > * {
+          position: relative;
+          z-index: 1;
+        }
+
+        .floating-module.music,
+        .floating-module.live {
+          grid-column: span 5;
+        }
+
+        .floating-module.socials,
+        .floating-module.links {
+          grid-column: span 7;
+        }
+
+        .floating-module.badges,
+        .floating-module.bio {
+          grid-column: span 12;
+        }
+
+        .floating-module.stats {
+          grid-column: 9 / span 4;
+          justify-self: end;
+          width: min(100%, 320px);
+        }
+
+        .floating-module-head {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 8px;
+          flex-wrap: wrap;
+          margin-bottom: 10px;
+        }
+
+        .floating-module-label {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          min-height: 24px;
+          padding: 0 8px;
+          border-radius: 999px;
+          border: 1px solid rgba(255,255,255,0.08);
+          background: rgba(255,255,255,0.04);
+          color: #eef2fb;
+          font-size: 10px;
+          font-weight: 800;
+          letter-spacing: 0.04em;
+          text-transform: uppercase;
+        }
+
+        .floating-module-meta {
+          color: #9ba7c0;
+          font-size: 11px;
+          font-weight: 700;
+        }
+
+        .floating-module .links-list {
+          margin-top: 0;
+        }
+
+        .floating-module .profile-link-card.float-a,
+        .floating-module .profile-link-card.float-b {
+          margin-inline: 0;
+        }
+
+        .floating-module .profile-badge-rail {
+          margin-top: 0;
+        }
+
+        @media (max-width: 920px) {
+          .floating-modules-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
+
+          .floating-module.music,
+          .floating-module.live,
+          .floating-module.socials,
+          .floating-module.links,
+          .floating-module.badges,
+          .floating-module.bio,
+          .floating-module.stats {
+            grid-column: span 2;
+            justify-self: stretch;
+            width: 100%;
+          }
+        }
+
+        @media (max-width: 680px) {
+          .floating-profile-body {
+            width: min(${stageWidth}px, calc(100% - 20px));
+            gap: 14px;
+            padding: ${preview ? "20px 0 14px" : "24px 0 24px"};
+          }
+
+          .floating-identity-block {
+            width: 100%;
+          }
+
+          .floating-bio-strip {
+            width: 100%;
+          }
+
+          .floating-modules-grid {
+            grid-template-columns: minmax(0, 1fr);
+            gap: 12px;
+          }
+
+          .floating-module.music,
+          .floating-module.live,
+          .floating-module.socials,
+          .floating-module.links,
+          .floating-module.badges,
+          .floating-module.bio,
+          .floating-module.stats {
+            grid-column: span 1;
+          }
+        }
+      `}</style>
+
+      <LivingProfileBackground
+        mood={mood}
+        aura={aura}
+        themeColor={themeColor}
+        scene={sceneAppearance.scene.value}
+        previewMode={preview}
+        intensity={backgroundIntensity}
+        motionLevel={motionLevel}
+      />
+
+      <div className="floating-profile-stage" aria-hidden>
+        <ProfileBannerMedia
+          url={resolvedBannerUrl}
+          kind={resolvedBannerUrl ? bannerKind : "unknown"}
+          className="floating-profile-stage-media"
+        />
+        <div className="floating-profile-stage-glow" />
+        <div className="floating-profile-stage-overlay" />
+        <div className="floating-profile-stage-vignette" />
+      </div>
+
+      <section className="floating-profile-body">
+        <div className="floating-identity-block">
+          <div className="floating-chip-row">
+            <div className="floating-chip accent">
+              <LuMoonStar size={12} />
+              {presence.statusLabel}
+            </div>
+            <div className="floating-chip">
+              <LuSparkles size={12} />
+              {sceneAppearance.scene.name}
+            </div>
+          </div>
+
+          <LivingAvatar
+            avatarUrl={sanitizeRenderableUrl(user.avatarUrl)}
+            avatarInitials={avatarInitials}
+            avatarAlt={user.username}
+            selectedDecoration={user.selectedDecoration}
+            themeColor={themeColor}
+            accentColor={presence.accent}
+            contrastColor={presence.contrast}
+            softColor={presence.soft}
+            pulseColor={presence.pulse}
+            auraBackground={presence.avatarAuraBackground}
+            ringColor={presence.avatarRing}
+            glowColor={presence.avatarGlow}
+            size={floatingAvatarSize}
+            frameInset={7}
+            decorationScale={decorationScale}
+            decorationOffsetX={decorationOffsetX}
+            decorationOffsetY={decorationOffsetY}
+          />
+
+          <ProfileNamePlate
+            displayName={displayName}
+            username={user.username}
+            effects={nameEffects}
+            motionLevel={motionLevel}
+            nameClassName="floating-name"
+            usernameClassName="floating-username"
+          />
+
+          {compactPills.length > 0 ? (
+            <div className="floating-pill-row">
+              {compactPills.map((pill) => (
+                <div
+                  key={pill.key}
+                  className="floating-pill"
+                  style={{
+                    color: pill.color,
+                    background: withAlpha(pill.color, "14"),
+                    borderColor: withAlpha(pill.color, "22"),
+                  }}
+                >
+                  {pill.icon}
+                  {pill.text}
+                </div>
+              ))}
+            </div>
+          ) : null}
+        </div>
+
+        {user.bio ? <div className="floating-bio-strip">{user.bio}</div> : null}
+
+        <div className="floating-modules-grid">
+          {orderedContentBlocks.map((block) =>
+            renderFloatingCompositionBlock(block, {
+              preview,
+              username: user.username,
+              music,
+              motionLevel,
+              themeColor: linkThemeColor,
+              socialThemeColor,
+              accentColor: presence.accent,
+              contrastColor: presence.contrast,
+              softColor: presence.soft,
+              featuredBadges,
+              extraBadgeCount,
+              likes,
+              dislikes,
+              views,
+              initialMyReaction,
+              regularSocialBlocks,
+              liveSocialBlocks,
+              links: user.links,
+              linksStyle: composition.linksStyle,
+              socialsStyle: composition.socialsStyle,
+            }),
+          )}
+        </div>
+      </section>
+    </main>
+  );
+}
+
+function IntroProfileStage({
+  mode,
+  floating,
+  preview,
+  previewMessage,
+  displayName,
+  user,
+  themeColor,
+  mood,
+  aura,
+  sceneAppearance,
+  nameEffects,
+  backgroundIntensity,
+  densityTokens,
+  cardStyle,
+  motionLevel,
+  music,
+  bannerKind,
+  avatarInitials,
+  decorationScale,
+  decorationOffsetX,
+  decorationOffsetY,
+  featuredBadges,
+  extraBadgeCount,
+  heroPills,
+  likes,
+  dislikes,
+  views,
+  initialMyReaction,
+  regularSocialBlocks,
+  liveSocialBlocks,
+  composition,
+  orderedContentBlocks,
+  hasDetails,
+}: {
+  mode: ProfileIntroMode;
+  floating: boolean;
+  preview: boolean;
+  previewMessage: string;
+  displayName: string;
+  user: PublicProfileRenderUser;
+  themeColor: string;
+  mood: ProfileMood;
+  aura: ProfileAura;
+  sceneAppearance: ReturnType<typeof getProfileSceneAppearance>;
+  nameEffects: ProfileNameEffect[];
+  backgroundIntensity: ProfileBackgroundIntensity;
+  densityTokens: ReturnType<typeof getProfileDensityTokens>;
+  cardStyle: ProfileCardStyle;
+  motionLevel: ProfileMotionLevel;
+  music: ProfileMusicData;
+  bannerKind: "image" | "video" | "unknown";
+  avatarInitials: string;
+  decorationScale: number;
+  decorationOffsetX: number;
+  decorationOffsetY: number;
+  featuredBadges: PublicProfileBadgeEntry[];
+  extraBadgeCount: number;
+  heroPills: PublicProfileHeroPill[];
+  likes: number;
+  dislikes: number;
+  views: number;
+  initialMyReaction: PublicProfileReaction;
+  regularSocialBlocks: PublicSocialBlock[];
+  liveSocialBlocks: PublicSocialBlock[];
+  composition: ProfileComposition;
+  orderedContentBlocks: ProfileCompositionBlock[];
+  hasDetails: boolean;
+}) {
+  const { presence, depth, socialThemeColor, linkThemeColor } = sceneAppearance;
+  const introAvatarSize = Math.max(
+    mode === "cinematic" ? 132 : 108,
+    Math.round((mode === "cinematic" ? 150 : 122) * densityTokens.avatarScale),
+  );
+  const introMaxWidth = Math.min(
+    Math.round(depth.shellMaxWidth * densityTokens.stageWidthScale * (mode === "cinematic" ? 0.7 : 0.6)),
+    mode === "cinematic" ? 540 : 460,
+  );
+  const detailsMaxWidth = Math.min(
+    Math.round(depth.shellMaxWidth * densityTokens.stageWidthScale),
+    mode === "cinematic" ? 820 : 780,
+  );
+  const introPills = mode === "cinematic" ? heroPills.slice(0, 3) : heroPills.slice(0, 2);
+  const introBadges = featuredBadges.slice(0, mode === "cinematic" ? 3 : 2);
+  const resolvedBannerUrl = sanitizeRenderableUrl(user.bannerUrl);
+  const detailsSectionId = `profile-details-${user.username}-${mode}${preview ? "-preview" : ""}`;
+
+  const scrollToDetails = () => {
+    if (preview || !hasDetails || typeof document === "undefined") {
+      return;
+    }
+
+    const target = document.getElementById(detailsSectionId);
+
+    if (!target) {
+      return;
+    }
+
+    const prefersReducedMotion =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    target.scrollIntoView({
+      behavior: prefersReducedMotion ? "auto" : "smooth",
+      block: "start",
+    });
+  };
+
+  return (
+    <main
+      style={{
+        minHeight: preview ? "auto" : "100vh",
+        position: "relative",
+        overflowX: "hidden",
+        color: "#ffffff",
+        fontFamily:
+          '"Space Grotesk", Inter, Arial, Helvetica, system-ui, sans-serif',
+        background: `
+          radial-gradient(circle at top, ${withAlpha(linkThemeColor, mode === "cinematic" || floating ? "22" : "16")} 0%, transparent 28%),
+          radial-gradient(circle at 82% 14%, ${withAlpha(presence.accent, "18")} 0%, transparent 18%),
+          linear-gradient(180deg, #05060a 0%, #040508 46%, #030407 100%)
+        `,
+        pointerEvents: preview ? "none" : undefined,
+        isolation: "isolate",
+      }}
+    >
+      <style>{`
+        .profile-intro-stage,
+        .profile-intro-stage-media,
+        .profile-intro-stage-overlay,
+        .profile-intro-stage-glow,
+        .profile-intro-stage-vignette,
+        .profile-intro-stage-depth {
+          position: absolute;
+          inset: 0;
+          pointer-events: none;
+        }
+
+        .profile-intro-stage {
+          z-index: 0;
+        }
+
+        .profile-intro-stage-media {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          transform: scale(${mode === "cinematic" ? 1.06 : 1.03});
+          filter: ${mode === "cinematic"
+            ? "brightness(0.9) saturate(1.04)"
+            : "brightness(0.82) saturate(0.98)"};
+        }
+
+        .profile-intro-stage-overlay {
+          background:
+            linear-gradient(
+              180deg,
+              rgba(4, 5, 9, ${mode === "cinematic" ? "0.18" : "0.32"}) 0%,
+              rgba(4, 5, 9, ${mode === "cinematic" ? "0.34" : "0.54"}) 38%,
+              rgba(4, 5, 9, 0.82) 100%
+            ),
+            radial-gradient(circle at 50% 16%, ${withAlpha(presence.accent, mode === "cinematic" ? "2e" : "18")} 0%, transparent 38%);
+        }
+
+        .profile-intro-stage-glow {
+          background: ${presence.stageGlow};
+          filter: blur(${mode === "cinematic" ? Math.max(depth.stageGlowBlur, 16) : 12}px);
+          opacity: ${mode === "cinematic" ? Math.max(depth.stageGlowOpacity * 0.7, 0.4) : 0.26};
+        }
+
+        .profile-intro-stage-vignette {
+          background:
+            radial-gradient(circle at center, rgba(0, 0, 0, 0) 42%, rgba(0, 0, 0, ${mode === "cinematic" ? "0.34" : "0.42"}) 100%),
+            linear-gradient(90deg, rgba(4, 5, 9, 0.34) 0%, rgba(4, 5, 9, 0.06) 22%, rgba(4, 5, 9, 0.06) 78%, rgba(4, 5, 9, 0.34) 100%);
+        }
+
+        .profile-intro-stage-depth {
+          background:
+            linear-gradient(180deg, rgba(5, 6, 10, 0) 0%, rgba(5, 6, 10, 0.16) 52%, rgba(5, 6, 10, 0.46) 100%),
+            radial-gradient(circle at 50% 100%, rgba(0, 0, 0, 0.18) 0%, transparent 42%);
+        }
+
+        .profile-intro-hero {
+          position: relative;
+          z-index: 1;
+          min-height: ${preview ? (mode === "cinematic" ? "540px" : "500px") : "100svh"};
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: ${preview ? "24px 14px 18px" : "32px 18px 18px"};
+          box-sizing: border-box;
+        }
+
+        .profile-intro-shell {
+          width: min(${introMaxWidth}px, calc(100% - 24px));
+          max-width: ${introMaxWidth}px;
+          position: relative;
+          display: grid;
+          justify-items: center;
+          gap: ${mode === "cinematic" ? "16px" : "13px"};
+          padding: ${mode === "cinematic" ? "22px 20px" : "18px 16px"};
+          text-align: center;
+          border-radius: ${mode === "cinematic" ? "28px" : "24px"};
+          border: 1px solid ${mode === "cinematic" || floating ? withAlpha(presence.accent, "1a") : "rgba(255,255,255,0.08)"};
+          background:
+            ${mode === "cinematic" || floating
+              ? "linear-gradient(180deg, rgba(255,255,255,0.04), rgba(6,8,13,0.38) 42%, rgba(6,8,13,0.18) 100%)"
+              : "linear-gradient(180deg, rgba(8,10,16,0.78), rgba(7,8,14,0.74))"},
+            ${cardStyle === "glass"
+              ? "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))"
+              : "none"};
+          box-shadow:
+            0 28px 60px rgba(0, 0, 0, 0.22),
+            0 0 0 1px rgba(255, 255, 255, 0.03),
+            inset 0 1px 0 rgba(255, 255, 255, 0.05);
+          backdrop-filter: ${cardStyle === "glass" && mode === "cinematic"
+            ? "blur(12px) saturate(112%)"
+            : cardStyle === "glass"
+              ? "blur(10px) saturate(108%)"
+              : "none"};
+          -webkit-backdrop-filter: ${cardStyle === "glass" && mode === "cinematic"
+            ? "blur(12px) saturate(112%)"
+            : cardStyle === "glass"
+              ? "blur(10px) saturate(108%)"
+              : "none"};
+        }
+
+        .profile-intro-shell::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          border-radius: inherit;
+          background:
+            radial-gradient(circle at top, ${withAlpha(presence.soft, mode === "cinematic" ? "18" : "0d")} 0%, transparent 38%),
+            linear-gradient(135deg, rgba(255,255,255,0.05), transparent 20%);
+          pointer-events: none;
+        }
+
+        .profile-intro-chip-row,
+        .profile-intro-pill-row,
+        .profile-intro-badge-row {
+          position: relative;
+          z-index: 1;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          flex-wrap: wrap;
+          min-width: 0;
+        }
+
+        .profile-intro-chip,
+        .profile-intro-scroll {
+          min-height: 28px;
+          padding: 0 10px;
+          border-radius: 999px;
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          border: 1px solid rgba(255,255,255,0.1);
+          background: rgba(255,255,255,0.05);
+          color: #eef3fc;
+          font-size: 10px;
+          font-weight: 800;
+          letter-spacing: 0.04em;
+          text-transform: uppercase;
+        }
+
+        .profile-intro-chip.accent {
+          border-color: ${presence.presenceBorder};
+          background: ${presence.presenceBackground};
+          color: #fff4fb;
+        }
+
+        .profile-intro-avatar,
+        .profile-intro-name,
+        .profile-intro-username {
+          position: relative;
+          z-index: 1;
+        }
+
+        .profile-intro-name {
+          margin: 0;
+          font-size: clamp(${mode === "cinematic" ? "34px" : "28px"}, ${mode === "cinematic" ? "5vw" : "4.6vw"}, ${mode === "cinematic" ? "54px" : "44px"});
+          line-height: 0.92;
+          letter-spacing: -0.08em;
+          text-shadow: 0 16px 38px rgba(0, 0, 0, 0.32);
+        }
+
+        .profile-intro-username {
+          margin-top: -4px;
+          color: #b0bdd6;
+          font-size: 13px;
+          font-weight: 700;
+          letter-spacing: 0.04em;
+        }
+
+        .profile-intro-bio-hint {
+          position: relative;
+          z-index: 1;
+          max-width: 38ch;
+          color: #cdd8eb;
+          font-size: 13px;
+          line-height: 1.65;
+        }
+
+        .profile-intro-pill {
+          min-height: 26px;
+          padding: 0 9px;
+          border-radius: 999px;
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          font-size: 10px;
+          font-weight: 800;
+          letter-spacing: 0.02em;
+          border: 1px solid rgba(255,255,255,0.08);
+          background: rgba(255,255,255,0.05);
+        }
+
+        .profile-intro-badge-pill {
+          min-height: 28px;
+          padding: 0 9px;
+          border-radius: 999px;
+          display: inline-flex;
+          align-items: center;
+          gap: 7px;
+          border: 1px solid rgba(255,255,255,0.08);
+          background: rgba(255,255,255,0.05);
+          max-width: 100%;
+        }
+
+        .profile-intro-badge-label {
+          font-size: 10px;
+          font-weight: 800;
+          color: #f5f7fb;
+        }
+
+        .profile-intro-scroll-wrap {
+          position: absolute;
+          left: 50%;
+          bottom: ${preview ? "8px" : "20px"};
+          transform: translateX(-50%);
+          z-index: 1;
+        }
+
+        .profile-intro-scroll {
+          cursor: pointer;
+          transition: opacity 160ms ease, transform 160ms ease;
+          animation: intro-scroll-hint 1.9s ease-in-out infinite;
+        }
+
+        .profile-intro-scroll:hover,
+        .profile-intro-scroll:focus-visible {
+          opacity: 1;
+          transform: translateY(-1px);
+        }
+
+        .profile-intro-details {
+          position: relative;
+          z-index: 1;
+          width: min(${detailsMaxWidth}px, calc(100% - 28px));
+          max-width: ${detailsMaxWidth}px;
+          margin: 0 auto ${preview ? "18px" : "34px"};
+          display: grid;
+          gap: ${floating ? "14px" : "12px"};
+        }
+
+        .profile-intro-module {
+          position: relative;
+          overflow: hidden;
+          min-width: 0;
+          border-radius: ${floating ? "18px" : "22px"};
+          border: 1px solid ${floating ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.08)"};
+          background:
+            linear-gradient(180deg, rgba(255,255,255,${floating ? "0.028" : "0.04"}), rgba(8,10,16,${floating ? "0.78" : "0.92"})),
+            ${sceneAppearance.surfaceBackground};
+          box-shadow:
+            0 ${floating ? "16px 30px" : "18px 36px"} rgba(0, 0, 0, 0.18),
+            inset 0 1px 0 rgba(255,255,255,0.04);
+          padding: ${floating ? "12px" : "14px"};
+        }
+
+        .profile-intro-module::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background:
+            linear-gradient(120deg, rgba(255,255,255,0.04), transparent 22%),
+            radial-gradient(circle at top right, ${withAlpha(presence.accent, "10")} 0%, transparent 28%);
+          pointer-events: none;
+        }
+
+        .profile-intro-module > * {
+          position: relative;
+          z-index: 1;
+        }
+
+        .profile-intro-module-stack {
+          display: grid;
+          gap: 10px;
+        }
+
+        .profile-intro-module-head {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 8px;
+          flex-wrap: wrap;
+        }
+
+        .profile-intro-module-copy {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          min-height: 26px;
+          padding: 0 9px;
+          border-radius: 999px;
+          border: 1px solid rgba(255,255,255,0.08);
+          background: rgba(255,255,255,0.04);
+          color: #eef3fc;
+          font-size: 10px;
+          font-weight: 800;
+          letter-spacing: 0.04em;
+          text-transform: uppercase;
+        }
+
+        .profile-intro-module-count {
+          color: #9aa7c2;
+          font-size: 11px;
+          font-weight: 700;
+        }
+
+        .profile-intro-bio-card {
+          color: #dfe7f6;
+          font-size: 13px;
+          line-height: ${densityTokens.bioLineHeight};
+          white-space: pre-wrap;
+          overflow-wrap: anywhere;
+        }
+
+        .profile-intro-module .links-list {
+          margin-top: 0;
+        }
+
+        .profile-intro-module .profile-link-card.float-a,
+        .profile-intro-module .profile-link-card.float-b {
+          margin-inline: 0;
+        }
+
+        @keyframes intro-scroll-hint {
+          0%, 100% {
+            opacity: 0.64;
+            transform: translateY(0);
+          }
+
+          50% {
+            opacity: 1;
+            transform: translateY(4px);
+          }
+        }
+
+        @media (max-width: 720px) {
+          .profile-intro-hero {
+            min-height: ${preview ? "460px" : "100svh"};
+            padding: 22px 14px 14px;
+          }
+
+          .profile-intro-shell {
+            width: min(${Math.min(introMaxWidth, 420)}px, calc(100% - 12px));
+            padding: 16px 14px;
+            border-radius: 22px;
+          }
+
+          .profile-intro-details {
+            width: min(${Math.min(detailsMaxWidth, 760)}px, calc(100% - 20px));
+          }
+
+          .profile-intro-module {
+            padding: 12px;
+            border-radius: 20px;
+          }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .profile-intro-scroll {
+            animation: none;
+          }
+        }
+      `}</style>
+
+      <LivingProfileBackground
+        mood={mood}
+        aura={aura}
+        themeColor={themeColor}
+        scene={sceneAppearance.scene.value}
+        previewMode={preview}
+        intensity={backgroundIntensity}
+        motionLevel={motionLevel}
+      />
+
+      <div className="profile-intro-stage" aria-hidden>
+        <ProfileBannerMedia
+          url={resolvedBannerUrl}
+          kind={resolvedBannerUrl ? bannerKind : "unknown"}
+          className="profile-intro-stage-media"
+        />
+        <div className="profile-intro-stage-glow" />
+        <div className="profile-intro-stage-overlay" />
+        <div className="profile-intro-stage-depth" />
+        <div className="profile-intro-stage-vignette" />
+      </div>
+
+      <section className="profile-intro-hero">
+        <div className="profile-intro-shell">
+          <div className="profile-intro-chip-row">
+            <div className="profile-intro-chip accent">
+              <LuMoonStar size={12} />
+              {presence.statusLabel}
+            </div>
+            <div className="profile-intro-chip">
+              <LuSparkles size={12} />
+              {sceneAppearance.scene.name}
+            </div>
+          </div>
+
+          {preview ? (
+            <div className="profile-intro-chip">
+              <LuBadgeCheck size={12} />
+              {previewMessage}
+            </div>
+          ) : null}
+
+          <div className="profile-intro-avatar">
+            <LivingAvatar
+              avatarUrl={sanitizeRenderableUrl(user.avatarUrl)}
+              avatarInitials={avatarInitials}
+              avatarAlt={user.username}
+              selectedDecoration={user.selectedDecoration}
+              themeColor={themeColor}
+              accentColor={presence.accent}
+              contrastColor={presence.contrast}
+              softColor={presence.soft}
+              pulseColor={presence.pulse}
+              auraBackground={presence.avatarAuraBackground}
+              ringColor={presence.avatarRing}
+              glowColor={presence.avatarGlow}
+              size={introAvatarSize}
+              frameInset={Math.max(6, Math.round(introAvatarSize * 0.05))}
+              decorationScale={decorationScale}
+              decorationOffsetX={decorationOffsetX}
+              decorationOffsetY={decorationOffsetY}
+            />
+          </div>
+
+          <ProfileNamePlate
+            displayName={displayName}
+            username={user.username}
+            effects={nameEffects}
+            motionLevel={motionLevel}
+            nameClassName="profile-intro-name"
+            usernameClassName="profile-intro-username"
+          />
+
+          {user.bio && mode === "cinematic" ? (
+            <div className="profile-intro-bio-hint">{truncateProfileBio(user.bio, 120)}</div>
+          ) : null}
+
+          {introPills.length > 0 && mode === "cinematic" ? (
+            <div className="profile-intro-pill-row">
+              {introPills.map((pill) => (
+                <div
+                  key={pill.key}
+                  className="profile-intro-pill"
+                  style={{
+                    color: pill.color,
+                    background: withAlpha(pill.color, "16"),
+                    borderColor: withAlpha(pill.color, "24"),
+                  }}
+                >
+                  {pill.icon}
+                  {pill.text}
+                </div>
+              ))}
+            </div>
+          ) : null}
+
+          {introBadges.length > 0 ? (
+            <div className="profile-intro-badge-row">
+              {introBadges.map((item) => {
+                const visual = getProfileBadgeVisual(item.badge, themeColor);
+
+                return (
+                  <div
+                    key={item.id}
+                    className="profile-intro-badge-pill"
+                    style={{
+                      background: visual.pillBackground,
+                      borderColor: visual.pillBorder,
+                      boxShadow: visual.pillShadow,
+                    }}
+                  >
+                    <BadgeVisual
+                      slug={item.badge.slug}
+                      color={item.badge.color || visual.color}
+                      rarity={item.badge.rarity}
+                      category={item.badge.category}
+                      size={24}
+                      compact
+                    />
+                    <span className="profile-intro-badge-label">{item.badge.name}</span>
+                  </div>
+                );
+              })}
+              {extraBadgeCount > 0 ? (
+                <div className="profile-intro-badge-pill">
+                  <span className="profile-intro-badge-label">+{extraBadgeCount} more</span>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+
+        {hasDetails ? (
+          <div className="profile-intro-scroll-wrap">
+            <button type="button" className="profile-intro-scroll" onClick={scrollToDetails}>
+              <LuChevronDown size={12} />
+              Scroll down for more
+            </button>
+          </div>
+        ) : null}
+      </section>
+
+      {hasDetails ? (
+        <section id={detailsSectionId} className="profile-intro-details">
+          {user.bio ? (
+            <div className="profile-intro-module">
+              <div className="profile-intro-module-stack">
+                <div className="profile-intro-module-head">
+                  <div className="profile-intro-module-copy">
+                    <LuMoonStar size={12} />
+                    Bio
+                  </div>
+                </div>
+                <div className="profile-intro-bio-card">{user.bio}</div>
+              </div>
+            </div>
+          ) : null}
+
+          {orderedContentBlocks.map((block) =>
+            renderIntroDetailBlock(block, {
+              preview,
+              music,
+              motionLevel,
+              username: user.username,
+              themeColor: linkThemeColor,
+              socialThemeColor,
+              accentColor: presence.accent,
+              contrastColor: presence.contrast,
+              softColor: presence.soft,
+              featuredBadges,
+              extraBadgeCount,
+              likes,
+              dislikes,
+              views,
+              initialMyReaction,
+              regularSocialBlocks,
+              liveSocialBlocks,
+              links: user.links,
+              linksStyle: composition.linksStyle,
+              socialsStyle: composition.socialsStyle,
+            }),
+          )}
+        </section>
+      ) : null}
+    </main>
+  );
+}
+
 function renderModernCompositionBlock(
   block: ProfileCompositionBlock,
   input: {
@@ -1433,6 +2714,408 @@ function renderModernCompositionBlock(
   );
 }
 
+function renderIntroDetailBlock(
+  block: ProfileCompositionBlock,
+  input: {
+    preview: boolean;
+    music: ProfileMusicData;
+    motionLevel: ProfileMotionLevel;
+    username: string;
+    themeColor: string;
+    socialThemeColor: string;
+    accentColor: string;
+    contrastColor: string;
+    softColor: string;
+    featuredBadges: PublicProfileBadgeEntry[];
+    extraBadgeCount: number;
+    likes: number;
+    dislikes: number;
+    views: number;
+    initialMyReaction: PublicProfileReaction;
+    regularSocialBlocks: PublicSocialBlock[];
+    liveSocialBlocks: PublicSocialBlock[];
+    links: PublicProfileRenderUser["links"];
+    linksStyle: ProfileCompositionLinksStyle;
+    socialsStyle: ProfileComposition["socialsStyle"];
+  },
+) {
+  if (block === "music") {
+    return (
+      <div key={block} className="profile-intro-module">
+        <div className="profile-intro-module-stack">
+          <div className="profile-intro-module-copy">
+            <LuMusic4 size={12} />
+            Music
+          </div>
+          <ProfileRenderBoundary label="Music card" compact resetKey={`${input.username}-${block}`}>
+            <ProfileMusicCard
+              music={input.music}
+              themeColor={input.themeColor}
+              accentColor={input.accentColor}
+              contrastColor={input.contrastColor}
+              softColor={input.softColor}
+              compact
+              showPlaceholder={input.preview}
+              motionLevel={input.motionLevel}
+            />
+          </ProfileRenderBoundary>
+        </div>
+      </div>
+    );
+  }
+
+  if (block === "socials") {
+    return (
+      <div key={block} className="profile-intro-module">
+        <div className="profile-intro-module-stack">
+          <div className="profile-intro-module-copy">
+            <LuSparkles size={12} />
+            Socials
+          </div>
+          <ProfileRenderBoundary label="Social presence" compact resetKey={`${input.username}-${block}`}>
+            <SocialPresenceSection
+              blocks={input.regularSocialBlocks}
+              themeColor={input.socialThemeColor}
+              compact
+              preview={input.preview}
+              mode="socials"
+              displayStyle={input.socialsStyle}
+            />
+          </ProfileRenderBoundary>
+        </div>
+      </div>
+    );
+  }
+
+  if (block === "live") {
+    return (
+      <div key={block} className="profile-intro-module">
+        <div className="profile-intro-module-stack">
+          <div className="profile-intro-module-copy">
+            <LuSparkles size={12} />
+            Live
+          </div>
+          <ProfileRenderBoundary label="Live presence" compact resetKey={`${input.username}-${block}`}>
+            <SocialPresenceSection
+              blocks={input.liveSocialBlocks}
+              themeColor={input.socialThemeColor}
+              compact
+              preview={input.preview}
+              mode="live"
+              displayStyle={input.socialsStyle}
+            />
+          </ProfileRenderBoundary>
+        </div>
+      </div>
+    );
+  }
+
+  if (block === "links") {
+    return (
+      <div key={block} className="profile-intro-module">
+        <div className="profile-intro-module-stack">
+          <div className="profile-intro-module-head">
+            <div className="profile-intro-module-copy">
+              <LuSparkles size={12} />
+              Links
+            </div>
+            <div className="profile-intro-module-count">
+              {input.links.length} link{input.links.length === 1 ? "" : "s"}
+            </div>
+          </div>
+          <div className="links-list">
+            {renderModernLinks(input.links, input.themeColor, input.linksStyle)}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (block === "badges") {
+    return (
+      <div key={block} className="profile-intro-module">
+        <div className="profile-intro-module-stack">
+          <div className="profile-intro-module-copy">
+            <LuBadgeCheck size={12} />
+            Badges
+          </div>
+          <div className="profile-badge-rail">
+            {input.featuredBadges.map((item) => {
+              const visual = getProfileBadgeVisual(item.badge, input.themeColor);
+
+              return (
+                <div
+                  key={item.id}
+                  className="profile-badge-pill"
+                  title={item.badge.description || item.badge.name}
+                  style={{
+                    background: visual.pillBackground,
+                    borderColor: visual.pillBorder,
+                    boxShadow: visual.pillShadow,
+                  }}
+                >
+                  <div className="profile-badge-icon">
+                    <BadgeVisual
+                      slug={item.badge.slug}
+                      color={item.badge.color || visual.color}
+                      rarity={item.badge.rarity}
+                      category={item.badge.category}
+                      size={28}
+                      compact
+                    />
+                  </div>
+                  <span className="profile-badge-label" style={{ color: visual.labelColor }}>
+                    {item.badge.name}
+                  </span>
+                </div>
+              );
+            })}
+            {input.extraBadgeCount > 0 ? (
+              <div className="profile-badge-pill">
+                <div className="profile-badge-icon">+{input.extraBadgeCount}</div>
+                <span className="profile-badge-label">More</span>
+              </div>
+            ) : null}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div key={block} className="profile-intro-module">
+      <div className="profile-intro-module-stack">
+        <div className="profile-intro-module-copy">
+          <LuBadgeCheck size={12} />
+          Stats
+        </div>
+        {input.preview ? (
+          <div className="empty-links">
+            <strong style={{ display: "block", color: "#ffffff", marginBottom: "8px" }}>
+              Stats preview
+            </strong>
+            <span>
+              {input.views} views, {input.likes} likes, {input.dislikes} dislikes
+            </span>
+          </div>
+        ) : (
+          <ProfileRenderBoundary label="Profile stats" compact resetKey={`${input.username}-${block}`}>
+            <ProfileHeroClient
+              username={input.username}
+              initialViews={input.views}
+              initialLikes={input.likes}
+              initialDislikes={input.dislikes}
+              themeColor={input.themeColor}
+              initialMyReaction={input.initialMyReaction}
+              preview={input.preview}
+            />
+          </ProfileRenderBoundary>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function renderFloatingCompositionBlock(
+  block: ProfileCompositionBlock,
+  input: {
+    preview: boolean;
+    music: ProfileMusicData;
+    motionLevel: ProfileMotionLevel;
+    username: string;
+    themeColor: string;
+    socialThemeColor: string;
+    accentColor: string;
+    contrastColor: string;
+    softColor: string;
+    featuredBadges: PublicProfileBadgeEntry[];
+    extraBadgeCount: number;
+    likes: number;
+    dislikes: number;
+    views: number;
+    initialMyReaction: PublicProfileReaction;
+    regularSocialBlocks: PublicSocialBlock[];
+    liveSocialBlocks: PublicSocialBlock[];
+    links: PublicProfileRenderUser["links"];
+    linksStyle: ProfileCompositionLinksStyle;
+    socialsStyle: ProfileComposition["socialsStyle"];
+  },
+) {
+  if (block === "music") {
+    return (
+      <div key={block} className="floating-module music">
+        <div className="floating-module-head">
+          <div className="floating-module-label">
+            <LuMusic4 size={12} />
+            Music
+          </div>
+        </div>
+        <ProfileRenderBoundary label="Music card" compact resetKey={`${input.username}-${block}`}>
+          <ProfileMusicCard
+            music={input.music}
+            themeColor={input.themeColor}
+            accentColor={input.accentColor}
+            contrastColor={input.contrastColor}
+            softColor={input.softColor}
+            compact
+            showPlaceholder={input.preview}
+            motionLevel={input.motionLevel}
+          />
+        </ProfileRenderBoundary>
+      </div>
+    );
+  }
+
+  if (block === "socials") {
+    return (
+      <div key={block} className="floating-module socials">
+        <div className="floating-module-head">
+          <div className="floating-module-label">
+            <LuSparkles size={12} />
+            Socials
+          </div>
+        </div>
+        <ProfileRenderBoundary label="Social presence" compact resetKey={`${input.username}-${block}`}>
+          <SocialPresenceSection
+            blocks={input.regularSocialBlocks}
+            themeColor={input.socialThemeColor}
+            compact
+            preview={input.preview}
+            mode="socials"
+            displayStyle={input.socialsStyle}
+          />
+        </ProfileRenderBoundary>
+      </div>
+    );
+  }
+
+  if (block === "live") {
+    return (
+      <div key={block} className="floating-module live">
+        <div className="floating-module-head">
+          <div className="floating-module-label">
+            <LuSparkles size={12} />
+            Live
+          </div>
+        </div>
+        <ProfileRenderBoundary label="Live presence" compact resetKey={`${input.username}-${block}`}>
+          <SocialPresenceSection
+            blocks={input.liveSocialBlocks}
+            themeColor={input.socialThemeColor}
+            compact
+            preview={input.preview}
+            mode="live"
+            displayStyle={input.socialsStyle}
+          />
+        </ProfileRenderBoundary>
+      </div>
+    );
+  }
+
+  if (block === "links") {
+    return (
+      <div key={block} className="floating-module links">
+        <div className="floating-module-head">
+          <div className="floating-module-label">
+            <LuSparkles size={12} />
+            Links
+          </div>
+          <div className="floating-module-meta">
+            {input.links.length} link{input.links.length === 1 ? "" : "s"}
+          </div>
+        </div>
+        <div className="links-list">
+          {renderModernLinks(input.links, input.themeColor, input.linksStyle)}
+        </div>
+      </div>
+    );
+  }
+
+  if (block === "badges") {
+    return (
+      <div key={block} className="floating-module badges">
+        <div className="floating-module-head">
+          <div className="floating-module-label">
+            <LuBadgeCheck size={12} />
+            Badges
+          </div>
+        </div>
+        <div className="profile-badge-rail">
+          {input.featuredBadges.map((item) => {
+            const visual = getProfileBadgeVisual(item.badge, input.themeColor);
+
+            return (
+              <div
+                key={item.id}
+                className="profile-badge-pill"
+                title={item.badge.description || item.badge.name}
+                style={{
+                  background: visual.pillBackground,
+                  borderColor: visual.pillBorder,
+                  boxShadow: visual.pillShadow,
+                }}
+              >
+                <div className="profile-badge-icon">
+                  <BadgeVisual
+                    slug={item.badge.slug}
+                    color={item.badge.color || visual.color}
+                    rarity={item.badge.rarity}
+                    category={item.badge.category}
+                    size={28}
+                    compact
+                  />
+                </div>
+                <span className="profile-badge-label" style={{ color: visual.labelColor }}>
+                  {item.badge.name}
+                </span>
+              </div>
+            );
+          })}
+          {input.extraBadgeCount > 0 ? (
+            <div className="profile-badge-pill">
+              <div className="profile-badge-icon">+{input.extraBadgeCount}</div>
+              <span className="profile-badge-label">More</span>
+            </div>
+          ) : null}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div key={block} className="floating-module stats">
+      <div className="floating-module-head">
+        <div className="floating-module-label">
+          <LuBadgeCheck size={12} />
+          Stats
+        </div>
+      </div>
+      {input.preview ? (
+        <div className="empty-links">
+          <strong style={{ display: "block", color: "#ffffff", marginBottom: "8px" }}>
+            Stats preview
+          </strong>
+          <span>
+            {input.views} views, {input.likes} likes, {input.dislikes} dislikes
+          </span>
+        </div>
+      ) : (
+        <ProfileRenderBoundary label="Profile stats" compact resetKey={`${input.username}-${block}`}>
+          <ProfileHeroClient
+            username={input.username}
+            initialViews={input.views}
+            initialLikes={input.likes}
+            initialDislikes={input.dislikes}
+            themeColor={input.themeColor}
+            initialMyReaction={input.initialMyReaction}
+            preview={input.preview}
+          />
+        </ProfileRenderBoundary>
+      )}
+    </div>
+  );
+}
+
 function renderModernLinks(
   links: PublicProfileRenderUser["links"],
   themeColor: string,
@@ -1573,6 +3256,14 @@ function sanitizeHeroPills(pills: PublicProfileHeroPill[]) {
         typeof pill.color === "string",
     );
   });
+}
+
+function truncateProfileBio(value: string, limit: number) {
+  if (value.length <= limit) {
+    return value;
+  }
+
+  return `${value.slice(0, Math.max(0, limit - 1)).trimEnd()}…`;
 }
 
 function sanitizeFeaturedBadges(badges: PublicProfileBadgeEntry[]) {

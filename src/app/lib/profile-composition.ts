@@ -15,6 +15,7 @@ export const PROFILE_COMPOSITION_DENSITIES = [
   "balanced",
   "spacious",
 ] as const;
+export const PROFILE_COMPOSITION_MODES = ["contained", "floating"] as const;
 
 export const PROFILE_COMPOSITION_LINK_STYLES = [
   "cards",
@@ -31,12 +32,14 @@ export const PROFILE_COMPOSITION_SOCIAL_STYLES = [
 
 export type ProfileCompositionBlock = (typeof PROFILE_COMPOSITION_BLOCKS)[number];
 export type ProfileCompositionDensity = (typeof PROFILE_COMPOSITION_DENSITIES)[number];
+export type ProfileCompositionMode = (typeof PROFILE_COMPOSITION_MODES)[number];
 export type ProfileCompositionLinksStyle =
   (typeof PROFILE_COMPOSITION_LINK_STYLES)[number];
 export type ProfileCompositionSocialsStyle =
   (typeof PROFILE_COMPOSITION_SOCIAL_STYLES)[number];
 
 export type ProfileComposition = {
+  mode: ProfileCompositionMode;
   visible: {
     music: boolean;
     socials: boolean;
@@ -52,6 +55,7 @@ export type ProfileComposition = {
 };
 
 export const DEFAULT_PROFILE_COMPOSITION: ProfileComposition = {
+  mode: "contained",
   visible: {
     music: true,
     socials: true,
@@ -84,6 +88,23 @@ export const PROFILE_COMPOSITION_DENSITY_OPTIONS = [
   },
 ] as const satisfies ReadonlyArray<{
   value: ProfileCompositionDensity;
+  name: string;
+  description: string;
+}>;
+
+export const PROFILE_COMPOSITION_MODE_OPTIONS = [
+  {
+    value: "contained",
+    name: "Contained",
+    description: "Keep modules grouped in the current structured profile presentation.",
+  },
+  {
+    value: "floating",
+    name: "Floating",
+    description: "Let identity and widgets live as separate modules inside the scene.",
+  },
+] as const satisfies ReadonlyArray<{
+  value: ProfileCompositionMode;
   name: string;
   description: string;
 }>;
@@ -148,6 +169,7 @@ export function normalizeProfileComposition(value: unknown): ProfileComposition 
       : null;
 
   return {
+    mode: normalizeCompositionMode(candidate?.mode),
     visible: normalizeVisible(candidate?.visible),
     order: normalizeOrder(candidate?.order),
     density: normalizeCompositionDensity(candidate?.density),
@@ -337,6 +359,14 @@ function normalizeCompositionDensity(value: unknown): ProfileCompositionDensity 
     value,
     PROFILE_COMPOSITION_DENSITIES,
     DEFAULT_PROFILE_COMPOSITION.density,
+  );
+}
+
+function normalizeCompositionMode(value: unknown): ProfileCompositionMode {
+  return normalizeEnumValue(
+    value,
+    PROFILE_COMPOSITION_MODES,
+    DEFAULT_PROFILE_COMPOSITION.mode,
   );
 }
 

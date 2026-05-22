@@ -20,6 +20,7 @@ import {
   normalizeProfileCornerStyle,
   normalizeProfileDensity,
   normalizeProfileGlassIntensity,
+  normalizeProfileIntroMode,
   normalizeProfileMotionLevel,
   normalizeProfileNameEffectsForUser,
 } from "@/app/lib/profile-customization";
@@ -82,6 +83,9 @@ export async function saveProfileSettings(formData: FormData) {
   const profileBannerStyle = normalizeProfileBannerStyle(
     String(formData.get("profileBannerStyle") || "").trim(),
   );
+  const profileIntroMode = normalizeProfileIntroMode(
+    String(formData.get("profileIntroMode") || "").trim(),
+  );
   const profileComposition = parseProfileCompositionInput(
     String(formData.get("profileComposition") || ""),
   );
@@ -131,6 +135,7 @@ export async function saveProfileSettings(formData: FormData) {
           profileBackgroundIntensity,
           profileGlassIntensity,
           profileBannerStyle,
+          profileIntroMode,
           profileComposition,
           layoutStyle: getStoredLayoutStyle(profileDensity),
           buttonStyle: getStoredButtonStyle(profileCardStyle),
@@ -169,6 +174,7 @@ export async function saveProfileSettings(formData: FormData) {
                 profileBackgroundIntensity,
                 profileGlassIntensity,
                 profileBannerStyle,
+                profileIntroMode,
                 layoutStyle: getStoredLayoutStyle(profileDensity),
                 buttonStyle: getStoredButtonStyle(profileCardStyle),
                 linksStyle: getStoredLinksStyle(profileCornerStyle),

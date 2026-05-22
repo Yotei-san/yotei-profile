@@ -34,11 +34,13 @@ import {
   DEFAULT_PROFILE_COMPOSITION,
   PROFILE_COMPOSITION_DENSITY_OPTIONS,
   PROFILE_COMPOSITION_LINK_STYLE_OPTIONS,
+  PROFILE_COMPOSITION_MODE_OPTIONS,
   PROFILE_COMPOSITION_SOCIAL_STYLE_OPTIONS,
   type ProfileComposition,
   type ProfileCompositionBlock,
   type ProfileCompositionDensity,
   type ProfileCompositionLinksStyle,
+  type ProfileCompositionMode,
   type ProfileCompositionSocialsStyle,
 } from "@/app/lib/profile-composition";
 import {
@@ -49,6 +51,7 @@ import {
   PROFILE_CORNER_STYLE_OPTIONS,
   PROFILE_DENSITY_OPTIONS,
   PROFILE_GLASS_INTENSITY_OPTIONS,
+  PROFILE_INTRO_MODE_OPTIONS,
   PROFILE_MOTION_LEVEL_OPTIONS,
   PROFILE_NAME_EFFECT_OPTIONS,
   isNameEffectAvailable,
@@ -58,6 +61,7 @@ import {
   type ProfileCornerStyle,
   type ProfileDensity,
   type ProfileGlassIntensity,
+  type ProfileIntroMode,
   type ProfileMotionLevel,
   type ProfileNameEffect,
 } from "@/app/lib/profile-customization";
@@ -119,6 +123,7 @@ type Props = {
   savedBackgroundIntensity: ProfileBackgroundIntensity;
   savedGlassIntensity: ProfileGlassIntensity;
   savedBannerStyle: ProfileBannerStyle;
+  savedIntroMode: ProfileIntroMode;
   savedDensity: ProfileDensity;
   savedCardStyle: ProfileCardStyle;
   savedCornerStyle: ProfileCornerStyle;
@@ -153,6 +158,7 @@ export default function ProfileLayoutExperience({
   savedBackgroundIntensity,
   savedGlassIntensity,
   savedBannerStyle,
+  savedIntroMode,
   savedDensity,
   savedCardStyle,
   savedCornerStyle,
@@ -190,6 +196,8 @@ export default function ProfileLayoutExperience({
     useState<ProfileGlassIntensity>(savedGlassIntensity);
   const [previewBannerStyle, setPreviewBannerStyle] =
     useState<ProfileBannerStyle>(savedBannerStyle);
+  const [previewIntroMode, setPreviewIntroMode] =
+    useState<ProfileIntroMode>(savedIntroMode);
   const [previewDensity, setPreviewDensity] = useState<ProfileDensity>(savedDensity);
   const [previewCardStyle, setPreviewCardStyle] = useState<ProfileCardStyle>(savedCardStyle);
   const [previewCornerStyle, setPreviewCornerStyle] =
@@ -222,6 +230,7 @@ export default function ProfileLayoutExperience({
   const deferredPreviewBackgroundIntensity = useDeferredValue(previewBackgroundIntensity);
   const deferredPreviewGlassIntensity = useDeferredValue(previewGlassIntensity);
   const deferredPreviewBannerStyle = useDeferredValue(previewBannerStyle);
+  const deferredPreviewIntroMode = useDeferredValue(previewIntroMode);
   const deferredPreviewDensity = useDeferredValue(previewDensity);
   const deferredPreviewCardStyle = useDeferredValue(previewCardStyle);
   const deferredPreviewCornerStyle = useDeferredValue(previewCornerStyle);
@@ -265,6 +274,7 @@ export default function ProfileLayoutExperience({
     previewBackgroundIntensity !== savedBackgroundIntensity ||
     previewGlassIntensity !== savedGlassIntensity ||
     previewBannerStyle !== savedBannerStyle ||
+    previewIntroMode !== savedIntroMode ||
     previewDensity !== savedDensity ||
     previewCardStyle !== savedCardStyle ||
     previewCornerStyle !== savedCornerStyle ||
@@ -765,6 +775,7 @@ export default function ProfileLayoutExperience({
                 value={previewBannerStyle}
                 readOnly
               />
+              <input type="hidden" name="profileIntroMode" value={previewIntroMode} readOnly />
               <input type="hidden" name="profileDensity" value={previewDensity} readOnly />
               <input type="hidden" name="profileCardStyle" value={previewCardStyle} readOnly />
               <input type="hidden" name="profileCornerStyle" value={previewCornerStyle} readOnly />
@@ -775,6 +786,36 @@ export default function ProfileLayoutExperience({
                 value={JSON.stringify(previewComposition)}
                 readOnly
               />
+
+              <div style={{ display: "grid", gap: "12px" }}>
+                <div style={livingSectionTitleStyle}>Intro mode</div>
+                <div style={livingGridStyle}>
+                  {PROFILE_INTRO_MODE_OPTIONS.map((option) => {
+                    const isSelected = previewIntroMode === option.value;
+                    const isSaved = savedIntroMode === option.value;
+
+                    return (
+                      <button
+                        key={option.value}
+                        type="button"
+                        className="living-card"
+                        aria-pressed={isSelected}
+                        onClick={() => setPreviewIntroMode(option.value)}
+                        style={atmosphereCardStyle(isSelected, isSaved, safeThemeColor)}
+                      >
+                        <div style={introModePreviewStyle(option.value, safeThemeColor)} />
+                        <div style={{ display: "grid", gap: "8px", minWidth: 0 }}>
+                          <div style={livingCardHeaderStyle}>
+                            <span>{option.name}</span>
+                            {isSelected ? <LuCheck size={16} /> : null}
+                          </div>
+                          <div style={layoutCardDescriptionStyle}>{option.description}</div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
 
               <div style={{ display: "grid", gap: "12px" }}>
                 <div style={livingSectionTitleStyle}>Background intensity</div>
@@ -1026,6 +1067,40 @@ export default function ProfileLayoutExperience({
               />
 
               <div style={compositionControlsGridStyle}>
+                <div style={{ display: "grid", gap: "10px" }}>
+                  <div style={livingSectionTitleStyle}>Composition mode</div>
+                  <div style={compositionChoiceGridStyle}>
+                    {PROFILE_COMPOSITION_MODE_OPTIONS.map((option) => {
+                      const isSelected = previewComposition.mode === option.value;
+
+                      return (
+                        <button
+                          key={option.value}
+                          type="button"
+                          className="living-card"
+                          aria-pressed={isSelected}
+                          onClick={() =>
+                            setPreviewComposition((current) => ({
+                              ...current,
+                              mode: option.value,
+                            }))
+                          }
+                          style={livingCardStyle(isSelected, previewPresence.accent)}
+                        >
+                          <div style={compositionModePreviewStyle(option.value, previewPresence.accent)} />
+                          <div style={{ display: "grid", gap: "8px", minWidth: 0 }}>
+                            <div style={livingCardHeaderStyle}>
+                              <span>{option.name}</span>
+                              {isSelected ? <LuCheck size={16} /> : null}
+                            </div>
+                            <div style={layoutCardDescriptionStyle}>{option.description}</div>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
                 <div style={compositionRowsStyle}>
                     {previewComposition.order.map((block, index) => {
                       const isHero = block === "hero";
@@ -1358,6 +1433,9 @@ export default function ProfileLayoutExperience({
                   {deferredPreviewMotionLevel} motion
                 </span>
                 <span style={dashboardTagStyle("violet")}>
+                  {deferredPreviewComposition.mode} mode
+                </span>
+                <span style={dashboardTagStyle("violet")}>
                   {deferredPreviewComposition.density} composition
                 </span>
                 <span style={dashboardTagStyle("violet")}>
@@ -1401,6 +1479,7 @@ export default function ProfileLayoutExperience({
                     backgroundIntensity={deferredPreviewBackgroundIntensity}
                     glassIntensity={deferredPreviewGlassIntensity}
                     bannerStyle={deferredPreviewBannerStyle}
+                    introMode={deferredPreviewIntroMode}
                     density={deferredPreviewDensity}
                     cardStyle={deferredPreviewCardStyle}
                     cornerStyle={deferredPreviewCornerStyle}
@@ -1708,6 +1787,42 @@ function bannerPreviewStyle(
     borderRadius: "16px",
     border: "1px solid rgba(255,255,255,0.08)",
     background: `${overlay}, linear-gradient(135deg, ${withAlpha(accentColor, "54")}, rgba(125,211,252,0.28), rgba(10,10,16,0.92))`,
+    boxShadow: `0 12px 24px ${withAlpha(accentColor, "10")}`,
+  };
+}
+
+function introModePreviewStyle(
+  value: ProfileIntroMode,
+  accentColor: string,
+): CSSProperties {
+  const overlay =
+    value === "off"
+      ? "linear-gradient(180deg, rgba(8,10,16,0.16), rgba(8,10,16,0.78))"
+      : value === "cinematic"
+        ? `radial-gradient(circle at 50% 18%, ${withAlpha(accentColor, "36")}, transparent 42%), linear-gradient(180deg, rgba(8,10,16,0.04), rgba(8,10,16,0.78))`
+        : `radial-gradient(circle at 50% 22%, ${withAlpha(accentColor, "20")}, transparent 34%), linear-gradient(180deg, rgba(8,10,16,0.08), rgba(8,10,16,0.74))`;
+
+  return {
+    minHeight: "78px",
+    borderRadius: "16px",
+    border: "1px solid rgba(255,255,255,0.08)",
+    background: `${overlay}, linear-gradient(135deg, ${withAlpha(accentColor, value === "off" ? "14" : "24")}, rgba(9,10,15,0.98))`,
+    boxShadow: `0 12px 24px ${withAlpha(accentColor, "10")}`,
+  };
+}
+
+function compositionModePreviewStyle(
+  value: ProfileCompositionMode,
+  accentColor: string,
+): CSSProperties {
+  return {
+    minHeight: "78px",
+    borderRadius: "16px",
+    border: "1px solid rgba(255,255,255,0.08)",
+    background:
+      value === "floating"
+        ? `radial-gradient(circle at 26% 30%, ${withAlpha(accentColor, "28")}, transparent 26%), radial-gradient(circle at 76% 62%, rgba(255,255,255,0.12), transparent 20%), linear-gradient(180deg, rgba(12,12,18,0.96), rgba(6,7,12,0.98))`
+        : `linear-gradient(180deg, ${withAlpha(accentColor, "12")}, rgba(9,10,15,0.98))`,
     boxShadow: `0 12px 24px ${withAlpha(accentColor, "10")}`,
   };
 }

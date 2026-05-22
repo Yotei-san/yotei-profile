@@ -29,6 +29,7 @@ import {
   normalizeProfileCornerStyle,
   normalizeProfileDensity,
   normalizeProfileGlassIntensity,
+  normalizeProfileIntroMode,
   normalizeProfileMotionLevel,
   normalizeProfileNameEffects,
 } from "@/app/lib/profile-customization";
@@ -143,6 +144,7 @@ export default async function ProfileSettingsPage({ searchParams }: PageProps) {
         savedBackgroundIntensity={profileData.backgroundIntensity}
         savedGlassIntensity={profileData.glassIntensity}
         savedBannerStyle={profileData.bannerStyle}
+        savedIntroMode={profileData.introMode}
         savedDensity={profileData.density}
         savedCardStyle={profileData.cardStyle}
         savedCornerStyle={profileData.cornerStyle}
@@ -230,6 +232,9 @@ function buildProfileRenderData(user: ProfileUserRecord) {
     bannerStyle: normalizeProfileBannerStyle(
       "profileBannerStyle" in user ? user.profileBannerStyle : undefined,
     ),
+    introMode: normalizeProfileIntroMode(
+      "profileIntroMode" in user ? user.profileIntroMode : undefined,
+    ),
     density: normalizeProfileDensity("layoutStyle" in user ? user.layoutStyle : undefined),
     cardStyle: normalizeProfileCardStyle(
       "buttonStyle" in user ? user.buttonStyle : undefined,
@@ -293,6 +298,7 @@ function buildDashboardProfileUserSelect(
           profileBackgroundIntensity: true,
           profileGlassIntensity: true,
           profileBannerStyle: true,
+          profileIntroMode: true,
           profileComposition: true,
           layoutStyle: true,
           buttonStyle: true,

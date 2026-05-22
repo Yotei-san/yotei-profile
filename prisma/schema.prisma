@@ -37,6 +37,7 @@ model User {
   profileBackgroundIntensity String  @default("medium")
   profileGlassIntensity     String   @default("medium")
   profileBannerStyle        String   @default("cinematic")
+  profileIntroMode          String   @default("off")
   profileMusicTitle         String?
   profileMusicArtist        String?
   profileMusicUrl           String?
