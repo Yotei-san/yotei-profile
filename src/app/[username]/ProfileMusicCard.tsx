@@ -70,19 +70,19 @@ export default function ProfileMusicCard({
           display: grid;
           grid-template-columns: auto minmax(0, 1fr) auto;
           align-items: center;
-          gap: 12px;
+          gap: 10px;
         }
 
         .profile-music-eq {
           display: inline-flex;
           align-items: end;
-          gap: 4px;
-          min-width: 22px;
-          height: 24px;
+          gap: 3px;
+          min-width: 18px;
+          height: 20px;
         }
 
         .profile-music-eq span {
-          width: 4px;
+          width: 3px;
           border-radius: 999px;
           background: linear-gradient(180deg, ${softColor}, ${accentColor});
           box-shadow: 0 0 12px ${withAlpha(accentColor, "20")};
@@ -91,22 +91,22 @@ export default function ProfileMusicCard({
         }
 
         .profile-music-eq span:nth-child(1) {
-          height: 12px;
+          height: 10px;
           animation-delay: 0s;
         }
 
         .profile-music-eq span:nth-child(2) {
-          height: 22px;
+          height: 18px;
           animation-delay: 0.18s;
         }
 
         .profile-music-eq span:nth-child(3) {
-          height: 16px;
+          height: 13px;
           animation-delay: 0.36s;
         }
 
         .profile-music-eq span:nth-child(4) {
-          height: 24px;
+          height: 20px;
           animation-delay: 0.54s;
         }
 
@@ -204,8 +204,8 @@ function cardStyle(
     overflow: "hidden",
     display: "grid",
     minWidth: 0,
-    padding: compact ? "14px" : "16px",
-    borderRadius: compact ? "18px" : "20px",
+    padding: compact ? "12px" : "14px",
+    borderRadius: compact ? "16px" : "18px",
     border: `1px solid ${withAlpha(accentColor, "26")}`,
     background: `
       radial-gradient(circle at top left, ${withAlpha(themeColor, "18")} 0%, transparent 34%),
@@ -238,14 +238,14 @@ function glowStyle(accentColor: string, contrastColor: string): CSSProperties {
 const leadingWrapStyle: CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
-  gap: "10px",
+  gap: "8px",
 };
 
 function iconBadgeStyle(color: string): CSSProperties {
   return {
-    width: "34px",
-    height: "34px",
-    borderRadius: "12px",
+    width: "30px",
+    height: "30px",
+    borderRadius: "10px",
     display: "inline-flex",
     alignItems: "center",
     justifyContent: "center",
@@ -259,14 +259,14 @@ function iconBadgeStyle(color: string): CSSProperties {
 
 const copyWrapStyle: CSSProperties = {
   display: "grid",
-  gap: "5px",
+  gap: "4px",
   minWidth: 0,
 };
 
 const badgeRowStyle: CSSProperties = {
   display: "flex",
   alignItems: "center",
-  gap: "8px",
+  gap: "6px",
   flexWrap: "wrap",
 };
 
@@ -274,13 +274,13 @@ function providerBadgeStyle(color: string): CSSProperties {
   return {
     display: "inline-flex",
     alignItems: "center",
-    minHeight: "22px",
-    padding: "0 8px",
+    minHeight: "20px",
+    padding: "0 7px",
     borderRadius: "999px",
     color: "#ffffff",
     background: withAlpha(color, "18"),
     border: `1px solid ${withAlpha(color, "30")}`,
-    fontSize: "10px",
+    fontSize: "9px",
     fontWeight: 900,
     letterSpacing: "0.06em",
     textTransform: "uppercase",
@@ -291,13 +291,13 @@ function statusBadgeStyle(color: string): CSSProperties {
   return {
     display: "inline-flex",
     alignItems: "center",
-    minHeight: "22px",
-    padding: "0 8px",
+    minHeight: "20px",
+    padding: "0 7px",
     borderRadius: "999px",
     color: "#d8e0f2",
     background: withAlpha(color, "14"),
     border: `1px solid ${withAlpha(color, "24")}`,
-    fontSize: "10px",
+    fontSize: "9px",
     fontWeight: 800,
     letterSpacing: "0.04em",
   };
@@ -306,7 +306,7 @@ function statusBadgeStyle(color: string): CSSProperties {
 function titleStyle(compact: boolean): CSSProperties {
   return {
     color: "#ffffff",
-    fontSize: compact ? "14px" : "15px",
+    fontSize: compact ? "13px" : "14px",
     lineHeight: 1.25,
     letterSpacing: "-0.03em",
     overflowWrap: "anywhere",
@@ -315,7 +315,7 @@ function titleStyle(compact: boolean): CSSProperties {
 
 const artistStyle: CSSProperties = {
   color: "#abb8d3",
-  fontSize: "12px",
+  fontSize: "11px",
   lineHeight: 1.5,
   overflowWrap: "anywhere",
 };
@@ -325,16 +325,16 @@ function ctaStyle(accentColor: string, contrastColor: string): CSSProperties {
     display: "inline-flex",
     alignItems: "center",
     justifyContent: "center",
-    gap: "8px",
-    minHeight: "34px",
-    padding: "0 12px",
-    borderRadius: "12px",
+    gap: "6px",
+    minHeight: "30px",
+    padding: "0 10px",
+    borderRadius: "10px",
     color: "#ffffff",
     textDecoration: "none",
     background: `linear-gradient(135deg, ${withAlpha(accentColor, "f2")}, ${withAlpha(contrastColor, "d8")})`,
     border: `1px solid ${withAlpha(accentColor, "38")}`,
     boxShadow: `0 16px 28px ${withAlpha(accentColor, "18")}`,
-    fontSize: "12px",
+    fontSize: "11px",
     fontWeight: 800,
     whiteSpace: "nowrap",
   };
@@ -344,13 +344,13 @@ const disabledCtaStyle: CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
-  minHeight: "34px",
-  padding: "0 12px",
-  borderRadius: "12px",
+  minHeight: "30px",
+  padding: "0 10px",
+  borderRadius: "10px",
   color: "#8b97b0",
   background: "rgba(255,255,255,0.03)",
   border: "1px solid rgba(255,255,255,0.08)",
-  fontSize: "12px",
+  fontSize: "11px",
   fontWeight: 700,
   whiteSpace: "nowrap",
 };
@@ -365,19 +365,19 @@ const placeholderHeaderStyle: CSSProperties = {
   display: "grid",
   gridTemplateColumns: "auto minmax(0, 1fr)",
   alignItems: "center",
-  gap: "10px",
+  gap: "8px",
   minWidth: 0,
 };
 
 const placeholderTitleStyle: CSSProperties = {
   color: "#ffffff",
-  fontSize: "14px",
+  fontSize: "13px",
   lineHeight: 1.3,
 };
 
 const placeholderTextStyle: CSSProperties = {
   color: "#a6b3cd",
-  fontSize: "12px",
+  fontSize: "11px",
   lineHeight: 1.55,
 };
 

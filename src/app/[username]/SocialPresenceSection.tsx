@@ -216,22 +216,22 @@ function isLivePriority(block: PublicSocialBlock) {
 
 const sectionStyle: CSSProperties = {
   display: "grid",
-  gap: "10px",
+  gap: "8px",
   minWidth: 0,
 };
 
 const kickerStyle: CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
-  gap: "8px",
+  gap: "6px",
   width: "fit-content",
-  minHeight: "28px",
-  padding: "0 10px",
+  minHeight: "26px",
+  padding: "0 9px",
   borderRadius: "999px",
   border: "1px solid rgba(255,255,255,0.08)",
   background: "rgba(255,255,255,0.04)",
   color: "#e4e4e7",
-  fontSize: "11px",
+  fontSize: "10px",
   fontWeight: 800,
   letterSpacing: "0.02em",
 };
@@ -243,8 +243,8 @@ function gridStyle(
   if (displayStyle === "grid" && !compact) {
     return {
       display: "grid",
-      gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 248px), 1fr))",
-      gap: "10px",
+      gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 220px), 1fr))",
+      gap: "8px",
       minWidth: 0,
       alignItems: "start",
     };
@@ -252,7 +252,7 @@ function gridStyle(
 
   return {
     display: "grid",
-    gap: displayStyle === "spotlight" ? "12px" : "10px",
+    gap: displayStyle === "spotlight" ? "10px" : "8px",
     minWidth: 0,
   };
 }
@@ -271,7 +271,7 @@ function socialItemStyle(
       : {
           display: "grid",
           minWidth: 0,
-          marginInlineStart: compact ? "0" : "10px",
+          marginInlineStart: compact ? "0" : "8px",
         };
   }
 

@@ -474,30 +474,36 @@ export function getProfileGlassTokens(intensity: ProfileGlassIntensity) {
 export function getProfileDensityTokens(density: ProfileDensity) {
   if (density === "compact") {
     return {
-      sectionGap: 0.76,
-      shellPadding: 0.74,
-      contentPadding: 0.78,
-      bannerScale: 0.88,
-      bioLineHeight: 1.64,
+      sectionGap: 0.68,
+      shellPadding: 0.66,
+      contentPadding: 0.72,
+      bannerScale: 0.82,
+      bioLineHeight: 1.58,
+      stageWidthScale: 0.88,
+      avatarScale: 0.84,
     };
   }
 
   if (density === "spacious") {
     return {
-      sectionGap: 1,
-      shellPadding: 0.96,
-      contentPadding: 1,
-      bannerScale: 1.02,
-      bioLineHeight: 1.86,
+      sectionGap: 0.94,
+      shellPadding: 0.9,
+      contentPadding: 0.96,
+      bannerScale: 0.98,
+      bioLineHeight: 1.82,
+      stageWidthScale: 1,
+      avatarScale: 1,
     };
   }
 
   return {
-    sectionGap: 0.88,
-    shellPadding: 0.84,
-    contentPadding: 0.88,
-    bannerScale: 0.94,
-    bioLineHeight: 1.76,
+    sectionGap: 0.8,
+    shellPadding: 0.76,
+    contentPadding: 0.82,
+    bannerScale: 0.9,
+    bioLineHeight: 1.7,
+    stageWidthScale: 0.96,
+    avatarScale: 0.92,
   };
 }
 

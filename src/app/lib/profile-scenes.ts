@@ -96,7 +96,7 @@ const PROFILE_SCENE_DEFINITIONS: Record<ProfileScene, ProfileSceneDefinition> = 
       stageGlowOpacity: 0.52,
       stageGlowBlur: 16,
       shadowDepth: 0.82,
-      shellMaxWidth: 900,
+      shellMaxWidth: 860,
     },
   },
   "cyber-tokyo": {
@@ -128,7 +128,7 @@ const PROFILE_SCENE_DEFINITIONS: Record<ProfileScene, ProfileSceneDefinition> = 
       stageGlowOpacity: 0.66,
       stageGlowBlur: 12,
       shadowDepth: 0.74,
-      shellMaxWidth: 860,
+      shellMaxWidth: 820,
     },
   },
   "void-core": {
@@ -160,7 +160,7 @@ const PROFILE_SCENE_DEFINITIONS: Record<ProfileScene, ProfileSceneDefinition> = 
       stageGlowOpacity: 0.34,
       stageGlowBlur: 24,
       shadowDepth: 1,
-      shellMaxWidth: 780,
+      shellMaxWidth: 760,
     },
   },
   "galaxy-room": {
@@ -192,7 +192,7 @@ const PROFILE_SCENE_DEFINITIONS: Record<ProfileScene, ProfileSceneDefinition> = 
       stageGlowOpacity: 0.62,
       stageGlowBlur: 16,
       shadowDepth: 0.82,
-      shellMaxWidth: 920,
+      shellMaxWidth: 860,
     },
   },
   "inferno-live": {
@@ -224,7 +224,7 @@ const PROFILE_SCENE_DEFINITIONS: Record<ProfileScene, ProfileSceneDefinition> = 
       stageGlowOpacity: 0.76,
       stageGlowBlur: 16,
       shadowDepth: 0.9,
-      shellMaxWidth: 850,
+      shellMaxWidth: 810,
     },
   },
   "frost-byte": {
@@ -256,7 +256,7 @@ const PROFILE_SCENE_DEFINITIONS: Record<ProfileScene, ProfileSceneDefinition> = 
       stageGlowOpacity: 0.5,
       stageGlowBlur: 14,
       shadowDepth: 0.78,
-      shellMaxWidth: 880,
+      shellMaxWidth: 830,
     },
   },
   "arcade-night": {
@@ -288,7 +288,7 @@ const PROFILE_SCENE_DEFINITIONS: Record<ProfileScene, ProfileSceneDefinition> = 
       stageGlowOpacity: 0.58,
       stageGlowBlur: 14,
       shadowDepth: 0.82,
-      shellMaxWidth: 890,
+      shellMaxWidth: 840,
     },
   },
 };
