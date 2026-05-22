@@ -6,6 +6,10 @@ import { getCurrentUser } from "@/app/lib/auth";
 import { getFeaturedPublicBadges } from "@/app/lib/badges";
 import { resolveEquippedDecoration } from "@/app/lib/decorations";
 import { readLiveEmbedMetadata } from "@/app/lib/live-embed";
+import {
+  isMissingProfileCompositionColumnError,
+  normalizeProfileComposition,
+} from "@/app/lib/profile-composition";
 import { normalizeProfileMusic } from "@/app/lib/profile-music";
 import {
   isMissingProfileCustomizationColumnError,
@@ -90,6 +94,7 @@ async function getProfileUser(username: string) {
     });
   } catch (error) {
     if (
+      isMissingProfileCompositionColumnError(error) ||
       isMissingProfileSceneColumnError(error) ||
       isMissingProfileCustomizationColumnError(error)
     ) {
@@ -155,6 +160,9 @@ function buildProfileRenderData(user: ProfileUserRecord) {
     motionLevel: normalizeProfileMotionLevel(
       "avatarPosition" in user ? user.avatarPosition : undefined,
     ),
+    composition: normalizeProfileComposition(
+      "profileComposition" in user ? user.profileComposition : undefined,
+    ),
     music: normalizeProfileMusic({
       enabled: user.profileMusicEnabled,
       title: user.profileMusicTitle,
@@ -205,6 +213,7 @@ function buildProfileUserSelect(
           profileBackgroundIntensity: true,
           profileGlassIntensity: true,
           profileBannerStyle: true,
+          profileComposition: true,
           layoutStyle: true,
           buttonStyle: true,
           linksStyle: true,

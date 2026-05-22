@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
 import { LuSparkles } from "react-icons/lu";
+import type { ProfileCompositionSocialsStyle } from "@/app/lib/profile-composition";
 import DiscordSocialBlock from "./DiscordSocialBlock";
 import GitHubSocialBlock from "./GitHubSocialBlock";
 import SpotifySocialBlock from "./SpotifySocialBlock";
@@ -32,6 +33,8 @@ type Props = {
   themeColor: string;
   compact?: boolean;
   preview?: boolean;
+  mode?: "all" | "socials" | "live";
+  displayStyle?: ProfileCompositionSocialsStyle;
 };
 
 export default function SocialPresenceSection({
@@ -39,9 +42,22 @@ export default function SocialPresenceSection({
   themeColor,
   compact = false,
   preview = false,
+  mode = "all",
+  displayStyle = "grid",
 }: Props) {
   const visibleBlocks = [...sanitizeBlocks(blocks)]
     .filter((block) => block.isEnabled)
+    .filter((block) => {
+      if (mode === "live") {
+        return isLiveBlock(block);
+      }
+
+      if (mode === "socials") {
+        return !isLiveBlock(block);
+      }
+
+      return true;
+    })
     .sort((left, right) => {
       const leftPriority = isLivePriority(left);
       const rightPriority = isLivePriority(right);
@@ -57,90 +73,96 @@ export default function SocialPresenceSection({
       <div style={{ display: "grid", gap: "8px" }}>
         <div style={kickerStyle}>
           <LuSparkles size={13} />
-          {compact ? "Presence" : "Socials"}
+          {mode === "live" ? "Live" : compact ? "Presence" : "Socials"}
         </div>
       </div>
 
-      <div style={gridStyle}>
-        {visibleBlocks.map((block) => {
+      <div style={gridStyle(displayStyle, compact)}>
+        {visibleBlocks.map((block, index) => {
+          const wrapperStyle = socialItemStyle(displayStyle, index, compact);
+
           if (block.platform === "discord") {
             return (
-              <ProfileRenderBoundary
-                key={block.id}
-                label="Discord presence"
-                compact
-                resetKey={block.id}
-              >
-                <DiscordSocialBlock
-                  username={block.username}
-                  statusText={block.statusText}
-                  url={block.url}
-                  themeColor={themeColor}
-                  compact={compact}
-                />
-              </ProfileRenderBoundary>
+              <div key={block.id} style={wrapperStyle}>
+                <ProfileRenderBoundary
+                  label="Discord presence"
+                  compact
+                  resetKey={block.id}
+                >
+                  <DiscordSocialBlock
+                    username={block.username}
+                    statusText={block.statusText}
+                    url={block.url}
+                    themeColor={themeColor}
+                    compact={compact}
+                  />
+                </ProfileRenderBoundary>
+              </div>
             );
           }
 
           if (block.platform === "github") {
             return (
-              <ProfileRenderBoundary
-                key={block.id}
-                label="GitHub presence"
-                compact
-                resetKey={block.id}
-              >
-                <GitHubSocialBlock
-                  username={block.username}
-                  statusText={block.statusText}
-                  featuredRepo={block.featuredRepo}
-                  url={block.url}
-                  themeColor={themeColor}
-                  compact={compact}
-                />
-              </ProfileRenderBoundary>
+              <div key={block.id} style={wrapperStyle}>
+                <ProfileRenderBoundary
+                  label="GitHub presence"
+                  compact
+                  resetKey={block.id}
+                >
+                  <GitHubSocialBlock
+                    username={block.username}
+                    statusText={block.statusText}
+                    featuredRepo={block.featuredRepo}
+                    url={block.url}
+                    themeColor={themeColor}
+                    compact={compact}
+                  />
+                </ProfileRenderBoundary>
+              </div>
             );
           }
 
           if (block.platform === "spotify") {
             return (
-              <ProfileRenderBoundary
-                key={block.id}
-                label="Spotify presence"
-                compact
-                resetKey={block.id}
-              >
-                <SpotifySocialBlock
-                  username={block.username}
-                  trackName={block.trackName}
-                  artistName={block.artistName}
-                  statusText={block.statusText}
-                  url={block.url}
-                  themeColor={themeColor}
-                  compact={compact}
-                />
-              </ProfileRenderBoundary>
+              <div key={block.id} style={wrapperStyle}>
+                <ProfileRenderBoundary
+                  label="Spotify presence"
+                  compact
+                  resetKey={block.id}
+                >
+                  <SpotifySocialBlock
+                    username={block.username}
+                    trackName={block.trackName}
+                    artistName={block.artistName}
+                    statusText={block.statusText}
+                    url={block.url}
+                    themeColor={themeColor}
+                    compact={compact}
+                  />
+                </ProfileRenderBoundary>
+              </div>
             );
           }
 
           if (block.platform === "youtube" || block.platform === "twitch") {
             return (
-              <ProfileRenderBoundary
-                key={block.id}
-                label="Creator video"
-                compact
-                resetKey={block.id}
-              >
-                <CreatorVideoSocialBlock
-                  platform={block.platform}
-                  channelName={block.username}
-                  headline={block.headline}
-                  featuredVideoTitle={block.featuredVideoTitle}
-                  url={block.url}
-                  themeColor={themeColor}
-                  compact={compact}
-                />
-              </ProfileRenderBoundary>
+              <div key={block.id} style={wrapperStyle}>
+                <ProfileRenderBoundary
+                  label="Creator video"
+                  compact
+                  resetKey={block.id}
+                >
+                  <CreatorVideoSocialBlock
+                    platform={block.platform}
+                    channelName={block.username}
+                    headline={block.headline}
+                    featuredVideoTitle={block.featuredVideoTitle}
+                    url={block.url}
+                    themeColor={themeColor}
+                    compact={compact}
+                  />
+                </ProfileRenderBoundary>
+              </div>
             );
           }
 
@@ -150,25 +172,26 @@ export default function SocialPresenceSection({
             block.platform === "kick_live"
           ) {
             return (
-              <ProfileRenderBoundary
-                key={block.id}
-                label="Live stream"
-                compact
-                resetKey={block.id}
-              >
-                <LiveEmbedSocialBlock
-                  platform={block.platform}
-                  channelName={block.username}
-                  streamTitle={block.streamTitle}
-                  url={block.url}
-                  openUrl={block.openUrl}
-                  embedUrl={block.embedUrl}
-                  accentColor={block.accentColor}
-                  isLive={block.isLive}
-                  compact={compact}
-                  preview={preview}
-                />
-              </ProfileRenderBoundary>
+              <div key={block.id} style={wrapperStyle}>
+                <ProfileRenderBoundary
+                  label="Live stream"
+                  compact
+                  resetKey={block.id}
+                >
+                  <LiveEmbedSocialBlock
+                    platform={block.platform}
+                    channelName={block.username}
+                    streamTitle={block.streamTitle}
+                    url={block.url}
+                    openUrl={block.openUrl}
+                    embedUrl={block.embedUrl}
+                    accentColor={block.accentColor}
+                    isLive={block.isLive}
+                    compact={compact}
+                    preview={preview}
+                  />
+                </ProfileRenderBoundary>
+              </div>
             );
           }
 
@@ -180,20 +203,11 @@ export default function SocialPresenceSection({
 }
 
 function isLivePriority(block: PublicSocialBlock) {
-  if (
-    (block.platform === "twitch_live" ||
-      block.platform === "youtube_live" ||
-      block.platform === "kick_live") &&
-    block.isLive
-  ) {
+  if (isLiveBlock(block) && block.isLive) {
     return 2;
   }
 
-  if (
-    block.platform === "twitch_live" ||
-    block.platform === "youtube_live" ||
-    block.platform === "kick_live"
-  ) {
+  if (isLiveBlock(block)) {
     return 1;
   }
 
@@ -222,11 +236,65 @@ const kickerStyle: CSSProperties = {
   letterSpacing: "0.02em",
 };
 
-const gridStyle: CSSProperties = {
-  display: "grid",
-  gap: "12px",
-  minWidth: 0,
-};
+function gridStyle(
+  displayStyle: ProfileCompositionSocialsStyle,
+  compact: boolean,
+): CSSProperties {
+  if (displayStyle === "grid" && !compact) {
+    return {
+      display: "grid",
+      gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))",
+      gap: "12px",
+      minWidth: 0,
+      alignItems: "start",
+    };
+  }
+
+  return {
+    display: "grid",
+    gap: displayStyle === "spotlight" ? "14px" : "12px",
+    minWidth: 0,
+  };
+}
+
+function socialItemStyle(
+  displayStyle: ProfileCompositionSocialsStyle,
+  index: number,
+  compact: boolean,
+): CSSProperties {
+  if (displayStyle === "spotlight") {
+    return index === 0
+      ? {
+          display: "grid",
+          minWidth: 0,
+        }
+      : {
+          display: "grid",
+          minWidth: 0,
+          marginInlineStart: compact ? "0" : "14px",
+        };
+  }
+
+  if (displayStyle === "stack") {
+    return {
+      display: "grid",
+      minWidth: 0,
+    };
+  }
+
+  return {
+    display: "grid",
+    minWidth: 0,
+  };
+}
+
+function isLiveBlock(block: Pick<PublicSocialBlock, "platform">) {
+  return (
+    block.platform === "twitch_live" ||
+    block.platform === "youtube_live" ||
+    block.platform === "kick_live"
+  );
+}
 
 function sanitizeBlocks(blocks: PublicSocialBlock[]) {
   if (!Array.isArray(blocks)) {

@@ -3,6 +3,10 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { redirectWithClearedSession, requireUser } from "@/app/lib/auth";
+import {
+  isMissingProfileCompositionColumnError,
+  parseProfileCompositionInput,
+} from "@/app/lib/profile-composition";
 import { normalizeProfileMusic } from "@/app/lib/profile-music";
 import {
   getStoredAvatarPosition,
@@ -78,6 +82,9 @@ export async function saveProfileSettings(formData: FormData) {
   const profileBannerStyle = normalizeProfileBannerStyle(
     String(formData.get("profileBannerStyle") || "").trim(),
   );
+  const profileComposition = parseProfileCompositionInput(
+    String(formData.get("profileComposition") || ""),
+  );
   const profileMusic = normalizeProfileMusic({
     enabled: parseBooleanFormValue(formData.get("profileMusicEnabled")),
     title: String(formData.get("profileMusicTitle") || ""),
@@ -124,6 +131,7 @@ export async function saveProfileSettings(formData: FormData) {
           profileBackgroundIntensity,
           profileGlassIntensity,
           profileBannerStyle,
+          profileComposition,
           layoutStyle: getStoredLayoutStyle(profileDensity),
           buttonStyle: getStoredButtonStyle(profileCardStyle),
           linksStyle: getStoredLinksStyle(profileCornerStyle),
@@ -137,6 +145,7 @@ export async function saveProfileSettings(formData: FormData) {
       });
     } catch (error) {
       if (
+        !isMissingProfileCompositionColumnError(error) &&
         !isMissingProfileSceneColumnError(error) &&
         !isMissingProfileCustomizationColumnError(error)
       ) {
@@ -164,6 +173,11 @@ export async function saveProfileSettings(formData: FormData) {
                 buttonStyle: getStoredButtonStyle(profileCardStyle),
                 linksStyle: getStoredLinksStyle(profileCornerStyle),
                 avatarPosition: getStoredAvatarPosition(profileMotionLevel),
+              }),
+          ...(isMissingProfileCompositionColumnError(error)
+            ? {}
+            : {
+                profileComposition,
               }),
           profileMusicTitle: profileMusic.title,
           profileMusicArtist: profileMusic.artist,

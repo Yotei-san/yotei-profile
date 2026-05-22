@@ -5,10 +5,24 @@ import { LuArrowUpRight, LuBadgeCheck, LuMoonStar, LuSparkles } from "react-icon
 import BadgeVisual from "@/app/dashboard/components/BadgeVisual";
 import { getLinkPlatform } from "@/app/lib/link-icons";
 import {
+  DEFAULT_PROFILE_COMPOSITION,
+  getProfileCompositionSpacingScale,
+  getRenderableCompositionOrder,
+  normalizeProfileComposition,
+  partitionSocialBlocks,
+  type ProfileComposition,
+  type ProfileCompositionBlock,
+  type ProfileCompositionDensity,
+  type ProfileCompositionLinksStyle,
+} from "@/app/lib/profile-composition";
+import {
   type ProfileAura,
   type ProfileMood,
 } from "@/app/lib/profile-presence";
-import type { ProfileMusicData } from "@/app/lib/profile-music";
+import {
+  shouldRenderProfileMusic,
+  type ProfileMusicData,
+} from "@/app/lib/profile-music";
 import {
   normalizeProfileBackgroundIntensity,
   normalizeProfileBannerStyle,
@@ -123,6 +137,7 @@ type Props = {
   dislikes: number;
   views: number;
   socialBlocks: PublicSocialBlock[];
+  composition: ProfileComposition;
   initialMyReaction: PublicProfileReaction;
   preview?: boolean;
   previewMessage?: string;
@@ -157,6 +172,7 @@ export default function PublicProfileRenderer({
   dislikes,
   views,
   socialBlocks,
+  composition,
   initialMyReaction,
   preview = false,
   previewMessage = "This is exactly how your live profile will look.",
@@ -177,6 +193,7 @@ export default function PublicProfileRenderer({
   const safeHeroPills = sanitizeHeroPills(heroPills);
   const safeFeaturedBadges = sanitizeFeaturedBadges(featuredBadges);
   const safeSocialBlocks = sanitizeSocialBlocks(socialBlocks);
+  const safeComposition = normalizeProfileComposition(composition);
   const safeExtraBadgeCount =
     safeFeaturedBadges.length === 0 ? 0 : Math.max(0, extraBadgeCount);
   const safeBannerUrl = sanitizeRenderableUrl(safeUser.bannerUrl);
@@ -213,6 +230,7 @@ export default function PublicProfileRenderer({
         dislikes={dislikes}
         views={views}
         socialBlocks={safeSocialBlocks}
+        composition={safeComposition}
         initialMyReaction={initialMyReaction}
         preview={preview}
       />
@@ -226,6 +244,9 @@ export default function PublicProfileRenderer({
     themeColor: safeThemeColor,
   });
   const { presence, depth } = sceneAppearance;
+  const compositionDensityScale = getProfileCompositionSpacingScale(
+    safeComposition.density,
+  );
   const glassTokens = getProfileGlassTokens(safeGlassIntensity);
   const bannerStyleTokens = getProfileBannerStyleTokens(safeBannerStyle);
   const densityTokens = getProfileDensityTokens(safeDensity);
@@ -241,7 +262,8 @@ export default function PublicProfileRenderer({
         ? "blur(8px) saturate(104%)"
         : "none"
     : panelBackdropFilter;
-  const spacingScale = densityTokens.sectionGap * depth.spacingScale;
+  const spacingScale =
+    densityTokens.sectionGap * depth.spacingScale * compositionDensityScale;
   const panelBackground = [
     `linear-gradient(180deg, rgba(255,255,255,${Math.max(0.01, 0.06 - depth.shellShadeOpacity * 0.2)}), rgba(4,6,10,${depth.shellShadeOpacity}) 100%)`,
     safeCardStyle === "glass" ? glassTokens.backgroundLayer : "",
@@ -279,6 +301,19 @@ export default function PublicProfileRenderer({
   const linkHoverLift = preview ? 0 : motionTokens.hoverLiftPx;
   const linkHoverScale = preview ? 1 : motionTokens.hoverScale;
   const linkTransition = preview ? 0 : motionTokens.transitionDurationMs;
+  const partitionedSocialBlocks = partitionSocialBlocks(safeSocialBlocks);
+  const renderableCompositionOrder = getRenderableCompositionOrder(safeComposition, {
+    hero: true,
+    music: preview ? true : shouldRenderProfileMusic(music),
+    socials: partitionedSocialBlocks.socials.length > 0,
+    live: partitionedSocialBlocks.live.length > 0,
+    links: true,
+    badges: safeFeaturedBadges.length > 0 || safeExtraBadgeCount > 0,
+    stats: true,
+  });
+  const orderedContentBlocks = renderableCompositionOrder.filter(
+    (block) => block !== "hero",
+  );
   const avatarAuraAnimation = motionTokens.allowDecorativeMotion
     ? safeMotionLevel === "subtle"
       ? "profile-aura 6.2s ease-in-out infinite"
@@ -1160,179 +1195,36 @@ export default function PublicProfileRenderer({
 
                   {safeUser.bio ? <div className="profile-bio">{safeUser.bio}</div> : null}
 
-                  <div className="widget-shell music">
-                    <ProfileRenderBoundary label="Music card" compact resetKey={safeUser.username}>
-                      <ProfileMusicCard
-                        music={music}
-                        themeColor={sceneAppearance.linkThemeColor}
-                        accentColor={presence.accent}
-                        contrastColor={presence.contrast}
-                        softColor={presence.soft}
-                        compact
-                        motionLevel={safeMotionLevel}
-                      />
-                    </ProfileRenderBoundary>
-                  </div>
-
-                  {preview ? null : (
-                    <ProfileRenderBoundary label="Profile reactions" compact resetKey={safeUser.username}>
-                      <ProfileHeroClient
-                        username={safeUser.username}
-                        initialViews={views}
-                        initialLikes={likes}
-                        initialDislikes={dislikes}
-                        themeColor={sceneAppearance.linkThemeColor}
-                        initialMyReaction={initialMyReaction}
-                        preview={preview}
-                      />
-                    </ProfileRenderBoundary>
-                  )}
-
-                  {safeFeaturedBadges.length > 0 ? (
-                    <div className="profile-badge-rail">
-                      {safeFeaturedBadges.map((item) => {
-                        const visual = getProfileBadgeVisual(
-                          item.badge,
-                          sceneAppearance.linkThemeColor,
-                        );
-
-                        return (
-                          <div
-                            key={item.id}
-                            className="profile-badge-pill"
-                            title={item.badge.description || item.badge.name}
-                            style={{
-                              background: visual.pillBackground,
-                              borderColor: visual.pillBorder,
-                              boxShadow: visual.pillShadow,
-                            }}
-                          >
-                            <div className="profile-badge-icon">
-                              <BadgeVisual
-                                slug={item.badge.slug}
-                                color={item.badge.color || visual.color}
-                                rarity={item.badge.rarity}
-                                category={item.badge.category}
-                                size={30}
-                                compact
-                              />
-                            </div>
-                            <span
-                              className="profile-badge-label"
-                              style={{ color: visual.labelColor }}
-                            >
-                              {item.badge.name}
-                            </span>
-                          </div>
-                        );
-                      })}
-
-                      {safeExtraBadgeCount > 0 ? (
-                        <div
-                          className="profile-badge-pill"
-                          title={`${safeExtraBadgeCount} more badge${safeExtraBadgeCount === 1 ? "" : "s"}`}
-                        >
-                          <div className="profile-badge-icon">+{safeExtraBadgeCount}</div>
-                          <span className="profile-badge-label">More</span>
-                        </div>
-                      ) : null}
-                    </div>
-                  ) : null}
                 </div>
               </div>
             </div>
 
             <div className="profile-links-column">
-              <div className="links-header">
-                <div className="links-copy">
-                  <div className="profile-kicker">
-                    <LuSparkles size={13} />
-                    Links
-                  </div>
-                  <h2>Selected links</h2>
-                  <p>Premium cards, socials, and calls to action stay aligned across desktop and mobile.</p>
-                </div>
-
-                <div className="links-count">
-                  <LuBadgeCheck size={13} />
-                  {safeUser.links.length} link{safeUser.links.length === 1 ? "" : "s"}
-                </div>
-              </div>
-
               <div className="links-list">
-                <div className="widget-shell social">
-                  <ProfileRenderBoundary label="Social presence" compact resetKey={safeUser.username}>
-                    <SocialPresenceSection
-                      blocks={safeSocialBlocks}
-                      themeColor={sceneAppearance.socialThemeColor}
-                      compact
-                      preview={preview}
-                    />
-                  </ProfileRenderBoundary>
-                </div>
-
-                {safeUser.links.length > 0 ? (
-                  safeUser.links.map((link, index) => {
-                    const platform = getLinkPlatform(link.url, link.title);
-                    const color = platform.color || sceneAppearance.linkThemeColor;
-                    const PlatformIcon = platform.icon;
-
-                    return (
-                      <a
-                        key={link.id}
-                        href={`/go/${link.id}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className={`profile-link-card ${index % 2 === 0 ? "float-a" : "float-b"}`}
-                        style={{
-                          borderColor: withAlpha(color, "24"),
-                          boxShadow: `0 18px 34px ${withAlpha(color, "0f")}`,
-                        }}
-                      >
-                        <div
-                          className="profile-link-glow"
-                          style={{
-                            background: `linear-gradient(90deg, ${withAlpha(color, "20")}, transparent)`,
-                          }}
-                        />
-
-                        <div
-                          className="profile-link-icon"
-                          style={{
-                            background: `linear-gradient(180deg, ${withAlpha(color, "20")}, ${withAlpha(color, "0c")})`,
-                            borderColor: withAlpha(color, "30"),
-                            boxShadow: `0 12px 24px ${withAlpha(color, "14")}`,
-                          }}
-                        >
-                          <PlatformIcon size={21} color={color} aria-hidden="true" />
-                        </div>
-
-                        <div className="profile-link-copy">
-                          <div className="profile-link-top">
-                            <strong>{link.title || platform.name}</strong>
-                            <span
-                              className="profile-link-platform"
-                              style={{
-                                color,
-                                background: withAlpha(color, "10"),
-                              }}
-                            >
-                              {platform.name}
-                            </span>
-                          </div>
-
-                          <div className="profile-link-host">{getLinkHostname(link.url)}</div>
-                          <div className="profile-link-url">{link.url}</div>
-                        </div>
-
-                        <div className="profile-link-arrow">
-                          <LuArrowUpRight size={16} />
-                        </div>
-                      </a>
-                    );
-                  })
-                ) : (
-                  <div className="empty-links">No links added yet.</div>
+                {orderedContentBlocks.map((block) =>
+                  renderModernCompositionBlock(block, {
+                    preview,
+                    music,
+                    motionLevel: safeMotionLevel,
+                    username: safeUser.username,
+                    themeColor: sceneAppearance.linkThemeColor,
+                    socialThemeColor: sceneAppearance.socialThemeColor,
+                    accentColor: presence.accent,
+                    contrastColor: presence.contrast,
+                    softColor: presence.soft,
+                    featuredBadges: safeFeaturedBadges,
+                    extraBadgeCount: safeExtraBadgeCount,
+                    likes,
+                    dislikes,
+                    views,
+                    initialMyReaction,
+                    regularSocialBlocks: partitionedSocialBlocks.socials,
+                    liveSocialBlocks: partitionedSocialBlocks.live,
+                    previewMessage,
+                    links: safeUser.links,
+                    linksStyle: safeComposition.linksStyle,
+                    socialsStyle: safeComposition.socialsStyle,
+                  }),
                 )}
               </div>
             </div>
@@ -1341,6 +1233,278 @@ export default function PublicProfileRenderer({
       </div>
     </main>
   );
+}
+
+function renderModernCompositionBlock(
+  block: ProfileCompositionBlock,
+  input: {
+    preview: boolean;
+    music: ProfileMusicData;
+    motionLevel: ProfileMotionLevel;
+    username: string;
+    themeColor: string;
+    socialThemeColor: string;
+    accentColor: string;
+    contrastColor: string;
+    softColor: string;
+    featuredBadges: PublicProfileBadgeEntry[];
+    extraBadgeCount: number;
+    likes: number;
+    dislikes: number;
+    views: number;
+    initialMyReaction: PublicProfileReaction;
+    regularSocialBlocks: PublicSocialBlock[];
+    liveSocialBlocks: PublicSocialBlock[];
+    links: PublicProfileRenderUser["links"];
+    linksStyle: ProfileCompositionLinksStyle;
+    socialsStyle: ProfileComposition["socialsStyle"];
+    previewMessage: string;
+  },
+) {
+  if (block === "music") {
+    return (
+      <div key={block} className="widget-shell music">
+        <ProfileRenderBoundary label="Music card" compact resetKey={`${input.username}-${block}`}>
+          <ProfileMusicCard
+            music={input.music}
+            themeColor={input.themeColor}
+            accentColor={input.accentColor}
+            contrastColor={input.contrastColor}
+            softColor={input.softColor}
+            compact
+            showPlaceholder={input.preview}
+            motionLevel={input.motionLevel}
+          />
+        </ProfileRenderBoundary>
+      </div>
+    );
+  }
+
+  if (block === "socials") {
+    return (
+      <div key={block} className="widget-shell social">
+        <ProfileRenderBoundary label="Social presence" compact resetKey={`${input.username}-${block}`}>
+          <SocialPresenceSection
+            blocks={input.regularSocialBlocks}
+            themeColor={input.socialThemeColor}
+            compact
+            preview={input.preview}
+            mode="socials"
+            displayStyle={input.socialsStyle}
+          />
+        </ProfileRenderBoundary>
+      </div>
+    );
+  }
+
+  if (block === "live") {
+    return (
+      <div key={block} className="widget-shell social">
+        <ProfileRenderBoundary label="Live presence" compact resetKey={`${input.username}-${block}`}>
+          <SocialPresenceSection
+            blocks={input.liveSocialBlocks}
+            themeColor={input.socialThemeColor}
+            compact
+            preview={input.preview}
+            mode="live"
+            displayStyle={input.socialsStyle}
+          />
+        </ProfileRenderBoundary>
+      </div>
+    );
+  }
+
+  if (block === "links") {
+    return (
+      <div key={block}>
+        <div className="links-header">
+          <div className="links-copy">
+            <div className="profile-kicker">
+              <LuSparkles size={13} />
+              Links
+            </div>
+            <h2>Selected links</h2>
+            <p>Premium cards, socials, and calls to action stay aligned across desktop and mobile.</p>
+          </div>
+
+          <div className="links-count">
+            <LuBadgeCheck size={13} />
+            {input.links.length} link{input.links.length === 1 ? "" : "s"}
+          </div>
+        </div>
+
+        {renderModernLinks(input.links, input.themeColor, input.linksStyle)}
+      </div>
+    );
+  }
+
+  if (block === "badges") {
+    return (
+      <div key={block}>
+        <div className="profile-kicker" style={{ marginBottom: "14px", width: "fit-content" }}>
+          <LuBadgeCheck size={13} />
+          Badges
+        </div>
+        <div className="profile-badge-rail">
+          {input.featuredBadges.map((item) => {
+            const visual = getProfileBadgeVisual(item.badge, input.themeColor);
+
+            return (
+              <div
+                key={item.id}
+                className="profile-badge-pill"
+                title={item.badge.description || item.badge.name}
+                style={{
+                  background: visual.pillBackground,
+                  borderColor: visual.pillBorder,
+                  boxShadow: visual.pillShadow,
+                }}
+              >
+                <div className="profile-badge-icon">
+                  <BadgeVisual
+                    slug={item.badge.slug}
+                    color={item.badge.color || visual.color}
+                    rarity={item.badge.rarity}
+                    category={item.badge.category}
+                    size={30}
+                    compact
+                  />
+                </div>
+                <span className="profile-badge-label" style={{ color: visual.labelColor }}>
+                  {item.badge.name}
+                </span>
+              </div>
+            );
+          })}
+
+          {input.extraBadgeCount > 0 ? (
+            <div
+              className="profile-badge-pill"
+              title={`${input.extraBadgeCount} more badge${input.extraBadgeCount === 1 ? "" : "s"}`}
+            >
+              <div className="profile-badge-icon">+{input.extraBadgeCount}</div>
+              <span className="profile-badge-label">More</span>
+            </div>
+          ) : null}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div key={block}>
+      {input.preview ? (
+        <div className="empty-links">
+          <strong style={{ display: "block", color: "#ffffff", marginBottom: "8px" }}>
+            Stats preview
+          </strong>
+          <span>
+            {input.views} views, {input.likes} likes, {input.dislikes} dislikes
+          </span>
+        </div>
+      ) : (
+        <ProfileRenderBoundary label="Profile stats" compact resetKey={`${input.username}-${block}`}>
+          <ProfileHeroClient
+            username={input.username}
+            initialViews={input.views}
+            initialLikes={input.likes}
+            initialDislikes={input.dislikes}
+            themeColor={input.themeColor}
+            initialMyReaction={input.initialMyReaction}
+            preview={input.preview}
+          />
+        </ProfileRenderBoundary>
+      )}
+    </div>
+  );
+}
+
+function renderModernLinks(
+  links: PublicProfileRenderUser["links"],
+  themeColor: string,
+  linksStyle: ProfileCompositionLinksStyle,
+) {
+  if (links.length === 0) {
+    return <div className="empty-links">No links added yet.</div>;
+  }
+
+  return links.map((link, index) => {
+    const platform = getLinkPlatform(link.url, link.title);
+    const color = platform.color || themeColor;
+    const PlatformIcon = platform.icon;
+    const isPill = linksStyle === "pills";
+    const isMinimal = linksStyle === "minimal";
+    const isStacked = linksStyle === "stacked";
+
+    return (
+      <a
+        key={link.id}
+        href={`/go/${link.id}`}
+        target="_blank"
+        rel="noreferrer"
+        className={`profile-link-card ${isStacked ? "" : index % 2 === 0 ? "float-a" : "float-b"}`}
+        style={{
+          borderColor: withAlpha(color, isMinimal ? "18" : "24"),
+          boxShadow: `0 18px 34px ${withAlpha(color, isMinimal ? "08" : "0f")}`,
+          padding: isPill ? "12px 14px" : isMinimal ? "14px" : isStacked ? "18px 18px 18px 16px" : undefined,
+          background: isMinimal
+            ? "rgba(255,255,255,0.02)"
+            : isPill
+              ? "linear-gradient(180deg, rgba(255,255,255,0.025), rgba(8,10,16,0.76))"
+              : undefined,
+        }}
+      >
+        <div
+          className="profile-link-glow"
+          style={{
+            background: `linear-gradient(90deg, ${withAlpha(color, isMinimal ? "14" : "20")}, transparent)`,
+            width: isPill ? "18%" : "26%",
+          }}
+        />
+
+        <div
+          className="profile-link-icon"
+          style={{
+            width: isPill ? "44px" : "52px",
+            height: isPill ? "44px" : "52px",
+            background: `linear-gradient(180deg, ${withAlpha(color, "20")}, ${withAlpha(color, "0c")})`,
+            borderColor: withAlpha(color, "30"),
+            boxShadow: `0 12px 24px ${withAlpha(color, "14")}`,
+          }}
+        >
+          <PlatformIcon size={isPill ? 18 : 21} color={color} aria-hidden="true" />
+        </div>
+
+        <div className="profile-link-copy">
+          <div className="profile-link-top">
+            <strong>{link.title || platform.name}</strong>
+            <span
+              className="profile-link-platform"
+              style={{
+                color,
+                background: withAlpha(color, "10"),
+              }}
+            >
+              {platform.name}
+            </span>
+          </div>
+
+          {isPill ? (
+            <div className="profile-link-host">{getLinkHostname(link.url)}</div>
+          ) : (
+            <>
+              <div className="profile-link-host">{getLinkHostname(link.url)}</div>
+              {isMinimal ? null : <div className="profile-link-url">{link.url}</div>}
+            </>
+          )}
+        </div>
+
+        <div className="profile-link-arrow">
+          <LuArrowUpRight size={16} />
+        </div>
+      </a>
+    );
+  });
 }
 
 function sanitizeUser(user: PublicProfileRenderUser): PublicProfileRenderUser {

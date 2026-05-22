@@ -31,6 +31,17 @@ import ProfileMusicCard from "@/app/[username]/ProfileMusicCard";
 import type { PublicProfileLayout } from "@/app/[username]/ProfileLayoutVariants";
 import type { PublicSocialBlock } from "@/app/[username]/SocialPresenceSection";
 import {
+  DEFAULT_PROFILE_COMPOSITION,
+  PROFILE_COMPOSITION_DENSITY_OPTIONS,
+  PROFILE_COMPOSITION_LINK_STYLE_OPTIONS,
+  PROFILE_COMPOSITION_SOCIAL_STYLE_OPTIONS,
+  type ProfileComposition,
+  type ProfileCompositionBlock,
+  type ProfileCompositionDensity,
+  type ProfileCompositionLinksStyle,
+  type ProfileCompositionSocialsStyle,
+} from "@/app/lib/profile-composition";
+import {
   MAX_PROFILE_NAME_EFFECTS,
   PROFILE_BACKGROUND_INTENSITY_OPTIONS,
   PROFILE_BANNER_STYLE_OPTIONS,
@@ -112,6 +123,7 @@ type Props = {
   savedCardStyle: ProfileCardStyle;
   savedCornerStyle: ProfileCornerStyle;
   savedMotionLevel: ProfileMotionLevel;
+  savedComposition: ProfileComposition;
   initialMusic: ProfileMusicData;
   previewUser: PublicProfileRenderUser;
   bannerKind: "image" | "video" | "unknown";
@@ -145,6 +157,7 @@ export default function ProfileLayoutExperience({
   savedCardStyle,
   savedCornerStyle,
   savedMotionLevel,
+  savedComposition,
   initialMusic,
   previewUser,
   bannerKind,
@@ -183,6 +196,8 @@ export default function ProfileLayoutExperience({
     useState<ProfileCornerStyle>(savedCornerStyle);
   const [previewMotionLevel, setPreviewMotionLevel] =
     useState<ProfileMotionLevel>(savedMotionLevel);
+  const [previewComposition, setPreviewComposition] =
+    useState<ProfileComposition>(savedComposition || DEFAULT_PROFILE_COMPOSITION);
   const [profileMusicEnabled, setProfileMusicEnabled] = useState(initialMusic.enabled);
   const [profileMusicTitle, setProfileMusicTitle] = useState(initialMusic.title || "");
   const [profileMusicArtist, setProfileMusicArtist] = useState(initialMusic.artist || "");
@@ -211,6 +226,7 @@ export default function ProfileLayoutExperience({
   const deferredPreviewCardStyle = useDeferredValue(previewCardStyle);
   const deferredPreviewCornerStyle = useDeferredValue(previewCornerStyle);
   const deferredPreviewMotionLevel = useDeferredValue(previewMotionLevel);
+  const deferredPreviewComposition = useDeferredValue(previewComposition);
   const deferredProfileMusicEnabled = useDeferredValue(profileMusicEnabled);
   const deferredProfileMusicTitle = useDeferredValue(profileMusicTitle);
   const deferredProfileMusicArtist = useDeferredValue(profileMusicArtist);
@@ -253,6 +269,7 @@ export default function ProfileLayoutExperience({
     previewCardStyle !== savedCardStyle ||
     previewCornerStyle !== savedCornerStyle ||
     previewMotionLevel !== savedMotionLevel ||
+    JSON.stringify(previewComposition) !== JSON.stringify(savedComposition) ||
     profileMusicEnabled !== initialMusic.enabled ||
     profileMusicTitle !== (initialMusic.title || "") ||
     profileMusicArtist !== (initialMusic.artist || "") ||
@@ -306,6 +323,60 @@ export default function ProfileLayoutExperience({
       }
 
       return [...current, effect];
+    });
+  }
+
+  function toggleCompositionVisibility(block: ProfileCompositionBlock) {
+    const visibilityKey = getVisibilityKeyForBlock(block);
+
+    if (!visibilityKey) {
+      return;
+    }
+
+    setPreviewComposition((current) => ({
+      ...current,
+      visible: {
+        ...current.visible,
+        [visibilityKey]: !current.visible[visibilityKey],
+      },
+    }));
+  }
+
+  function moveCompositionBlock(
+    block: ProfileCompositionBlock,
+    direction: "up" | "down",
+  ) {
+    setPreviewComposition((current) => {
+      if (block === "hero") {
+        return current;
+      }
+
+      const currentIndex = current.order.indexOf(block);
+
+      if (currentIndex === -1) {
+        return current;
+      }
+
+      if (direction === "up" && currentIndex <= 1) {
+        return current;
+      }
+
+      const nextIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
+
+      if (nextIndex < 0 || nextIndex >= current.order.length) {
+        return current;
+      }
+
+      const nextOrder = [...current.order];
+      [nextOrder[currentIndex], nextOrder[nextIndex]] = [
+        nextOrder[nextIndex],
+        nextOrder[currentIndex],
+      ];
+
+      return {
+        ...current,
+        order: nextOrder,
+      };
     });
   }
 
@@ -698,6 +769,12 @@ export default function ProfileLayoutExperience({
               <input type="hidden" name="profileCardStyle" value={previewCardStyle} readOnly />
               <input type="hidden" name="profileCornerStyle" value={previewCornerStyle} readOnly />
               <input type="hidden" name="profileMotionLevel" value={previewMotionLevel} readOnly />
+              <input
+                type="hidden"
+                name="profileComposition"
+                value={JSON.stringify(previewComposition)}
+                readOnly
+              />
 
               <div style={{ display: "grid", gap: "12px" }}>
                 <div style={livingSectionTitleStyle}>Background intensity</div>
@@ -941,6 +1018,186 @@ export default function ProfileLayoutExperience({
               </div>
             </div>
 
+            <div style={compositionSectionStyle}>
+              <DashboardSectionHeading
+                eyebrow="Profile Composition"
+                title="Structure the public experience"
+                description="Control which widgets show up, how they stack, and how links and socials present without heavy drag-and-drop."
+              />
+
+              <div style={compositionControlsGridStyle}>
+                <div style={compositionRowsStyle}>
+                    {previewComposition.order.map((block, index) => {
+                      const isHero = block === "hero";
+                      const visibilityKey = getVisibilityKeyForBlock(block);
+                      const canMoveUp = !isHero && index > 1;
+                      const canMoveDown =
+                        !isHero && index < previewComposition.order.length - 1;
+                      const isVisible =
+                        visibilityKey == null
+                          ? true
+                          : previewComposition.visible[visibilityKey];
+
+                      return (
+                        <div
+                          key={block}
+                          style={compositionRowStyle(
+                            isVisible,
+                            previewPresence.accent,
+                            isHero,
+                          )}
+                        >
+                          <div style={compositionRowCopyStyle}>
+                            <div style={compositionRowTitleStyle}>
+                              {getCompositionBlockLabel(block)}
+                            </div>
+                            <div style={layoutCardDescriptionStyle}>
+                              {getCompositionBlockDescription(block)}
+                            </div>
+                          </div>
+
+                          <div style={compositionRowActionsStyle}>
+                            <button
+                              type="button"
+                              onClick={() => moveCompositionBlock(block, "up")}
+                              disabled={!canMoveUp}
+                              style={compositionMoveButtonStyle(canMoveUp)}
+                            >
+                              Up
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => moveCompositionBlock(block, "down")}
+                              disabled={!canMoveDown}
+                              style={compositionMoveButtonStyle(canMoveDown)}
+                            >
+                              Down
+                            </button>
+                            <label
+                              style={compositionToggleStyle(
+                                isVisible,
+                                previewPresence.accent,
+                                isHero,
+                              )}
+                            >
+                              <span>
+                                {isHero
+                                  ? "Always on"
+                                  : isVisible
+                                    ? "Visible"
+                                    : "Hidden"}
+                              </span>
+                              <input
+                                type="checkbox"
+                                checked={isVisible}
+                                disabled={isHero}
+                                onChange={() => toggleCompositionVisibility(block)}
+                                style={musicCheckboxStyle}
+                              />
+                            </label>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                <div style={compositionOptionGridStyle}>
+                    <div style={{ display: "grid", gap: "10px" }}>
+                      <div style={livingSectionTitleStyle}>Widget density</div>
+                      <div style={compositionChoiceGridStyle}>
+                        {PROFILE_COMPOSITION_DENSITY_OPTIONS.map((option) => {
+                          const isSelected = previewComposition.density === option.value;
+
+                          return (
+                            <button
+                              key={option.value}
+                              type="button"
+                              className="living-card"
+                              aria-pressed={isSelected}
+                              onClick={() =>
+                                setPreviewComposition((current) => ({
+                                  ...current,
+                                  density: option.value,
+                                }))
+                              }
+                              style={livingCardStyle(isSelected, previewPresence.accent)}
+                            >
+                              <div style={livingCardHeaderStyle}>
+                                <span>{option.name}</span>
+                                {isSelected ? <LuCheck size={16} /> : null}
+                              </div>
+                              <div style={layoutCardDescriptionStyle}>{option.description}</div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div style={{ display: "grid", gap: "10px" }}>
+                      <div style={livingSectionTitleStyle}>Link display</div>
+                      <div style={compositionChoiceGridStyle}>
+                        {PROFILE_COMPOSITION_LINK_STYLE_OPTIONS.map((option) => {
+                          const isSelected = previewComposition.linksStyle === option.value;
+
+                          return (
+                            <button
+                              key={option.value}
+                              type="button"
+                              className="living-card"
+                              aria-pressed={isSelected}
+                              onClick={() =>
+                                setPreviewComposition((current) => ({
+                                  ...current,
+                                  linksStyle: option.value,
+                                }))
+                              }
+                              style={livingCardStyle(isSelected, previewPresence.accent)}
+                            >
+                              <div style={livingCardHeaderStyle}>
+                                <span>{option.name}</span>
+                                {isSelected ? <LuCheck size={16} /> : null}
+                              </div>
+                              <div style={layoutCardDescriptionStyle}>{option.description}</div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div style={{ display: "grid", gap: "10px" }}>
+                      <div style={livingSectionTitleStyle}>Social display</div>
+                      <div style={compositionChoiceGridStyle}>
+                        {PROFILE_COMPOSITION_SOCIAL_STYLE_OPTIONS.map((option) => {
+                          const isSelected = previewComposition.socialsStyle === option.value;
+
+                          return (
+                            <button
+                              key={option.value}
+                              type="button"
+                              className="living-card"
+                              aria-pressed={isSelected}
+                              onClick={() =>
+                                setPreviewComposition((current) => ({
+                                  ...current,
+                                  socialsStyle: option.value,
+                                }))
+                              }
+                              style={livingCardStyle(isSelected, previewPresence.accent)}
+                            >
+                              <div style={livingCardHeaderStyle}>
+                                <span>{option.name}</span>
+                                {isSelected ? <LuCheck size={16} /> : null}
+                              </div>
+                              <div style={layoutCardDescriptionStyle}>{option.description}</div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                </div>
+              </div>
+            </div>
+
             <div style={musicSectionStyle}>
               <DashboardSectionHeading
                 eyebrow="Profile Music"
@@ -1100,6 +1357,15 @@ export default function ProfileLayoutExperience({
                 <span style={dashboardTagStyle("violet")}>
                   {deferredPreviewMotionLevel} motion
                 </span>
+                <span style={dashboardTagStyle("violet")}>
+                  {deferredPreviewComposition.density} composition
+                </span>
+                <span style={dashboardTagStyle("violet")}>
+                  {deferredPreviewComposition.linksStyle} links
+                </span>
+                <span style={dashboardTagStyle("violet")}>
+                  {deferredPreviewComposition.socialsStyle} socials
+                </span>
                 <span style={dashboardTagStyle(isDirty ? "violet" : "green")}>
                   {isDirty ? "Unsaved changes" : "Saved state"}
                 </span>
@@ -1152,6 +1418,7 @@ export default function ProfileLayoutExperience({
                     dislikes={dislikes}
                     views={views}
                     socialBlocks={socialBlocks}
+                    composition={deferredPreviewComposition}
                     initialMyReaction={null}
                     preview
                     previewMessage="This is exactly how your live profile will look."
@@ -1982,6 +2249,198 @@ const previewFooterCopyStyle: CSSProperties = {
   color: "#e8eefc",
   fontSize: "13px",
   fontWeight: 800,
+};
+
+function getVisibilityKeyForBlock(block: ProfileCompositionBlock) {
+  if (block === "hero") {
+    return null;
+  }
+
+  if (block === "music") {
+    return "music" as const;
+  }
+
+  if (block === "socials") {
+    return "socials" as const;
+  }
+
+  if (block === "links") {
+    return "links" as const;
+  }
+
+  if (block === "badges") {
+    return "badges" as const;
+  }
+
+  if (block === "stats") {
+    return "stats" as const;
+  }
+
+  return "live" as const;
+}
+
+function getCompositionBlockLabel(block: ProfileCompositionBlock) {
+  if (block === "hero") {
+    return "Hero";
+  }
+
+  if (block === "music") {
+    return "Music";
+  }
+
+  if (block === "socials") {
+    return "Socials";
+  }
+
+  if (block === "live") {
+    return "Live";
+  }
+
+  if (block === "links") {
+    return "Links";
+  }
+
+  if (block === "badges") {
+    return "Badges";
+  }
+
+  return "Stats";
+}
+
+function getCompositionBlockDescription(block: ProfileCompositionBlock) {
+  if (block === "hero") {
+    return "Avatar, identity, mood, aura, and the first impression area.";
+  }
+
+  if (block === "music") {
+    return "Profile soundtrack card with title, artist, and outbound CTA.";
+  }
+
+  if (block === "socials") {
+    return "Non-live social integrations like Discord, GitHub, Spotify, and creator cards.";
+  }
+
+  if (block === "live") {
+    return "Live embed cards stay visually prioritized when they are actually on air.";
+  }
+
+  if (block === "links") {
+    return "Primary outbound links and calls to action.";
+  }
+
+  if (block === "badges") {
+    return "Featured profile badges and any extra badge count.";
+  }
+
+  return "Views and reactions block.";
+}
+
+const compositionSectionStyle: CSSProperties = {
+  display: "grid",
+  gap: "18px",
+};
+
+const compositionControlsGridStyle: CSSProperties = {
+  display: "grid",
+  gap: "18px",
+};
+
+const compositionRowsStyle: CSSProperties = {
+  display: "grid",
+  gap: "12px",
+};
+
+function compositionRowStyle(
+  isVisible: boolean,
+  accentColor: string,
+  isHero: boolean,
+): CSSProperties {
+  return {
+    display: "grid",
+    gridTemplateColumns: "minmax(0, 1fr) auto",
+    gap: "14px",
+    alignItems: "center",
+    padding: "14px 16px",
+    borderRadius: "18px",
+    border: `1px solid ${
+      isHero
+        ? withAlpha(accentColor, "28")
+        : isVisible
+          ? withAlpha(accentColor, "1c")
+          : "rgba(255,255,255,0.08)"
+    }`,
+    background: isHero
+      ? `linear-gradient(180deg, ${withAlpha(accentColor, "12")}, rgba(12,12,18,0.96))`
+      : isVisible
+        ? `linear-gradient(180deg, rgba(255,255,255,0.04), rgba(12,12,18,0.96))`
+        : "linear-gradient(180deg, rgba(18,18,24,0.96), rgba(11,11,15,0.96))",
+    boxShadow: isVisible ? `0 16px 28px ${withAlpha(accentColor, "10")}` : "none",
+  };
+}
+
+const compositionRowCopyStyle: CSSProperties = {
+  display: "grid",
+  gap: "6px",
+  minWidth: 0,
+};
+
+const compositionRowTitleStyle: CSSProperties = {
+  color: "#ffffff",
+  fontSize: "15px",
+  fontWeight: 900,
+};
+
+const compositionRowActionsStyle: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: "10px",
+  flexWrap: "wrap",
+  justifyContent: "flex-end",
+};
+
+function compositionMoveButtonStyle(enabled: boolean): CSSProperties {
+  return {
+    minHeight: "34px",
+    padding: "0 12px",
+    borderRadius: "999px",
+    border: "1px solid rgba(255,255,255,0.08)",
+    background: enabled ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.02)",
+    color: enabled ? "#eef2ff" : "#7f8ca7",
+    fontSize: "12px",
+    fontWeight: 800,
+    cursor: enabled ? "pointer" : "not-allowed",
+  };
+}
+
+function compositionToggleStyle(
+  isVisible: boolean,
+  accentColor: string,
+  isHero: boolean,
+): CSSProperties {
+  return {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "10px",
+    minHeight: "36px",
+    padding: "0 12px",
+    borderRadius: "999px",
+    border: `1px solid ${isVisible || isHero ? withAlpha(accentColor, "24") : "rgba(255,255,255,0.08)"}`,
+    background: isVisible || isHero ? withAlpha(accentColor, "12") : "rgba(255,255,255,0.03)",
+    color: "#eef2ff",
+    fontSize: "12px",
+    fontWeight: 800,
+  };
+}
+
+const compositionOptionGridStyle: CSSProperties = {
+  display: "grid",
+  gap: "16px",
+};
+
+const compositionChoiceGridStyle: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 180px), 1fr))",
+  gap: "12px",
 };
 
 function normalizeThemeColor(value: string) {

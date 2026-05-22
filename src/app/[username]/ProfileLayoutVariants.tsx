@@ -4,10 +4,20 @@ import LivingAvatar from "@/app/components/LivingAvatar";
 import BadgeVisual from "@/app/dashboard/components/BadgeVisual";
 import { getLinkPlatform } from "@/app/lib/link-icons";
 import {
+  getProfileCompositionSpacingScale,
+  getRenderableCompositionOrder,
+  partitionSocialBlocks,
+  type ProfileComposition,
+  type ProfileCompositionBlock,
+} from "@/app/lib/profile-composition";
+import {
   type ProfileAura,
   type ProfileMood,
 } from "@/app/lib/profile-presence";
-import type { ProfileMusicData } from "@/app/lib/profile-music";
+import {
+  shouldRenderProfileMusic,
+  type ProfileMusicData,
+} from "@/app/lib/profile-music";
 import {
   getProfileBannerStyleTokens,
   getProfileCardStyleTokens,
@@ -116,6 +126,7 @@ type Props = {
   dislikes: number;
   views: number;
   socialBlocks: PublicSocialBlock[];
+  composition: ProfileComposition;
   initialMyReaction: "like" | "dislike" | null;
   preview?: boolean;
 };
@@ -147,9 +158,22 @@ function DefaultLayout(props: Props) {
   const { presence, depth } = sceneAppearance;
   const glassTokens = getProfileGlassTokens(props.glassIntensity);
   const densityTokens = getProfileDensityTokens(props.density);
+  const compositionSpacingScale = getProfileCompositionSpacingScale(
+    props.composition.density,
+  );
   const cardStyleTokens = getProfileCardStyleTokens(props.cardStyle);
   const cornerTokens = getProfileCornerTokens(props.cornerStyle);
   const motionTokens = getProfileMotionTokens(props.motionLevel);
+  const socialGroups = partitionSocialBlocks(props.socialBlocks);
+  const orderedBlocks = getRenderableCompositionOrder(props.composition, {
+    hero: true,
+    music: props.preview ? true : shouldRenderProfileMusic(props.music),
+    socials: socialGroups.socials.length > 0,
+    live: socialGroups.live.length > 0,
+    links: true,
+    badges: props.featuredBadges.length > 0 || props.extraBadgeCount > 0,
+    stats: true,
+  }).filter((block) => block !== "hero");
   const resolvedBackdrop =
     props.cardStyle === "glass" ? glassTokens.backdropFilter : cardStyleTokens.backdropFilter;
   const resolvedSurfaceBackground = getLayeredSurfaceBackground(
@@ -203,7 +227,14 @@ function DefaultLayout(props: Props) {
           cornerRadius={cornerTokens.shellRadius}
         />
 
-        <div style={defaultContentStyle(props.preview, densityTokens, depth)}>
+        <div
+          style={defaultContentStyle(
+            props.preview,
+            densityTokens,
+            depth,
+            compositionSpacingScale,
+          )}
+        >
           <div style={defaultIdentityStyle(depth)}>
             <AvatarVisual
               avatarUrl={props.user.avatarUrl}
@@ -250,58 +281,34 @@ function DefaultLayout(props: Props) {
             </div>
           </div>
 
-          {props.preview ? null : (
-            <ProfileHeroClient
-              username={props.user.username}
-              initialViews={props.views}
-              initialLikes={props.likes}
-              initialDislikes={props.dislikes}
-              themeColor={sceneAppearance.linkThemeColor}
-              initialMyReaction={props.initialMyReaction}
-              preview={props.preview}
-            />
+          {orderedBlocks.map((block) =>
+            renderVariantBlock(block, {
+              layout: "default",
+              preview: props.preview,
+              username: props.user.username,
+              music: props.music,
+              motionLevel: props.motionLevel,
+              themeColor: sceneAppearance.linkThemeColor,
+              socialThemeColor: sceneAppearance.socialThemeColor,
+              accentColor: presence.accent,
+              contrastColor: presence.contrast,
+              softColor: presence.soft,
+              featuredBadges: props.featuredBadges,
+              extraBadgeCount: props.extraBadgeCount,
+              likes: props.likes,
+              dislikes: props.dislikes,
+              views: props.views,
+              initialMyReaction: props.initialMyReaction,
+              socialGroups,
+              links: props.user.links,
+              density: densityTokens,
+              cardStyle: props.cardStyle,
+              cornerTokens,
+              motionTokens,
+              depth,
+              composition: props.composition,
+            }),
           )}
-
-          <BadgeRail
-            badges={props.featuredBadges}
-            extraBadgeCount={props.extraBadgeCount}
-            themeColor={sceneAppearance.linkThemeColor}
-          />
-          <DetachedWidget depth={depth}>
-            <ProfileRenderBoundary label="Music card" compact resetKey={props.user.username}>
-              <ProfileMusicCard
-                music={props.music}
-                themeColor={sceneAppearance.linkThemeColor}
-                accentColor={presence.accent}
-                contrastColor={presence.contrast}
-                softColor={presence.soft}
-                compact
-                motionLevel={props.motionLevel}
-              />
-            </ProfileRenderBoundary>
-          </DetachedWidget>
-          <DetachedWidget depth={depth} accent={presence.soft}>
-            <ProfileRenderBoundary label="Social presence" compact resetKey={props.user.username}>
-              <SocialPresenceSection
-                blocks={props.socialBlocks}
-                themeColor={sceneAppearance.socialThemeColor}
-                compact
-                preview={props.preview}
-              />
-            </ProfileRenderBoundary>
-          </DetachedWidget>
-          <LinksSection
-            layout="default"
-            links={props.user.links}
-            themeColor={sceneAppearance.linkThemeColor}
-            surfaceBackground={sceneAppearance.surfaceBackground}
-            surfaceBorder={sceneAppearance.surfaceBorder}
-            density={densityTokens}
-            cardStyle={props.cardStyle}
-            cornerTokens={cornerTokens}
-            motionTokens={motionTokens}
-            depth={depth}
-          />
         </div>
       </section>
     </main>
@@ -318,10 +325,23 @@ function SimplisticLayout(props: Props) {
   const { presence, depth } = sceneAppearance;
   const glassTokens = getProfileGlassTokens(props.glassIntensity);
   const densityTokens = getProfileDensityTokens(props.density);
+  const compositionSpacingScale = getProfileCompositionSpacingScale(
+    props.composition.density,
+  );
   const cardStyleTokens = getProfileCardStyleTokens(props.cardStyle);
   const cornerTokens = getProfileCornerTokens(props.cornerStyle);
   const resolvedBackdrop =
     props.cardStyle === "glass" ? glassTokens.backdropFilter : cardStyleTokens.backdropFilter;
+  const socialGroups = partitionSocialBlocks(props.socialBlocks);
+  const orderedBlocks = getRenderableCompositionOrder(props.composition, {
+    hero: true,
+    music: props.preview ? true : shouldRenderProfileMusic(props.music),
+    socials: socialGroups.socials.length > 0,
+    live: socialGroups.live.length > 0,
+    links: true,
+    badges: props.featuredBadges.length > 0 || props.extraBadgeCount > 0,
+    stats: true,
+  }).filter((block) => block !== "hero");
 
   return (
     <main
@@ -342,8 +362,16 @@ function SimplisticLayout(props: Props) {
         intensity={props.backgroundIntensity}
         motionLevel={props.motionLevel}
       />
-      <div style={simplisticShellStyle(props.preview, resolvedBackdrop, densityTokens, depth)}>
-        <div style={simplisticHeaderStyle(densityTokens, depth)}>
+      <div
+        style={simplisticShellStyle(
+          props.preview,
+          resolvedBackdrop,
+          densityTokens,
+          depth,
+          compositionSpacingScale,
+        )}
+      >
+        <div style={simplisticHeaderStyle(densityTokens, depth, compositionSpacingScale)}>
           <AvatarVisual
             avatarUrl={props.user.avatarUrl}
             avatarInitials={props.avatarInitials}
@@ -405,59 +433,34 @@ function SimplisticLayout(props: Props) {
           />
         </div>
 
-        {props.preview ? null : (
-          <ProfileHeroClient
-            username={props.user.username}
-            initialViews={props.views}
-            initialLikes={props.likes}
-            initialDislikes={props.dislikes}
-            themeColor={sceneAppearance.linkThemeColor}
-            initialMyReaction={props.initialMyReaction}
-            preview={props.preview}
-          />
+        {orderedBlocks.map((block) =>
+          renderVariantBlock(block, {
+            layout: "simplistic",
+            preview: props.preview,
+            username: props.user.username,
+            music: props.music,
+            motionLevel: props.motionLevel,
+            themeColor: sceneAppearance.linkThemeColor,
+            socialThemeColor: sceneAppearance.socialThemeColor,
+            accentColor: presence.accent,
+            contrastColor: presence.contrast,
+            softColor: presence.soft,
+            featuredBadges: props.featuredBadges,
+            extraBadgeCount: props.extraBadgeCount,
+            likes: props.likes,
+            dislikes: props.dislikes,
+            views: props.views,
+            initialMyReaction: props.initialMyReaction,
+            socialGroups,
+            links: props.user.links,
+            density: densityTokens,
+            cardStyle: props.cardStyle,
+            cornerTokens,
+            motionTokens: getProfileMotionTokens(props.motionLevel),
+            depth,
+            composition: props.composition,
+          }),
         )}
-
-        <BadgeRail
-          badges={props.featuredBadges}
-          extraBadgeCount={props.extraBadgeCount}
-          themeColor={sceneAppearance.linkThemeColor}
-          minimal
-        />
-        <DetachedWidget depth={depth}>
-          <ProfileRenderBoundary label="Music card" compact resetKey={props.user.username}>
-            <ProfileMusicCard
-              music={props.music}
-              themeColor={sceneAppearance.linkThemeColor}
-              accentColor={presence.accent}
-              contrastColor={presence.contrast}
-              softColor={presence.soft}
-              compact
-              motionLevel={props.motionLevel}
-            />
-          </ProfileRenderBoundary>
-        </DetachedWidget>
-        <DetachedWidget depth={depth} accent={presence.soft}>
-          <ProfileRenderBoundary label="Social presence" compact resetKey={props.user.username}>
-            <SocialPresenceSection
-              blocks={props.socialBlocks}
-              themeColor={sceneAppearance.socialThemeColor}
-              compact
-              preview={props.preview}
-            />
-          </ProfileRenderBoundary>
-        </DetachedWidget>
-        <LinksSection
-          layout="simplistic"
-          links={props.user.links}
-          themeColor={sceneAppearance.linkThemeColor}
-          surfaceBackground={sceneAppearance.surfaceBackground}
-          surfaceBorder={sceneAppearance.surfaceBorder}
-          density={densityTokens}
-          cardStyle={props.cardStyle}
-          cornerTokens={cornerTokens}
-          motionTokens={getProfileMotionTokens(props.motionLevel)}
-          depth={depth}
-        />
       </div>
     </main>
   );
@@ -473,6 +476,9 @@ function PortfolioLayout(props: Props) {
   const { presence, depth } = sceneAppearance;
   const glassTokens = getProfileGlassTokens(props.glassIntensity);
   const densityTokens = getProfileDensityTokens(props.density);
+  const compositionSpacingScale = getProfileCompositionSpacingScale(
+    props.composition.density,
+  );
   const cardStyleTokens = getProfileCardStyleTokens(props.cardStyle);
   const cornerTokens = getProfileCornerTokens(props.cornerStyle);
   const motionTokens = getProfileMotionTokens(props.motionLevel);
@@ -484,6 +490,16 @@ function PortfolioLayout(props: Props) {
     cardStyleTokens.shellOverlay,
     props.cardStyle === "glass",
   );
+  const socialGroups = partitionSocialBlocks(props.socialBlocks);
+  const orderedBlocks = getRenderableCompositionOrder(props.composition, {
+    hero: true,
+    music: props.preview ? true : shouldRenderProfileMusic(props.music),
+    socials: socialGroups.socials.length > 0,
+    live: socialGroups.live.length > 0,
+    links: true,
+    badges: props.featuredBadges.length > 0 || props.extraBadgeCount > 0,
+    stats: true,
+  }).filter((block) => block !== "hero");
 
   return (
     <main
@@ -518,7 +534,14 @@ function PortfolioLayout(props: Props) {
         />
       </div>
 
-      <div style={portfolioShellStyle(props.preview, densityTokens, depth)}>
+      <div
+        style={portfolioShellStyle(
+          props.preview,
+          densityTokens,
+          depth,
+          compositionSpacingScale,
+        )}
+      >
         <aside
           style={portfolioSidebarStyle(
             props.preview,
@@ -575,38 +598,6 @@ function PortfolioLayout(props: Props) {
           </div>
 
           <PillRow pills={props.heroPills} subtle />
-
-          {props.preview ? null : (
-            <ProfileHeroClient
-              username={props.user.username}
-              initialViews={props.views}
-              initialLikes={props.likes}
-              initialDislikes={props.dislikes}
-              themeColor={sceneAppearance.linkThemeColor}
-              initialMyReaction={props.initialMyReaction}
-              preview={props.preview}
-            />
-          )}
-
-          <BadgeRail
-            badges={props.featuredBadges}
-            extraBadgeCount={props.extraBadgeCount}
-            themeColor={sceneAppearance.linkThemeColor}
-          />
-
-          <DetachedWidget depth={depth}>
-            <ProfileRenderBoundary label="Music card" compact resetKey={props.user.username}>
-              <ProfileMusicCard
-                music={props.music}
-                themeColor={sceneAppearance.linkThemeColor}
-                accentColor={presence.accent}
-                contrastColor={presence.contrast}
-                softColor={presence.soft}
-                compact
-                motionLevel={props.motionLevel}
-              />
-            </ProfileRenderBoundary>
-          </DetachedWidget>
         </aside>
 
         <section
@@ -621,27 +612,34 @@ function PortfolioLayout(props: Props) {
             depth,
           )}
         >
-          <DetachedWidget depth={depth} accent={presence.soft}>
-            <ProfileRenderBoundary label="Social presence" compact resetKey={props.user.username}>
-              <SocialPresenceSection
-                blocks={props.socialBlocks}
-                themeColor={sceneAppearance.socialThemeColor}
-                preview={props.preview}
-              />
-            </ProfileRenderBoundary>
-          </DetachedWidget>
-          <LinksSection
-            layout="portfolio"
-            links={props.user.links}
-            themeColor={sceneAppearance.linkThemeColor}
-            surfaceBackground={sceneAppearance.surfaceBackground}
-            surfaceBorder={sceneAppearance.surfaceBorder}
-            density={densityTokens}
-            cardStyle={props.cardStyle}
-            cornerTokens={cornerTokens}
-            motionTokens={motionTokens}
-            depth={depth}
-          />
+          {orderedBlocks.map((block) =>
+            renderVariantBlock(block, {
+              layout: "portfolio",
+              preview: props.preview,
+              username: props.user.username,
+              music: props.music,
+              motionLevel: props.motionLevel,
+              themeColor: sceneAppearance.linkThemeColor,
+              socialThemeColor: sceneAppearance.socialThemeColor,
+              accentColor: presence.accent,
+              contrastColor: presence.contrast,
+              softColor: presence.soft,
+              featuredBadges: props.featuredBadges,
+              extraBadgeCount: props.extraBadgeCount,
+              likes: props.likes,
+              dislikes: props.dislikes,
+              views: props.views,
+              initialMyReaction: props.initialMyReaction,
+              socialGroups,
+              links: props.user.links,
+              density: densityTokens,
+              cardStyle: props.cardStyle,
+              cornerTokens,
+              motionTokens,
+              depth,
+              composition: props.composition,
+            }),
+          )}
         </section>
       </div>
     </main>
@@ -741,6 +739,141 @@ function DetachedWidget({
       />
       {children}
     </div>
+  );
+}
+
+function renderVariantBlock(
+  block: ProfileCompositionBlock,
+  input: {
+    layout: "default" | "simplistic" | "portfolio";
+    preview?: boolean;
+    username: string;
+    music: ProfileMusicData;
+    motionLevel: ProfileMotionLevel;
+    themeColor: string;
+    socialThemeColor: string;
+    accentColor: string;
+    contrastColor: string;
+    softColor: string;
+    featuredBadges: BadgeEntry[];
+    extraBadgeCount: number;
+    likes: number;
+    dislikes: number;
+    views: number;
+    initialMyReaction: "like" | "dislike" | null;
+    socialGroups: {
+      socials: PublicSocialBlock[];
+      live: PublicSocialBlock[];
+    };
+    links: LinkEntry[];
+    density: ReturnType<typeof getProfileDensityTokens>;
+    cardStyle: ProfileCardStyle;
+    cornerTokens: ReturnType<typeof getProfileCornerTokens>;
+    motionTokens: ReturnType<typeof getProfileMotionTokens>;
+    depth: ProfileSceneDepth;
+    composition: ProfileComposition;
+  },
+) {
+  if (block === "music") {
+    return (
+      <DetachedWidget key={block} depth={input.depth}>
+        <ProfileRenderBoundary label="Music card" compact resetKey={`${input.username}-${block}`}>
+          <ProfileMusicCard
+            music={input.music}
+            themeColor={input.themeColor}
+            accentColor={input.accentColor}
+            contrastColor={input.contrastColor}
+            softColor={input.softColor}
+            compact
+            showPlaceholder={Boolean(input.preview)}
+            motionLevel={input.motionLevel}
+          />
+        </ProfileRenderBoundary>
+      </DetachedWidget>
+    );
+  }
+
+  if (block === "socials") {
+    return (
+      <DetachedWidget key={block} depth={input.depth} accent={input.softColor}>
+        <ProfileRenderBoundary label="Social presence" compact resetKey={`${input.username}-${block}`}>
+          <SocialPresenceSection
+            blocks={input.socialGroups.socials}
+            themeColor={input.socialThemeColor}
+            compact={input.layout !== "portfolio"}
+            preview={input.preview}
+            mode="socials"
+            displayStyle={input.composition.socialsStyle}
+          />
+        </ProfileRenderBoundary>
+      </DetachedWidget>
+    );
+  }
+
+  if (block === "live") {
+    return (
+      <DetachedWidget key={block} depth={input.depth} accent={input.accentColor}>
+        <ProfileRenderBoundary label="Live presence" compact resetKey={`${input.username}-${block}`}>
+          <SocialPresenceSection
+            blocks={input.socialGroups.live}
+            themeColor={input.socialThemeColor}
+            compact={input.layout !== "portfolio"}
+            preview={input.preview}
+            mode="live"
+            displayStyle={input.composition.socialsStyle}
+          />
+        </ProfileRenderBoundary>
+      </DetachedWidget>
+    );
+  }
+
+  if (block === "links") {
+    return (
+      <LinksSection
+        key={block}
+        layout={input.layout}
+        links={input.links}
+        themeColor={input.themeColor}
+        surfaceBackground="rgba(255,255,255,0.02)"
+        surfaceBorder="rgba(255,255,255,0.08)"
+        density={input.density}
+        cardStyle={input.cardStyle}
+        cornerTokens={input.cornerTokens}
+        motionTokens={input.motionTokens}
+        depth={input.depth}
+        linksStyle={input.composition.linksStyle}
+      />
+    );
+  }
+
+  if (block === "badges") {
+    return (
+      <div key={block}>
+        <BadgeRail
+          badges={input.featuredBadges}
+          extraBadgeCount={input.extraBadgeCount}
+          themeColor={input.themeColor}
+          minimal={input.layout === "simplistic"}
+        />
+      </div>
+    );
+  }
+
+  return input.preview ? (
+    <div key={block} style={emptyLinksStyle(input.cornerTokens)}>
+      {input.views} views, {input.likes} likes, {input.dislikes} dislikes
+    </div>
+  ) : (
+    <ProfileHeroClient
+      key={block}
+      username={input.username}
+      initialViews={input.views}
+      initialLikes={input.likes}
+      initialDislikes={input.dislikes}
+      themeColor={input.themeColor}
+      initialMyReaction={input.initialMyReaction}
+      preview={input.preview}
+    />
   );
 }
 
@@ -989,6 +1122,7 @@ function LinksSection({
   cornerTokens,
   motionTokens,
   depth,
+  linksStyle,
 }: {
   layout: "default" | "simplistic" | "portfolio";
   links: LinkEntry[];
@@ -1000,6 +1134,7 @@ function LinksSection({
   cornerTokens: ReturnType<typeof getProfileCornerTokens>;
   motionTokens: ReturnType<typeof getProfileMotionTokens>;
   depth: ProfileSceneDepth;
+  linksStyle: ProfileComposition["linksStyle"];
 }) {
   return (
     <section
@@ -1022,6 +1157,9 @@ function LinksSection({
             const color = platform.color || themeColor;
             const PlatformIcon = platform.icon;
             const hostname = getLinkHostname(link.url);
+            const isPill = linksStyle === "pills";
+            const isMinimal = linksStyle === "minimal";
+            const isStacked = linksStyle === "stacked";
 
             return (
               <a
@@ -1038,7 +1176,9 @@ function LinksSection({
                       : defaultLinkCardStyle),
                   borderRadius: `${cornerTokens.cardRadius}px`,
                   background:
-                    cardStyle === "solid"
+                    isMinimal
+                      ? "rgba(255,255,255,0.02)"
+                      : cardStyle === "solid"
                       ? "linear-gradient(180deg, rgba(255,255,255,0.02), rgba(8,10,15,0.94))"
                       : cardStyle === "minimal"
                         ? "rgba(255,255,255,0.02)"
@@ -1049,14 +1189,17 @@ function LinksSection({
                     motionTokens.hoverShadowBoost > 0.8 ? "12" : "0d",
                   )}, inset 0 1px 0 ${surfaceBorder}`,
                   transition: `transform ${motionTokens.transitionDurationMs}ms ease, box-shadow ${motionTokens.transitionDurationMs}ms ease`,
+                  padding: isPill ? "12px 14px" : isStacked ? "16px" : undefined,
                   marginInlineStart:
                     layout === "portfolio"
                       ? "0"
-                      : index % 2 === 0
+                      : isStacked || isPill
+                        ? "0"
+                        : index % 2 === 0
                         ? "0"
                         : `${Math.round(16 * depth.spacingScale)}px`,
                   marginInlineEnd:
-                    layout === "portfolio" || index % 2 === 1
+                    layout === "portfolio" || isStacked || isPill || index % 2 === 1
                       ? "0"
                       : `${Math.round(12 * depth.spacingScale)}px`,
                 }}
@@ -1067,9 +1210,11 @@ function LinksSection({
                     borderRadius: `${Math.max(cornerTokens.cardRadius - 4, 12)}px`,
                     background: withAlpha(color, layout === "simplistic" ? "12" : "16"),
                     color,
+                    width: isPill ? "42px" : "48px",
+                    height: isPill ? "42px" : "48px",
                   }}
                 >
-                  <PlatformIcon size={20} color={color} aria-hidden="true" />
+                  <PlatformIcon size={isPill ? 18 : 20} color={color} aria-hidden="true" />
                 </div>
 
                 <div style={{ minWidth: 0 }}>
@@ -1106,9 +1251,11 @@ function LinksSection({
                   <div style={{ color: "#a1a1aa", fontSize: "13px", marginTop: "6px" }}>
                     {hostname}
                   </div>
-                  <div style={{ color: "#71717a", fontSize: "12px", marginTop: "4px" }}>
-                    {link.url}
-                  </div>
+                  {isPill ? null : (
+                    <div style={{ color: "#71717a", fontSize: "12px", marginTop: "4px" }}>
+                      {link.url}
+                    </div>
+                  )}
                 </div>
 
                 <div
@@ -1234,9 +1381,10 @@ const defaultContentStyle = (
     aura: "none",
     themeColor: "#f472b6",
   }).depth,
+  compositionSpacingScale = 1,
 ): CSSProperties => ({
   display: "grid",
-  gap: `${Math.round(24 * densityTokens.sectionGap * depth.spacingScale)}px`,
+  gap: `${Math.round(24 * densityTokens.sectionGap * depth.spacingScale * compositionSpacingScale)}px`,
   padding: preview
     ? `0 ${Math.round(26 * densityTokens.contentPadding)}px ${Math.round(32 * densityTokens.contentPadding)}px`
     : `0 ${Math.round(26 * densityTokens.contentPadding)}px ${Math.round(28 * densityTokens.contentPadding)}px`,
@@ -1319,6 +1467,7 @@ const simplisticShellStyle = (
     aura: "none",
     themeColor: "#f472b6",
   }).depth,
+  compositionSpacingScale = 1,
 ): CSSProperties => ({
   width: `min(${Math.min(depth.shellMaxWidth, 860)}px, 100%)`,
   maxWidth: `${Math.min(depth.shellMaxWidth, 860)}px`,
@@ -1326,7 +1475,7 @@ const simplisticShellStyle = (
   position: "relative",
   zIndex: 1,
   display: "grid",
-  gap: `${Math.round(20 * densityTokens.sectionGap * depth.spacingScale)}px`,
+  gap: `${Math.round(20 * densityTokens.sectionGap * depth.spacingScale * compositionSpacingScale)}px`,
   minWidth: 0,
   backdropFilter: glassBackdrop,
   WebkitBackdropFilter: glassBackdrop,
@@ -1340,10 +1489,11 @@ const simplisticHeaderStyle = (
     aura: "none",
     themeColor: "#f472b6",
   }).depth,
+  compositionSpacingScale = 1,
 ): CSSProperties => ({
   display: "grid",
   gridTemplateColumns: "auto minmax(0, 1fr)",
-  gap: `${Math.round(18 * densityTokens.sectionGap * depth.spacingScale)}px`,
+  gap: `${Math.round(18 * densityTokens.sectionGap * depth.spacingScale * compositionSpacingScale)}px`,
   alignItems: "center",
   padding: `${Math.round(22 * densityTokens.contentPadding)}px 0 4px`,
   minWidth: 0,
@@ -1432,6 +1582,7 @@ const portfolioShellStyle = (
     aura: "none",
     themeColor: "#f472b6",
   }).depth,
+  compositionSpacingScale = 1,
 ): CSSProperties => ({
   width: `min(${Math.min(depth.shellMaxWidth + 80, 1160)}px, 100%)`,
   maxWidth: `${Math.min(depth.shellMaxWidth + 80, 1160)}px`,
@@ -1440,7 +1591,7 @@ const portfolioShellStyle = (
   margin: "0 auto",
   display: "grid",
   gridTemplateColumns: "minmax(0, 320px) minmax(0, 1fr)",
-  gap: `${Math.round(20 * densityTokens.sectionGap * depth.spacingScale)}px`,
+  gap: `${Math.round(20 * densityTokens.sectionGap * depth.spacingScale * compositionSpacingScale)}px`,
   minWidth: 0,
 });
 

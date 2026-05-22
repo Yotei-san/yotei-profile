@@ -16,6 +16,10 @@ import { redirectWithClearedSession, requireUser } from "@/app/lib/auth";
 import { getFeaturedPublicBadges } from "@/app/lib/badges";
 import { resolveEquippedDecoration } from "@/app/lib/decorations";
 import { readLiveEmbedMetadata } from "@/app/lib/live-embed";
+import {
+  isMissingProfileCompositionColumnError,
+  normalizeProfileComposition,
+} from "@/app/lib/profile-composition";
 import { normalizeProfileMusic } from "@/app/lib/profile-music";
 import {
   isMissingProfileCustomizationColumnError,
@@ -143,6 +147,7 @@ export default async function ProfileSettingsPage({ searchParams }: PageProps) {
         savedCardStyle={profileData.cardStyle}
         savedCornerStyle={profileData.cornerStyle}
         savedMotionLevel={profileData.motionLevel}
+        savedComposition={profileData.composition}
         initialMusic={profileData.music}
         previewUser={profileData.user}
         bannerKind={profileData.bannerKind}
@@ -171,6 +176,7 @@ async function getDashboardProfileUser(userId: string) {
     });
   } catch (error) {
     if (
+      isMissingProfileCompositionColumnError(error) ||
       isMissingProfileSceneColumnError(error) ||
       isMissingProfileCustomizationColumnError(error)
     ) {
@@ -234,6 +240,9 @@ function buildProfileRenderData(user: ProfileUserRecord) {
     motionLevel: normalizeProfileMotionLevel(
       "avatarPosition" in user ? user.avatarPosition : undefined,
     ),
+    composition: normalizeProfileComposition(
+      "profileComposition" in user ? user.profileComposition : undefined,
+    ),
     music: normalizeProfileMusic({
       enabled: user.profileMusicEnabled,
       title: user.profileMusicTitle,
@@ -284,6 +293,7 @@ function buildDashboardProfileUserSelect(
           profileBackgroundIntensity: true,
           profileGlassIntensity: true,
           profileBannerStyle: true,
+          profileComposition: true,
           layoutStyle: true,
           buttonStyle: true,
           linksStyle: true,

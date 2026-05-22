@@ -42,6 +42,7 @@ model User {
   profileMusicUrl           String?
   profileMusicProvider      String   @default("custom")
   profileMusicEnabled       Boolean  @default(false)
+  profileComposition        Json?
   textColor                 String?
   cardOpacity               Int?     @default(72)
   cardBlur                  Int?     @default(16)
