@@ -3,6 +3,7 @@ import { LuArrowUpRight, LuSparkles } from "react-icons/lu";
 import LivingAvatar from "@/app/components/LivingAvatar";
 import BadgeVisual from "@/app/dashboard/components/BadgeVisual";
 import { getLinkPlatform } from "@/app/lib/link-icons";
+import type { ProfileCustomBlock } from "@/app/lib/profile-custom-blocks";
 import {
   getProfileCompositionSpacingScale,
   getRenderableCompositionOrder,
@@ -10,6 +11,11 @@ import {
   type ProfileComposition,
   type ProfileCompositionBlock,
 } from "@/app/lib/profile-composition";
+import {
+  getProfileDnaTuning,
+  type ProfileDnaTuning,
+} from "@/app/lib/profile-dna";
+import { getProfilePresetRenderTuning } from "@/app/lib/profile-presets";
 import {
   type ProfileAura,
   type ProfileMood,
@@ -44,6 +50,7 @@ import ProfileBannerMedia from "./ProfileBannerMedia";
 import ProfileNamePlate from "./ProfileNamePlate";
 import ProfileHeroClient from "./ProfileHeroClient";
 import ProfileMusicCard from "./ProfileMusicCard";
+import ProfileCustomBlockCard from "./ProfileCustomBlock";
 import ProfileRenderBoundary from "./ProfileRenderBoundary";
 import SocialPresenceSection, {
   type PublicSocialBlock,
@@ -158,9 +165,11 @@ function DefaultLayout(props: Props) {
   const { presence, depth } = sceneAppearance;
   const glassTokens = getProfileGlassTokens(props.glassIntensity);
   const densityTokens = getProfileDensityTokens(props.density);
+  const presetRenderTuning = getProfilePresetRenderTuning(props.composition.preset);
+  const dnaTuning = getProfileDnaTuning(props.composition.dna);
   const compositionSpacingScale = getProfileCompositionSpacingScale(
     props.composition.density,
-  );
+  ) * presetRenderTuning.moduleGapScale * dnaTuning.spacingScale * dnaTuning.separationScale;
   const cardStyleTokens = getProfileCardStyleTokens(props.cardStyle);
   const cornerTokens = getProfileCornerTokens(props.cornerStyle);
   const motionTokens = getProfileMotionTokens(props.motionLevel);
@@ -174,8 +183,12 @@ function DefaultLayout(props: Props) {
     badges: props.featuredBadges.length > 0 || props.extraBadgeCount > 0,
     stats: true,
   }).filter((block) => block !== "hero");
+  const customBlocks = props.composition.customBlocks.filter((block) => block.visible);
   const resolvedBackdrop =
-    props.cardStyle === "glass" ? glassTokens.backdropFilter : cardStyleTokens.backdropFilter;
+    scaleBlurInFilter(
+      props.cardStyle === "glass" ? glassTokens.backdropFilter : cardStyleTokens.backdropFilter,
+      dnaTuning.blurScale,
+    );
   const resolvedSurfaceBackground = getLayeredSurfaceBackground(
     sceneAppearance.surfaceBackground,
     glassTokens.backgroundLayer,
@@ -191,6 +204,7 @@ function DefaultLayout(props: Props) {
         presence.stageGlow,
         densityTokens,
         depth,
+        dnaTuning,
       )}
     >
       <LivingProfileBackground
@@ -213,6 +227,8 @@ function DefaultLayout(props: Props) {
           densityTokens,
           cornerTokens,
           depth,
+          presetRenderTuning.stageWidthScale * dnaTuning.compactnessScale,
+          dnaTuning,
         )}
       >
         <BannerSurface
@@ -268,16 +284,17 @@ function DefaultLayout(props: Props) {
                 nameStyle={defaultNameStyle(densityTokens)}
                 usernameStyle={usernameStyle}
               />
-              <div
-                style={presenceChipStyle(
-                  presence.presenceBackground,
-                  presence.presenceBorder,
-                  cornerTokens,
-                )}
-              >
-                {presence.statusLabel}
-              </div>
-              <PillRow pills={props.heroPills} compact />
+            <div
+              style={presenceChipStyle(
+                presence.presenceBackground,
+                presence.presenceBorder,
+                cornerTokens,
+                dnaTuning,
+              )}
+            >
+              {presence.statusLabel}
+            </div>
+              <PillRow pills={props.heroPills} compact dnaTuning={dnaTuning} />
               {props.user.bio ? <p style={defaultBioStyle(densityTokens)}>{props.user.bio}</p> : null}
             </div>
           </div>
@@ -308,6 +325,19 @@ function DefaultLayout(props: Props) {
               motionTokens,
               depth,
               composition: props.composition,
+              dnaTuning,
+            }),
+          )}
+          {customBlocks.map((block, index) =>
+            renderVariantCustomBlock(block, {
+              key: `custom-${block.id}`,
+              accentColor: sceneAppearance.linkThemeColor,
+              contrastColor: presence.contrast,
+              softColor: presence.soft,
+              depth,
+              index,
+              dnaTuning,
+              preview: props.preview,
             }),
           )}
         </div>
@@ -326,13 +356,18 @@ function SimplisticLayout(props: Props) {
   const { presence, depth } = sceneAppearance;
   const glassTokens = getProfileGlassTokens(props.glassIntensity);
   const densityTokens = getProfileDensityTokens(props.density);
+  const presetRenderTuning = getProfilePresetRenderTuning(props.composition.preset);
+  const dnaTuning = getProfileDnaTuning(props.composition.dna);
   const compositionSpacingScale = getProfileCompositionSpacingScale(
     props.composition.density,
-  );
+  ) * presetRenderTuning.moduleGapScale * dnaTuning.spacingScale * dnaTuning.separationScale;
   const cardStyleTokens = getProfileCardStyleTokens(props.cardStyle);
   const cornerTokens = getProfileCornerTokens(props.cornerStyle);
   const resolvedBackdrop =
-    props.cardStyle === "glass" ? glassTokens.backdropFilter : cardStyleTokens.backdropFilter;
+    scaleBlurInFilter(
+      props.cardStyle === "glass" ? glassTokens.backdropFilter : cardStyleTokens.backdropFilter,
+      dnaTuning.blurScale,
+    );
   const socialGroups = partitionSocialBlocks(props.socialBlocks);
   const orderedBlocks = getRenderableCompositionOrder(props.composition, {
     hero: true,
@@ -343,6 +378,7 @@ function SimplisticLayout(props: Props) {
     badges: props.featuredBadges.length > 0 || props.extraBadgeCount > 0,
     stats: true,
   }).filter((block) => block !== "hero");
+  const customBlocks = props.composition.customBlocks.filter((block) => block.visible);
 
   return (
     <main
@@ -352,6 +388,7 @@ function SimplisticLayout(props: Props) {
         sceneAppearance.surfaceBackground,
         densityTokens,
         depth,
+        dnaTuning,
       )}
     >
       <LivingProfileBackground
@@ -370,6 +407,7 @@ function SimplisticLayout(props: Props) {
           densityTokens,
           depth,
           compositionSpacingScale,
+          presetRenderTuning.stageWidthScale * dnaTuning.compactnessScale,
         )}
       >
         <div style={simplisticHeaderStyle(densityTokens, depth, compositionSpacingScale)}>
@@ -410,6 +448,7 @@ function SimplisticLayout(props: Props) {
                 presence.presenceBackground,
                 presence.presenceBorder,
                 cornerTokens,
+                dnaTuning,
               )}
             >
               {presence.statusLabel}
@@ -418,7 +457,7 @@ function SimplisticLayout(props: Props) {
           </div>
         </div>
 
-        <PillRow pills={props.heroPills} subtle />
+        <PillRow pills={props.heroPills} subtle dnaTuning={dnaTuning} />
 
         <div style={simplisticBannerWrapStyle(depth)}>
           <BannerSurface
@@ -460,6 +499,19 @@ function SimplisticLayout(props: Props) {
             motionTokens: getProfileMotionTokens(props.motionLevel),
             depth,
             composition: props.composition,
+            dnaTuning,
+          }),
+        )}
+        {customBlocks.map((block, index) =>
+          renderVariantCustomBlock(block, {
+            key: `custom-${block.id}`,
+            accentColor: sceneAppearance.linkThemeColor,
+            contrastColor: presence.contrast,
+            softColor: presence.soft,
+            depth,
+            index,
+            dnaTuning,
+            preview: props.preview,
           }),
         )}
       </div>
@@ -477,14 +529,19 @@ function PortfolioLayout(props: Props) {
   const { presence, depth } = sceneAppearance;
   const glassTokens = getProfileGlassTokens(props.glassIntensity);
   const densityTokens = getProfileDensityTokens(props.density);
+  const presetRenderTuning = getProfilePresetRenderTuning(props.composition.preset);
+  const dnaTuning = getProfileDnaTuning(props.composition.dna);
   const compositionSpacingScale = getProfileCompositionSpacingScale(
     props.composition.density,
-  );
+  ) * presetRenderTuning.moduleGapScale * dnaTuning.spacingScale * dnaTuning.separationScale;
   const cardStyleTokens = getProfileCardStyleTokens(props.cardStyle);
   const cornerTokens = getProfileCornerTokens(props.cornerStyle);
   const motionTokens = getProfileMotionTokens(props.motionLevel);
   const resolvedBackdrop =
-    props.cardStyle === "glass" ? glassTokens.backdropFilter : cardStyleTokens.backdropFilter;
+    scaleBlurInFilter(
+      props.cardStyle === "glass" ? glassTokens.backdropFilter : cardStyleTokens.backdropFilter,
+      dnaTuning.blurScale,
+    );
   const resolvedSurfaceBackground = getLayeredSurfaceBackground(
     sceneAppearance.surfaceBackground,
     glassTokens.backgroundLayer,
@@ -501,6 +558,7 @@ function PortfolioLayout(props: Props) {
     badges: props.featuredBadges.length > 0 || props.extraBadgeCount > 0,
     stats: true,
   }).filter((block) => block !== "hero");
+  const customBlocks = props.composition.customBlocks.filter((block) => block.visible);
 
   return (
     <main
@@ -510,6 +568,7 @@ function PortfolioLayout(props: Props) {
         sceneAppearance.surfaceBackground,
         densityTokens,
         depth,
+        dnaTuning,
       )}
     >
       <LivingProfileBackground
@@ -521,7 +580,14 @@ function PortfolioLayout(props: Props) {
         intensity={props.backgroundIntensity}
         motionLevel={props.motionLevel}
       />
-      <div style={portfolioBannerWrapStyle(props.preview, densityTokens, depth)}>
+      <div
+        style={portfolioBannerWrapStyle(
+          props.preview,
+          densityTokens,
+          depth,
+          presetRenderTuning.stageWidthScale * dnaTuning.compactnessScale,
+        )}
+      >
         <BannerSurface
           bannerUrl={props.user.bannerUrl}
           bannerKind={props.bannerKind}
@@ -541,6 +607,7 @@ function PortfolioLayout(props: Props) {
           densityTokens,
           depth,
           compositionSpacingScale,
+          presetRenderTuning.stageWidthScale * dnaTuning.compactnessScale,
         )}
       >
         <aside
@@ -592,6 +659,7 @@ function PortfolioLayout(props: Props) {
                 presence.presenceBackground,
                 presence.presenceBorder,
                 cornerTokens,
+                dnaTuning,
               )}
             >
               {presence.statusLabel}
@@ -599,7 +667,7 @@ function PortfolioLayout(props: Props) {
             {props.user.bio ? <p style={portfolioBioStyle(densityTokens)}>{props.user.bio}</p> : null}
           </div>
 
-          <PillRow pills={props.heroPills} subtle />
+          <PillRow pills={props.heroPills} subtle dnaTuning={dnaTuning} />
         </aside>
 
         <section
@@ -641,6 +709,19 @@ function PortfolioLayout(props: Props) {
               motionTokens,
               depth,
               composition: props.composition,
+              dnaTuning,
+            }),
+          )}
+          {customBlocks.map((block, index) =>
+            renderVariantCustomBlock(block, {
+              key: `custom-${block.id}`,
+              accentColor: sceneAppearance.linkThemeColor,
+              contrastColor: presence.contrast,
+              softColor: presence.soft,
+              depth,
+              index,
+              dnaTuning,
+              preview: props.preview,
             }),
           )}
         </section>
@@ -717,16 +798,21 @@ function DetachedWidget({
   children,
   depth,
   accent = "#ffffff",
+  dnaTuning = getProfileDnaTuning(null),
+  style,
 }: {
   children: ReactNode;
   depth: ProfileSceneDepth;
   accent?: string;
+  dnaTuning?: ProfileDnaTuning;
+  style?: CSSProperties;
 }) {
   return (
     <div
       style={{
         position: "relative",
         minWidth: 0,
+        ...style,
       }}
     >
       <div
@@ -735,7 +821,7 @@ function DetachedWidget({
           inset: "-6px",
           borderRadius: "24px",
           background: `radial-gradient(circle at 18% 18%, ${withAlpha(accent, "10")} 0%, transparent 32%)`,
-          opacity: Math.min(0.78, 0.3 + depth.lightingOpacity * 0.72),
+          opacity: Math.min(0.88, (0.3 + depth.lightingOpacity * 0.72) * dnaTuning.glowScale),
           zIndex: -1,
           pointerEvents: "none",
         }}
@@ -775,11 +861,12 @@ function renderVariantBlock(
     motionTokens: ReturnType<typeof getProfileMotionTokens>;
     depth: ProfileSceneDepth;
     composition: ProfileComposition;
+    dnaTuning: ProfileDnaTuning;
   },
 ) {
   if (block === "music") {
     return (
-      <DetachedWidget key={block} depth={input.depth}>
+      <DetachedWidget key={block} depth={input.depth} dnaTuning={input.dnaTuning}>
         <ProfileRenderBoundary label="Music card" compact resetKey={`${input.username}-${block}`}>
           <ProfileMusicCard
             music={input.music}
@@ -798,7 +885,12 @@ function renderVariantBlock(
 
   if (block === "socials") {
     return (
-      <DetachedWidget key={block} depth={input.depth} accent={input.softColor}>
+      <DetachedWidget
+        key={block}
+        depth={input.depth}
+        accent={input.softColor}
+        dnaTuning={input.dnaTuning}
+      >
         <ProfileRenderBoundary label="Social presence" compact resetKey={`${input.username}-${block}`}>
           <SocialPresenceSection
             blocks={input.socialGroups.socials}
@@ -815,7 +907,12 @@ function renderVariantBlock(
 
   if (block === "live") {
     return (
-      <DetachedWidget key={block} depth={input.depth} accent={input.accentColor}>
+      <DetachedWidget
+        key={block}
+        depth={input.depth}
+        accent={input.accentColor}
+        dnaTuning={input.dnaTuning}
+      >
         <ProfileRenderBoundary label="Live presence" compact resetKey={`${input.username}-${block}`}>
           <SocialPresenceSection
             blocks={input.socialGroups.live}
@@ -845,6 +942,7 @@ function renderVariantBlock(
         motionTokens={input.motionTokens}
         depth={input.depth}
         linksStyle={input.composition.linksStyle}
+        dnaTuning={input.dnaTuning}
       />
     );
   }
@@ -877,6 +975,50 @@ function renderVariantBlock(
       initialMyReaction={input.initialMyReaction}
       preview={input.preview}
     />
+  );
+}
+
+function renderVariantCustomBlock(
+  block: ProfileCustomBlock,
+  input: {
+    key: string;
+    accentColor: string;
+    contrastColor: string;
+    softColor: string;
+    depth: ProfileSceneDepth;
+    index: number;
+    dnaTuning: ProfileDnaTuning;
+    preview?: boolean;
+  },
+) {
+  return (
+    <DetachedWidget
+      key={input.key}
+      depth={input.depth}
+      accent={block.accentColor || input.accentColor}
+      dnaTuning={input.dnaTuning}
+      style={{
+        justifySelf:
+          block.alignment === "start"
+            ? "start"
+            : block.alignment === "end"
+              ? "end"
+              : "center",
+        width: "100%",
+        maxWidth: block.width === "compact" ? "340px" : "520px",
+        marginTop: input.index % 2 === 0 ? "0" : "4px",
+      }}
+    >
+      <ProfileCustomBlockCard
+        block={block}
+        accentColor={input.accentColor}
+        contrastColor={input.contrastColor}
+        softColor={input.softColor}
+        dnaTuning={input.dnaTuning}
+        preview={Boolean(input.preview)}
+        compact
+      />
+    </DetachedWidget>
   );
 }
 
@@ -945,16 +1087,18 @@ function PillRow({
   pills,
   compact = false,
   subtle = false,
+  dnaTuning = getProfileDnaTuning(null),
 }: {
   pills: HeroPill[];
   compact?: boolean;
   subtle?: boolean;
+  dnaTuning?: ProfileDnaTuning;
 }) {
   return (
     <div
       style={{
         display: "flex",
-        gap: "8px",
+        gap: `${Math.max(6, Math.round(8 * dnaTuning.chipScale))}px`,
         flexWrap: "wrap",
       }}
     >
@@ -964,14 +1108,16 @@ function PillRow({
           style={{
             display: "inline-flex",
             alignItems: "center",
-            gap: "6px",
-            minHeight: compact ? "26px" : "28px",
-            padding: compact ? "0 9px" : "0 10px",
+            gap: `${Math.max(5, Math.round(6 * dnaTuning.chipScale))}px`,
+            minHeight: `${Math.max(24, Math.round((compact ? 26 : 28) * dnaTuning.chipScale))}px`,
+            padding: compact
+              ? `0 ${Math.max(8, Math.round(9 * dnaTuning.chipScale))}px`
+              : `0 ${Math.max(9, Math.round(10 * dnaTuning.chipScale))}px`,
             borderRadius: "999px",
             color: pill.color,
             background: subtle ? "rgba(255,255,255,0.04)" : withAlpha(pill.color, "14"),
             border: `1px solid ${subtle ? "rgba(255,255,255,0.08)" : withAlpha(pill.color, "24")}`,
-            fontSize: "10px",
+            fontSize: `${Math.max(9, Math.round(10 * dnaTuning.chipScale))}px`,
             fontWeight: 800,
             letterSpacing: "0.02em",
           }}
@@ -1126,6 +1272,7 @@ function LinksSection({
   motionTokens,
   depth,
   linksStyle,
+  dnaTuning,
 }: {
   layout: "default" | "simplistic" | "portfolio";
   links: LinkEntry[];
@@ -1138,12 +1285,13 @@ function LinksSection({
   motionTokens: ReturnType<typeof getProfileMotionTokens>;
   depth: ProfileSceneDepth;
   linksStyle: ProfileComposition["linksStyle"];
+  dnaTuning: ProfileDnaTuning;
 }) {
   return (
     <section
       style={{
         display: "grid",
-        gap: `${Math.round(8 * density.sectionGap)}px`,
+        gap: `${Math.round(8 * density.sectionGap * dnaTuning.spacingScale)}px`,
       }}
     >
       <div style={{ display: "grid", gap: "8px" }}>
@@ -1153,7 +1301,12 @@ function LinksSection({
         </div>
       </div>
 
-      <div style={{ display: "grid", gap: `${Math.round(8 * density.sectionGap * depth.spacingScale)}px` }}>
+      <div
+        style={{
+          display: "grid",
+          gap: `${Math.round(8 * density.sectionGap * depth.spacingScale * dnaTuning.spacingScale)}px`,
+        }}
+      >
         {links.length > 0 ? (
           links.map((link, index) => {
             const platform = getLinkPlatform(link.url, link.title);
@@ -1189,10 +1342,18 @@ function LinksSection({
                   borderColor: withAlpha(color, layout === "simplistic" ? "14" : "22"),
                   boxShadow: `0 18px 34px ${withAlpha(
                     color,
-                    motionTokens.hoverShadowBoost > 0.8 ? "12" : "0d",
+                    dnaTuning.glowScale >= 1.08
+                      ? "14"
+                      : motionTokens.hoverShadowBoost > 0.8
+                        ? "12"
+                        : "0d",
                   )}, inset 0 1px 0 ${surfaceBorder}`,
                   transition: `transform ${motionTokens.transitionDurationMs}ms ease, box-shadow ${motionTokens.transitionDurationMs}ms ease`,
-                  padding: isPill ? "9px 11px" : isStacked ? "12px" : "11px",
+                  padding: isPill
+                    ? `${Math.max(8, Math.round(9 * dnaTuning.compactnessScale))}px ${Math.max(10, Math.round(11 * dnaTuning.compactnessScale))}px`
+                    : isStacked
+                      ? `${Math.max(11, Math.round(12 * dnaTuning.compactnessScale))}px`
+                      : `${Math.max(10, Math.round(11 * dnaTuning.compactnessScale))}px`,
                   marginInlineStart:
                     layout === "portfolio"
                       ? "0"
@@ -1292,6 +1453,21 @@ function withAlpha(hex: string, alpha: string) {
   return `${hex}${alpha}`;
 }
 
+function scaleBlurInFilter(filter: string, scale: number) {
+  if (filter === "none" || !filter) {
+    return filter;
+  }
+
+  return filter.replace(/blur\(([\d.]+)px\)/g, (_, value: string) => {
+    const nextBlur = Math.max(0, Math.round(Number(value) * scale));
+    return `blur(${nextBlur}px)`;
+  });
+}
+
+function clampNumber(value: number, min: number, max: number) {
+  return Math.min(Math.max(value, min), max);
+}
+
 function getLinkHostname(url: string) {
   try {
     return new URL(url).hostname.replace(/^www\./, "");
@@ -1313,8 +1489,12 @@ function getStageMaxWidth(
   depth: ProfileSceneDepth,
   densityTokens: ReturnType<typeof getProfileDensityTokens>,
   cap: number,
+  stageWidthScale = 1,
 ) {
-  return Math.min(Math.round(depth.shellMaxWidth * densityTokens.stageWidthScale), cap);
+  return Math.min(
+    Math.round(depth.shellMaxWidth * densityTokens.stageWidthScale * stageWidthScale),
+    Math.round(cap * stageWidthScale),
+  );
 }
 
 const bannerMediaStyle = (scale: number, filter: string): CSSProperties => ({
@@ -1338,6 +1518,7 @@ const defaultPageStyle = (
     aura: "none",
     themeColor: "#f472b6",
   }).depth,
+  dnaTuning = getProfileDnaTuning(null),
 ): CSSProperties => ({
   minHeight: preview ? "auto" : "100vh",
   minWidth: 0,
@@ -1349,7 +1530,7 @@ const defaultPageStyle = (
     : `${Math.round(24 * densityTokens.shellPadding * depth.spacingScale)}px 12px ${Math.round(28 * densityTokens.shellPadding * depth.spacingScale)}px`,
   color: "#ffffff",
   fontFamily: '"Space Grotesk", Inter, Arial, Helvetica, sans-serif',
-  background: `${stageGlow}, linear-gradient(180deg, rgba(5,6,10,0.98), rgba(3,4,7,1)), radial-gradient(circle at top, ${withAlpha(themeColor, "16")} 0%, transparent 28%)`,
+  background: `${stageGlow}, linear-gradient(180deg, rgba(5,6,10,${clampNumber(0.98 / dnaTuning.transparencyScale, 0.76, 1)}), rgba(3,4,7,1)), radial-gradient(circle at top, ${withAlpha(themeColor, dnaTuning.glowScale >= 1.08 ? "20" : "16")} 0%, transparent 28%)`,
 });
 
 const defaultShellStyle = (
@@ -1367,9 +1548,11 @@ const defaultShellStyle = (
     aura: "none",
     themeColor: "#f472b6",
   }).depth,
+  stageWidthScale = 1,
+  dnaTuning = getProfileDnaTuning(null),
 ): CSSProperties => ({
-  width: `min(${getStageMaxWidth(depth, densityTokens, 840)}px, 100%)`,
-  maxWidth: `${getStageMaxWidth(depth, densityTokens, 840)}px`,
+  width: `min(${getStageMaxWidth(depth, densityTokens, 840, stageWidthScale)}px, 100%)`,
+  maxWidth: `${getStageMaxWidth(depth, densityTokens, 840, stageWidthScale)}px`,
   margin: "0 auto",
   position: "relative",
   zIndex: 1,
@@ -1378,8 +1561,8 @@ const defaultShellStyle = (
   border: `1px solid ${surfaceBorder}`,
   background: surfaceBackground,
   boxShadow: panelGlow
-    ? `${panelGlow}, ${shadowBoost}, 0 ${Math.round(28 * depth.shadowDepth)}px ${Math.round(70 * depth.shadowDepth)}px rgba(0,0,0,0.24)`
-    : `${shadowBoost}, 0 ${Math.round(28 * depth.shadowDepth)}px ${Math.round(70 * depth.shadowDepth)}px rgba(0,0,0,0.28)`,
+    ? `${panelGlow}, ${shadowBoost}, 0 ${Math.round(28 * depth.shadowDepth * dnaTuning.shadowScale)}px ${Math.round(70 * depth.shadowDepth * dnaTuning.shadowScale)}px rgba(0,0,0,${clampNumber(0.24 * dnaTuning.shadowScale, 0.14, 0.34)})`
+    : `${shadowBoost}, 0 ${Math.round(28 * depth.shadowDepth * dnaTuning.shadowScale)}px ${Math.round(70 * depth.shadowDepth * dnaTuning.shadowScale)}px rgba(0,0,0,${clampNumber(0.28 * dnaTuning.shadowScale, 0.16, 0.36)})`,
   backdropFilter: glassBackdrop,
   WebkitBackdropFilter: glassBackdrop,
 });
@@ -1455,6 +1638,7 @@ const simplisticPageStyle = (
     aura: "none",
     themeColor: "#f472b6",
   }).depth,
+  dnaTuning = getProfileDnaTuning(null),
 ): CSSProperties => ({
   minHeight: preview ? "auto" : "100vh",
   minWidth: 0,
@@ -1480,9 +1664,10 @@ const simplisticShellStyle = (
     themeColor: "#f472b6",
   }).depth,
   compositionSpacingScale = 1,
+  stageWidthScale = 1,
 ): CSSProperties => ({
-  width: `min(${getStageMaxWidth(depth, densityTokens, 560)}px, 100%)`,
-  maxWidth: `${getStageMaxWidth(depth, densityTokens, 560)}px`,
+  width: `min(${getStageMaxWidth(depth, densityTokens, 560, stageWidthScale)}px, 100%)`,
+  maxWidth: `${getStageMaxWidth(depth, densityTokens, 560, stageWidthScale)}px`,
   margin: "0 auto",
   position: "relative",
   zIndex: 1,
@@ -1552,6 +1737,7 @@ const portfolioPageStyle = (
     aura: "none",
     themeColor: "#f472b6",
   }).depth,
+  dnaTuning = getProfileDnaTuning(null),
 ): CSSProperties => ({
   minHeight: preview ? "auto" : "100vh",
   minWidth: 0,
@@ -1575,9 +1761,10 @@ const portfolioBannerWrapStyle = (
     aura: "none",
     themeColor: "#f472b6",
   }).depth,
+  stageWidthScale = 1,
 ): CSSProperties => ({
-  width: `min(${Math.min(getStageMaxWidth(depth, densityTokens, 860) + 12, 872)}px, 100%)`,
-  maxWidth: `${Math.min(getStageMaxWidth(depth, densityTokens, 860) + 12, 872)}px`,
+  width: `min(${Math.min(getStageMaxWidth(depth, densityTokens, 860, stageWidthScale) + 12, Math.round(872 * stageWidthScale))}px, 100%)`,
+  maxWidth: `${Math.min(getStageMaxWidth(depth, densityTokens, 860, stageWidthScale) + 12, Math.round(872 * stageWidthScale))}px`,
   position: "relative",
   zIndex: 1,
   margin: preview
@@ -1595,9 +1782,10 @@ const portfolioShellStyle = (
     themeColor: "#f472b6",
   }).depth,
   compositionSpacingScale = 1,
+  stageWidthScale = 1,
 ): CSSProperties => ({
-  width: `min(${Math.min(getStageMaxWidth(depth, densityTokens, 860) + 12, 872)}px, 100%)`,
-  maxWidth: `${Math.min(getStageMaxWidth(depth, densityTokens, 860) + 12, 872)}px`,
+  width: `min(${Math.min(getStageMaxWidth(depth, densityTokens, 860, stageWidthScale) + 12, Math.round(872 * stageWidthScale))}px, 100%)`,
+  maxWidth: `${Math.min(getStageMaxWidth(depth, densityTokens, 860, stageWidthScale) + 12, Math.round(872 * stageWidthScale))}px`,
   position: "relative",
   zIndex: 1,
   margin: "0 auto",
@@ -1745,18 +1933,19 @@ const presenceChipStyle = (
   background: string,
   borderColor: string,
   cornerTokens = getProfileCornerTokens("rounded"),
+  dnaTuning = getProfileDnaTuning(null),
 ): CSSProperties => ({
   width: "fit-content",
-  minHeight: "26px",
-  padding: "0 9px",
+  minHeight: `${Math.max(24, Math.round(26 * dnaTuning.chipScale))}px`,
+  padding: `0 ${Math.max(8, Math.round(9 * dnaTuning.chipScale))}px`,
   borderRadius: `${cornerTokens.chipRadius}px`,
   display: "inline-flex",
   alignItems: "center",
   color: "#f8fafc",
   background,
   border: `1px solid ${borderColor}`,
-  boxShadow: "0 10px 18px rgba(0,0,0,0.14)",
-  fontSize: "10px",
+  boxShadow: `0 ${Math.round(10 * dnaTuning.shadowScale)}px ${Math.round(18 * dnaTuning.shadowScale)}px rgba(0,0,0,${clampNumber(0.14 * dnaTuning.shadowScale, 0.08, 0.24)})`,
+  fontSize: `${Math.max(9, Math.round(10 * dnaTuning.chipScale))}px`,
   fontWeight: 800,
   letterSpacing: "0.02em",
 });

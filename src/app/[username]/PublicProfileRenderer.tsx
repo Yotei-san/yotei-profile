@@ -12,6 +12,7 @@ import {
 import BadgeVisual from "@/app/dashboard/components/BadgeVisual";
 import { getLinkPlatform } from "@/app/lib/link-icons";
 import {
+  getProfileFloatingCompositionPlan,
   getProfileCompositionSpacingScale,
   getRenderableCompositionOrder,
   normalizeProfileComposition,
@@ -19,7 +20,18 @@ import {
   type ProfileComposition,
   type ProfileCompositionBlock,
   type ProfileCompositionLinksStyle,
+  type ProfileFloatingModulePlacement,
+  type ProfileFloatingPersonality,
 } from "@/app/lib/profile-composition";
+import {
+  getProfileDnaTuning,
+  type ProfileDnaTuning,
+} from "@/app/lib/profile-dna";
+import {
+  getProfilePresetRenderTuning,
+  type ProfilePresetRenderTuning,
+} from "@/app/lib/profile-presets";
+import type { ProfileCustomBlock } from "@/app/lib/profile-custom-blocks";
 import {
   type ProfileAura,
   type ProfileMood,
@@ -66,6 +78,7 @@ import ProfileNamePlate from "./ProfileNamePlate";
 import ProfileLayoutVariants, { type PublicProfileLayout } from "./ProfileLayoutVariants";
 import ProfileMusicCard from "./ProfileMusicCard";
 import ProfileHeroClient from "./ProfileHeroClient";
+import ProfileCustomBlockCard from "./ProfileCustomBlock";
 import SocialPresenceSection, { type PublicSocialBlock } from "./SocialPresenceSection";
 
 export type PublicProfileReaction = "like" | "dislike" | null;
@@ -219,12 +232,20 @@ export default function PublicProfileRenderer({
   const compositionDensityScale = getProfileCompositionSpacingScale(
     safeComposition.density,
   );
+  const presetRenderTuning = getProfilePresetRenderTuning(safeComposition.preset);
+  const dnaTuning = getProfileDnaTuning(safeComposition.dna);
   const glassTokens = getProfileGlassTokens(safeGlassIntensity);
   const bannerStyleTokens = getProfileBannerStyleTokens(safeBannerStyle);
   const densityTokens = getProfileDensityTokens(safeDensity);
   const cardStyleTokens = getProfileCardStyleTokens(safeCardStyle);
   const cornerTokens = getProfileCornerTokens(safeCornerStyle);
   const motionTokens = getProfileMotionTokens(safeMotionLevel);
+  const shellShadeScale =
+    presetRenderTuning.shellVisibility === "ghost"
+      ? 0.58
+      : presetRenderTuning.shellVisibility === "solid"
+        ? 1.08
+        : 0.82;
   const panelBackdropFilter =
     safeCardStyle === "glass" ? glassTokens.backdropFilter : cardStyleTokens.backdropFilter;
   const resolvedPanelBackdropFilter = preview
@@ -233,11 +254,17 @@ export default function PublicProfileRenderer({
       : safeCardStyle === "minimal"
         ? "blur(8px) saturate(104%)"
         : "none"
-    : panelBackdropFilter;
+    : scaleBlurInFilter(panelBackdropFilter, dnaTuning.blurScale);
+  const surfaceOpacityScale = clampNumber(1 / dnaTuning.transparencyScale, 0.7, 1.2);
   const spacingScale =
-    densityTokens.sectionGap * depth.spacingScale * compositionDensityScale;
+    densityTokens.sectionGap *
+    depth.spacingScale *
+    compositionDensityScale *
+    presetRenderTuning.moduleGapScale *
+    dnaTuning.spacingScale *
+    dnaTuning.separationScale;
   const panelBackground = [
-    `linear-gradient(180deg, rgba(255,255,255,${Math.max(0.01, 0.06 - depth.shellShadeOpacity * 0.2)}), rgba(4,6,10,${depth.shellShadeOpacity}) 100%)`,
+    `linear-gradient(180deg, rgba(255,255,255,${Math.max(0.008, (0.06 - depth.shellShadeOpacity * 0.2) * (shellShadeScale + 0.08) * surfaceOpacityScale)}), rgba(4,6,10,${(depth.shellShadeOpacity * shellShadeScale * surfaceOpacityScale).toFixed(3)}) 100%)`,
     safeCardStyle === "glass" ? glassTokens.backgroundLayer : "",
     cardStyleTokens.shellOverlay,
     sceneAppearance.shellBackground,
@@ -245,21 +272,30 @@ export default function PublicProfileRenderer({
     .filter(Boolean)
     .join(", ");
   const surfaceBackground = [
-    `linear-gradient(180deg, rgba(255,255,255,${Math.max(0.01, 0.04 - depth.surfaceShadeOpacity * 0.08)}), rgba(3,4,9,${depth.surfaceShadeOpacity}) 100%)`,
+    `linear-gradient(180deg, rgba(255,255,255,${Math.max(0.008, (0.04 - depth.surfaceShadeOpacity * 0.08) * (shellShadeScale + 0.08) * surfaceOpacityScale)}), rgba(3,4,9,${(depth.surfaceShadeOpacity * shellShadeScale * surfaceOpacityScale).toFixed(3)}) 100%)`,
     safeCardStyle === "glass" ? glassTokens.backgroundLayer : "",
     cardStyleTokens.shellOverlay,
     sceneAppearance.surfaceBackground,
   ]
     .filter(Boolean)
     .join(", ");
-  const shellMaxWidth = Math.round(depth.shellMaxWidth * densityTokens.stageWidthScale);
+  const shellMaxWidth = Math.round(
+    depth.shellMaxWidth *
+      densityTokens.stageWidthScale *
+      presetRenderTuning.stageWidthScale *
+      dnaTuning.compactnessScale,
+  );
   const shellPadding = preview
     ? `${Math.round(10 * densityTokens.shellPadding * depth.spacingScale)}px 0 ${Math.round(12 * densityTokens.shellPadding * depth.spacingScale)}px`
     : `${Math.round(22 * densityTokens.shellPadding * depth.spacingScale)}px 0 ${Math.round(10 * densityTokens.shellPadding * depth.spacingScale)}px`;
   const columnPadding = preview
     ? `${Math.round(15 * densityTokens.contentPadding * depth.spacingScale)}px`
     : `${Math.round(18 * densityTokens.contentPadding * depth.spacingScale)}px`;
-  const avatarSize = Math.round((preview ? 136 : 152) * densityTokens.avatarScale);
+  const avatarSize = Math.round(
+    (preview ? 136 : 152) *
+      densityTokens.avatarScale *
+      dnaTuning.compactnessScale,
+  );
   const stageGlowBlur =
     safeMotionLevel === "alive"
       ? depth.stageGlowBlur
@@ -272,9 +308,33 @@ export default function PublicProfileRenderer({
       : safeMotionLevel === "subtle"
         ? Math.max(0.28, depth.stageGlowOpacity * 0.74)
         : 0.22;
-  const linkHoverLift = preview ? 0 : motionTokens.hoverLiftPx;
-  const linkHoverScale = preview ? 1 : motionTokens.hoverScale;
-  const linkTransition = preview ? 0 : motionTokens.transitionDurationMs;
+  const tunedStageGlowBlur = Math.round(
+    stageGlowBlur * dnaTuning.ambientScale * dnaTuning.glowScale,
+  );
+  const tunedStageGlowOpacity = clampNumber(
+    stageGlowOpacity * dnaTuning.ambientScale * 0.94,
+    0.14,
+    0.88,
+  );
+  const linkHoverLift = preview
+    ? 0
+    : Math.round(motionTokens.hoverLiftPx * dnaTuning.hoverEnergy);
+  const linkHoverScale = preview
+    ? 1
+    : Number(
+        (
+          1 +
+          (motionTokens.hoverScale - 1) *
+            dnaTuning.hoverEnergy *
+            dnaTuning.motionScale
+        ).toFixed(3),
+      );
+  const linkTransition = preview
+    ? 0
+    : Math.round(
+        motionTokens.transitionDurationMs /
+          clampNumber(dnaTuning.motionScale, 0.82, 1.18),
+      );
   const partitionedSocialBlocks = partitionSocialBlocks(safeSocialBlocks);
   const renderableCompositionOrder = getRenderableCompositionOrder(safeComposition, {
     hero: true,
@@ -288,8 +348,12 @@ export default function PublicProfileRenderer({
   const orderedContentBlocks = renderableCompositionOrder.filter(
     (block) => block !== "hero",
   );
+  const visibleCustomBlocks = safeComposition.customBlocks.filter((block) => block.visible);
   const isFloatingComposition = safeComposition.mode === "floating";
-  const hasIntroDetails = Boolean(safeUser.bio) || orderedContentBlocks.length > 0;
+  const hasIntroDetails =
+    Boolean(safeUser.bio) ||
+    orderedContentBlocks.length > 0 ||
+    visibleCustomBlocks.length > 0;
   const avatarAuraAnimation = motionTokens.allowDecorativeMotion
     ? safeMotionLevel === "subtle"
       ? "profile-aura 6.2s ease-in-out infinite"
@@ -321,6 +385,8 @@ export default function PublicProfileRenderer({
         motionLevel={safeMotionLevel}
         music={music}
         bannerKind={safeBannerKind}
+        presetRenderTuning={presetRenderTuning}
+        dnaTuning={dnaTuning}
         avatarInitials={avatarInitials}
         decorationScale={decorationScale}
         decorationOffsetX={decorationOffsetX}
@@ -336,6 +402,7 @@ export default function PublicProfileRenderer({
         liveSocialBlocks={partitionedSocialBlocks.live}
         composition={safeComposition}
         orderedContentBlocks={orderedContentBlocks}
+        customBlocks={visibleCustomBlocks}
         hasDetails={hasIntroDetails}
       />
     );
@@ -359,6 +426,8 @@ export default function PublicProfileRenderer({
         motionLevel={safeMotionLevel}
         music={music}
         bannerKind={safeBannerKind}
+        presetRenderTuning={presetRenderTuning}
+        dnaTuning={dnaTuning}
         avatarInitials={avatarInitials}
         decorationScale={decorationScale}
         decorationOffsetX={decorationOffsetX}
@@ -374,6 +443,7 @@ export default function PublicProfileRenderer({
         liveSocialBlocks={partitionedSocialBlocks.live}
         composition={safeComposition}
         orderedContentBlocks={orderedContentBlocks}
+        customBlocks={visibleCustomBlocks}
       />
     );
   }
@@ -440,6 +510,16 @@ export default function PublicProfileRenderer({
         "--profile-link-hover-scale": `${linkHoverScale}`,
         "--profile-transition-duration": `${linkTransition}ms`,
         "--profile-stack-gap": `${Math.round(14 * spacingScale)}px`,
+        "--profile-chip-height": `${Math.max(24, Math.round(28 * dnaTuning.chipScale))}px`,
+        "--profile-chip-padding-x": `${Math.max(8, Math.round(10 * dnaTuning.chipScale))}px`,
+        "--profile-chip-font-size": `${Math.max(9, Math.round(10 * dnaTuning.chipScale))}px`,
+        "--profile-chip-gap": `${Math.max(5, Math.round(6 * dnaTuning.chipScale))}px`,
+        "--profile-border-alpha": `${clampNumber(0.08 * dnaTuning.borderScale, 0.04, 0.18).toFixed(3)}`,
+        "--profile-shadow-alpha": `${clampNumber(0.16 * dnaTuning.shadowScale, 0.08, 0.28).toFixed(3)}`,
+        "--profile-widget-glow-opacity": `${clampNumber(0.72 * dnaTuning.glowScale, 0.38, 1).toFixed(3)}`,
+        "--profile-panel-blur": `${Math.max(0, Math.round(10 * dnaTuning.blurScale))}px`,
+        "--profile-dna-label-scale": `${dnaTuning.typographyScale}`,
+        "--profile-dna-surface-opacity": `${surfaceOpacityScale.toFixed(3)}`,
       } as CSSProperties}
     >
       <style>{`
@@ -533,8 +613,8 @@ export default function PublicProfileRenderer({
 
         .profile-stage-glow {
           background: ${presence.stageGlow};
-          filter: blur(${stageGlowBlur}px);
-          opacity: ${stageGlowOpacity};
+          filter: blur(${tunedStageGlowBlur}px);
+          opacity: ${tunedStageGlowOpacity};
         }
 
         .profile-stage-foreground {
@@ -595,11 +675,11 @@ export default function PublicProfileRenderer({
           position: relative;
           border-radius: var(--profile-panel-radius);
           background: ${panelBackground};
-          border: 1px solid ${sceneAppearance.surfaceBorder};
+          border: 1px solid rgba(255, 255, 255, calc(var(--profile-border-alpha) + 0.015));
           box-shadow:
             ${presence.panelGlow},
             ${glassTokens.shadowBoost},
-            0 ${Math.round(24 * depth.shadowDepth)}px ${Math.round(54 * depth.shadowDepth)}px rgba(0, 0, 0, ${Math.min(0.32, 0.18 + depth.shadowDepth * 0.08)}),
+            0 ${Math.round(24 * depth.shadowDepth * dnaTuning.shadowScale)}px ${Math.round(54 * depth.shadowDepth * dnaTuning.shadowScale)}px rgba(0, 0, 0, calc(var(--profile-shadow-alpha) + 0.04)),
             inset 0 1px 0 rgba(255, 255, 255, 0.05);
           overflow: hidden;
           backdrop-filter: ${resolvedPanelBackdropFilter};
@@ -659,21 +739,21 @@ export default function PublicProfileRenderer({
         .profile-kicker,
         .links-count,
         .preview-callout {
-          min-height: 28px;
-          padding: 0 10px;
+          min-height: var(--profile-chip-height);
+          padding: 0 var(--profile-chip-padding-x);
           border-radius: var(--profile-chip-radius);
           display: inline-flex;
           align-items: center;
-          gap: 6px;
+          gap: var(--profile-chip-gap);
           color: #edf2fb;
           background: rgba(255, 255, 255, 0.04);
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          font-size: 10px;
+          border: 1px solid rgba(255, 255, 255, var(--profile-border-alpha));
+          font-size: var(--profile-chip-font-size);
           font-weight: 800;
           letter-spacing: 0.02em;
-          box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12);
-          backdrop-filter: blur(10px);
-          -webkit-backdrop-filter: blur(10px);
+          box-shadow: 0 10px 20px rgba(0, 0, 0, calc(var(--profile-shadow-alpha) - 0.04));
+          backdrop-filter: blur(var(--profile-panel-blur));
+          -webkit-backdrop-filter: blur(var(--profile-panel-blur));
         }
 
         .ambient-chip.accent,
@@ -690,9 +770,9 @@ export default function PublicProfileRenderer({
 
         .presence-chip {
           width: fit-content;
-          min-height: 28px;
+          min-height: var(--profile-chip-height);
           margin-top: 8px;
-          padding: 0 10px;
+          padding: 0 var(--profile-chip-padding-x);
           border-radius: var(--profile-chip-radius);
           display: inline-flex;
           align-items: center;
@@ -700,8 +780,8 @@ export default function PublicProfileRenderer({
           color: #f7fbff;
           background: ${presence.presenceBackground};
           border: 1px solid ${presence.presenceBorder};
-          box-shadow: 0 10px 22px ${withAlpha(presence.accent, "10")};
-          font-size: 10px;
+          box-shadow: 0 10px 22px ${withAlpha(presence.accent, dnaTuning.glowScale >= 1.1 ? "16" : "10")};
+          font-size: var(--profile-chip-font-size);
           font-weight: 800;
           letter-spacing: 0.02em;
         }
@@ -852,16 +932,16 @@ export default function PublicProfileRenderer({
         }
 
         .profile-pill {
-          min-height: 28px;
-          padding: 0 9px;
+          min-height: var(--profile-chip-height);
+          padding: 0 ${Math.max(7, Math.round(9 * dnaTuning.chipScale))}px;
           border-radius: var(--profile-chip-radius);
           display: inline-flex;
           align-items: center;
           gap: 6px;
-          font-size: 10px;
+          font-size: var(--profile-chip-font-size);
           font-weight: 800;
           letter-spacing: 0.02em;
-          border: 1px solid rgba(255, 255, 255, 0.08);
+          border: 1px solid rgba(255, 255, 255, var(--profile-border-alpha));
           background: rgba(255, 255, 255, 0.04);
         }
 
@@ -916,18 +996,18 @@ export default function PublicProfileRenderer({
           background:
             radial-gradient(circle at 16% 18%, ${withAlpha(presence.accent, "0e")} 0%, transparent 34%),
             radial-gradient(circle at 84% 72%, ${withAlpha(presence.soft, "0c")} 0%, transparent 30%);
-          opacity: 0.72;
+          opacity: var(--profile-widget-glow-opacity);
           z-index: -1;
         }
 
         .profile-badge-pill {
-          min-height: 30px;
-          padding: 0 9px;
+          min-height: ${Math.max(26, Math.round(30 * dnaTuning.chipScale))}px;
+          padding: 0 ${Math.max(7, Math.round(9 * dnaTuning.chipScale))}px;
           border-radius: var(--profile-chip-radius);
           display: inline-flex;
           align-items: center;
           gap: 8px;
-          border: 1px solid rgba(255, 255, 255, 0.08);
+          border: 1px solid rgba(255, 255, 255, var(--profile-border-alpha));
           background: rgba(255, 255, 255, 0.04);
           max-width: 100%;
         }
@@ -943,7 +1023,7 @@ export default function PublicProfileRenderer({
         }
 
         .profile-badge-label {
-          font-size: 10px;
+          font-size: var(--profile-chip-font-size);
           font-weight: 800;
           overflow-wrap: anywhere;
         }
@@ -972,9 +1052,9 @@ export default function PublicProfileRenderer({
           background:
             linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.016)),
             linear-gradient(180deg, rgba(10, 12, 18, 0.58), rgba(9, 10, 16, 0.68));
-          border: 1px solid rgba(255, 255, 255, 0.07);
+          border: 1px solid rgba(255, 255, 255, calc(var(--profile-border-alpha) - 0.01));
           box-shadow:
-            0 12px 24px rgba(0, 0, 0, 0.16),
+            0 12px 24px rgba(0, 0, 0, var(--profile-shadow-alpha)),
             inset 0 1px 0 rgba(255, 255, 255, 0.04);
           transition:
             transform var(--profile-transition-duration) ease,
@@ -1321,6 +1401,7 @@ export default function PublicProfileRenderer({
                     accentColor: presence.accent,
                     contrastColor: presence.contrast,
                     softColor: presence.soft,
+                    dnaTuning,
                     featuredBadges: safeFeaturedBadges,
                     extraBadgeCount: safeExtraBadgeCount,
                     likes,
@@ -1333,6 +1414,17 @@ export default function PublicProfileRenderer({
                     links: safeUser.links,
                     linksStyle: safeComposition.linksStyle,
                     socialsStyle: safeComposition.socialsStyle,
+                  }),
+                )}
+                {visibleCustomBlocks.map((block, index) =>
+                  renderContainedCustomBlock(block, {
+                    key: `custom-${block.id}`,
+                    preview,
+                    accentColor: sceneAppearance.linkThemeColor,
+                    contrastColor: presence.contrast,
+                    softColor: presence.soft,
+                    dnaTuning,
+                    style: getContainedCustomBlockStyle(block, index),
                   }),
                 )}
               </div>
@@ -1360,6 +1452,8 @@ function FloatingProfileScene({
   motionLevel,
   music,
   bannerKind,
+  presetRenderTuning,
+  dnaTuning,
   avatarInitials,
   decorationScale,
   decorationOffsetX,
@@ -1375,6 +1469,7 @@ function FloatingProfileScene({
   liveSocialBlocks,
   composition,
   orderedContentBlocks,
+  customBlocks,
 }: {
   preview: boolean;
   displayName: string;
@@ -1391,6 +1486,8 @@ function FloatingProfileScene({
   motionLevel: ProfileMotionLevel;
   music: ProfileMusicData;
   bannerKind: "image" | "video" | "unknown";
+  presetRenderTuning: ProfilePresetRenderTuning;
+  dnaTuning: ProfileDnaTuning;
   avatarInitials: string;
   decorationScale: number;
   decorationOffsetX: number;
@@ -1406,19 +1503,90 @@ function FloatingProfileScene({
   liveSocialBlocks: PublicSocialBlock[];
   composition: ProfileComposition;
   orderedContentBlocks: ProfileCompositionBlock[];
+  customBlocks: ProfileCustomBlock[];
 }) {
   const { presence, depth, socialThemeColor, linkThemeColor } = sceneAppearance;
   const resolvedBannerUrl = sanitizeRenderableUrl(user.bannerUrl);
-  const floatingAvatarSize = Math.max(108, Math.round(132 * densityTokens.avatarScale));
+  const floatingPlan = getProfileFloatingCompositionPlan({
+    density: composition.density,
+    introMode: "off",
+    orderedBlocks: orderedContentBlocks,
+    personalityOverride: presetRenderTuning.floatingPersonality,
+  });
+  const personality = floatingPlan.personality;
+  const tunedFloatingIntensity = resolveFloatingIntensity(dnaTuning, personality);
+  const floatingAvatarSize = Math.max(
+    102,
+    Math.round(132 * densityTokens.avatarScale * dnaTuning.compactnessScale),
+  );
   const identityWidth = Math.min(
-    Math.round(depth.shellMaxWidth * densityTokens.stageWidthScale * 0.58),
-    500,
+    Math.round(
+      depth.shellMaxWidth *
+        densityTokens.stageWidthScale *
+        presetRenderTuning.stageWidthScale *
+        dnaTuning.compactnessScale *
+        0.58,
+    ),
+    Math.round(
+      500 * presetRenderTuning.stageWidthScale * dnaTuning.compactnessScale,
+    ),
   );
   const stageWidth = Math.min(
-    Math.round(depth.shellMaxWidth * densityTokens.stageWidthScale),
-    860,
+    Math.round(
+      depth.shellMaxWidth *
+        densityTokens.stageWidthScale *
+        presetRenderTuning.stageWidthScale *
+        dnaTuning.compactnessScale,
+    ),
+    Math.round(
+      860 * presetRenderTuning.stageWidthScale * dnaTuning.compactnessScale,
+    ),
   );
   const compactPills = heroPills.slice(0, 3);
+  const identityJustifySelf =
+    personality === "scattered"
+      ? "start"
+      : personality === "cinematic"
+        ? "center"
+        : personality === "minimal"
+          ? "center"
+          : "center";
+  const identityTransform =
+    personality === "scattered"
+      ? `translate3d(${Math.round(-18 * tunedFloatingIntensity)}px, 0, 0)`
+      : personality === "cinematic"
+        ? `translate3d(${Math.round(10 * tunedFloatingIntensity)}px, ${Math.round(8 * tunedFloatingIntensity)}px, 0)`
+        : personality === "minimal"
+          ? "translate3d(0, 0, 0)"
+          : "translate3d(0, 0, 0)";
+  const bioTransform =
+    personality === "cinematic"
+      ? `translate3d(${Math.round(28 * tunedFloatingIntensity)}px, ${Math.round(4 * tunedFloatingIntensity)}px, 0)`
+      : personality === "scattered"
+        ? `translate3d(${Math.round(-20 * tunedFloatingIntensity)}px, 0, 0)`
+        : personality === "minimal"
+          ? "translate3d(0, 0, 0)"
+          : `translate3d(${Math.round(10 * tunedFloatingIntensity)}px, 0, 0)`;
+  const floatingBodyGap = Math.max(
+    12,
+    Math.round(
+      (personality === "scattered" ? 14 : personality === "cinematic" ? 16 : 15) *
+        presetRenderTuning.moduleGapScale *
+        dnaTuning.spacingScale,
+    ),
+  );
+  const floatingGridRowGap = Math.max(
+    10,
+    Math.round(
+      (personality === "scattered" ? 12 : 13) *
+        presetRenderTuning.moduleGapScale *
+        dnaTuning.spacingScale,
+    ),
+  );
+  const floatingGridColumnGap = Math.max(
+    12,
+    Math.round(14 * presetRenderTuning.moduleGapScale * dnaTuning.spacingScale),
+  );
 
   return (
     <main
@@ -1465,8 +1633,8 @@ function FloatingProfileScene({
 
         .floating-profile-stage-glow {
           background: ${presence.stageGlow};
-          filter: blur(${Math.max(14, depth.stageGlowBlur)}px);
-          opacity: ${Math.max(0.34, depth.stageGlowOpacity * 0.62)};
+          filter: blur(${Math.max(14, Math.round(depth.stageGlowBlur * dnaTuning.ambientScale * dnaTuning.glowScale))}px);
+          opacity: ${clampNumber(depth.stageGlowOpacity * 0.62 * dnaTuning.ambientScale, 0.26, 0.8)};
         }
 
         .floating-profile-stage-vignette {
@@ -1483,29 +1651,30 @@ function FloatingProfileScene({
           margin: 0 auto;
           padding: ${preview ? "26px 0 18px" : "34px 0 30px"};
           display: grid;
-          gap: 18px;
+          gap: ${floatingBodyGap}px;
         }
 
         .floating-identity-block {
           width: min(${identityWidth}px, 100%);
-          justify-self: center;
+          justify-self: ${identityJustifySelf};
+          transform: ${identityTransform};
           display: grid;
-          justify-items: center;
-          gap: 12px;
-          text-align: center;
-          padding: 18px 16px;
+          justify-items: ${dnaTuning.alignment === "offset" ? "start" : "center"};
+          gap: ${Math.max(10, Math.round(12 * dnaTuning.spacingScale))}px;
+          text-align: ${dnaTuning.alignment === "offset" ? "left" : "center"};
+          padding: ${Math.max(14, Math.round(18 * dnaTuning.compactnessScale))}px ${Math.max(13, Math.round(16 * dnaTuning.compactnessScale))}px;
           border-radius: ${Math.max(cornerTokens.panelRadius, 20)}px;
-          border: 1px solid rgba(255,255,255,0.06);
+          border: 1px solid rgba(255,255,255,${clampNumber(0.06 * dnaTuning.borderScale, 0.03, 0.12).toFixed(3)});
           background:
-            linear-gradient(180deg, rgba(255,255,255,0.03), rgba(7,9,14,0.4)),
+            linear-gradient(180deg, rgba(255,255,255,${clampNumber(0.03 / dnaTuning.transparencyScale, 0.014, 0.042).toFixed(3)}), rgba(7,9,14,${clampNumber(0.4 / dnaTuning.transparencyScale, 0.22, 0.54).toFixed(3)})),
             ${cardStyle === "glass"
               ? "linear-gradient(180deg, rgba(255,255,255,0.025), rgba(255,255,255,0.01))"
               : "none"};
           box-shadow:
-            0 20px 48px rgba(0,0,0,0.18),
+            0 ${Math.round(20 * dnaTuning.shadowScale)}px ${Math.round(48 * dnaTuning.shadowScale)}px rgba(0,0,0,${clampNumber(0.18 * dnaTuning.shadowScale, 0.1, 0.3).toFixed(3)}),
             inset 0 1px 0 rgba(255,255,255,0.04);
-          backdrop-filter: ${cardStyle === "glass" ? "blur(10px) saturate(108%)" : "none"};
-          -webkit-backdrop-filter: ${cardStyle === "glass" ? "blur(10px) saturate(108%)" : "none"};
+          backdrop-filter: ${cardStyle === "glass" ? `blur(${Math.max(8, Math.round(10 * dnaTuning.blurScale))}px) saturate(${Math.round(108 + (dnaTuning.glowScale - 1) * 20)}%)` : "none"};
+          -webkit-backdrop-filter: ${cardStyle === "glass" ? `blur(${Math.max(8, Math.round(10 * dnaTuning.blurScale))}px) saturate(${Math.round(108 + (dnaTuning.glowScale - 1) * 20)}%)` : "none"};
         }
 
         .floating-chip-row,
@@ -1571,8 +1740,9 @@ function FloatingProfileScene({
         }
 
         .floating-bio-strip {
-          justify-self: center;
-          width: min(640px, 100%);
+          justify-self: ${personality === "scattered" ? "start" : personality === "cinematic" ? "end" : "center"};
+          transform: ${bioTransform};
+          width: min(${personality === "minimal" ? "560px" : personality === "cinematic" ? "600px" : "640px"}, 100%);
           padding: 12px 14px;
           border-radius: ${Math.max(cornerTokens.cardRadius, 16)}px;
           border: 1px solid rgba(255,255,255,0.06);
@@ -1589,7 +1759,7 @@ function FloatingProfileScene({
         .floating-modules-grid {
           display: grid;
           grid-template-columns: repeat(12, minmax(0, 1fr));
-          gap: 14px;
+          gap: ${floatingGridRowGap}px ${floatingGridColumnGap}px;
           align-items: start;
         }
 
@@ -1597,6 +1767,11 @@ function FloatingProfileScene({
           position: relative;
           min-width: 0;
           overflow: hidden;
+          grid-column: var(--floating-col-start, 1) / span var(--floating-col-span, 12);
+          justify-self: var(--floating-justify, stretch);
+          width: var(--floating-width, 100%);
+          max-width: var(--floating-max-width, none);
+          transform: translate3d(var(--floating-x, 0px), var(--floating-y, 0px), 0);
           border-radius: ${Math.max(cornerTokens.cardRadius - 2, 16)}px;
           border: 1px solid rgba(255,255,255,0.05);
           background:
@@ -1623,27 +1798,6 @@ function FloatingProfileScene({
         .floating-module > * {
           position: relative;
           z-index: 1;
-        }
-
-        .floating-module.music,
-        .floating-module.live {
-          grid-column: span 5;
-        }
-
-        .floating-module.socials,
-        .floating-module.links {
-          grid-column: span 7;
-        }
-
-        .floating-module.badges,
-        .floating-module.bio {
-          grid-column: span 12;
-        }
-
-        .floating-module.stats {
-          grid-column: 9 / span 4;
-          justify-self: end;
-          width: min(100%, 320px);
         }
 
         .floating-module-head {
@@ -1679,11 +1833,28 @@ function FloatingProfileScene({
 
         .floating-module .links-list {
           margin-top: 0;
+          display: grid;
+          grid-template-columns: ${personality === "minimal"
+            ? "minmax(0, 1fr)"
+            : "repeat(2, minmax(0, 1fr))"};
+          gap: 10px 12px;
         }
 
         .floating-module .profile-link-card.float-a,
         .floating-module .profile-link-card.float-b {
           margin-inline: 0;
+        }
+
+        .floating-module.links .profile-link-card:nth-child(odd) {
+          justify-self: start;
+          max-width: ${personality === "cinematic" ? "320px" : "300px"};
+          margin-top: ${personality === "scattered" ? "8px" : "0"};
+        }
+
+        .floating-module.links .profile-link-card:nth-child(even) {
+          justify-self: end;
+          max-width: ${personality === "minimal" ? "100%" : "280px"};
+          margin-top: ${personality === "cinematic" ? "18px" : personality === "scattered" ? "14px" : "10px"};
         }
 
         .floating-module .profile-badge-rail {
@@ -1695,16 +1866,12 @@ function FloatingProfileScene({
             grid-template-columns: repeat(2, minmax(0, 1fr));
           }
 
-          .floating-module.music,
-          .floating-module.live,
-          .floating-module.socials,
-          .floating-module.links,
-          .floating-module.badges,
-          .floating-module.bio,
-          .floating-module.stats {
-            grid-column: span 2;
-            justify-self: stretch;
-            width: 100%;
+          .floating-module {
+            grid-column: 1 / -1 !important;
+            justify-self: stretch !important;
+            width: 100% !important;
+            max-width: none !important;
+            transform: none !important;
           }
         }
 
@@ -1717,10 +1884,14 @@ function FloatingProfileScene({
 
           .floating-identity-block {
             width: 100%;
+            justify-self: stretch;
+            transform: none;
           }
 
           .floating-bio-strip {
             width: 100%;
+            justify-self: stretch;
+            transform: none;
           }
 
           .floating-modules-grid {
@@ -1728,14 +1899,15 @@ function FloatingProfileScene({
             gap: 12px;
           }
 
-          .floating-module.music,
-          .floating-module.live,
-          .floating-module.socials,
-          .floating-module.links,
-          .floating-module.badges,
-          .floating-module.bio,
-          .floating-module.stats {
-            grid-column: span 1;
+          .floating-module .links-list {
+            grid-template-columns: minmax(0, 1fr);
+          }
+
+          .floating-module.links .profile-link-card:nth-child(odd),
+          .floating-module.links .profile-link-card:nth-child(even) {
+            justify-self: stretch;
+            max-width: 100%;
+            margin-top: 0;
           }
         }
       `}</style>
@@ -1825,32 +1997,34 @@ function FloatingProfileScene({
 
         {user.bio ? <div className="floating-bio-strip">{user.bio}</div> : null}
 
-        <div className="floating-modules-grid">
-          {orderedContentBlocks.map((block) =>
-            renderFloatingCompositionBlock(block, {
-              preview,
-              username: user.username,
-              music,
-              motionLevel,
-              themeColor: linkThemeColor,
-              socialThemeColor,
-              accentColor: presence.accent,
-              contrastColor: presence.contrast,
-              softColor: presence.soft,
-              featuredBadges,
-              extraBadgeCount,
-              likes,
-              dislikes,
-              views,
-              initialMyReaction,
-              regularSocialBlocks,
-              liveSocialBlocks,
-              links: user.links,
-              linksStyle: composition.linksStyle,
-              socialsStyle: composition.socialsStyle,
-            }),
-          )}
-        </div>
+        <FloatingModulesField
+          orderedContentBlocks={orderedContentBlocks}
+          customBlocks={customBlocks}
+          placements={floatingPlan.placements}
+          personality={personality}
+          widgetWidthScale={presetRenderTuning.widgetWidthScale}
+          dnaTuning={dnaTuning}
+          preview={preview}
+          username={user.username}
+          music={music}
+          motionLevel={motionLevel}
+          themeColor={linkThemeColor}
+          socialThemeColor={socialThemeColor}
+          accentColor={presence.accent}
+          contrastColor={presence.contrast}
+          softColor={presence.soft}
+          featuredBadges={featuredBadges}
+          extraBadgeCount={extraBadgeCount}
+          likes={likes}
+          dislikes={dislikes}
+          views={views}
+          initialMyReaction={initialMyReaction}
+          regularSocialBlocks={regularSocialBlocks}
+          liveSocialBlocks={liveSocialBlocks}
+          links={user.links}
+          linksStyle={composition.linksStyle}
+          socialsStyle={composition.socialsStyle}
+        />
       </section>
     </main>
   );
@@ -1874,6 +2048,8 @@ function IntroProfileStage({
   motionLevel,
   music,
   bannerKind,
+  presetRenderTuning,
+  dnaTuning,
   avatarInitials,
   decorationScale,
   decorationOffsetX,
@@ -1889,6 +2065,7 @@ function IntroProfileStage({
   liveSocialBlocks,
   composition,
   orderedContentBlocks,
+  customBlocks,
   hasDetails,
 }: {
   mode: ProfileIntroMode;
@@ -1908,6 +2085,8 @@ function IntroProfileStage({
   motionLevel: ProfileMotionLevel;
   music: ProfileMusicData;
   bannerKind: "image" | "video" | "unknown";
+  presetRenderTuning: ProfilePresetRenderTuning;
+  dnaTuning: ProfileDnaTuning;
   avatarInitials: string;
   decorationScale: number;
   decorationOffsetX: number;
@@ -1923,25 +2102,79 @@ function IntroProfileStage({
   liveSocialBlocks: PublicSocialBlock[];
   composition: ProfileComposition;
   orderedContentBlocks: ProfileCompositionBlock[];
+  customBlocks: ProfileCustomBlock[];
   hasDetails: boolean;
 }) {
   const { presence, depth, socialThemeColor, linkThemeColor } = sceneAppearance;
   const introAvatarSize = Math.max(
     mode === "cinematic" ? 132 : 108,
-    Math.round((mode === "cinematic" ? 150 : 122) * densityTokens.avatarScale),
+    Math.round(
+      (mode === "cinematic" ? 150 : 122) *
+        densityTokens.avatarScale *
+        dnaTuning.compactnessScale,
+    ),
   );
   const introMaxWidth = Math.min(
-    Math.round(depth.shellMaxWidth * densityTokens.stageWidthScale * (mode === "cinematic" ? 0.7 : 0.6)),
-    mode === "cinematic" ? 540 : 460,
+    Math.round(
+      depth.shellMaxWidth *
+        densityTokens.stageWidthScale *
+        presetRenderTuning.stageWidthScale *
+        presetRenderTuning.introStageScale *
+        dnaTuning.introStageScale *
+        (mode === "cinematic" ? 0.7 : 0.6),
+    ),
+    Math.round(
+      (mode === "cinematic" ? 540 : 460) *
+        presetRenderTuning.introStageScale *
+        dnaTuning.introStageScale,
+    ),
   );
   const detailsMaxWidth = Math.min(
-    Math.round(depth.shellMaxWidth * densityTokens.stageWidthScale),
-    mode === "cinematic" ? 820 : 780,
+    Math.round(
+      depth.shellMaxWidth *
+        densityTokens.stageWidthScale *
+        presetRenderTuning.stageWidthScale *
+        dnaTuning.compactnessScale,
+    ),
+    Math.round(
+      (mode === "cinematic" ? 820 : 780) *
+        presetRenderTuning.stageWidthScale *
+        dnaTuning.compactnessScale,
+    ),
   );
   const introPills = mode === "cinematic" ? heroPills.slice(0, 3) : heroPills.slice(0, 2);
   const introBadges = featuredBadges.slice(0, mode === "cinematic" ? 3 : 2);
   const resolvedBannerUrl = sanitizeRenderableUrl(user.bannerUrl);
   const detailsSectionId = `profile-details-${user.username}-${mode}${preview ? "-preview" : ""}`;
+  const floatingPlan = floating
+    ? getProfileFloatingCompositionPlan({
+        density: composition.density,
+        introMode: mode,
+        orderedBlocks: orderedContentBlocks,
+        personalityOverride: presetRenderTuning.floatingPersonality,
+      })
+    : null;
+  const floatingPersonality = floatingPlan?.personality ?? "centered";
+  const introDetailsGap = Math.max(
+    10,
+    Math.round(
+      (floating ? 14 : 12) *
+        presetRenderTuning.moduleGapScale *
+        dnaTuning.spacingScale,
+    ),
+  );
+  const introFloatingGridRowGap = Math.max(
+    10,
+    Math.round(
+      (floatingPersonality === "scattered" ? 12 : 13) *
+        presetRenderTuning.moduleGapScale *
+        dnaTuning.spacingScale,
+    ),
+  );
+  const introFloatingGridColumnGap = Math.max(
+    12,
+    Math.round(14 * presetRenderTuning.moduleGapScale * dnaTuning.spacingScale),
+  );
 
   const scrollToDetails = () => {
     if (preview || !hasDetails || typeof document === "undefined") {
@@ -2220,7 +2453,7 @@ function IntroProfileStage({
           max-width: ${detailsMaxWidth}px;
           margin: 0 auto ${preview ? "18px" : "34px"};
           display: grid;
-          gap: ${floating ? "14px" : "12px"};
+          gap: ${introDetailsGap}px;
         }
 
         .profile-intro-module {
@@ -2305,6 +2538,127 @@ function IntroProfileStage({
           margin-inline: 0;
         }
 
+        .floating-bio-strip {
+          justify-self: center;
+          width: min(600px, 100%);
+          padding: 12px 14px;
+          border-radius: 18px;
+          border: 1px solid rgba(255,255,255,0.06);
+          background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(7,9,14,0.66));
+          color: #dfe7f6;
+          font-size: 13px;
+          line-height: ${densityTokens.bioLineHeight};
+          text-align: center;
+          white-space: pre-wrap;
+          overflow-wrap: anywhere;
+          box-shadow: 0 16px 32px rgba(0,0,0,0.16);
+        }
+
+        .floating-modules-grid {
+          display: grid;
+          grid-template-columns: repeat(12, minmax(0, 1fr));
+          gap: ${introFloatingGridRowGap}px ${introFloatingGridColumnGap}px;
+          align-items: start;
+        }
+
+        .floating-module {
+          position: relative;
+          min-width: 0;
+          overflow: hidden;
+          grid-column: var(--floating-col-start, 1) / span var(--floating-col-span, 12);
+          justify-self: var(--floating-justify, stretch);
+          width: var(--floating-width, 100%);
+          max-width: var(--floating-max-width, none);
+          transform: translate3d(var(--floating-x, 0px), var(--floating-y, 0px), 0);
+          border-radius: 18px;
+          border: 1px solid rgba(255,255,255,0.05);
+          background:
+            linear-gradient(180deg, rgba(255,255,255,0.028), rgba(8,10,16,0.72)),
+            ${sceneAppearance.surfaceBackground};
+          box-shadow:
+            0 16px 30px rgba(0,0,0,0.14),
+            inset 0 1px 0 rgba(255,255,255,0.03);
+          padding: 12px;
+          backdrop-filter: ${cardStyle === "glass" ? "blur(8px) saturate(106%)" : "none"};
+          -webkit-backdrop-filter: ${cardStyle === "glass" ? "blur(8px) saturate(106%)" : "none"};
+        }
+
+        .floating-module::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background:
+            radial-gradient(circle at top right, ${withAlpha(presence.accent, "0f")} 0%, transparent 28%),
+            linear-gradient(120deg, rgba(255,255,255,0.04), transparent 18%);
+          pointer-events: none;
+        }
+
+        .floating-module > * {
+          position: relative;
+          z-index: 1;
+        }
+
+        .floating-module-head {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 8px;
+          flex-wrap: wrap;
+          margin-bottom: 10px;
+        }
+
+        .floating-module-label {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          min-height: 24px;
+          padding: 0 8px;
+          border-radius: 999px;
+          border: 1px solid rgba(255,255,255,0.08);
+          background: rgba(255,255,255,0.04);
+          color: #eef2fb;
+          font-size: 10px;
+          font-weight: 800;
+          letter-spacing: 0.04em;
+          text-transform: uppercase;
+        }
+
+        .floating-module-meta {
+          color: #9ba7c0;
+          font-size: 11px;
+          font-weight: 700;
+        }
+
+        .floating-module .links-list {
+          margin-top: 0;
+          display: grid;
+          grid-template-columns: ${floatingPersonality === "minimal"
+            ? "minmax(0, 1fr)"
+            : "repeat(2, minmax(0, 1fr))"};
+          gap: 10px 12px;
+        }
+
+        .floating-module .profile-link-card.float-a,
+        .floating-module .profile-link-card.float-b {
+          margin-inline: 0;
+        }
+
+        .floating-module.links .profile-link-card:nth-child(odd) {
+          justify-self: start;
+          max-width: ${floatingPersonality === "cinematic" ? "320px" : "300px"};
+          margin-top: ${floatingPersonality === "scattered" ? "8px" : "0"};
+        }
+
+        .floating-module.links .profile-link-card:nth-child(even) {
+          justify-self: end;
+          max-width: ${floatingPersonality === "minimal" ? "100%" : "280px"};
+          margin-top: ${floatingPersonality === "cinematic"
+            ? "18px"
+            : floatingPersonality === "scattered"
+              ? "14px"
+              : "10px"};
+        }
+
         @keyframes intro-scroll-hint {
           0%, 100% {
             opacity: 0.64;
@@ -2336,6 +2690,34 @@ function IntroProfileStage({
           .profile-intro-module {
             padding: 12px;
             border-radius: 20px;
+          }
+
+          .floating-bio-strip {
+            width: 100%;
+          }
+
+          .floating-modules-grid {
+            grid-template-columns: minmax(0, 1fr);
+            gap: 12px;
+          }
+
+          .floating-module {
+            grid-column: 1 / -1 !important;
+            justify-self: stretch !important;
+            width: 100% !important;
+            max-width: none !important;
+            transform: none !important;
+          }
+
+          .floating-module .links-list {
+            grid-template-columns: minmax(0, 1fr);
+          }
+
+          .floating-module.links .profile-link-card:nth-child(odd),
+          .floating-module.links .profile-link-card:nth-child(even) {
+            justify-self: stretch;
+            max-width: 100%;
+            margin-top: 0;
           }
         }
 
@@ -2489,48 +2871,286 @@ function IntroProfileStage({
       </section>
 
       {hasDetails ? (
-        <section id={detailsSectionId} className="profile-intro-details">
-          {user.bio ? (
-            <div className="profile-intro-module">
-              <div className="profile-intro-module-stack">
-                <div className="profile-intro-module-head">
-                  <div className="profile-intro-module-copy">
-                    <LuMoonStar size={12} />
-                    Bio
-                  </div>
-                </div>
-                <div className="profile-intro-bio-card">{user.bio}</div>
+        floating && floatingPlan ? (
+          <section id={detailsSectionId} className="profile-intro-details">
+            {user.bio ? (
+              <div className="floating-bio-strip" style={{ transform: "none", justifySelf: "center" }}>
+                {user.bio}
               </div>
-            </div>
-          ) : null}
+            ) : null}
 
-          {orderedContentBlocks.map((block) =>
-            renderIntroDetailBlock(block, {
-              preview,
-              music,
-              motionLevel,
-              username: user.username,
-              themeColor: linkThemeColor,
-              socialThemeColor,
-              accentColor: presence.accent,
-              contrastColor: presence.contrast,
-              softColor: presence.soft,
-              featuredBadges,
-              extraBadgeCount,
-              likes,
-              dislikes,
-              views,
-              initialMyReaction,
-              regularSocialBlocks,
-              liveSocialBlocks,
-              links: user.links,
-              linksStyle: composition.linksStyle,
-              socialsStyle: composition.socialsStyle,
-            }),
-          )}
-        </section>
+            <FloatingModulesField
+              orderedContentBlocks={orderedContentBlocks}
+              customBlocks={customBlocks}
+              placements={floatingPlan.placements}
+              personality={floatingPlan.personality}
+              widgetWidthScale={presetRenderTuning.widgetWidthScale}
+              dnaTuning={dnaTuning}
+              preview={preview}
+              username={user.username}
+              music={music}
+              motionLevel={motionLevel}
+              themeColor={linkThemeColor}
+              socialThemeColor={socialThemeColor}
+              accentColor={presence.accent}
+              contrastColor={presence.contrast}
+              softColor={presence.soft}
+              featuredBadges={featuredBadges}
+              extraBadgeCount={extraBadgeCount}
+              likes={likes}
+              dislikes={dislikes}
+              views={views}
+              initialMyReaction={initialMyReaction}
+              regularSocialBlocks={regularSocialBlocks}
+              liveSocialBlocks={liveSocialBlocks}
+              links={user.links}
+              linksStyle={composition.linksStyle}
+              socialsStyle={composition.socialsStyle}
+            />
+          </section>
+        ) : (
+          <section id={detailsSectionId} className="profile-intro-details">
+            {user.bio ? (
+              <div className="profile-intro-module">
+                <div className="profile-intro-module-stack">
+                  <div className="profile-intro-module-head">
+                    <div className="profile-intro-module-copy">
+                      <LuMoonStar size={12} />
+                      Bio
+                    </div>
+                  </div>
+                  <div className="profile-intro-bio-card">{user.bio}</div>
+                </div>
+              </div>
+            ) : null}
+
+            {orderedContentBlocks.map((block) =>
+              renderIntroDetailBlock(block, {
+                preview,
+                music,
+                motionLevel,
+                username: user.username,
+                themeColor: linkThemeColor,
+                socialThemeColor,
+                accentColor: presence.accent,
+                contrastColor: presence.contrast,
+                softColor: presence.soft,
+                dnaTuning,
+                featuredBadges,
+                extraBadgeCount,
+                likes,
+                dislikes,
+                views,
+                initialMyReaction,
+                regularSocialBlocks,
+                liveSocialBlocks,
+                links: user.links,
+                linksStyle: composition.linksStyle,
+                socialsStyle: composition.socialsStyle,
+              }),
+            )}
+            {customBlocks.map((block, index) =>
+              renderIntroCustomBlock(block, {
+                key: `custom-${block.id}`,
+                preview,
+                accentColor: linkThemeColor,
+                contrastColor: presence.contrast,
+                softColor: presence.soft,
+                dnaTuning,
+                style: getContainedCustomBlockStyle(block, index),
+              }),
+            )}
+          </section>
+        )
       ) : null}
     </main>
+  );
+}
+
+function FloatingModulesField(input: {
+  orderedContentBlocks: ProfileCompositionBlock[];
+  customBlocks: ProfileCustomBlock[];
+  placements: Partial<Record<ProfileCompositionBlock, ProfileFloatingModulePlacement>>;
+  personality: ProfileFloatingPersonality;
+  widgetWidthScale: number;
+  dnaTuning: ProfileDnaTuning;
+  preview: boolean;
+  music: ProfileMusicData;
+  motionLevel: ProfileMotionLevel;
+  username: string;
+  themeColor: string;
+  socialThemeColor: string;
+  accentColor: string;
+  contrastColor: string;
+  softColor: string;
+  featuredBadges: PublicProfileBadgeEntry[];
+  extraBadgeCount: number;
+  likes: number;
+  dislikes: number;
+  views: number;
+  initialMyReaction: PublicProfileReaction;
+  regularSocialBlocks: PublicSocialBlock[];
+  liveSocialBlocks: PublicSocialBlock[];
+  links: PublicProfileRenderUser["links"];
+  linksStyle: ProfileCompositionLinksStyle;
+  socialsStyle: ProfileComposition["socialsStyle"];
+}) {
+  return (
+    <div className="floating-modules-grid">
+      {input.orderedContentBlocks.map((block, index) =>
+        renderFloatingCompositionBlock(block, {
+          placement:
+            input.placements[block] ?? {
+              columnStart: 1,
+              span: 12,
+              width: "wide",
+              align: "center",
+              xOffset: 0,
+              yOffset: index * 4,
+            },
+          personality: input.personality,
+          widgetWidthScale: input.widgetWidthScale,
+          dnaTuning: input.dnaTuning,
+          preview: input.preview,
+          username: input.username,
+          music: input.music,
+          motionLevel: input.motionLevel,
+          themeColor: input.themeColor,
+          socialThemeColor: input.socialThemeColor,
+          accentColor: input.accentColor,
+          contrastColor: input.contrastColor,
+          softColor: input.softColor,
+          featuredBadges: input.featuredBadges,
+          extraBadgeCount: input.extraBadgeCount,
+          likes: input.likes,
+          dislikes: input.dislikes,
+          views: input.views,
+          initialMyReaction: input.initialMyReaction,
+          regularSocialBlocks: input.regularSocialBlocks,
+          liveSocialBlocks: input.liveSocialBlocks,
+          links: input.links,
+          linksStyle: input.linksStyle,
+          socialsStyle: input.socialsStyle,
+        }),
+      )}
+      {input.customBlocks.map((block, index) =>
+        renderFloatingCustomBlock(block, {
+          key: `custom-${block.id}`,
+          personality: input.personality,
+          widgetWidthScale: input.widgetWidthScale,
+          dnaTuning: input.dnaTuning,
+          placement: getFloatingCustomBlockPlacement(
+            block,
+            index,
+            input.personality,
+          ),
+          preview: input.preview,
+          accentColor: input.accentColor,
+          contrastColor: input.contrastColor,
+          softColor: input.softColor,
+        }),
+      )}
+    </div>
+  );
+}
+
+function renderContainedCustomBlock(
+  block: ProfileCustomBlock,
+  input: {
+    key: string;
+    preview: boolean;
+    accentColor: string;
+    contrastColor: string;
+    softColor: string;
+    dnaTuning: ProfileDnaTuning;
+    style?: CSSProperties;
+  },
+) {
+  return (
+    <div key={input.key} className="widget-shell custom-block-shell" style={input.style}>
+      <ProfileCustomBlockCard
+        block={block}
+        accentColor={input.accentColor}
+        contrastColor={input.contrastColor}
+        softColor={input.softColor}
+        dnaTuning={input.dnaTuning}
+        preview={input.preview}
+        compact
+      />
+    </div>
+  );
+}
+
+function renderIntroCustomBlock(
+  block: ProfileCustomBlock,
+  input: {
+    key: string;
+    preview: boolean;
+    accentColor: string;
+    contrastColor: string;
+    softColor: string;
+    dnaTuning: ProfileDnaTuning;
+    style?: CSSProperties;
+  },
+) {
+  return (
+    <div key={input.key} className="profile-intro-module custom-block-shell" style={input.style}>
+      <ProfileCustomBlockCard
+        block={block}
+        accentColor={input.accentColor}
+        contrastColor={input.contrastColor}
+        softColor={input.softColor}
+        dnaTuning={input.dnaTuning}
+        preview={input.preview}
+        compact
+      />
+    </div>
+  );
+}
+
+function renderFloatingCustomBlock(
+  block: ProfileCustomBlock,
+  input: {
+    key: string;
+    placement: ProfileFloatingModulePlacement;
+    personality: ProfileFloatingPersonality;
+    widgetWidthScale: number;
+    dnaTuning: ProfileDnaTuning;
+    preview: boolean;
+    accentColor: string;
+    contrastColor: string;
+    softColor: string;
+  },
+) {
+  const floatingStyle = {
+    ...getFloatingModuleStyle(input.placement, input.widgetWidthScale),
+    padding: block.type === "divider" ? "8px" : "10px",
+    background:
+      block.transparency && block.type !== "divider"
+        ? "linear-gradient(180deg, rgba(255,255,255,0.02), rgba(8,10,16,0.5))"
+        : undefined,
+    border:
+      block.type === "divider"
+        ? "1px solid rgba(255,255,255,0.03)"
+        : undefined,
+  } as CSSProperties;
+
+  return (
+    <div
+      key={input.key}
+      className={`floating-module custom-block-shell custom-${block.type} personality-${input.personality}`}
+      style={floatingStyle}
+    >
+      <ProfileCustomBlockCard
+        block={block}
+        accentColor={input.accentColor}
+        contrastColor={input.contrastColor}
+        softColor={input.softColor}
+        dnaTuning={input.dnaTuning}
+        preview={input.preview}
+        compact
+      />
+    </div>
   );
 }
 
@@ -2546,6 +3166,7 @@ function renderModernCompositionBlock(
     accentColor: string;
     contrastColor: string;
     softColor: string;
+    dnaTuning: ProfileDnaTuning;
     featuredBadges: PublicProfileBadgeEntry[];
     extraBadgeCount: number;
     likes: number;
@@ -2628,7 +3249,12 @@ function renderModernCompositionBlock(
           </div>
         </div>
 
-        {renderModernLinks(input.links, input.themeColor, input.linksStyle)}
+        {renderModernLinks(
+          input.links,
+          input.themeColor,
+          input.linksStyle,
+          input.dnaTuning,
+        )}
       </div>
     );
   }
@@ -2726,6 +3352,7 @@ function renderIntroDetailBlock(
     accentColor: string;
     contrastColor: string;
     softColor: string;
+    dnaTuning: ProfileDnaTuning;
     featuredBadges: PublicProfileBadgeEntry[];
     extraBadgeCount: number;
     likes: number;
@@ -2824,7 +3451,12 @@ function renderIntroDetailBlock(
             </div>
           </div>
           <div className="links-list">
-            {renderModernLinks(input.links, input.themeColor, input.linksStyle)}
+            {renderModernLinks(
+              input.links,
+              input.themeColor,
+              input.linksStyle,
+              input.dnaTuning,
+            )}
           </div>
         </div>
       </div>
@@ -2919,6 +3551,10 @@ function renderIntroDetailBlock(
 function renderFloatingCompositionBlock(
   block: ProfileCompositionBlock,
   input: {
+    placement: ProfileFloatingModulePlacement;
+    personality: ProfileFloatingPersonality;
+    widgetWidthScale: number;
+    dnaTuning: ProfileDnaTuning;
     preview: boolean;
     music: ProfileMusicData;
     motionLevel: ProfileMotionLevel;
@@ -2941,9 +3577,16 @@ function renderFloatingCompositionBlock(
     socialsStyle: ProfileComposition["socialsStyle"];
   },
 ) {
+  const floatingStyle = getFloatingModuleStyle(
+    input.placement,
+    input.widgetWidthScale,
+    input.dnaTuning,
+  );
+  const floatingClassName = `floating-module ${block} personality-${input.personality}`;
+
   if (block === "music") {
     return (
-      <div key={block} className="floating-module music">
+      <div key={block} className={floatingClassName} style={floatingStyle}>
         <div className="floating-module-head">
           <div className="floating-module-label">
             <LuMusic4 size={12} />
@@ -2968,7 +3611,7 @@ function renderFloatingCompositionBlock(
 
   if (block === "socials") {
     return (
-      <div key={block} className="floating-module socials">
+      <div key={block} className={floatingClassName} style={floatingStyle}>
         <div className="floating-module-head">
           <div className="floating-module-label">
             <LuSparkles size={12} />
@@ -2991,7 +3634,7 @@ function renderFloatingCompositionBlock(
 
   if (block === "live") {
     return (
-      <div key={block} className="floating-module live">
+      <div key={block} className={floatingClassName} style={floatingStyle}>
         <div className="floating-module-head">
           <div className="floating-module-label">
             <LuSparkles size={12} />
@@ -3014,7 +3657,7 @@ function renderFloatingCompositionBlock(
 
   if (block === "links") {
     return (
-      <div key={block} className="floating-module links">
+      <div key={block} className={floatingClassName} style={floatingStyle}>
         <div className="floating-module-head">
           <div className="floating-module-label">
             <LuSparkles size={12} />
@@ -3025,7 +3668,12 @@ function renderFloatingCompositionBlock(
           </div>
         </div>
         <div className="links-list">
-          {renderModernLinks(input.links, input.themeColor, input.linksStyle)}
+          {renderModernLinks(
+            input.links,
+            input.themeColor,
+            input.linksStyle,
+            input.dnaTuning,
+          )}
         </div>
       </div>
     );
@@ -3033,7 +3681,7 @@ function renderFloatingCompositionBlock(
 
   if (block === "badges") {
     return (
-      <div key={block} className="floating-module badges">
+      <div key={block} className={floatingClassName} style={floatingStyle}>
         <div className="floating-module-head">
           <div className="floating-module-label">
             <LuBadgeCheck size={12} />
@@ -3083,7 +3731,7 @@ function renderFloatingCompositionBlock(
   }
 
   return (
-    <div key={block} className="floating-module stats">
+    <div key={block} className={floatingClassName} style={floatingStyle}>
       <div className="floating-module-head">
         <div className="floating-module-label">
           <LuBadgeCheck size={12} />
@@ -3120,6 +3768,7 @@ function renderModernLinks(
   links: PublicProfileRenderUser["links"],
   themeColor: string,
   linksStyle: ProfileCompositionLinksStyle,
+  dnaTuning: ProfileDnaTuning,
 ) {
   if (links.length === 0) {
     return <div className="empty-links">No links added yet.</div>;
@@ -3142,8 +3791,14 @@ function renderModernLinks(
         className={`profile-link-card ${isStacked ? "" : index % 2 === 0 ? "float-a" : "float-b"}`}
         style={{
           borderColor: withAlpha(color, isMinimal ? "18" : "24"),
-          boxShadow: `0 18px 34px ${withAlpha(color, isMinimal ? "08" : "0f")}`,
-          padding: isPill ? "10px 12px" : isMinimal ? "12px" : isStacked ? "14px 14px 14px 13px" : undefined,
+          boxShadow: `0 ${Math.round(18 * dnaTuning.shadowScale)}px ${Math.round(34 * dnaTuning.shadowScale)}px ${withAlpha(color, isMinimal ? "08" : dnaTuning.glowScale >= 1.08 ? "12" : "0f")}`,
+          padding: isPill
+            ? `${Math.max(9, Math.round(10 * dnaTuning.compactnessScale))}px ${Math.max(11, Math.round(12 * dnaTuning.compactnessScale))}px`
+            : isMinimal
+              ? `${Math.max(11, Math.round(12 * dnaTuning.compactnessScale))}px`
+              : isStacked
+                ? `${Math.max(12, Math.round(14 * dnaTuning.compactnessScale))}px ${Math.max(12, Math.round(14 * dnaTuning.compactnessScale))}px ${Math.max(12, Math.round(14 * dnaTuning.compactnessScale))}px ${Math.max(12, Math.round(13 * dnaTuning.compactnessScale))}px`
+                : undefined,
           background: isMinimal
             ? "rgba(255,255,255,0.02)"
             : isPill
@@ -3166,7 +3821,7 @@ function renderModernLinks(
             height: isPill ? "38px" : "42px",
             background: `linear-gradient(180deg, ${withAlpha(color, "20")}, ${withAlpha(color, "0c")})`,
             borderColor: withAlpha(color, "30"),
-            boxShadow: `0 12px 24px ${withAlpha(color, "14")}`,
+            boxShadow: `0 ${Math.round(12 * dnaTuning.shadowScale)}px ${Math.round(24 * dnaTuning.shadowScale)}px ${withAlpha(color, dnaTuning.glowScale >= 1.08 ? "18" : "14")}`,
           }}
         >
           <PlatformIcon size={isPill ? 16 : 18} color={color} aria-hidden="true" />
@@ -3202,6 +3857,142 @@ function renderModernLinks(
       </a>
     );
   });
+}
+
+function getContainedCustomBlockStyle(
+  block: ProfileCustomBlock,
+  index: number,
+): CSSProperties {
+  return {
+    justifySelf:
+      block.alignment === "start"
+        ? "start"
+        : block.alignment === "end"
+          ? "end"
+          : "center",
+    width: "100%",
+    maxWidth:
+      block.width === "compact"
+        ? block.type === "divider"
+          ? "360px"
+          : "340px"
+        : block.type === "image-card"
+          ? "520px"
+          : block.type === "status-banner" || block.type === "text-strip"
+            ? "560px"
+            : "480px",
+    marginTop: index === 0 ? "0" : `${Math.max(0, (index % 2) * 4)}px`,
+  };
+}
+
+function getFloatingCustomBlockPlacement(
+  block: ProfileCustomBlock,
+  index: number,
+  personality: ProfileFloatingPersonality,
+): ProfileFloatingModulePlacement {
+  const compact = block.width === "compact";
+  const isWideStrip =
+    block.type === "divider" ||
+    block.type === "status-banner" ||
+    block.type === "text-strip";
+
+  return {
+    columnStart:
+      block.alignment === "start"
+        ? personality === "scattered"
+          ? 1
+          : 2
+        : block.alignment === "end"
+          ? personality === "cinematic"
+            ? 7
+            : 8
+          : compact
+            ? 4
+            : 3,
+    span: isWideStrip ? 8 : compact ? 4 : 6,
+    width: isWideStrip ? "bar" : compact ? "compact" : "medium",
+    align: block.alignment,
+    xOffset:
+      block.alignment === "start"
+        ? personality === "scattered"
+          ? -10
+          : -4
+        : block.alignment === "end"
+          ? personality === "cinematic"
+            ? 12
+            : 6
+          : 0,
+    yOffset:
+      block.type === "divider"
+        ? index * 2
+        : block.type === "image-card"
+          ? 8 + index * 4
+          : 4 + index * 6,
+  };
+}
+
+function getFloatingModuleStyle(
+  placement: ProfileFloatingModulePlacement,
+  widthScale = 1,
+  dnaTuning: ProfileDnaTuning = getProfileDnaTuning(null),
+): CSSProperties {
+  const floatingOffsetScale = resolveFloatingIntensity(dnaTuning);
+  const maxWidth =
+    placement.width === "compact"
+      ? `${Math.round(320 * widthScale)}px`
+      : placement.width === "medium"
+        ? `${Math.round(440 * widthScale)}px`
+        : placement.width === "bar"
+          ? `${Math.round(560 * widthScale)}px`
+          : placement.width === "footer"
+            ? `${Math.round(300 * widthScale)}px`
+            : "100%";
+
+  return {
+    "--floating-col-start": `${placement.columnStart}`,
+    "--floating-col-span": `${placement.span}`,
+    "--floating-justify":
+      placement.align === "center"
+        ? "center"
+        : placement.align === "end"
+          ? "end"
+          : "start",
+    "--floating-width": placement.width === "wide" ? "100%" : `min(100%, ${maxWidth})`,
+    "--floating-max-width": maxWidth,
+    "--floating-x": `${Math.round(placement.xOffset * floatingOffsetScale)}px`,
+    "--floating-y": `${Math.round(placement.yOffset * floatingOffsetScale)}px`,
+  } as CSSProperties;
+}
+
+function resolveFloatingIntensity(
+  dnaTuning: ProfileDnaTuning,
+  personality?: ProfileFloatingPersonality,
+) {
+  const personalityBoost =
+    personality === "cinematic"
+      ? 1.06
+      : personality === "scattered"
+        ? 1.1
+        : personality === "minimal"
+          ? 0.92
+          : 1;
+
+  return clampNumber(dnaTuning.floatingIntensity * personalityBoost, 0.8, 1.28);
+}
+
+function scaleBlurInFilter(filter: string, scale: number) {
+  if (filter === "none" || !filter) {
+    return filter;
+  }
+
+  return filter.replace(/blur\(([\d.]+)px\)/g, (_, value: string) => {
+    const nextBlur = Math.max(0, Math.round(Number(value) * scale));
+    return `blur(${nextBlur}px)`;
+  });
+}
+
+function clampNumber(value: number, min: number, max: number) {
+  return Math.min(Math.max(value, min), max);
 }
 
 function sanitizeUser(user: PublicProfileRenderUser): PublicProfileRenderUser {

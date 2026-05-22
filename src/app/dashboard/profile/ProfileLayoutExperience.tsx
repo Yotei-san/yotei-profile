@@ -44,6 +44,27 @@ import {
   type ProfileCompositionSocialsStyle,
 } from "@/app/lib/profile-composition";
 import {
+  MAX_PROFILE_CUSTOM_BLOCKS,
+  PROFILE_CUSTOM_BLOCK_ALIGNMENT_OPTIONS,
+  PROFILE_CUSTOM_BLOCK_TYPE_OPTIONS,
+  PROFILE_CUSTOM_BLOCK_WIDTH_OPTIONS,
+  createProfileCustomBlockDraft,
+  getProfileCustomBlockTypeMeta,
+  type ProfileCustomBlock,
+  type ProfileCustomBlockType,
+} from "@/app/lib/profile-custom-blocks";
+import {
+  PROFILE_DNA_OPTIONS,
+  getProfileDnaTuning,
+  type ProfileDnaType,
+} from "@/app/lib/profile-dna";
+import {
+  PROFILE_PRESET_OPTIONS,
+  applyProfilePresetToState,
+  getProfilePresetDefinition,
+  type ProfilePresetId,
+} from "@/app/lib/profile-presets";
+import {
   MAX_PROFILE_NAME_EFFECTS,
   PROFILE_BACKGROUND_INTENSITY_OPTIONS,
   PROFILE_BANNER_STYLE_OPTIONS,
@@ -218,6 +239,8 @@ export default function ProfileLayoutExperience({
   const sceneOptions = getProfileSceneOptions();
   const savedSceneName =
     sceneOptions.find((option) => option.value === savedScene)?.name || "Default";
+  const savedPreset = savedComposition?.preset ?? null;
+  const savedDna = savedComposition?.dna ?? null;
 
   const deferredDisplayName = useDeferredValue(displayName);
   const deferredBio = useDeferredValue(bio);
@@ -386,6 +409,106 @@ export default function ProfileLayoutExperience({
       return {
         ...current,
         order: nextOrder,
+      };
+    });
+  }
+
+  function applyPreset(preset: ProfilePresetId | null) {
+    if (!preset) {
+      startTransition(() => {
+        setPreviewComposition((current) => ({
+          ...current,
+          preset: null,
+        }));
+      });
+      return;
+    }
+
+    const nextState = applyProfilePresetToState(preset, previewComposition);
+
+    startTransition(() => {
+      setPreviewMood(nextState.mood);
+      setPreviewAura(nextState.aura);
+      setPreviewScene(nextState.scene);
+      setPreviewBackgroundIntensity(nextState.backgroundIntensity);
+      setPreviewGlassIntensity(nextState.glassIntensity);
+      setPreviewBannerStyle(nextState.bannerStyle);
+      setPreviewIntroMode(nextState.introMode);
+      setPreviewDensity(nextState.density);
+      setPreviewCardStyle(nextState.cardStyle);
+      setPreviewCornerStyle(nextState.cornerStyle);
+      setPreviewMotionLevel(nextState.motionLevel);
+      setPreviewComposition(nextState.composition);
+    });
+  }
+
+  function applyDna(dna: ProfileDnaType | null) {
+    startTransition(() => {
+      setPreviewComposition((current) => ({
+        ...current,
+        dna,
+      }));
+    });
+  }
+
+  function addCustomBlock(type: ProfileCustomBlockType) {
+    setPreviewComposition((current) => {
+      if (current.customBlocks.length >= MAX_PROFILE_CUSTOM_BLOCKS) {
+        return current;
+      }
+
+      return {
+        ...current,
+        customBlocks: [
+          ...current.customBlocks,
+          createProfileCustomBlockDraft(type, createCustomBlockId()),
+        ],
+      };
+    });
+  }
+
+  function updateCustomBlock(
+    blockId: string,
+    updater: (block: ProfileCustomBlock) => ProfileCustomBlock,
+  ) {
+    setPreviewComposition((current) => ({
+      ...current,
+      customBlocks: current.customBlocks.map((block) =>
+        block.id === blockId ? updater(block) : block,
+      ),
+    }));
+  }
+
+  function removeCustomBlock(blockId: string) {
+    setPreviewComposition((current) => ({
+      ...current,
+      customBlocks: current.customBlocks.filter((block) => block.id !== blockId),
+    }));
+  }
+
+  function moveCustomBlock(blockId: string, direction: "up" | "down") {
+    setPreviewComposition((current) => {
+      const index = current.customBlocks.findIndex((block) => block.id === blockId);
+
+      if (index === -1) {
+        return current;
+      }
+
+      const targetIndex = direction === "up" ? index - 1 : index + 1;
+
+      if (targetIndex < 0 || targetIndex >= current.customBlocks.length) {
+        return current;
+      }
+
+      const nextBlocks = [...current.customBlocks];
+      [nextBlocks[index], nextBlocks[targetIndex]] = [
+        nextBlocks[targetIndex],
+        nextBlocks[index],
+      ];
+
+      return {
+        ...current,
+        customBlocks: nextBlocks,
       };
     });
   }
@@ -747,6 +870,149 @@ export default function ProfileLayoutExperience({
                     );
                   })}
                 </div>
+              </div>
+            </div>
+
+            <div style={{ display: "grid", gap: "14px" }}>
+              <DashboardSectionHeading
+                eyebrow="Profile Preset"
+                title="Start from a curated vibe"
+                description="Apply a full Yotei preset instantly, then keep customizing every control below. Choosing Custom clears the preset tag without resetting your current edits."
+              />
+
+              <div style={livingGridStyle}>
+                <button
+                  type="button"
+                  className="living-card"
+                  aria-pressed={previewComposition.preset == null}
+                  onClick={() => applyPreset(null)}
+                  style={atmosphereCardStyle(
+                    previewComposition.preset == null,
+                    savedPreset == null,
+                    safeThemeColor,
+                  )}
+                >
+                  <div style={presetPreviewStyle("custom", safeThemeColor)} />
+                  <div style={{ display: "grid", gap: "8px", minWidth: 0 }}>
+                    <div style={livingCardHeaderStyle}>
+                      <span>Custom</span>
+                      {previewComposition.preset == null ? <LuCheck size={16} /> : null}
+                    </div>
+                    <div style={layoutCardDescriptionStyle}>
+                      Keep your current settings and remove preset-only tuning.
+                    </div>
+                    <div style={presetMetaRowStyle}>
+                      <span style={presetMetaBadgeStyle("rgba(255,255,255,0.08)")}>
+                        Manual
+                      </span>
+                    </div>
+                  </div>
+                </button>
+
+                {PROFILE_PRESET_OPTIONS.map((preset) => {
+                  const isSelected = previewComposition.preset === preset.value;
+                  const isSaved = savedPreset === preset.value;
+
+                  return (
+                    <button
+                      key={preset.value}
+                      type="button"
+                      className="living-card"
+                      aria-pressed={isSelected}
+                      onClick={() => applyPreset(preset.value)}
+                      style={atmosphereCardStyle(isSelected, isSaved, preset.accent)}
+                    >
+                      <div style={presetPreviewStyle(preset.value, preset.accent)} />
+                      <div style={{ display: "grid", gap: "8px", minWidth: 0 }}>
+                        <div style={livingCardHeaderStyle}>
+                          <span>{preset.name}</span>
+                          {isSelected ? <LuCheck size={16} /> : null}
+                        </div>
+                        <div style={layoutCardDescriptionStyle}>{preset.description}</div>
+                        <div style={presetMetaRowStyle}>
+                          <span style={presetMetaBadgeStyle(withAlpha(preset.accent, "1a"))}>
+                            {preset.mode}
+                          </span>
+                          <span style={presetMetaBadgeStyle("rgba(255,255,255,0.08)")}>
+                            {preset.introMode} intro
+                          </span>
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div style={{ display: "grid", gap: "14px" }}>
+              <DashboardSectionHeading
+                eyebrow="Profile DNA"
+                title="Set the visual personality"
+                description="DNA is the procedural baseline for spacing, transparency, glow, compactness, and floating pressure. It updates instantly and still leaves every other control editable."
+              />
+
+              <div style={livingGridStyle}>
+                <button
+                  type="button"
+                  className="living-card"
+                  aria-pressed={previewComposition.dna == null}
+                  onClick={() => applyDna(null)}
+                  style={atmosphereCardStyle(
+                    previewComposition.dna == null,
+                    savedDna == null,
+                    safeThemeColor,
+                  )}
+                >
+                  <div style={presetPreviewStyle("custom", safeThemeColor)} />
+                  <div style={{ display: "grid", gap: "8px", minWidth: 0 }}>
+                    <div style={livingCardHeaderStyle}>
+                      <span>Custom</span>
+                      {previewComposition.dna == null ? <LuCheck size={16} /> : null}
+                    </div>
+                    <div style={layoutCardDescriptionStyle}>
+                      Keep your current styling mix without a DNA baseline.
+                    </div>
+                    <div style={presetMetaRowStyle}>
+                      <span style={presetMetaBadgeStyle("rgba(255,255,255,0.08)")}>
+                        Manual
+                      </span>
+                    </div>
+                  </div>
+                </button>
+
+                {PROFILE_DNA_OPTIONS.map((dna) => {
+                  const isSelected = previewComposition.dna === dna.value;
+                  const isSaved = savedDna === dna.value;
+                  const tuning = getProfileDnaTuning(dna.value);
+
+                  return (
+                    <button
+                      key={dna.value}
+                      type="button"
+                      className="living-card"
+                      aria-pressed={isSelected}
+                      onClick={() => applyDna(dna.value)}
+                      style={atmosphereCardStyle(isSelected, isSaved, dna.accent)}
+                    >
+                      <div style={presetPreviewStyle(dna.value ?? "custom", dna.accent)} />
+                      <div style={{ display: "grid", gap: "8px", minWidth: 0 }}>
+                        <div style={livingCardHeaderStyle}>
+                          <span>{dna.name}</span>
+                          {isSelected ? <LuCheck size={16} /> : null}
+                        </div>
+                        <div style={layoutCardDescriptionStyle}>{dna.description}</div>
+                        <div style={presetMetaRowStyle}>
+                          <span style={presetMetaBadgeStyle(withAlpha(dna.accent, "1a"))}>
+                            {tuning.alignment}
+                          </span>
+                          <span style={presetMetaBadgeStyle("rgba(255,255,255,0.08)")}>
+                            {`${Math.round(tuning.floatingIntensity * 100)}% float`}
+                          </span>
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -1273,6 +1539,299 @@ export default function ProfileLayoutExperience({
               </div>
             </div>
 
+            <div style={compositionSectionStyle}>
+              <DashboardSectionHeading
+                eyebrow="Custom Blocks"
+                title="Add artistic inserts"
+                description="Lightweight atmospheric blocks that sit inside the profile composition without turning the page into a full builder."
+              />
+
+              <div style={{ display: "grid", gap: "12px" }}>
+                <div style={livingSectionTitleStyle}>
+                  Add block
+                </div>
+                <div style={compositionChoiceGridStyle}>
+                  {PROFILE_CUSTOM_BLOCK_TYPE_OPTIONS.map((option) => {
+                    const limitReached =
+                      previewComposition.customBlocks.length >= MAX_PROFILE_CUSTOM_BLOCKS;
+
+                    return (
+                      <button
+                        key={option.value}
+                        type="button"
+                        className="living-card"
+                        disabled={limitReached}
+                        onClick={() => addCustomBlock(option.value)}
+                        style={livingCardStyle(false, safeThemeColor)}
+                      >
+                        <div style={presetPreviewStyle("custom", safeThemeColor)} />
+                        <div style={{ display: "grid", gap: "8px", minWidth: 0 }}>
+                          <div style={livingCardHeaderStyle}>
+                            <span>{option.name}</span>
+                          </div>
+                          <div style={layoutCardDescriptionStyle}>{option.description}</div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+                <div style={dashboardMutedTextStyle}>
+                  {previewComposition.customBlocks.length}/{MAX_PROFILE_CUSTOM_BLOCKS} blocks used.
+                </div>
+              </div>
+
+              <div style={compositionRowsStyle}>
+                {previewComposition.customBlocks.length === 0 ? (
+                  <div style={emptyCustomBlocksStyle}>
+                    No custom blocks yet. Add a quote, divider, mood card, or image insert to break up the profile rhythm.
+                  </div>
+                ) : (
+                  previewComposition.customBlocks.map((block, index) => {
+                    const meta = getProfileCustomBlockTypeMeta(block.type);
+                    const canMoveUp = index > 0;
+                    const canMoveDown =
+                      index < previewComposition.customBlocks.length - 1;
+
+                    return (
+                      <div key={block.id} style={customBlockEditorCardStyle(block, safeThemeColor)}>
+                        <div style={customBlockEditorHeaderStyle}>
+                          <div style={{ display: "grid", gap: "4px", minWidth: 0 }}>
+                            <div style={compositionRowTitleStyle}>{meta.name}</div>
+                            <div style={layoutCardDescriptionStyle}>{meta.description}</div>
+                          </div>
+                          <div style={compositionRowActionsStyle}>
+                            <button
+                              type="button"
+                              onClick={() => moveCustomBlock(block.id, "up")}
+                              disabled={!canMoveUp}
+                              style={compositionMoveButtonStyle(canMoveUp)}
+                            >
+                              Up
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => moveCustomBlock(block.id, "down")}
+                              disabled={!canMoveDown}
+                              style={compositionMoveButtonStyle(canMoveDown)}
+                            >
+                              Down
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => removeCustomBlock(block.id)}
+                              style={dashboardButtonStyle("secondary")}
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        </div>
+
+                        <div style={customBlockEditorFieldsStyle}>
+                          <label style={dashboardLabelStyle}>
+                            Block type
+                            <select
+                              value={block.type}
+                              onChange={(event) =>
+                                updateCustomBlock(block.id, (current) => ({
+                                  ...createProfileCustomBlockDraft(
+                                    event.target.value as ProfileCustomBlockType,
+                                    current.id,
+                                  ),
+                                  visible: current.visible,
+                                  glow: current.glow,
+                                  transparency: current.transparency,
+                                  alignment: current.alignment,
+                                  width: current.width,
+                                  accentColor: current.accentColor,
+                                  text: current.text,
+                                  secondaryText: current.secondaryText,
+                                  imageUrl: current.imageUrl,
+                                }))
+                              }
+                              style={dashboardInputStyle}
+                            >
+                              {PROFILE_CUSTOM_BLOCK_TYPE_OPTIONS.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                  {option.name}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+
+                          <label style={dashboardLabelStyle}>
+                            Alignment
+                            <select
+                              value={block.alignment}
+                              onChange={(event) =>
+                                updateCustomBlock(block.id, (current) => ({
+                                  ...current,
+                                  alignment: event.target.value as ProfileCustomBlock["alignment"],
+                                }))
+                              }
+                              style={dashboardInputStyle}
+                            >
+                              {PROFILE_CUSTOM_BLOCK_ALIGNMENT_OPTIONS.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                  {option.name}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+
+                          <label style={dashboardLabelStyle}>
+                            Width
+                            <select
+                              value={block.width}
+                              onChange={(event) =>
+                                updateCustomBlock(block.id, (current) => ({
+                                  ...current,
+                                  width: event.target.value as ProfileCustomBlock["width"],
+                                }))
+                              }
+                              style={dashboardInputStyle}
+                            >
+                              {PROFILE_CUSTOM_BLOCK_WIDTH_OPTIONS.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                  {option.name}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+
+                          <label style={dashboardLabelStyle}>
+                            Accent color
+                            <input
+                              type="text"
+                              value={block.accentColor || ""}
+                              onChange={(event) =>
+                                updateCustomBlock(block.id, (current) => ({
+                                  ...current,
+                                  accentColor: event.target.value.trim() || null,
+                                }))
+                              }
+                              placeholder="#f472b6"
+                              style={dashboardInputStyle}
+                            />
+                          </label>
+
+                          <label style={dashboardLabelStyle}>
+                            Main text
+                            <input
+                              type="text"
+                              value={block.text || ""}
+                              onChange={(event) =>
+                                updateCustomBlock(block.id, (current) => ({
+                                  ...current,
+                                  text: event.target.value,
+                                }))
+                              }
+                              placeholder={customBlockTextPlaceholder(block)}
+                              style={dashboardInputStyle}
+                            />
+                          </label>
+
+                          {block.type === "mood" ||
+                          block.type === "status-banner" ||
+                          block.type === "image-card" ? (
+                            <label style={dashboardLabelStyle}>
+                              Secondary text
+                              <input
+                                type="text"
+                                value={block.secondaryText || ""}
+                                onChange={(event) =>
+                                  updateCustomBlock(block.id, (current) => ({
+                                    ...current,
+                                    secondaryText: event.target.value,
+                                  }))
+                                }
+                                placeholder={
+                                  block.type === "image-card"
+                                    ? "Caption"
+                                    : "Short supporting line"
+                                }
+                                style={dashboardInputStyle}
+                              />
+                            </label>
+                          ) : null}
+
+                          {block.type === "image-card" ? (
+                            <label style={dashboardLabelStyle}>
+                              Image URL
+                              <input
+                                type="text"
+                                value={block.imageUrl || ""}
+                                onChange={(event) =>
+                                  updateCustomBlock(block.id, (current) => ({
+                                    ...current,
+                                    imageUrl: event.target.value,
+                                  }))
+                                }
+                                placeholder="https://..."
+                                style={dashboardInputStyle}
+                              />
+                            </label>
+                          ) : null}
+                        </div>
+
+                        <div style={customBlockEditorToggleRowStyle}>
+                          <label style={compositionToggleStyle(block.visible, safeThemeColor, false)}>
+                            <span>{block.visible ? "Visible" : "Hidden"}</span>
+                            <input
+                              type="checkbox"
+                              checked={block.visible}
+                              onChange={() =>
+                                updateCustomBlock(block.id, (current) => ({
+                                  ...current,
+                                  visible: !current.visible,
+                                }))
+                              }
+                              style={musicCheckboxStyle}
+                            />
+                          </label>
+
+                          <label style={compositionToggleStyle(block.glow, safeThemeColor, false)}>
+                            <span>{block.glow ? "Glow" : "No glow"}</span>
+                            <input
+                              type="checkbox"
+                              checked={block.glow}
+                              onChange={() =>
+                                updateCustomBlock(block.id, (current) => ({
+                                  ...current,
+                                  glow: !current.glow,
+                                }))
+                              }
+                              style={musicCheckboxStyle}
+                            />
+                          </label>
+
+                          <label
+                            style={compositionToggleStyle(
+                              block.transparency,
+                              safeThemeColor,
+                              false,
+                            )}
+                          >
+                            <span>{block.transparency ? "Transparent" : "Solid"}</span>
+                            <input
+                              type="checkbox"
+                              checked={block.transparency}
+                              onChange={() =>
+                                updateCustomBlock(block.id, (current) => ({
+                                  ...current,
+                                  transparency: !current.transparency,
+                                }))
+                              }
+                              style={musicCheckboxStyle}
+                            />
+                          </label>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+
             <div style={musicSectionStyle}>
               <DashboardSectionHeading
                 eyebrow="Profile Music"
@@ -1401,6 +1960,12 @@ export default function ProfileLayoutExperience({
             actions={
               <>
                 <span style={dashboardTagStyle("pink")}>Previewing {deferredPreviewLayout}</span>
+                <span style={dashboardTagStyle("violet")}>
+                  {getProfilePresetDefinition(deferredPreviewComposition.preset)?.name ?? "Custom"}
+                </span>
+                <span style={dashboardTagStyle("violet")}>
+                  {getProfileDnaTuning(deferredPreviewComposition.dna).name} DNA
+                </span>
                 <span style={dashboardTagStyle("violet")}>{deferredPreviewMood}</span>
                 <span style={dashboardTagStyle("violet")}>{deferredPreviewAura} aura</span>
                 <span style={dashboardTagStyle("violet")}>
@@ -1443,6 +2008,9 @@ export default function ProfileLayoutExperience({
                 </span>
                 <span style={dashboardTagStyle("violet")}>
                   {deferredPreviewComposition.socialsStyle} socials
+                </span>
+                <span style={dashboardTagStyle("violet")}>
+                  {deferredPreviewComposition.customBlocks.length} custom blocks
                 </span>
                 <span style={dashboardTagStyle(isDirty ? "violet" : "green")}>
                   {isDirty ? "Unsaved changes" : "Saved state"}
@@ -1894,6 +2462,72 @@ function motionPreviewStyle(
     border: "1px solid rgba(255,255,255,0.08)",
     background: `radial-gradient(circle at 26% 32%, ${withAlpha(accentColor, opacity)}, transparent 38%), linear-gradient(135deg, rgba(13,13,19,0.98), rgba(7,8,12,0.98))`,
     boxShadow: `0 12px 24px ${withAlpha(accentColor, "10")}`,
+  };
+}
+
+function presetPreviewStyle(
+  value: ProfilePresetId | ProfileDnaType | "custom",
+  accentColor: string,
+): CSSProperties {
+  const background =
+    value === "cinematic"
+      ? `radial-gradient(circle at 50% 24%, ${withAlpha(accentColor, "48")}, transparent 36%), linear-gradient(180deg, rgba(10,10,16,0.18), rgba(10,10,16,0.9))`
+      : value === "ghost"
+        ? "linear-gradient(180deg, rgba(255,255,255,0.06), rgba(11,11,16,0.76))"
+        : value === "cyber"
+          ? `repeating-linear-gradient(180deg, rgba(34,211,238,0.08) 0 1px, transparent 1px 7px), linear-gradient(135deg, ${withAlpha(accentColor, "22")}, rgba(8,9,14,0.96))`
+          : value === "minimalist"
+            ? "linear-gradient(180deg, rgba(255,255,255,0.02), rgba(10,10,14,0.92))"
+            : value === "ambient"
+              ? `radial-gradient(circle at top left, ${withAlpha(accentColor, "30")}, transparent 42%), linear-gradient(180deg, rgba(12,12,20,0.96), rgba(8,8,12,0.96))`
+              : value === "void"
+                ? `radial-gradient(circle at 60% 20%, ${withAlpha(accentColor, "18")}, transparent 24%), linear-gradient(180deg, rgba(7,8,14,0.94), rgba(3,4,8,0.98))`
+                : value === "mono"
+                  ? "linear-gradient(180deg, rgba(255,255,255,0.04), rgba(9,10,14,0.96))"
+                  : value === "pulse"
+                    ? `radial-gradient(circle at 32% 34%, ${withAlpha(accentColor, "36")}, transparent 26%), linear-gradient(135deg, rgba(12,12,18,0.96), rgba(8,8,12,0.98))`
+              : value === "floating"
+                ? `radial-gradient(circle at 24% 34%, ${withAlpha(accentColor, "32")}, transparent 28%), radial-gradient(circle at 76% 62%, rgba(255,255,255,0.12), transparent 22%), linear-gradient(180deg, rgba(11,11,16,0.96), rgba(7,8,12,0.98))`
+                : value === "devcore"
+                  ? `linear-gradient(135deg, ${withAlpha(accentColor, "16")}, rgba(7,12,18,0.98))`
+                  : value === "afterhours"
+                    ? `radial-gradient(circle at 22% 24%, ${withAlpha(accentColor, "22")}, transparent 34%), linear-gradient(180deg, rgba(8,8,14,0.96), rgba(4,5,9,0.98))`
+                    : value === "softglass"
+                      ? `linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.02)), linear-gradient(135deg, ${withAlpha(accentColor, "18")}, rgba(9,12,18,0.94))`
+                      : `linear-gradient(135deg, ${withAlpha(accentColor, "14")}, rgba(9,10,15,0.96))`;
+
+  return {
+    minHeight: "78px",
+    borderRadius:
+      value === "minimalist" || value === "devcore" || value === "mono"
+        ? "12px"
+        : "18px",
+    border: "1px solid rgba(255,255,255,0.08)",
+    background,
+    boxShadow: `0 12px 24px ${withAlpha(accentColor, "10")}`,
+  };
+}
+
+const presetMetaRowStyle: CSSProperties = {
+  display: "flex",
+  gap: "8px",
+  flexWrap: "wrap",
+};
+
+function presetMetaBadgeStyle(background: string): CSSProperties {
+  return {
+    display: "inline-flex",
+    alignItems: "center",
+    minHeight: "24px",
+    padding: "0 9px",
+    borderRadius: "999px",
+    background,
+    border: "1px solid rgba(255,255,255,0.08)",
+    color: "#eef2ff",
+    fontSize: "10px",
+    fontWeight: 800,
+    letterSpacing: "0.05em",
+    textTransform: "uppercase",
   };
 }
 
@@ -2552,6 +3186,54 @@ const compositionOptionGridStyle: CSSProperties = {
   gap: "16px",
 };
 
+const emptyCustomBlocksStyle: CSSProperties = {
+  padding: "16px",
+  borderRadius: "18px",
+  border: "1px solid rgba(255,255,255,0.08)",
+  background: "linear-gradient(180deg, rgba(18,18,24,0.96), rgba(11,11,15,0.96))",
+  color: "#aeb7cb",
+  fontSize: "13px",
+  lineHeight: 1.65,
+};
+
+function customBlockEditorCardStyle(
+  block: ProfileCustomBlock,
+  accentColor: string,
+): CSSProperties {
+  return {
+    display: "grid",
+    gap: "14px",
+    padding: "16px",
+    borderRadius: "20px",
+    border: `1px solid ${
+      block.visible ? withAlpha(block.accentColor || accentColor, "24") : "rgba(255,255,255,0.08)"
+    }`,
+    background: block.visible
+      ? `linear-gradient(180deg, ${withAlpha(block.accentColor || accentColor, "12")}, rgba(12,12,18,0.96))`
+      : "linear-gradient(180deg, rgba(18,18,24,0.96), rgba(11,11,15,0.96))",
+  };
+}
+
+const customBlockEditorHeaderStyle: CSSProperties = {
+  display: "flex",
+  alignItems: "flex-start",
+  justifyContent: "space-between",
+  gap: "14px",
+  flexWrap: "wrap",
+};
+
+const customBlockEditorFieldsStyle: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 180px), 1fr))",
+  gap: "12px",
+};
+
+const customBlockEditorToggleRowStyle: CSSProperties = {
+  display: "flex",
+  gap: "10px",
+  flexWrap: "wrap",
+};
+
 const compositionChoiceGridStyle: CSSProperties = {
   display: "grid",
   gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 180px), 1fr))",
@@ -2574,6 +3256,34 @@ function normalizeThemeColor(value: string) {
   }
 
   return "#f472b6";
+}
+
+function customBlockTextPlaceholder(block: ProfileCustomBlock) {
+  if (block.type === "quote") {
+    return "Short atmospheric quote";
+  }
+
+  if (block.type === "text-strip") {
+    return "Single-line strip text";
+  }
+
+  if (block.type === "divider") {
+    return "Optional divider label";
+  }
+
+  if (block.type === "mood") {
+    return "Main mood phrase";
+  }
+
+  if (block.type === "image-card") {
+    return "Image title";
+  }
+
+  return "Status message";
+}
+
+function createCustomBlockId() {
+  return `custom-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
 function withAlpha(hex: string, alpha: string) {

@@ -1,4 +1,17 @@
 import type { PublicSocialBlock } from "@/app/[username]/SocialPresenceSection";
+import type { ProfileIntroMode } from "@/app/lib/profile-customization";
+import {
+  normalizeProfileCustomBlocks,
+  type ProfileCustomBlock,
+} from "@/app/lib/profile-custom-blocks";
+import {
+  normalizeProfileDna,
+  type ProfileDnaType,
+} from "@/app/lib/profile-dna";
+import {
+  normalizeProfilePreset,
+  type ProfilePresetId,
+} from "@/app/lib/profile-presets";
 
 export const PROFILE_COMPOSITION_BLOCKS = [
   "hero",
@@ -16,6 +29,12 @@ export const PROFILE_COMPOSITION_DENSITIES = [
   "spacious",
 ] as const;
 export const PROFILE_COMPOSITION_MODES = ["contained", "floating"] as const;
+export const PROFILE_FLOATING_PERSONALITIES = [
+  "centered",
+  "cinematic",
+  "scattered",
+  "minimal",
+] as const;
 
 export const PROFILE_COMPOSITION_LINK_STYLES = [
   "cards",
@@ -33,12 +52,16 @@ export const PROFILE_COMPOSITION_SOCIAL_STYLES = [
 export type ProfileCompositionBlock = (typeof PROFILE_COMPOSITION_BLOCKS)[number];
 export type ProfileCompositionDensity = (typeof PROFILE_COMPOSITION_DENSITIES)[number];
 export type ProfileCompositionMode = (typeof PROFILE_COMPOSITION_MODES)[number];
+export type ProfileFloatingPersonality =
+  (typeof PROFILE_FLOATING_PERSONALITIES)[number];
 export type ProfileCompositionLinksStyle =
   (typeof PROFILE_COMPOSITION_LINK_STYLES)[number];
 export type ProfileCompositionSocialsStyle =
   (typeof PROFILE_COMPOSITION_SOCIAL_STYLES)[number];
 
 export type ProfileComposition = {
+  preset: ProfilePresetId | null;
+  dna: ProfileDnaType | null;
   mode: ProfileCompositionMode;
   visible: {
     music: boolean;
@@ -52,9 +75,12 @@ export type ProfileComposition = {
   density: ProfileCompositionDensity;
   linksStyle: ProfileCompositionLinksStyle;
   socialsStyle: ProfileCompositionSocialsStyle;
+  customBlocks: ProfileCustomBlock[];
 };
 
 export const DEFAULT_PROFILE_COMPOSITION: ProfileComposition = {
+  preset: null,
+  dna: null,
   mode: "contained",
   visible: {
     music: true,
@@ -68,6 +94,7 @@ export const DEFAULT_PROFILE_COMPOSITION: ProfileComposition = {
   density: "balanced",
   linksStyle: "cards",
   socialsStyle: "grid",
+  customBlocks: [],
 };
 
 export const PROFILE_COMPOSITION_DENSITY_OPTIONS = [
@@ -162,6 +189,22 @@ type CompositionVisibilityKey = keyof ProfileComposition["visible"];
 
 type RenderAvailability = Record<ProfileCompositionBlock, boolean>;
 
+export type ProfileFloatingPlacementWidth =
+  | "compact"
+  | "medium"
+  | "wide"
+  | "bar"
+  | "footer";
+
+export type ProfileFloatingModulePlacement = {
+  align: "start" | "center" | "end";
+  columnStart: number;
+  span: number;
+  width: ProfileFloatingPlacementWidth;
+  xOffset: number;
+  yOffset: number;
+};
+
 export function normalizeProfileComposition(value: unknown): ProfileComposition {
   const candidate =
     value && typeof value === "object" && !Array.isArray(value)
@@ -169,12 +212,15 @@ export function normalizeProfileComposition(value: unknown): ProfileComposition 
       : null;
 
   return {
+    preset: normalizeProfilePreset(candidate?.preset),
+    dna: normalizeProfileDna(candidate?.dna),
     mode: normalizeCompositionMode(candidate?.mode),
     visible: normalizeVisible(candidate?.visible),
     order: normalizeOrder(candidate?.order),
     density: normalizeCompositionDensity(candidate?.density),
     linksStyle: normalizeCompositionLinksStyle(candidate?.linksStyle),
     socialsStyle: normalizeCompositionSocialsStyle(candidate?.socialsStyle),
+    customBlocks: normalizeProfileCustomBlocks(candidate?.customBlocks),
   };
 }
 
@@ -260,6 +306,41 @@ export function getProfileCompositionSpacingScale(
   }
 
   return 1;
+}
+
+export function getProfileFloatingCompositionPlan(input: {
+  density: ProfileCompositionDensity;
+  introMode: ProfileIntroMode;
+  orderedBlocks: ProfileCompositionBlock[];
+  personalityOverride?: ProfileFloatingPersonality | null;
+}) {
+  const visibleCount = input.orderedBlocks.length;
+  const personality =
+    input.personalityOverride ??
+    selectFloatingPersonality({
+      density: input.density,
+      introMode: input.introMode,
+      visibleCount,
+    });
+
+  const placements = input.orderedBlocks.reduce(
+    (acc, block, index) => {
+      acc[block] = getFloatingModulePlacement({
+        personality,
+        block,
+        index,
+        visibleCount,
+      });
+      return acc;
+    },
+    {} as Partial<Record<ProfileCompositionBlock, ProfileFloatingModulePlacement>>,
+  );
+
+  return {
+    personality,
+    visibleCount,
+    placements,
+  };
 }
 
 export function isMissingProfileCompositionColumnError(error: unknown) {
@@ -437,3 +518,292 @@ function isBlockRenderable(
 
   return composition.visible.live;
 }
+
+function selectFloatingPersonality(input: {
+  density: ProfileCompositionDensity;
+  introMode: ProfileIntroMode;
+  visibleCount: number;
+}): ProfileFloatingPersonality {
+  if (input.introMode === "cinematic") {
+    return "cinematic";
+  }
+
+  if (input.density === "compact") {
+    return input.visibleCount <= 3 ? "minimal" : "scattered";
+  }
+
+  if (input.visibleCount >= 5) {
+    return "scattered";
+  }
+
+  if (input.introMode === "minimal") {
+    return input.visibleCount <= 3 ? "centered" : "minimal";
+  }
+
+  if (input.visibleCount <= 2) {
+    return "centered";
+  }
+
+  return "minimal";
+}
+
+function getFloatingModulePlacement(input: {
+  personality: ProfileFloatingPersonality;
+  block: ProfileCompositionBlock;
+  index: number;
+  visibleCount: number;
+}): ProfileFloatingModulePlacement {
+  const base = FLOATING_PLACEMENT_MAP[input.personality][input.block] ??
+    FLOATING_PLACEMENT_MAP.centered[input.block];
+
+  if (input.visibleCount <= 2) {
+    return {
+      ...base,
+      columnStart: input.index % 2 === 0 ? 3 : 5,
+      span: input.block === "stats" ? 4 : Math.min(8, Math.max(base.span, 6)),
+      align: "center",
+      xOffset: input.index % 2 === 0 ? -8 : 10,
+      yOffset: base.yOffset + input.index * 8,
+    };
+  }
+
+  return base;
+}
+
+const FLOATING_PLACEMENT_MAP: Record<
+  ProfileFloatingPersonality,
+  Record<ProfileCompositionBlock, ProfileFloatingModulePlacement>
+> = {
+  centered: {
+    hero: {
+      columnStart: 3,
+      span: 8,
+      width: "wide",
+      align: "center",
+      xOffset: 0,
+      yOffset: 0,
+    },
+    music: {
+      columnStart: 3,
+      span: 8,
+      width: "bar",
+      align: "center",
+      xOffset: 16,
+      yOffset: -6,
+    },
+    socials: {
+      columnStart: 2,
+      span: 4,
+      width: "compact",
+      align: "start",
+      xOffset: -24,
+      yOffset: 10,
+    },
+    live: {
+      columnStart: 8,
+      span: 4,
+      width: "compact",
+      align: "end",
+      xOffset: 22,
+      yOffset: 18,
+    },
+    links: {
+      columnStart: 4,
+      span: 6,
+      width: "wide",
+      align: "center",
+      xOffset: 10,
+      yOffset: 18,
+    },
+    badges: {
+      columnStart: 3,
+      span: 5,
+      width: "medium",
+      align: "start",
+      xOffset: -14,
+      yOffset: 10,
+    },
+    stats: {
+      columnStart: 9,
+      span: 3,
+      width: "footer",
+      align: "end",
+      xOffset: 10,
+      yOffset: 28,
+    },
+  },
+  cinematic: {
+    hero: {
+      columnStart: 3,
+      span: 8,
+      width: "wide",
+      align: "center",
+      xOffset: 0,
+      yOffset: 0,
+    },
+    music: {
+      columnStart: 5,
+      span: 7,
+      width: "bar",
+      align: "end",
+      xOffset: 24,
+      yOffset: -12,
+    },
+    socials: {
+      columnStart: 2,
+      span: 4,
+      width: "compact",
+      align: "start",
+      xOffset: -28,
+      yOffset: 16,
+    },
+    live: {
+      columnStart: 8,
+      span: 4,
+      width: "compact",
+      align: "end",
+      xOffset: 28,
+      yOffset: 22,
+    },
+    links: {
+      columnStart: 4,
+      span: 7,
+      width: "wide",
+      align: "center",
+      xOffset: 18,
+      yOffset: 26,
+    },
+    badges: {
+      columnStart: 2,
+      span: 5,
+      width: "medium",
+      align: "start",
+      xOffset: -10,
+      yOffset: 6,
+    },
+    stats: {
+      columnStart: 9,
+      span: 3,
+      width: "footer",
+      align: "end",
+      xOffset: 16,
+      yOffset: 32,
+    },
+  },
+  scattered: {
+    hero: {
+      columnStart: 3,
+      span: 8,
+      width: "wide",
+      align: "center",
+      xOffset: 0,
+      yOffset: 0,
+    },
+    music: {
+      columnStart: 1,
+      span: 6,
+      width: "bar",
+      align: "start",
+      xOffset: -18,
+      yOffset: -4,
+    },
+    socials: {
+      columnStart: 8,
+      span: 4,
+      width: "compact",
+      align: "end",
+      xOffset: 22,
+      yOffset: -10,
+    },
+    live: {
+      columnStart: 2,
+      span: 4,
+      width: "compact",
+      align: "start",
+      xOffset: 14,
+      yOffset: 22,
+    },
+    links: {
+      columnStart: 5,
+      span: 7,
+      width: "wide",
+      align: "end",
+      xOffset: -12,
+      yOffset: 20,
+    },
+    badges: {
+      columnStart: 3,
+      span: 5,
+      width: "medium",
+      align: "center",
+      xOffset: 20,
+      yOffset: 12,
+    },
+    stats: {
+      columnStart: 9,
+      span: 4,
+      width: "footer",
+      align: "end",
+      xOffset: -6,
+      yOffset: 30,
+    },
+  },
+  minimal: {
+    hero: {
+      columnStart: 3,
+      span: 8,
+      width: "wide",
+      align: "center",
+      xOffset: 0,
+      yOffset: 0,
+    },
+    music: {
+      columnStart: 3,
+      span: 7,
+      width: "bar",
+      align: "center",
+      xOffset: 0,
+      yOffset: -2,
+    },
+    socials: {
+      columnStart: 2,
+      span: 4,
+      width: "compact",
+      align: "start",
+      xOffset: -10,
+      yOffset: 10,
+    },
+    live: {
+      columnStart: 8,
+      span: 4,
+      width: "compact",
+      align: "end",
+      xOffset: 10,
+      yOffset: 14,
+    },
+    links: {
+      columnStart: 4,
+      span: 6,
+      width: "wide",
+      align: "center",
+      xOffset: 0,
+      yOffset: 16,
+    },
+    badges: {
+      columnStart: 4,
+      span: 5,
+      width: "medium",
+      align: "center",
+      xOffset: 0,
+      yOffset: 8,
+    },
+    stats: {
+      columnStart: 8,
+      span: 3,
+      width: "footer",
+      align: "end",
+      xOffset: 0,
+      yOffset: 24,
+    },
+  },
+};
