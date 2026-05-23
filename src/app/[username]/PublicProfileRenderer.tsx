@@ -2455,7 +2455,7 @@ function IntroProfileStage({
 
     const updateScrollHint = () => {
       frame = 0;
-      const nextOpacity = Math.max(0.34, 1 - Math.min(window.scrollY / 180, 1) * 0.66);
+      const nextOpacity = Math.max(0, 1 - Math.min(window.scrollY / 120, 1));
       setScrollHintOpacity((current) =>
         Math.abs(current - nextOpacity) < 0.02 ? current : nextOpacity,
       );
@@ -2846,9 +2846,12 @@ function IntroProfileStage({
         .profile-intro-scroll-wrap {
           position: absolute;
           left: 50%;
-          bottom: ${preview ? "2px" : "8px"};
+          bottom: ${preview ? "10px" : "20px"};
           transform: translateX(-50%);
           z-index: 1;
+          transition:
+            opacity var(--intro-transition-duration) var(--intro-motion-ease),
+            transform var(--intro-transition-duration) var(--intro-motion-ease);
         }
 
         .profile-intro-scroll {
@@ -2857,7 +2860,6 @@ function IntroProfileStage({
           min-height: 40px;
           padding: 5px 8px 5px 6px;
           gap: 10px;
-          opacity: ${Number(scrollHintOpacity.toFixed(3))};
           border-color: rgba(255,255,255,0.1);
           background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(8,10,16,0.48));
           box-shadow:
@@ -2913,7 +2915,8 @@ function IntroProfileStage({
           z-index: 1;
           width: min(${detailsMaxWidth}px, calc(100% - 28px));
           max-width: ${detailsMaxWidth}px;
-          margin: ${preview ? "-10px" : "-38px"} auto ${preview ? "18px" : "28px"};
+          margin: 0 auto ${preview ? "18px" : "28px"};
+          padding-top: ${preview ? "12px" : "24px"};
           display: grid;
           grid-template-columns: repeat(12, minmax(0, 1fr));
           gap: ${introDetailsGap}px;
@@ -3305,7 +3308,8 @@ function IntroProfileStage({
 
           .profile-intro-details {
             width: min(${Math.min(detailsMaxWidth, 760)}px, calc(100% - 20px));
-            margin: -22px auto ${preview ? "18px" : "24px"};
+            margin: 0 auto ${preview ? "18px" : "24px"};
+            padding-top: ${preview ? "10px" : "18px"};
             grid-template-columns: minmax(0, 1fr);
           }
 
@@ -3519,7 +3523,14 @@ function IntroProfileStage({
         </div>
 
         {hasDetails ? (
-          <div className="profile-intro-scroll-wrap">
+          <div
+            className="profile-intro-scroll-wrap"
+            style={{
+              opacity: scrollHintOpacity,
+              transform: `translateX(-50%) translateY(${((1 - scrollHintOpacity) * 8).toFixed(2)}px)`,
+              pointerEvents: scrollHintOpacity < 0.08 ? "none" : "auto",
+            }}
+          >
             <button type="button" className="profile-intro-scroll" onClick={scrollToDetails}>
               <span className="profile-intro-scroll-orb" aria-hidden="true">
                 <span className="profile-intro-scroll-arrow">
