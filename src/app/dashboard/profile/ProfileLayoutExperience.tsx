@@ -34,6 +34,7 @@ import {
   DEFAULT_PROFILE_COMPOSITION,
   PROFILE_COMPOSITION_DENSITY_OPTIONS,
   PROFILE_COMPOSITION_LINK_STYLE_OPTIONS,
+  PROFILE_COMPOSITION_METADATA_PLACEMENT_OPTIONS,
   PROFILE_COMPOSITION_MODE_OPTIONS,
   PROFILE_COMPOSITION_SOCIAL_STYLE_OPTIONS,
   type ProfileComposition,
@@ -546,6 +547,28 @@ export default function ProfileLayoutExperience({
                 rows={5}
                 style={dashboardTextareaStyle}
               />
+            </label>
+
+            <label style={dashboardLabelStyle}>
+              Location
+              <input
+                type="text"
+                value={previewComposition.metadata.locationText}
+                onChange={(event) =>
+                  setPreviewComposition((current) => ({
+                    ...current,
+                    metadata: {
+                      ...current.metadata,
+                      locationText: event.target.value.slice(0, 80),
+                    },
+                  }))
+                }
+                placeholder="Brazil, Tokyo JP, Internet, nowhere, with her <3"
+                style={dashboardInputStyle}
+              />
+              <span style={dashboardMutedTextStyle}>
+                Freeform text only. Leave blank to hide location.
+              </span>
             </label>
 
             <label style={dashboardLabelStyle}>
@@ -1534,6 +1557,72 @@ export default function ProfileLayoutExperience({
                           );
                         })}
                       </div>
+                    </div>
+
+                    <div style={{ display: "grid", gap: "10px" }}>
+                      <div style={livingSectionTitleStyle}>Metadata placement</div>
+                      <div style={compositionChoiceGridStyle}>
+                        {PROFILE_COMPOSITION_METADATA_PLACEMENT_OPTIONS.map((option) => {
+                          const isSelected =
+                            previewComposition.metadata.placement === option.value;
+
+                          return (
+                            <button
+                              key={option.value}
+                              type="button"
+                              className="living-card"
+                              aria-pressed={isSelected}
+                              onClick={() =>
+                                setPreviewComposition((current) => ({
+                                  ...current,
+                                  metadata: {
+                                    ...current.metadata,
+                                    placement: option.value,
+                                  },
+                                }))
+                              }
+                              style={livingCardStyle(isSelected, previewPresence.accent)}
+                            >
+                              <div style={livingCardHeaderStyle}>
+                                <span>{option.name}</span>
+                                {isSelected ? <LuCheck size={16} /> : null}
+                              </div>
+                              <div style={layoutCardDescriptionStyle}>{option.description}</div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div style={{ display: "grid", gap: "10px" }}>
+                      <div style={livingSectionTitleStyle}>Identity badges</div>
+                      <label
+                        style={compositionToggleStyle(
+                          previewComposition.metadata.showBadges,
+                          previewPresence.accent,
+                          false,
+                        )}
+                      >
+                        <span>
+                          {previewComposition.metadata.showBadges
+                            ? "Visible near name"
+                            : "Hidden"}
+                        </span>
+                        <input
+                          type="checkbox"
+                          checked={previewComposition.metadata.showBadges}
+                          onChange={() =>
+                            setPreviewComposition((current) => ({
+                              ...current,
+                              metadata: {
+                                ...current.metadata,
+                                showBadges: !current.metadata.showBadges,
+                              },
+                            }))
+                          }
+                          style={musicCheckboxStyle}
+                        />
+                      </label>
                     </div>
                 </div>
               </div>
@@ -3021,14 +3110,6 @@ function getVisibilityKeyForBlock(block: ProfileCompositionBlock) {
     return "links" as const;
   }
 
-  if (block === "badges") {
-    return "badges" as const;
-  }
-
-  if (block === "stats") {
-    return "stats" as const;
-  }
-
   return "live" as const;
 }
 
@@ -3053,11 +3134,7 @@ function getCompositionBlockLabel(block: ProfileCompositionBlock) {
     return "Links";
   }
 
-  if (block === "badges") {
-    return "Badges";
-  }
-
-  return "Stats";
+  return "Live";
 }
 
 function getCompositionBlockDescription(block: ProfileCompositionBlock) {
@@ -3081,11 +3158,7 @@ function getCompositionBlockDescription(block: ProfileCompositionBlock) {
     return "Primary outbound links and calls to action.";
   }
 
-  if (block === "badges") {
-    return "Featured profile badges and any extra badge count.";
-  }
-
-  return "Views and reactions block.";
+  return "Live embed cards stay visually prioritized when they are actually on air.";
 }
 
 const compositionSectionStyle: CSSProperties = {

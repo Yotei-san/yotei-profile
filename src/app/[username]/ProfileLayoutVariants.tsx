@@ -1,7 +1,6 @@
 import type { CSSProperties, ReactNode } from "react";
 import { LuArrowUpRight, LuSparkles } from "react-icons/lu";
 import LivingAvatar from "@/app/components/LivingAvatar";
-import BadgeVisual from "@/app/dashboard/components/BadgeVisual";
 import { getLinkPlatform } from "@/app/lib/link-icons";
 import type { ProfileCustomBlock } from "@/app/lib/profile-custom-blocks";
 import {
@@ -47,6 +46,7 @@ import {
 } from "@/app/lib/profile-scenes";
 import LivingProfileBackground from "./LivingProfileBackground";
 import ProfileBannerMedia from "./ProfileBannerMedia";
+import ProfileIdentityBadges from "./ProfileIdentityBadges";
 import ProfileNamePlate from "./ProfileNamePlate";
 import ProfileHeroClient from "./ProfileHeroClient";
 import ProfileMusicCard from "./ProfileMusicCard";
@@ -180,8 +180,6 @@ function DefaultLayout(props: Props) {
     socials: socialGroups.socials.length > 0,
     live: socialGroups.live.length > 0,
     links: true,
-    badges: props.featuredBadges.length > 0 || props.extraBadgeCount > 0,
-    stats: true,
   }).filter((block) => block !== "hero");
   const customBlocks = props.composition.customBlocks.filter((block) => block.visible);
   const resolvedBackdrop =
@@ -284,18 +282,45 @@ function DefaultLayout(props: Props) {
                 nameStyle={defaultNameStyle(densityTokens)}
                 usernameStyle={usernameStyle}
               />
-            <div
-              style={presenceChipStyle(
-                presence.presenceBackground,
-                presence.presenceBorder,
-                cornerTokens,
-                dnaTuning,
-              )}
-            >
-              {presence.statusLabel}
-            </div>
+              {props.composition.metadata.showBadges ? (
+                <ProfileIdentityBadges
+                  badges={props.featuredBadges}
+                  extraBadgeCount={props.extraBadgeCount}
+                  themeColor={sceneAppearance.linkThemeColor}
+                />
+              ) : null}
+              {renderIdentityMetadataSlot("under-username", {
+                composition: props.composition,
+                username: props.user.username,
+                views: props.views,
+                likes: props.likes,
+                dislikes: props.dislikes,
+                themeColor: sceneAppearance.linkThemeColor,
+                initialMyReaction: props.initialMyReaction,
+                preview: props.preview,
+              })}
+              <div
+                style={presenceChipStyle(
+                  presence.presenceBackground,
+                  presence.presenceBorder,
+                  cornerTokens,
+                  dnaTuning,
+                )}
+              >
+                {presence.statusLabel}
+              </div>
               <PillRow pills={props.heroPills} compact dnaTuning={dnaTuning} />
               {props.user.bio ? <p style={defaultBioStyle(densityTokens)}>{props.user.bio}</p> : null}
+              {renderIdentityMetadataSlot("bio", {
+                composition: props.composition,
+                username: props.user.username,
+                views: props.views,
+                likes: props.likes,
+                dislikes: props.dislikes,
+                themeColor: sceneAppearance.linkThemeColor,
+                initialMyReaction: props.initialMyReaction,
+                preview: props.preview,
+              })}
             </div>
           </div>
 
@@ -340,6 +365,16 @@ function DefaultLayout(props: Props) {
               preview: props.preview,
             }),
           )}
+          {renderIdentityMetadataSlot("footer", {
+            composition: props.composition,
+            username: props.user.username,
+            views: props.views,
+            likes: props.likes,
+            dislikes: props.dislikes,
+            themeColor: sceneAppearance.linkThemeColor,
+            initialMyReaction: props.initialMyReaction,
+            preview: props.preview,
+          })}
         </div>
       </section>
     </main>
@@ -375,8 +410,6 @@ function SimplisticLayout(props: Props) {
     socials: socialGroups.socials.length > 0,
     live: socialGroups.live.length > 0,
     links: true,
-    badges: props.featuredBadges.length > 0 || props.extraBadgeCount > 0,
-    stats: true,
   }).filter((block) => block !== "hero");
   const customBlocks = props.composition.customBlocks.filter((block) => block.visible);
 
@@ -443,6 +476,23 @@ function SimplisticLayout(props: Props) {
               nameStyle={simplisticNameStyle(densityTokens)}
               usernameStyle={usernameStyle}
             />
+            {props.composition.metadata.showBadges ? (
+              <ProfileIdentityBadges
+                badges={props.featuredBadges}
+                extraBadgeCount={props.extraBadgeCount}
+                themeColor={sceneAppearance.linkThemeColor}
+              />
+            ) : null}
+            {renderIdentityMetadataSlot("under-username", {
+              composition: props.composition,
+              username: props.user.username,
+              views: props.views,
+              likes: props.likes,
+              dislikes: props.dislikes,
+              themeColor: sceneAppearance.linkThemeColor,
+              initialMyReaction: props.initialMyReaction,
+              preview: props.preview,
+            })}
             <div
               style={presenceChipStyle(
                 presence.presenceBackground,
@@ -454,6 +504,16 @@ function SimplisticLayout(props: Props) {
               {presence.statusLabel}
             </div>
             {props.user.bio ? <p style={simplisticBioStyle(densityTokens)}>{props.user.bio}</p> : null}
+            {renderIdentityMetadataSlot("bio", {
+              composition: props.composition,
+              username: props.user.username,
+              views: props.views,
+              likes: props.likes,
+              dislikes: props.dislikes,
+              themeColor: sceneAppearance.linkThemeColor,
+              initialMyReaction: props.initialMyReaction,
+              preview: props.preview,
+            })}
           </div>
         </div>
 
@@ -514,6 +574,16 @@ function SimplisticLayout(props: Props) {
             preview: props.preview,
           }),
         )}
+        {renderIdentityMetadataSlot("footer", {
+          composition: props.composition,
+          username: props.user.username,
+          views: props.views,
+          likes: props.likes,
+          dislikes: props.dislikes,
+          themeColor: sceneAppearance.linkThemeColor,
+          initialMyReaction: props.initialMyReaction,
+          preview: props.preview,
+        })}
       </div>
     </main>
   );
@@ -555,8 +625,6 @@ function PortfolioLayout(props: Props) {
     socials: socialGroups.socials.length > 0,
     live: socialGroups.live.length > 0,
     links: true,
-    badges: props.featuredBadges.length > 0 || props.extraBadgeCount > 0,
-    stats: true,
   }).filter((block) => block !== "hero");
   const customBlocks = props.composition.customBlocks.filter((block) => block.visible);
 
@@ -654,6 +722,23 @@ function PortfolioLayout(props: Props) {
               nameStyle={portfolioNameStyle(densityTokens)}
               usernameStyle={usernameStyle}
             />
+            {props.composition.metadata.showBadges ? (
+              <ProfileIdentityBadges
+                badges={props.featuredBadges}
+                extraBadgeCount={props.extraBadgeCount}
+                themeColor={sceneAppearance.linkThemeColor}
+              />
+            ) : null}
+            {renderIdentityMetadataSlot("under-username", {
+              composition: props.composition,
+              username: props.user.username,
+              views: props.views,
+              likes: props.likes,
+              dislikes: props.dislikes,
+              themeColor: sceneAppearance.linkThemeColor,
+              initialMyReaction: props.initialMyReaction,
+              preview: props.preview,
+            })}
             <div
               style={presenceChipStyle(
                 presence.presenceBackground,
@@ -665,6 +750,16 @@ function PortfolioLayout(props: Props) {
               {presence.statusLabel}
             </div>
             {props.user.bio ? <p style={portfolioBioStyle(densityTokens)}>{props.user.bio}</p> : null}
+            {renderIdentityMetadataSlot("bio", {
+              composition: props.composition,
+              username: props.user.username,
+              views: props.views,
+              likes: props.likes,
+              dislikes: props.dislikes,
+              themeColor: sceneAppearance.linkThemeColor,
+              initialMyReaction: props.initialMyReaction,
+              preview: props.preview,
+            })}
           </div>
 
           <PillRow pills={props.heroPills} subtle dnaTuning={dnaTuning} />
@@ -724,6 +819,16 @@ function PortfolioLayout(props: Props) {
               preview: props.preview,
             }),
           )}
+          {renderIdentityMetadataSlot("footer", {
+            composition: props.composition,
+            username: props.user.username,
+            views: props.views,
+            likes: props.likes,
+            dislikes: props.dislikes,
+            themeColor: sceneAppearance.linkThemeColor,
+            initialMyReaction: props.initialMyReaction,
+            preview: props.preview,
+          })}
         </section>
       </div>
     </main>
@@ -947,35 +1052,7 @@ function renderVariantBlock(
     );
   }
 
-  if (block === "badges") {
-    return (
-      <div key={block}>
-        <BadgeRail
-          badges={input.featuredBadges}
-          extraBadgeCount={input.extraBadgeCount}
-          themeColor={input.themeColor}
-          minimal={input.layout === "simplistic"}
-        />
-      </div>
-    );
-  }
-
-  return input.preview ? (
-    <div key={block} style={emptyLinksStyle(input.cornerTokens)}>
-      {input.views} views, {input.likes} likes, {input.dislikes} dislikes
-    </div>
-  ) : (
-    <ProfileHeroClient
-      key={block}
-      username={input.username}
-      initialViews={input.views}
-      initialLikes={input.likes}
-      initialDislikes={input.dislikes}
-      themeColor={input.themeColor}
-      initialMyReaction={input.initialMyReaction}
-      preview={input.preview}
-    />
-  );
+  return null;
 }
 
 function renderVariantCustomBlock(
@@ -1130,134 +1207,35 @@ function PillRow({
   );
 }
 
-function BadgeRail({
-  badges,
-  extraBadgeCount,
-  themeColor,
-  minimal = false,
-}: {
-  badges: BadgeEntry[];
-  extraBadgeCount: number;
-  themeColor: string;
-  minimal?: boolean;
-}) {
-  if (badges.length === 0) {
+function renderIdentityMetadataSlot(
+  slot: "under-username" | "bio" | "footer",
+  input: {
+    composition: ProfileComposition;
+    username: string;
+    views: number;
+    likes: number;
+    dislikes: number;
+    themeColor: string;
+    initialMyReaction: "like" | "dislike" | null;
+    preview?: boolean;
+  },
+) {
+  if (input.composition.metadata.placement !== slot) {
     return null;
   }
 
   return (
-    <div style={{ display: "flex", gap: "7px", flexWrap: "wrap" }}>
-      {badges.map((item) => {
-        const visual = getBadgeVisual(item.badge, themeColor, minimal);
-
-        return (
-          <div
-            key={item.id}
-            title={item.badge.description || item.badge.name}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "7px",
-              minHeight: "30px",
-              padding: "0 9px",
-              borderRadius: "999px",
-              border: `1px solid ${visual.pillBorder}`,
-              background: visual.pillBackground,
-              boxShadow: visual.pillShadow,
-            }}
-          >
-            <div
-              style={{
-                width: "auto",
-                minWidth: "24px",
-                height: "22px",
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                flexShrink: 0,
-              }}
-            >
-              <BadgeVisual
-                slug={item.badge.slug}
-                color={item.badge.color || themeColor}
-                rarity={item.badge.rarity}
-                category={item.badge.category}
-                size={28}
-                compact
-              />
-            </div>
-            <span style={{ fontSize: "10px", fontWeight: 800, color: visual.labelColor }}>
-              {item.badge.name}
-            </span>
-          </div>
-        );
-      })}
-      {extraBadgeCount > 0 ? (
-        <div
-          title={`${extraBadgeCount} more badge${extraBadgeCount === 1 ? "" : "s"}`}
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "7px",
-            minHeight: "30px",
-            padding: "0 9px",
-            borderRadius: "999px",
-            border: "1px solid rgba(255,255,255,0.08)",
-            background: minimal ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.04)",
-            color: "#f4f4f5",
-          }}
-        >
-          <div
-            style={{
-              width: "24px",
-              height: "22px",
-              borderRadius: "999px",
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "#ffffff",
-              background: withAlpha(themeColor, "18"),
-              boxShadow: `0 10px 18px ${withAlpha(themeColor, "14")}`,
-              fontSize: "9px",
-              fontWeight: 900,
-              flexShrink: 0,
-            }}
-          >
-            +{extraBadgeCount}
-          </div>
-          <span style={{ fontSize: "10px", fontWeight: 800, color: "#f4f4f5" }}>
-            More
-          </span>
-        </div>
-      ) : null}
-    </div>
+    <ProfileHeroClient
+      username={input.username}
+      initialViews={input.views}
+      initialLikes={input.likes}
+      initialDislikes={input.dislikes}
+      themeColor={input.themeColor}
+      initialMyReaction={input.initialMyReaction}
+      locationText={input.composition.metadata.locationText}
+      preview={input.preview}
+    />
   );
-}
-
-function getBadgeVisual(
-  badge: BadgeEntry["badge"],
-  themeColor: string,
-  minimal: boolean
-) {
-  const color = badge.color || themeColor;
-  const isPriority =
-    badge.slug === "owner" ||
-    badge.slug === "admin" ||
-    badge.slug === "premium" ||
-    badge.category === "official";
-
-  return {
-    pillBackground: isPriority
-      ? `linear-gradient(135deg, ${withAlpha(color, "16")}, rgba(255,255,255,0.05))`
-      : minimal
-        ? "rgba(255,255,255,0.03)"
-        : "rgba(255,255,255,0.04)",
-    pillBorder: isPriority ? withAlpha(color, "34") : "rgba(255,255,255,0.08)",
-    pillShadow: isPriority ? `0 14px 28px ${withAlpha(color, "16")}` : "none",
-    iconBackground: withAlpha(color, isPriority ? "22" : "18"),
-    iconShadow: `0 10px 18px ${withAlpha(color, isPriority ? "20" : "14")}`,
-    labelColor: isPriority ? "#ffffff" : "#f4f4f5",
-  };
 }
 
 function LinksSection({

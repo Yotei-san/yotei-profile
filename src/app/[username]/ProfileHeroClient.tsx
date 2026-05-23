@@ -2,7 +2,7 @@
 
 import type { CSSProperties, ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
-import { LuEye, LuThumbsDown, LuThumbsUp } from "react-icons/lu";
+import { LuEye, LuMapPin, LuThumbsDown, LuThumbsUp } from "react-icons/lu";
 
 type MyReaction = "like" | "dislike" | null;
 
@@ -13,6 +13,8 @@ type Props = {
   initialDislikes: number;
   themeColor: string;
   initialMyReaction: MyReaction;
+  locationText?: string | null;
+  align?: "start" | "center";
   preview?: boolean;
 };
 
@@ -27,6 +29,8 @@ export default function ProfileHeroClient({
   initialDislikes,
   themeColor,
   initialMyReaction,
+  locationText,
+  align = "start",
   preview = false,
 }: Props) {
   const [views, setViews] = useState(initialViews);
@@ -136,73 +140,90 @@ export default function ProfileHeroClient({
     }
   }
 
+  const normalizedLocationText = locationText?.trim() || "";
+
   return (
-    <div style={{ marginTop: "14px" }}>
+    <div>
       <style>{`
         .profile-hero-metrics {
           display: flex;
-          gap: 10px;
+          align-items: center;
+          gap: 8px;
           flex-wrap: wrap;
+          min-width: 0;
+        }
+
+        .profile-hero-metrics.align-center {
+          justify-content: center;
         }
 
         .profile-hero-chip,
         .profile-hero-reaction {
           transition:
-            transform 180ms ease,
-            box-shadow 180ms ease,
-            border-color 180ms ease,
-            background 180ms ease,
+            transform 160ms ease,
+            box-shadow 160ms ease,
+            border-color 160ms ease,
+            background 160ms ease,
             opacity 160ms ease;
         }
 
-        .profile-hero-chip {
-          background: rgba(255, 255, 255, 0.035);
+        .profile-hero-reaction:hover:not(:disabled),
+        .profile-hero-reaction:focus-visible {
+          transform: translateY(-1px);
         }
 
-        .profile-hero-reaction:hover:not(:disabled) {
-          transform: translateY(-2px);
+        .profile-hero-location {
+          max-width: min(100%, 28rem);
         }
 
-        @media (max-width: 820px) {
-          .profile-hero-metrics {
-            justify-content: center;
-          }
+        .profile-hero-location .profile-hero-token-copy {
+          overflow-wrap: anywhere;
         }
 
         @media (max-width: 640px) {
           .profile-hero-metrics {
-            display: grid;
-            grid-template-columns: 1fr;
+            gap: 7px;
+          }
+
+          .profile-hero-location {
+            max-width: 100%;
+          }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .profile-hero-chip,
+          .profile-hero-reaction {
+            transition: none;
           }
         }
       `}</style>
 
-      <div className="profile-hero-metrics">
+      <div className={`profile-hero-metrics ${align === "center" ? "align-center" : ""}`}>
         <MetricChip
           label="Views"
           value={views}
-          icon={<LuEye size={15} />}
+          icon={<LuEye size={14} />}
           color="#dbe4f5"
-          background="rgba(255,255,255,0.035)"
-          border="rgba(255,255,255,0.07)"
+          background="rgba(255,255,255,0.04)"
+          border="rgba(255,255,255,0.08)"
         />
 
         <ReactionButton
-          label="Like"
+          label="Likes"
           value={likes}
-          icon={<LuThumbsUp size={15} />}
+          icon={<LuThumbsUp size={14} />}
           onClick={() => sendReaction("like")}
           disabled={isSubmitting || preview}
           isActive={myReaction === "like"}
           accentColor={themeColor}
-          background="rgba(69, 212, 131, 0.09)"
+          background="rgba(69, 212, 131, 0.08)"
           border="rgba(69, 212, 131, 0.18)"
         />
 
         <ReactionButton
-          label="Dislike"
+          label="Dislikes"
           value={dislikes}
-          icon={<LuThumbsDown size={15} />}
+          icon={<LuThumbsDown size={14} />}
           onClick={() => sendReaction("dislike")}
           disabled={isSubmitting || preview}
           isActive={myReaction === "dislike"}
@@ -210,6 +231,18 @@ export default function ProfileHeroClient({
           background="rgba(248, 113, 113, 0.08)"
           border="rgba(248, 113, 113, 0.16)"
         />
+
+        {normalizedLocationText ? (
+          <MetricChip
+            label="Location"
+            value={normalizedLocationText}
+            icon={<LuMapPin size={14} />}
+            color="#edf4ff"
+            background="rgba(255,255,255,0.04)"
+            border="rgba(255,255,255,0.08)"
+            className="profile-hero-location"
+          />
+        ) : null}
       </div>
     </div>
   );
@@ -222,17 +255,20 @@ function MetricChip({
   color,
   background,
   border,
+  className,
 }: {
   label: string;
-  value: number;
+  value: number | string;
   icon: ReactNode;
   color: string;
   background: string;
   border: string;
+  className?: string;
 }) {
   return (
     <div
-      className="profile-hero-chip"
+      className={`profile-hero-chip ${className ?? ""}`.trim()}
+      aria-label={`${label}: ${value}`}
       style={{
         ...chipBaseStyle,
         color,
@@ -241,9 +277,8 @@ function MetricChip({
       }}
     >
       <span style={iconWrapStyle}>{icon}</span>
-      <span style={copyWrapStyle}>
-        <strong style={valueStyle}>{value}</strong>
-        <span style={labelStyle}>{label}</span>
+      <span className="profile-hero-token-copy" style={valueTextStyle}>
+        {typeof value === "number" ? value.toLocaleString() : value}
       </span>
     </div>
   );
@@ -277,6 +312,7 @@ function ReactionButton({
       disabled={disabled}
       aria-pressed={isActive}
       className="profile-hero-reaction"
+      aria-label={`${label}: ${value.toLocaleString()}`}
       style={reactionButtonStyle(
         accentColor,
         background,
@@ -286,10 +322,7 @@ function ReactionButton({
       )}
     >
       <span style={iconWrapStyle}>{icon}</span>
-      <span style={copyWrapStyle}>
-        <strong style={valueStyle}>{value}</strong>
-        <span style={labelStyle}>{label}</span>
-      </span>
+      <span style={valueTextStyle}>{value.toLocaleString()}</span>
     </button>
   );
 }
@@ -308,58 +341,40 @@ function reactionButtonStyle(
     background,
     border: `1px solid ${isActive ? `${accentColor}66` : border}`,
     boxShadow: isActive
-      ? `0 0 0 1px ${accentColor}36, 0 12px 26px ${accentColor}16`
-      : `0 10px 24px ${accentColor}0d`,
+      ? `0 0 0 1px ${accentColor}36, 0 10px 24px ${accentColor}14`
+      : `0 8px 20px ${accentColor}0a`,
     opacity: disabled ? 0.7 : 1,
     pointerEvents: disabled ? "none" : "auto",
-    paddingRight: "18px",
     fontFamily: "inherit",
   };
 }
 
 const chipBaseStyle: CSSProperties = {
-  minHeight: "44px",
-  padding: "0 13px",
-  borderRadius: "14px",
+  minHeight: "30px",
+  padding: "0 10px",
+  borderRadius: "999px",
   display: "inline-flex",
   alignItems: "center",
-  gap: "10px",
+  gap: "7px",
   boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04)",
-  width: "100%",
-  maxWidth: "100%",
   minWidth: 0,
   boxSizing: "border-box",
 };
 
 const iconWrapStyle: CSSProperties = {
-  width: "28px",
-  height: "28px",
-  borderRadius: "10px",
+  width: "18px",
+  height: "18px",
+  borderRadius: "999px",
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
-  background: "rgba(255,255,255,0.04)",
-  border: "1px solid rgba(255,255,255,0.06)",
   flexShrink: 0,
 };
 
-const copyWrapStyle: CSSProperties = {
-  display: "grid",
-  textAlign: "left",
-  minWidth: 0,
-};
-
-const valueStyle: CSSProperties = {
-  fontSize: "14px",
+const valueTextStyle: CSSProperties = {
+  fontSize: "12px",
   lineHeight: 1,
-  letterSpacing: "-0.03em",
-};
-
-const labelStyle: CSSProperties = {
-  marginTop: "5px",
-  color: "#9dabc6",
-  fontSize: "10px",
   fontWeight: 800,
-  letterSpacing: "0.04em",
-  textTransform: "uppercase",
+  letterSpacing: "0.01em",
+  minWidth: 0,
 };

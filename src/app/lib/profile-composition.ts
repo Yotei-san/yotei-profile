@@ -19,8 +19,6 @@ export const PROFILE_COMPOSITION_BLOCKS = [
   "socials",
   "live",
   "links",
-  "badges",
-  "stats",
 ] as const;
 
 export const PROFILE_COMPOSITION_DENSITIES = [
@@ -49,6 +47,13 @@ export const PROFILE_COMPOSITION_SOCIAL_STYLES = [
   "spotlight",
 ] as const;
 
+export const PROFILE_COMPOSITION_METADATA_PLACEMENTS = [
+  "under-username",
+  "bio",
+  "footer",
+  "hidden",
+] as const;
+
 export type ProfileCompositionBlock = (typeof PROFILE_COMPOSITION_BLOCKS)[number];
 export type ProfileCompositionDensity = (typeof PROFILE_COMPOSITION_DENSITIES)[number];
 export type ProfileCompositionMode = (typeof PROFILE_COMPOSITION_MODES)[number];
@@ -58,6 +63,14 @@ export type ProfileCompositionLinksStyle =
   (typeof PROFILE_COMPOSITION_LINK_STYLES)[number];
 export type ProfileCompositionSocialsStyle =
   (typeof PROFILE_COMPOSITION_SOCIAL_STYLES)[number];
+export type ProfileCompositionMetadataPlacement =
+  (typeof PROFILE_COMPOSITION_METADATA_PLACEMENTS)[number];
+
+export type ProfileCompositionMetadata = {
+  placement: ProfileCompositionMetadataPlacement;
+  locationText: string;
+  showBadges: boolean;
+};
 
 export type ProfileComposition = {
   preset: ProfilePresetId | null;
@@ -67,14 +80,13 @@ export type ProfileComposition = {
     music: boolean;
     socials: boolean;
     links: boolean;
-    badges: boolean;
-    stats: boolean;
     live: boolean;
   };
   order: ProfileCompositionBlock[];
   density: ProfileCompositionDensity;
   linksStyle: ProfileCompositionLinksStyle;
   socialsStyle: ProfileCompositionSocialsStyle;
+  metadata: ProfileCompositionMetadata;
   customBlocks: ProfileCustomBlock[];
 };
 
@@ -86,14 +98,17 @@ export const DEFAULT_PROFILE_COMPOSITION: ProfileComposition = {
     music: true,
     socials: true,
     links: true,
-    badges: true,
-    stats: true,
     live: true,
   },
-  order: ["hero", "music", "socials", "live", "links", "badges", "stats"],
+  order: ["hero", "music", "socials", "live", "links"],
   density: "balanced",
   linksStyle: "cards",
   socialsStyle: "grid",
+  metadata: {
+    placement: "under-username",
+    locationText: "",
+    showBadges: true,
+  },
   customBlocks: [],
 };
 
@@ -185,7 +200,32 @@ export const PROFILE_COMPOSITION_SOCIAL_STYLE_OPTIONS = [
   description: string;
 }>;
 
-type CompositionVisibilityKey = keyof ProfileComposition["visible"];
+export const PROFILE_COMPOSITION_METADATA_PLACEMENT_OPTIONS = [
+  {
+    value: "under-username",
+    name: "Under username",
+    description: "Keep views, reactions, and location directly in the identity stack.",
+  },
+  {
+    value: "bio",
+    name: "Bio area",
+    description: "Tuck metadata beneath the bio for a more editorial profile flow.",
+  },
+  {
+    value: "footer",
+    name: "Footer row",
+    description: "Let metadata sit lower on the page as a quiet profile footer.",
+  },
+  {
+    value: "hidden",
+    name: "Hidden",
+    description: "Hide views, reactions, and location from the public profile.",
+  },
+] as const satisfies ReadonlyArray<{
+  value: ProfileCompositionMetadataPlacement;
+  name: string;
+  description: string;
+}>;
 
 type RenderAvailability = Record<ProfileCompositionBlock, boolean>;
 
@@ -220,6 +260,7 @@ export function normalizeProfileComposition(value: unknown): ProfileComposition 
     density: normalizeCompositionDensity(candidate?.density),
     linksStyle: normalizeCompositionLinksStyle(candidate?.linksStyle),
     socialsStyle: normalizeCompositionSocialsStyle(candidate?.socialsStyle),
+    metadata: normalizeMetadata(candidate?.metadata, candidate?.visible),
     customBlocks: normalizeProfileCustomBlocks(candidate?.customBlocks),
   };
 }
@@ -385,9 +426,44 @@ function normalizeVisible(value: unknown): ProfileComposition["visible"] {
       DEFAULT_PROFILE_COMPOSITION.visible.socials,
     ),
     links: normalizeVisibleFlag(candidate.links, DEFAULT_PROFILE_COMPOSITION.visible.links),
-    badges: normalizeVisibleFlag(candidate.badges, DEFAULT_PROFILE_COMPOSITION.visible.badges),
-    stats: normalizeVisibleFlag(candidate.stats, DEFAULT_PROFILE_COMPOSITION.visible.stats),
     live: normalizeVisibleFlag(candidate.live, DEFAULT_PROFILE_COMPOSITION.visible.live),
+  };
+}
+
+function normalizeMetadata(
+  value: unknown,
+  legacyVisibleValue: unknown,
+): ProfileCompositionMetadata {
+  const candidate =
+    value && typeof value === "object" && !Array.isArray(value)
+      ? (value as Record<string, unknown>)
+      : {};
+  const legacyVisible =
+    legacyVisibleValue &&
+    typeof legacyVisibleValue === "object" &&
+    !Array.isArray(legacyVisibleValue)
+      ? (legacyVisibleValue as Record<string, unknown>)
+      : {};
+  const normalizedLocationText = normalizeLocationText(
+    candidate.locationText ?? candidate.location ?? candidate.country,
+  );
+  const defaultPlacement = normalizeVisibleFlag(
+    legacyVisible.stats,
+    true,
+  )
+    ? DEFAULT_PROFILE_COMPOSITION.metadata.placement
+    : "hidden";
+
+  return {
+    placement: normalizeMetadataPlacement(candidate.placement, defaultPlacement),
+    locationText: normalizedLocationText,
+    showBadges: normalizeVisibleFlag(
+      candidate.showBadges,
+      normalizeVisibleFlag(
+        legacyVisible.badges,
+        DEFAULT_PROFILE_COMPOSITION.metadata.showBadges,
+      ),
+    ),
   };
 }
 
@@ -467,6 +543,25 @@ function normalizeCompositionSocialsStyle(value: unknown): ProfileCompositionSoc
   );
 }
 
+function normalizeMetadataPlacement(
+  value: unknown,
+  fallback = DEFAULT_PROFILE_COMPOSITION.metadata.placement,
+): ProfileCompositionMetadataPlacement {
+  return normalizeEnumValue(
+    value,
+    PROFILE_COMPOSITION_METADATA_PLACEMENTS,
+    fallback,
+  );
+}
+
+function normalizeLocationText(value: unknown) {
+  if (typeof value !== "string") {
+    return "";
+  }
+
+  return value.trim().slice(0, 80);
+}
+
 function normalizeEnumValue<TValue extends string>(
   value: unknown,
   candidates: readonly TValue[],
@@ -506,14 +601,6 @@ function isBlockRenderable(
 
   if (block === "links") {
     return composition.visible.links;
-  }
-
-  if (block === "badges") {
-    return composition.visible.badges;
-  }
-
-  if (block === "stats") {
-    return composition.visible.stats;
   }
 
   return composition.visible.live;
@@ -560,7 +647,7 @@ function getFloatingModulePlacement(input: {
     return {
       ...base,
       columnStart: input.index % 2 === 0 ? 3 : 5,
-      span: input.block === "stats" ? 4 : Math.min(8, Math.max(base.span, 6)),
+      span: Math.min(8, Math.max(base.span, 6)),
       align: "center",
       xOffset: input.index % 2 === 0 ? -8 : 10,
       yOffset: base.yOffset + input.index * 8,
@@ -615,22 +702,6 @@ const FLOATING_PLACEMENT_MAP: Record<
       xOffset: 10,
       yOffset: 18,
     },
-    badges: {
-      columnStart: 3,
-      span: 5,
-      width: "medium",
-      align: "start",
-      xOffset: -14,
-      yOffset: 10,
-    },
-    stats: {
-      columnStart: 9,
-      span: 3,
-      width: "footer",
-      align: "end",
-      xOffset: 10,
-      yOffset: 28,
-    },
   },
   cinematic: {
     hero: {
@@ -672,22 +743,6 @@ const FLOATING_PLACEMENT_MAP: Record<
       align: "center",
       xOffset: 18,
       yOffset: 26,
-    },
-    badges: {
-      columnStart: 2,
-      span: 5,
-      width: "medium",
-      align: "start",
-      xOffset: -10,
-      yOffset: 6,
-    },
-    stats: {
-      columnStart: 9,
-      span: 3,
-      width: "footer",
-      align: "end",
-      xOffset: 16,
-      yOffset: 32,
     },
   },
   scattered: {
@@ -731,22 +786,6 @@ const FLOATING_PLACEMENT_MAP: Record<
       xOffset: -12,
       yOffset: 20,
     },
-    badges: {
-      columnStart: 3,
-      span: 5,
-      width: "medium",
-      align: "center",
-      xOffset: 20,
-      yOffset: 12,
-    },
-    stats: {
-      columnStart: 9,
-      span: 4,
-      width: "footer",
-      align: "end",
-      xOffset: -6,
-      yOffset: 30,
-    },
   },
   minimal: {
     hero: {
@@ -788,22 +827,6 @@ const FLOATING_PLACEMENT_MAP: Record<
       align: "center",
       xOffset: 0,
       yOffset: 16,
-    },
-    badges: {
-      columnStart: 4,
-      span: 5,
-      width: "medium",
-      align: "center",
-      xOffset: 0,
-      yOffset: 8,
-    },
-    stats: {
-      columnStart: 8,
-      span: 3,
-      width: "footer",
-      align: "end",
-      xOffset: 0,
-      yOffset: 24,
     },
   },
 };

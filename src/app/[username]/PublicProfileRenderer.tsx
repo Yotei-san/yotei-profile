@@ -9,7 +9,6 @@ import {
   LuMusic4,
   LuSparkles,
 } from "react-icons/lu";
-import BadgeVisual from "@/app/dashboard/components/BadgeVisual";
 import { getLinkPlatform } from "@/app/lib/link-icons";
 import {
   getProfileFloatingCompositionPlan,
@@ -74,6 +73,7 @@ import {
 import LivingAvatar from "@/app/components/LivingAvatar";
 import LivingProfileBackground from "./LivingProfileBackground";
 import ProfileBannerMedia from "./ProfileBannerMedia";
+import ProfileIdentityBadges from "./ProfileIdentityBadges";
 import ProfileRenderBoundary from "./ProfileRenderBoundary";
 import ProfileNamePlate from "./ProfileNamePlate";
 import ProfileLayoutVariants, { type PublicProfileLayout } from "./ProfileLayoutVariants";
@@ -355,18 +355,18 @@ export default function PublicProfileRenderer({
     socials: partitionedSocialBlocks.socials.length > 0,
     live: partitionedSocialBlocks.live.length > 0,
     links: true,
-    badges: safeFeaturedBadges.length > 0 || safeExtraBadgeCount > 0,
-    stats: true,
   });
   const orderedContentBlocks = renderableCompositionOrder.filter(
     (block) => block !== "hero",
   );
   const visibleCustomBlocks = safeComposition.customBlocks.filter((block) => block.visible);
   const isFloatingComposition = safeComposition.mode === "floating";
+  const hasFooterMetadata = safeComposition.metadata.placement === "footer";
   const hasIntroDetails =
     Boolean(safeUser.bio) ||
     orderedContentBlocks.length > 0 ||
-    visibleCustomBlocks.length > 0;
+    visibleCustomBlocks.length > 0 ||
+    hasFooterMetadata;
   const avatarAuraAnimation = motionTokens.allowDecorativeMotion
     ? `profile-aura ${motionPersonalityTokens.glowPulseDurationS.toFixed(2)}s ${motionPersonalityTokens.transitionEasing} infinite`
     : "none";
@@ -1462,6 +1462,23 @@ export default function PublicProfileRenderer({
                         nameClassName="profile-name"
                         usernameClassName="profile-username"
                       />
+                      {safeComposition.metadata.showBadges ? (
+                        <ProfileIdentityBadges
+                          badges={safeFeaturedBadges}
+                          extraBadgeCount={safeExtraBadgeCount}
+                          themeColor={sceneAppearance.linkThemeColor}
+                        />
+                      ) : null}
+                      {renderIdentityMetadataSlot("under-username", {
+                        composition: safeComposition,
+                        username: safeUser.username,
+                        views,
+                        likes,
+                        dislikes,
+                        themeColor: sceneAppearance.linkThemeColor,
+                        initialMyReaction,
+                        preview,
+                      })}
                       <div className="presence-chip">
                         <LuMoonStar size={13} />
                         {presence.statusLabel}
@@ -1488,6 +1505,16 @@ export default function PublicProfileRenderer({
                   </div>
 
                   {safeUser.bio ? <div className="profile-bio">{safeUser.bio}</div> : null}
+                  {renderIdentityMetadataSlot("bio", {
+                    composition: safeComposition,
+                    username: safeUser.username,
+                    views,
+                    likes,
+                    dislikes,
+                    themeColor: sceneAppearance.linkThemeColor,
+                    initialMyReaction,
+                    preview,
+                  })}
 
                 </div>
               </div>
@@ -1532,6 +1559,16 @@ export default function PublicProfileRenderer({
                     style: getContainedCustomBlockStyle(block, index),
                   }),
                 )}
+                {renderIdentityMetadataSlot("footer", {
+                  composition: safeComposition,
+                  username: safeUser.username,
+                  views,
+                  likes,
+                  dislikes,
+                  themeColor: sceneAppearance.linkThemeColor,
+                  initialMyReaction,
+                  preview,
+                })}
               </div>
             </div>
           </div>
@@ -2129,6 +2166,25 @@ function FloatingProfileScene({
             nameClassName="floating-name"
             usernameClassName="floating-username"
           />
+          {composition.metadata.showBadges ? (
+            <ProfileIdentityBadges
+              badges={featuredBadges}
+              extraBadgeCount={extraBadgeCount}
+              themeColor={linkThemeColor}
+              align="center"
+            />
+          ) : null}
+          {renderIdentityMetadataSlot("under-username", {
+            composition,
+            username: user.username,
+            views,
+            likes,
+            dislikes,
+            themeColor: linkThemeColor,
+            initialMyReaction,
+            preview,
+            align: "center",
+          })}
 
           {compactPills.length > 0 ? (
             <div className="floating-pill-row">
@@ -2151,6 +2207,17 @@ function FloatingProfileScene({
         </div>
 
         {user.bio ? <div className="floating-bio-strip">{user.bio}</div> : null}
+        {renderIdentityMetadataSlot("bio", {
+          composition,
+          username: user.username,
+          views,
+          likes,
+          dislikes,
+          themeColor: linkThemeColor,
+          initialMyReaction,
+          preview,
+          align: "center",
+        })}
 
         <FloatingModulesField
           orderedContentBlocks={orderedContentBlocks}
@@ -2180,6 +2247,17 @@ function FloatingProfileScene({
           linksStyle={composition.linksStyle}
           socialsStyle={composition.socialsStyle}
         />
+        {renderIdentityMetadataSlot("footer", {
+          composition,
+          username: user.username,
+          views,
+          likes,
+          dislikes,
+          themeColor: linkThemeColor,
+          initialMyReaction,
+          preview,
+          align: "center",
+        })}
       </section>
     </main>
   );
@@ -2193,6 +2271,39 @@ function getIntroRevealStyle(
     "--intro-reveal-delay": `calc(var(--intro-reveal-stagger) * ${Math.min(revealIndex, 6)})`,
     ...extra,
   } as CSSProperties;
+}
+
+function renderIdentityMetadataSlot(
+  slot: "under-username" | "bio" | "footer",
+  input: {
+    composition: ProfileComposition;
+    username: string;
+    views: number;
+    likes: number;
+    dislikes: number;
+    themeColor: string;
+    initialMyReaction: PublicProfileReaction;
+    preview: boolean;
+    align?: "start" | "center";
+  },
+) {
+  if (input.composition.metadata.placement !== slot) {
+    return null;
+  }
+
+  return (
+    <ProfileHeroClient
+      username={input.username}
+      initialViews={input.views}
+      initialLikes={input.likes}
+      initialDislikes={input.dislikes}
+      themeColor={input.themeColor}
+      initialMyReaction={input.initialMyReaction}
+      locationText={input.composition.metadata.locationText}
+      align={input.align}
+      preview={input.preview}
+    />
+  );
 }
 
 function useScrollAtmosphere(enabled: boolean, distance: number) {
@@ -2371,7 +2482,6 @@ function IntroProfileStage({
     ),
   );
   const introPills = mode === "cinematic" ? heroPills.slice(0, 3) : heroPills.slice(0, 2);
-  const introBadges = featuredBadges.slice(0, mode === "cinematic" ? 3 : 2);
   const resolvedBannerUrl = sanitizeRenderableUrl(user.bannerUrl);
   const detailsSectionId = `profile-details-${user.username}-${mode}${preview ? "-preview" : ""}`;
   const floatingPersonality = floating
@@ -3549,6 +3659,25 @@ function IntroProfileStage({
             nameClassName="profile-intro-name"
             usernameClassName="profile-intro-username"
           />
+          {composition.metadata.showBadges ? (
+            <ProfileIdentityBadges
+              badges={featuredBadges}
+              extraBadgeCount={extraBadgeCount}
+              themeColor={themeColor}
+              align="center"
+            />
+          ) : null}
+          {renderIdentityMetadataSlot("under-username", {
+            composition,
+            username: user.username,
+            views,
+            likes,
+            dislikes,
+            themeColor,
+            initialMyReaction,
+            preview,
+            align: "center",
+          })}
 
           {user.bio && mode === "cinematic" ? (
             <div className="profile-intro-bio-hint">{truncateProfileBio(user.bio, 120)}</div>
@@ -3572,41 +3701,17 @@ function IntroProfileStage({
               ))}
             </div>
           ) : null}
-
-          {introBadges.length > 0 ? (
-            <div className="profile-intro-badge-row">
-              {introBadges.map((item) => {
-                const visual = getProfileBadgeVisual(item.badge, themeColor);
-
-                return (
-                  <div
-                    key={item.id}
-                    className="profile-intro-badge-pill"
-                    style={{
-                      background: visual.pillBackground,
-                      borderColor: visual.pillBorder,
-                      boxShadow: visual.pillShadow,
-                    }}
-                  >
-                    <BadgeVisual
-                      slug={item.badge.slug}
-                      color={item.badge.color || visual.color}
-                      rarity={item.badge.rarity}
-                      category={item.badge.category}
-                      size={24}
-                      compact
-                    />
-                    <span className="profile-intro-badge-label">{item.badge.name}</span>
-                  </div>
-                );
-              })}
-              {extraBadgeCount > 0 ? (
-                <div className="profile-intro-badge-pill">
-                  <span className="profile-intro-badge-label">+{extraBadgeCount} more</span>
-                </div>
-              ) : null}
-            </div>
-          ) : null}
+          {renderIdentityMetadataSlot("bio", {
+            composition,
+            username: user.username,
+            views,
+            likes,
+            dislikes,
+            themeColor,
+            initialMyReaction,
+            preview,
+            align: "center",
+          })}
         </div>
 
         {hasDetails ? (
@@ -3650,6 +3755,7 @@ function IntroProfileStage({
             accentColor: presence.accent,
             contrastColor: presence.contrast,
             softColor: presence.soft,
+            composition,
             dnaTuning,
             featuredBadges,
             extraBadgeCount,
@@ -3664,6 +3770,17 @@ function IntroProfileStage({
           })}
         </section>
       ) : null}
+      {!hasDetails ? renderIdentityMetadataSlot("footer", {
+        composition,
+        username: user.username,
+        views,
+        likes,
+        dislikes,
+        themeColor,
+        initialMyReaction,
+        preview,
+        align: "center",
+      }) : null}
     </main>
   );
 }
@@ -3800,6 +3917,7 @@ function renderIntroChapterSequence(input: {
   accentColor: string;
   contrastColor: string;
   softColor: string;
+  composition: ProfileComposition;
   dnaTuning: ProfileDnaTuning;
   featuredBadges: PublicProfileBadgeEntry[];
   extraBadgeCount: number;
@@ -4079,106 +4197,39 @@ function renderIntroChapterSequence(input: {
     );
   }
 
-  if (orderedBlockSet.has("badges") || orderedBlockSet.has("stats")) {
-    pushChapter(
-      renderIntroChapter({
-        key: "extras",
-        preview: input.preview,
-        revealIndex: revealIndex++,
-        label: "Extras",
-        icon: <LuBadgeCheck size={12} />,
-        children: (
-          <div className="profile-intro-chapter-stack">
-            {orderedBlockSet.has("badges") ? (
-              <div className="profile-intro-chapter-subsection">
-                {orderedBlockSet.has("stats") ? (
-                  <div className="profile-intro-chapter-subtitle">
-                    <LuBadgeCheck size={12} />
-                    Badges
-                  </div>
-                ) : null}
-                <div className="profile-badge-rail">
-                  {input.featuredBadges.map((item) => {
-                    const visual = getProfileBadgeVisual(item.badge, input.themeColor);
+  if (input.composition.metadata.placement === "footer") {
+    if (sections.length > 0) {
+      const divider = renderDivider();
 
-                    return (
-                      <div
-                        key={item.id}
-                        className="profile-badge-pill"
-                        title={item.badge.description || item.badge.name}
-                        style={{
-                          background: visual.pillBackground,
-                          borderColor: visual.pillBorder,
-                          boxShadow: visual.pillShadow,
-                        }}
-                      >
-                        <div className="profile-badge-icon">
-                          <BadgeVisual
-                            slug={item.badge.slug}
-                            color={item.badge.color || visual.color}
-                            rarity={item.badge.rarity}
-                            category={item.badge.category}
-                            size={28}
-                            compact
-                          />
-                        </div>
-                        <span
-                          className="profile-badge-label"
-                          style={{ color: visual.labelColor }}
-                        >
-                          {item.badge.name}
-                        </span>
-                      </div>
-                    );
-                  })}
-                  {input.extraBadgeCount > 0 ? (
-                    <div className="profile-badge-pill">
-                      <div className="profile-badge-icon">+{input.extraBadgeCount}</div>
-                      <span className="profile-badge-label">More</span>
-                    </div>
-                  ) : null}
-                </div>
-              </div>
-            ) : null}
-            {orderedBlockSet.has("stats") ? (
-              <div className="profile-intro-chapter-subsection">
-                {orderedBlockSet.has("badges") ? (
-                  <div className="profile-intro-chapter-subtitle">
-                    <LuBadgeCheck size={12} />
-                    Activity
-                  </div>
-                ) : null}
-                {input.preview ? (
-                  <div className="empty-links">
-                    <strong style={{ display: "block", color: "#ffffff", marginBottom: "8px" }}>
-                      Stats preview
-                    </strong>
-                    <span>
-                      {input.views} views, {input.likes} likes, {input.dislikes} dislikes
-                    </span>
-                  </div>
-                ) : (
-                  <ProfileRenderBoundary
-                    label="Profile stats"
-                    compact
-                    resetKey={`${input.username}-intro-stats`}
-                  >
-                    <ProfileHeroClient
-                      username={input.username}
-                      initialViews={input.views}
-                      initialLikes={input.likes}
-                      initialDislikes={input.dislikes}
-                      themeColor={input.themeColor}
-                      initialMyReaction={input.initialMyReaction}
-                      preview={input.preview}
-                    />
-                  </ProfileRenderBoundary>
-                )}
-              </div>
-            ) : null}
-          </div>
-        ),
-      }),
+      if (divider) {
+        sections.push(divider);
+      }
+    }
+
+    sections.push(
+      <div
+        key="metadata-footer"
+        className="profile-intro-footer-row"
+        data-intro-reveal="item"
+        data-revealed={input.preview ? "true" : "false"}
+        style={getIntroRevealStyle(revealIndex++, {
+          gridColumn: "1 / -1",
+          justifySelf: "center",
+          width: "100%",
+        })}
+      >
+        {renderIdentityMetadataSlot("footer", {
+          composition: input.composition,
+          username: input.username,
+          views: input.views,
+          likes: input.likes,
+          dislikes: input.dislikes,
+          themeColor: input.themeColor,
+          initialMyReaction: input.initialMyReaction,
+          preview: input.preview,
+          align: "center",
+        })}
+      </div>,
     );
   }
 
@@ -4401,85 +4452,7 @@ function renderModernCompositionBlock(
     );
   }
 
-  if (block === "badges") {
-    return (
-      <div key={block} className="widget-shell badges">
-        <div className="profile-kicker" style={{ marginBottom: "14px", width: "fit-content" }}>
-          <LuBadgeCheck size={13} />
-          Badges
-        </div>
-        <div className="profile-badge-rail">
-          {input.featuredBadges.map((item) => {
-            const visual = getProfileBadgeVisual(item.badge, input.themeColor);
-
-            return (
-              <div
-                key={item.id}
-                className="profile-badge-pill"
-                title={item.badge.description || item.badge.name}
-                style={{
-                  background: visual.pillBackground,
-                  borderColor: visual.pillBorder,
-                  boxShadow: visual.pillShadow,
-                }}
-              >
-                <div className="profile-badge-icon">
-                  <BadgeVisual
-                    slug={item.badge.slug}
-                    color={item.badge.color || visual.color}
-                    rarity={item.badge.rarity}
-                    category={item.badge.category}
-                    size={30}
-                    compact
-                  />
-                </div>
-                <span className="profile-badge-label" style={{ color: visual.labelColor }}>
-                  {item.badge.name}
-                </span>
-              </div>
-            );
-          })}
-
-          {input.extraBadgeCount > 0 ? (
-            <div
-              className="profile-badge-pill"
-              title={`${input.extraBadgeCount} more badge${input.extraBadgeCount === 1 ? "" : "s"}`}
-            >
-              <div className="profile-badge-icon">+{input.extraBadgeCount}</div>
-              <span className="profile-badge-label">More</span>
-            </div>
-          ) : null}
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div key={block} className="widget-shell stats">
-      {input.preview ? (
-        <div className="empty-links">
-          <strong style={{ display: "block", color: "#ffffff", marginBottom: "8px" }}>
-            Stats preview
-          </strong>
-          <span>
-            {input.views} views, {input.likes} likes, {input.dislikes} dislikes
-          </span>
-        </div>
-      ) : (
-        <ProfileRenderBoundary label="Profile stats" compact resetKey={`${input.username}-${block}`}>
-          <ProfileHeroClient
-            username={input.username}
-            initialViews={input.views}
-            initialLikes={input.likes}
-            initialDislikes={input.dislikes}
-            themeColor={input.themeColor}
-            initialMyReaction={input.initialMyReaction}
-            preview={input.preview}
-          />
-        </ProfileRenderBoundary>
-      )}
-    </div>
-  );
+  return null;
 }
 
 function renderFloatingCompositionBlock(
@@ -4641,101 +4614,7 @@ function renderFloatingCompositionBlock(
     );
   }
 
-  if (block === "badges") {
-    return (
-      <div
-        key={block}
-        className={floatingClassName}
-        data-intro-reveal="item"
-        data-revealed={input.preview ? "true" : "false"}
-        style={floatingStyle}
-      >
-        <div className="floating-module-head">
-          <div className="floating-module-label">
-            <LuBadgeCheck size={12} />
-            Badges
-          </div>
-        </div>
-        <div className="profile-badge-rail">
-          {input.featuredBadges.map((item) => {
-            const visual = getProfileBadgeVisual(item.badge, input.themeColor);
-
-            return (
-              <div
-                key={item.id}
-                className="profile-badge-pill"
-                title={item.badge.description || item.badge.name}
-                style={{
-                  background: visual.pillBackground,
-                  borderColor: visual.pillBorder,
-                  boxShadow: visual.pillShadow,
-                }}
-              >
-                <div className="profile-badge-icon">
-                  <BadgeVisual
-                    slug={item.badge.slug}
-                    color={item.badge.color || visual.color}
-                    rarity={item.badge.rarity}
-                    category={item.badge.category}
-                    size={28}
-                    compact
-                  />
-                </div>
-                <span className="profile-badge-label" style={{ color: visual.labelColor }}>
-                  {item.badge.name}
-                </span>
-              </div>
-            );
-          })}
-          {input.extraBadgeCount > 0 ? (
-            <div className="profile-badge-pill">
-              <div className="profile-badge-icon">+{input.extraBadgeCount}</div>
-              <span className="profile-badge-label">More</span>
-            </div>
-          ) : null}
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div
-      key={block}
-      className={floatingClassName}
-      data-intro-reveal="item"
-      data-revealed={input.preview ? "true" : "false"}
-      style={floatingStyle}
-    >
-      <div className="floating-module-head">
-        <div className="floating-module-label">
-          <LuBadgeCheck size={12} />
-          Stats
-        </div>
-      </div>
-      {input.preview ? (
-        <div className="empty-links">
-          <strong style={{ display: "block", color: "#ffffff", marginBottom: "8px" }}>
-            Stats preview
-          </strong>
-          <span>
-            {input.views} views, {input.likes} likes, {input.dislikes} dislikes
-          </span>
-        </div>
-      ) : (
-        <ProfileRenderBoundary label="Profile stats" compact resetKey={`${input.username}-${block}`}>
-          <ProfileHeroClient
-            username={input.username}
-            initialViews={input.views}
-            initialLikes={input.likes}
-            initialDislikes={input.dislikes}
-            themeColor={input.themeColor}
-            initialMyReaction={input.initialMyReaction}
-            preview={input.preview}
-          />
-        </ProfileRenderBoundary>
-      )}
-    </div>
-  );
+  return null;
 }
 
 function renderModernLinks(
@@ -5096,28 +4975,6 @@ function normalizeThemeColor(value: string) {
   }
 
   return /^#([0-9a-fA-F]{6})$/.test(trimmed) ? trimmed : "#f472b6";
-}
-
-function getProfileBadgeVisual(
-  badge: PublicProfileBadgeEntry["badge"],
-  themeColor: string,
-) {
-  const color = badge.color || themeColor;
-  const isPriority =
-    badge.slug === "owner" ||
-    badge.slug === "admin" ||
-    badge.slug === "premium" ||
-    badge.category === "official";
-
-  return {
-    color,
-    pillBackground: isPriority
-      ? `linear-gradient(135deg, ${withAlpha(color, "16")}, rgba(255,255,255,0.05))`
-      : "rgba(255,255,255,0.04)",
-    pillBorder: isPriority ? withAlpha(color, "34") : "rgba(255,255,255,0.08)",
-    pillShadow: isPriority ? `0 14px 28px ${withAlpha(color, "18")}` : undefined,
-    labelColor: isPriority ? "#ffffff" : "#f3f5fb",
-  };
 }
 
 function getLinkHostname(url: string) {
