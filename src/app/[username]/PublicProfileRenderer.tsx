@@ -2195,42 +2195,6 @@ function getIntroRevealStyle(
   } as CSSProperties;
 }
 
-function getIntroDetailModuleClassName(block: ProfileCompositionBlock) {
-  return `profile-intro-module detail-${block}`;
-}
-
-function getIntroCustomBlockClassName(block: ProfileCustomBlock) {
-  return [
-    "profile-intro-module",
-    "custom-block-shell",
-    `custom-${block.type}`,
-    `width-${block.width}`,
-    `align-${block.alignment}`,
-  ].join(" ");
-}
-
-function getIntroCustomBlockStyle(block: ProfileCustomBlock): CSSProperties {
-  return {
-    justifySelf:
-      block.alignment === "start"
-        ? "start"
-        : block.alignment === "end"
-          ? "end"
-          : "stretch",
-    width: "100%",
-    maxWidth:
-      block.width === "compact"
-        ? block.type === "divider"
-          ? "100%"
-          : "360px"
-        : block.type === "image-card"
-          ? "560px"
-          : block.type === "status-banner" || block.type === "text-strip"
-            ? "100%"
-            : "520px",
-  };
-}
-
 function useScrollAtmosphere(enabled: boolean, distance: number) {
   const [progress, setProgress] = useState(0);
 
@@ -2410,15 +2374,14 @@ function IntroProfileStage({
   const introBadges = featuredBadges.slice(0, mode === "cinematic" ? 3 : 2);
   const resolvedBannerUrl = sanitizeRenderableUrl(user.bannerUrl);
   const detailsSectionId = `profile-details-${user.username}-${mode}${preview ? "-preview" : ""}`;
-  const floatingPlan = floating
+  const floatingPersonality = floating
     ? getProfileFloatingCompositionPlan({
         density: composition.density,
         introMode: mode,
         orderedBlocks: orderedContentBlocks,
         personalityOverride: presetRenderTuning.floatingPersonality,
-      })
-    : null;
-  const floatingPersonality = floatingPlan?.personality ?? "centered";
+      }).personality
+    : "centered";
   const introDetailsGap = Math.max(
     10,
     Math.round(
@@ -2918,27 +2881,137 @@ function IntroProfileStage({
           margin: 0 auto ${preview ? "18px" : "28px"};
           padding-top: ${preview ? "12px" : "24px"};
           display: grid;
-          grid-template-columns: repeat(12, minmax(0, 1fr));
-          gap: ${introDetailsGap}px;
+          grid-template-columns: minmax(0, 1fr);
+          gap: ${Math.max(16, introDetailsGap + 6)}px;
           scroll-margin-top: 28px;
-          filter: blur(calc((1 - var(--intro-scroll-progress)) * 1.5px));
+          align-items: start;
         }
 
         .profile-intro-details[data-revealed="false"] {
-          opacity: 0.4;
-          transform: translate3d(0, var(--intro-reveal-distance), 0) scale(var(--intro-reveal-scale));
+          opacity: 1;
+          transform: none;
         }
 
         .profile-intro-details[data-revealed="true"] {
           opacity: 1;
           transform: none;
-          transition:
-            opacity var(--intro-reveal-duration) var(--intro-motion-ease),
-            transform var(--intro-reveal-duration) var(--intro-motion-emphasis);
         }
 
-        .profile-intro-details.is-floating {
-          gap: ${Math.max(12, introDetailsGap + 2)}px;
+        .profile-intro-chapter,
+        .profile-intro-divider-row {
+          width: min(100%, 720px);
+          justify-self: center;
+          min-width: 0;
+        }
+
+        .profile-intro-chapter {
+          position: relative;
+          overflow: hidden;
+          display: grid;
+          gap: 14px;
+          padding: 16px 18px;
+          border-radius: 26px;
+          border: 1px solid rgba(255,255,255,0.06);
+          background:
+            linear-gradient(180deg, rgba(255,255,255,0.04), rgba(9,11,17,0.16)),
+            radial-gradient(circle at top, ${withAlpha(presence.accent, "0d")} 0%, transparent 48%);
+          box-shadow:
+            0 12px 26px rgba(0,0,0,0.08),
+            inset 0 1px 0 rgba(255,255,255,0.04);
+          backdrop-filter: blur(6px) saturate(104%);
+          -webkit-backdrop-filter: blur(6px) saturate(104%);
+          transition:
+            transform var(--intro-transition-duration) var(--intro-motion-ease),
+            opacity var(--intro-transition-duration) var(--intro-motion-ease),
+            box-shadow var(--intro-transition-duration) var(--intro-motion-ease);
+        }
+
+        .profile-intro-chapter::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background:
+            linear-gradient(120deg, rgba(255,255,255,0.045), transparent 22%),
+            radial-gradient(circle at top right, ${withAlpha(presence.soft, "08")} 0%, transparent 32%);
+          pointer-events: none;
+        }
+
+        .profile-intro-chapter > * {
+          position: relative;
+          z-index: 1;
+        }
+
+        .profile-intro-chapter-head {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 8px;
+          flex-wrap: wrap;
+        }
+
+        .profile-intro-chapter-label,
+        .profile-intro-chapter-subtitle {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          width: fit-content;
+          min-height: 24px;
+          padding: 0 9px;
+          border-radius: 999px;
+          border: 1px solid rgba(255,255,255,0.08);
+          background: rgba(255,255,255,0.035);
+          color: #eef3fc;
+          font-size: 10px;
+          font-weight: 800;
+          letter-spacing: var(--intro-label-tracking);
+          text-transform: uppercase;
+          opacity: var(--intro-label-opacity);
+        }
+
+        .profile-intro-chapter-note {
+          color: #9ca8c1;
+          font-size: 11px;
+          font-weight: 700;
+          letter-spacing: 0.02em;
+        }
+
+        .profile-intro-chapter-body,
+        .profile-intro-chapter-stack {
+          display: grid;
+          gap: 12px;
+          min-width: 0;
+        }
+
+        .profile-intro-chapter-copy {
+          color: #e4ebf8;
+          font-size: 13px;
+          line-height: ${densityTokens.bioLineHeight};
+          white-space: pre-wrap;
+          overflow-wrap: anywhere;
+        }
+
+        .profile-intro-chapter-subsection {
+          display: grid;
+          gap: 10px;
+          min-width: 0;
+        }
+
+        .profile-intro-chapter-subsection + .profile-intro-chapter-subsection {
+          padding-top: 4px;
+          border-top: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .profile-intro-inline-block {
+          width: 100%;
+          min-width: 0;
+        }
+
+        .profile-intro-inline-block.custom-image-card {
+          max-width: 100%;
+        }
+
+        .profile-intro-divider-row {
+          padding: 2px 0;
         }
 
         .profile-intro-bio-strip,
@@ -3008,6 +3081,7 @@ function IntroProfileStage({
         }
 
         .profile-intro-module[data-revealed="false"],
+        .profile-intro-chapter[data-revealed="false"],
         .floating-module[data-revealed="false"],
         .profile-intro-bio-strip[data-revealed="false"],
         .floating-bio-strip[data-revealed="false"] {
@@ -3016,6 +3090,7 @@ function IntroProfileStage({
         }
 
         .profile-intro-module[data-revealed="true"],
+        .profile-intro-chapter[data-revealed="true"],
         .floating-module[data-revealed="true"],
         .profile-intro-bio-strip[data-revealed="true"],
         .floating-bio-strip[data-revealed="true"] {
@@ -3130,6 +3205,10 @@ function IntroProfileStage({
         }
 
         .profile-intro-module .links-list {
+          margin-top: 0;
+        }
+
+        .profile-intro-chapter .links-list {
           margin-top: 0;
         }
 
@@ -3279,6 +3358,8 @@ function IntroProfileStage({
         }
 
         @media (max-width: 920px) {
+          .profile-intro-chapter,
+          .profile-intro-divider-row,
           .profile-intro-bio-strip,
           .floating-bio-strip,
           .profile-intro-module,
@@ -3311,6 +3392,12 @@ function IntroProfileStage({
             margin: 0 auto ${preview ? "18px" : "24px"};
             padding-top: ${preview ? "10px" : "18px"};
             grid-template-columns: minmax(0, 1fr);
+          }
+
+          .profile-intro-chapter {
+            width: 100%;
+            padding: 14px 14px;
+            border-radius: 22px;
           }
 
           .profile-intro-bio-strip,
@@ -3544,119 +3631,38 @@ function IntroProfileStage({
       </section>
 
       {hasDetails ? (
-        floating && floatingPlan ? (
-          <section
-            id={detailsSectionId}
-            ref={detailsRef}
-            className="profile-intro-details is-floating"
-            data-revealed={preview ? "true" : "false"}
-          >
-            {user.bio ? (
-              <div
-                className="floating-bio-strip"
-                data-intro-reveal="item"
-                data-revealed={preview ? "true" : "false"}
-                style={getIntroRevealStyle(0)}
-              >
-                {user.bio}
-              </div>
-            ) : null}
-
-            <FloatingModulesField
-              orderedContentBlocks={orderedContentBlocks}
-              customBlocks={customBlocks}
-              placements={floatingPlan.placements}
-              personality={floatingPlan.personality}
-              widgetWidthScale={presetRenderTuning.widgetWidthScale}
-              dnaTuning={dnaTuning}
-              preview={preview}
-              username={user.username}
-              music={music}
-              motionLevel={motionLevel}
-              themeColor={linkThemeColor}
-              socialThemeColor={socialThemeColor}
-              accentColor={presence.accent}
-              contrastColor={presence.contrast}
-              softColor={presence.soft}
-              featuredBadges={featuredBadges}
-              extraBadgeCount={extraBadgeCount}
-              likes={likes}
-              dislikes={dislikes}
-              views={views}
-              initialMyReaction={initialMyReaction}
-              regularSocialBlocks={regularSocialBlocks}
-              liveSocialBlocks={liveSocialBlocks}
-              links={user.links}
-              linksStyle={composition.linksStyle}
-              socialsStyle={composition.socialsStyle}
-              revealOffset={user.bio ? 1 : 0}
-            />
-          </section>
-        ) : (
-          <section
-            id={detailsSectionId}
-            ref={detailsRef}
-            className="profile-intro-details is-contained"
-            data-revealed={preview ? "true" : "false"}
-          >
-            {user.bio ? (
-              <div
-                className="profile-intro-bio-strip"
-                data-intro-reveal="item"
-                data-revealed={preview ? "true" : "false"}
-                style={getIntroRevealStyle(0)}
-              >
-                <div className="profile-intro-module-head">
-                  <div className="profile-intro-module-copy">
-                    <LuMoonStar size={12} />
-                    About
-                  </div>
-                </div>
-                <div className="profile-intro-bio-card">{user.bio}</div>
-              </div>
-            ) : null}
-
-            {orderedContentBlocks.map((block, index) =>
-              renderIntroDetailBlock(block, {
-                preview,
-                music,
-                motionLevel,
-                username: user.username,
-                themeColor: linkThemeColor,
-                socialThemeColor,
-                accentColor: presence.accent,
-                contrastColor: presence.contrast,
-                softColor: presence.soft,
-                dnaTuning,
-                featuredBadges,
-                extraBadgeCount,
-                likes,
-                dislikes,
-                views,
-                initialMyReaction,
-                regularSocialBlocks,
-                liveSocialBlocks,
-                links: user.links,
-                linksStyle: composition.linksStyle,
-                socialsStyle: composition.socialsStyle,
-                revealIndex: index + (user.bio ? 1 : 0),
-              }),
-            )}
-            {customBlocks.map((block, index) =>
-              renderIntroCustomBlock(block, {
-                key: `custom-${block.id}`,
-                preview,
-                accentColor: linkThemeColor,
-                contrastColor: presence.contrast,
-                softColor: presence.soft,
-                dnaTuning,
-                revealIndex:
-                  orderedContentBlocks.length + index + (user.bio ? 1 : 0),
-                style: getIntroCustomBlockStyle(block),
-              }),
-            )}
-          </section>
-        )
+        <section
+          id={detailsSectionId}
+          ref={detailsRef}
+          className="profile-intro-details is-contained"
+          data-revealed={preview ? "true" : "false"}
+        >
+          {renderIntroChapterSequence({
+            preview,
+            user,
+            orderedContentBlocks,
+            customBlocks,
+            music,
+            motionLevel,
+            username: user.username,
+            themeColor: linkThemeColor,
+            socialThemeColor,
+            accentColor: presence.accent,
+            contrastColor: presence.contrast,
+            softColor: presence.soft,
+            dnaTuning,
+            featuredBadges,
+            extraBadgeCount,
+            likes,
+            dislikes,
+            views,
+            initialMyReaction,
+            regularSocialBlocks,
+            liveSocialBlocks,
+            linksStyle: composition.linksStyle,
+            socialsStyle: composition.socialsStyle,
+          })}
+        </section>
       ) : null}
     </main>
   );
@@ -3781,7 +3787,434 @@ function renderContainedCustomBlock(
   );
 }
 
-function renderIntroCustomBlock(
+function renderIntroChapterSequence(input: {
+  preview: boolean;
+  user: PublicProfileRenderUser;
+  orderedContentBlocks: ProfileCompositionBlock[];
+  customBlocks: ProfileCustomBlock[];
+  music: ProfileMusicData;
+  motionLevel: ProfileMotionLevel;
+  username: string;
+  themeColor: string;
+  socialThemeColor: string;
+  accentColor: string;
+  contrastColor: string;
+  softColor: string;
+  dnaTuning: ProfileDnaTuning;
+  featuredBadges: PublicProfileBadgeEntry[];
+  extraBadgeCount: number;
+  likes: number;
+  dislikes: number;
+  views: number;
+  initialMyReaction: PublicProfileReaction;
+  regularSocialBlocks: PublicSocialBlock[];
+  liveSocialBlocks: PublicSocialBlock[];
+  linksStyle: ProfileCompositionLinksStyle;
+  socialsStyle: ProfileComposition["socialsStyle"];
+}) {
+  const orderedBlockSet = new Set(input.orderedContentBlocks);
+  const aboutBlocks = input.customBlocks.filter((block) => block.type === "quote");
+  const interestBlocks = input.customBlocks.filter(
+    (block) =>
+      block.type === "text-strip" ||
+      block.type === "mood" ||
+      block.type === "status-banner",
+  );
+  const workBlocks = input.customBlocks.filter((block) => block.type === "image-card");
+  const dividerBlocks = input.customBlocks.filter((block) => block.type === "divider");
+
+  let revealIndex = 0;
+  let dividerIndex = 0;
+  const sections: ReactNode[] = [];
+
+  const renderDivider = () => {
+    const block = dividerBlocks[dividerIndex];
+
+    if (!block) {
+      return null;
+    }
+
+    dividerIndex += 1;
+
+    return (
+      <div
+        key={`divider-${block.id}`}
+        className="profile-intro-divider-row"
+        data-intro-reveal="item"
+        data-revealed={input.preview ? "true" : "false"}
+        style={getIntroRevealStyle(revealIndex++)}
+      >
+        <ProfileCustomBlockCard
+          block={block}
+          accentColor={block.accentColor || input.themeColor}
+          contrastColor={input.contrastColor}
+          softColor={input.softColor}
+          dnaTuning={input.dnaTuning}
+          preview={input.preview}
+          compact
+        />
+      </div>
+    );
+  };
+
+  const pushChapter = (chapter: ReactNode | null) => {
+    if (!chapter) {
+      return;
+    }
+
+    if (sections.length > 0) {
+      const divider = renderDivider();
+
+      if (divider) {
+        sections.push(divider);
+      }
+    }
+
+    sections.push(chapter);
+  };
+
+  if (input.user.bio || aboutBlocks.length > 0) {
+    pushChapter(
+      renderIntroChapter({
+        key: "about",
+        preview: input.preview,
+        revealIndex: revealIndex++,
+        label: "About",
+        icon: <LuMoonStar size={12} />,
+        note:
+          input.user.bio && aboutBlocks.length > 0
+            ? `${aboutBlocks.length + 1} notes`
+            : undefined,
+        children: (
+          <div className="profile-intro-chapter-stack">
+            {input.user.bio ? (
+              <div className="profile-intro-chapter-copy">{input.user.bio}</div>
+            ) : null}
+            {aboutBlocks.map((block) =>
+              renderIntroInlineCustomBlock(block, {
+                key: `about-${block.id}`,
+                preview: input.preview,
+                accentColor: input.themeColor,
+                contrastColor: input.contrastColor,
+                softColor: input.softColor,
+                dnaTuning: input.dnaTuning,
+              }),
+            )}
+          </div>
+        ),
+      }),
+    );
+  }
+
+  if (orderedBlockSet.has("music")) {
+    pushChapter(
+      renderIntroChapter({
+        key: "music",
+        preview: input.preview,
+        revealIndex: revealIndex++,
+        label: "Music",
+        icon: <LuMusic4 size={12} />,
+        children: (
+          <ProfileRenderBoundary
+            label="Music card"
+            compact
+            resetKey={`${input.username}-intro-music`}
+          >
+            <ProfileMusicCard
+              music={input.music}
+              themeColor={input.themeColor}
+              accentColor={input.accentColor}
+              contrastColor={input.contrastColor}
+              softColor={input.softColor}
+              compact
+              showPlaceholder={input.preview}
+              motionLevel={input.motionLevel}
+            />
+          </ProfileRenderBoundary>
+        ),
+      }),
+    );
+  }
+
+  if (orderedBlockSet.has("links") || interestBlocks.length > 0) {
+    pushChapter(
+      renderIntroChapter({
+        key: "links-interests",
+        preview: input.preview,
+        revealIndex: revealIndex++,
+        label: "Links / Interests",
+        icon: <LuSparkles size={12} />,
+        note:
+          orderedBlockSet.has("links") && input.user.links.length > 0
+            ? `${input.user.links.length} link${input.user.links.length === 1 ? "" : "s"}`
+            : undefined,
+        children: (
+          <div className="profile-intro-chapter-stack">
+            {interestBlocks.length > 0 ? (
+              <div className="profile-intro-chapter-subsection">
+                {interestBlocks.map((block) =>
+                  renderIntroInlineCustomBlock(block, {
+                    key: `interest-${block.id}`,
+                    preview: input.preview,
+                    accentColor: input.themeColor,
+                    contrastColor: input.contrastColor,
+                    softColor: input.softColor,
+                    dnaTuning: input.dnaTuning,
+                  }),
+                )}
+              </div>
+            ) : null}
+            {orderedBlockSet.has("links") ? (
+              <div className="profile-intro-chapter-subsection">
+                <div className="profile-intro-chapter-subtitle">
+                  <LuArrowUpRight size={12} />
+                  Link collection
+                </div>
+                <div className="links-list">
+                  {renderModernLinks(
+                    input.user.links,
+                    input.themeColor,
+                    input.linksStyle,
+                    input.dnaTuning,
+                  )}
+                </div>
+              </div>
+            ) : null}
+          </div>
+        ),
+      }),
+    );
+  }
+
+  if (orderedBlockSet.has("socials") || orderedBlockSet.has("live")) {
+    pushChapter(
+      renderIntroChapter({
+        key: "socials",
+        preview: input.preview,
+        revealIndex: revealIndex++,
+        label: "Socials",
+        icon: <LuSparkles size={12} />,
+        note:
+          orderedBlockSet.has("socials") && orderedBlockSet.has("live")
+            ? "Connected presence"
+            : undefined,
+        children: (
+          <div className="profile-intro-chapter-stack">
+            {orderedBlockSet.has("socials") ? (
+              <div className="profile-intro-chapter-subsection">
+                {orderedBlockSet.has("live") ? (
+                  <div className="profile-intro-chapter-subtitle">
+                    <LuSparkles size={12} />
+                    Social channels
+                  </div>
+                ) : null}
+                <ProfileRenderBoundary
+                  label="Social presence"
+                  compact
+                  resetKey={`${input.username}-intro-socials`}
+                >
+                  <SocialPresenceSection
+                    blocks={input.regularSocialBlocks}
+                    themeColor={input.socialThemeColor}
+                    compact
+                    preview={input.preview}
+                    mode="socials"
+                    displayStyle={input.socialsStyle}
+                  />
+                </ProfileRenderBoundary>
+              </div>
+            ) : null}
+            {orderedBlockSet.has("live") ? (
+              <div className="profile-intro-chapter-subsection">
+                <div className="profile-intro-chapter-subtitle">
+                  <LuSparkles size={12} />
+                  Live now
+                </div>
+                <ProfileRenderBoundary
+                  label="Live presence"
+                  compact
+                  resetKey={`${input.username}-intro-live`}
+                >
+                  <SocialPresenceSection
+                    blocks={input.liveSocialBlocks}
+                    themeColor={input.socialThemeColor}
+                    compact
+                    preview={input.preview}
+                    mode="live"
+                    displayStyle={input.socialsStyle}
+                  />
+                </ProfileRenderBoundary>
+              </div>
+            ) : null}
+          </div>
+        ),
+      }),
+    );
+  }
+
+  if (workBlocks.length > 0) {
+    pushChapter(
+      renderIntroChapter({
+        key: "work",
+        preview: input.preview,
+        revealIndex: revealIndex++,
+        label: "Work / Projects",
+        icon: <LuArrowUpRight size={12} />,
+        note: `${workBlocks.length} visual${workBlocks.length === 1 ? "" : "s"}`,
+        children: (
+          <div className="profile-intro-chapter-stack">
+            {workBlocks.map((block) =>
+              renderIntroInlineCustomBlock(block, {
+                key: `work-${block.id}`,
+                preview: input.preview,
+                accentColor: input.themeColor,
+                contrastColor: input.contrastColor,
+                softColor: input.softColor,
+                dnaTuning: input.dnaTuning,
+              }),
+            )}
+          </div>
+        ),
+      }),
+    );
+  }
+
+  if (orderedBlockSet.has("badges") || orderedBlockSet.has("stats")) {
+    pushChapter(
+      renderIntroChapter({
+        key: "extras",
+        preview: input.preview,
+        revealIndex: revealIndex++,
+        label: "Extras",
+        icon: <LuBadgeCheck size={12} />,
+        children: (
+          <div className="profile-intro-chapter-stack">
+            {orderedBlockSet.has("badges") ? (
+              <div className="profile-intro-chapter-subsection">
+                {orderedBlockSet.has("stats") ? (
+                  <div className="profile-intro-chapter-subtitle">
+                    <LuBadgeCheck size={12} />
+                    Badges
+                  </div>
+                ) : null}
+                <div className="profile-badge-rail">
+                  {input.featuredBadges.map((item) => {
+                    const visual = getProfileBadgeVisual(item.badge, input.themeColor);
+
+                    return (
+                      <div
+                        key={item.id}
+                        className="profile-badge-pill"
+                        title={item.badge.description || item.badge.name}
+                        style={{
+                          background: visual.pillBackground,
+                          borderColor: visual.pillBorder,
+                          boxShadow: visual.pillShadow,
+                        }}
+                      >
+                        <div className="profile-badge-icon">
+                          <BadgeVisual
+                            slug={item.badge.slug}
+                            color={item.badge.color || visual.color}
+                            rarity={item.badge.rarity}
+                            category={item.badge.category}
+                            size={28}
+                            compact
+                          />
+                        </div>
+                        <span
+                          className="profile-badge-label"
+                          style={{ color: visual.labelColor }}
+                        >
+                          {item.badge.name}
+                        </span>
+                      </div>
+                    );
+                  })}
+                  {input.extraBadgeCount > 0 ? (
+                    <div className="profile-badge-pill">
+                      <div className="profile-badge-icon">+{input.extraBadgeCount}</div>
+                      <span className="profile-badge-label">More</span>
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
+            {orderedBlockSet.has("stats") ? (
+              <div className="profile-intro-chapter-subsection">
+                {orderedBlockSet.has("badges") ? (
+                  <div className="profile-intro-chapter-subtitle">
+                    <LuBadgeCheck size={12} />
+                    Activity
+                  </div>
+                ) : null}
+                {input.preview ? (
+                  <div className="empty-links">
+                    <strong style={{ display: "block", color: "#ffffff", marginBottom: "8px" }}>
+                      Stats preview
+                    </strong>
+                    <span>
+                      {input.views} views, {input.likes} likes, {input.dislikes} dislikes
+                    </span>
+                  </div>
+                ) : (
+                  <ProfileRenderBoundary
+                    label="Profile stats"
+                    compact
+                    resetKey={`${input.username}-intro-stats`}
+                  >
+                    <ProfileHeroClient
+                      username={input.username}
+                      initialViews={input.views}
+                      initialLikes={input.likes}
+                      initialDislikes={input.dislikes}
+                      themeColor={input.themeColor}
+                      initialMyReaction={input.initialMyReaction}
+                      preview={input.preview}
+                    />
+                  </ProfileRenderBoundary>
+                )}
+              </div>
+            ) : null}
+          </div>
+        ),
+      }),
+    );
+  }
+
+  return sections;
+}
+
+function renderIntroChapter(input: {
+  key: string;
+  preview: boolean;
+  revealIndex: number;
+  label: string;
+  icon: ReactNode;
+  children: ReactNode;
+  note?: string;
+}) {
+  return (
+    <div
+      key={input.key}
+      className="profile-intro-chapter"
+      data-intro-reveal="item"
+      data-revealed={input.preview ? "true" : "false"}
+      style={getIntroRevealStyle(input.revealIndex)}
+    >
+      <div className="profile-intro-chapter-head">
+        <div className="profile-intro-chapter-label">
+          {input.icon}
+          {input.label}
+        </div>
+        {input.note ? <div className="profile-intro-chapter-note">{input.note}</div> : null}
+      </div>
+      <div className="profile-intro-chapter-body">{input.children}</div>
+    </div>
+  );
+}
+
+function renderIntroInlineCustomBlock(
   block: ProfileCustomBlock,
   input: {
     key: string;
@@ -3790,21 +4223,13 @@ function renderIntroCustomBlock(
     contrastColor: string;
     softColor: string;
     dnaTuning: ProfileDnaTuning;
-    revealIndex: number;
-    style?: CSSProperties;
   },
 ) {
   return (
-    <div
-      key={input.key}
-      className={getIntroCustomBlockClassName(block)}
-      data-intro-reveal="item"
-      data-revealed={input.preview ? "true" : "false"}
-      style={getIntroRevealStyle(input.revealIndex, input.style)}
-    >
+    <div key={input.key} className={`profile-intro-inline-block custom-${block.type}`}>
       <ProfileCustomBlockCard
         block={block}
-        accentColor={input.accentColor}
+        accentColor={block.accentColor || input.accentColor}
         contrastColor={input.contrastColor}
         softColor={input.softColor}
         dnaTuning={input.dnaTuning}
@@ -4053,251 +4478,6 @@ function renderModernCompositionBlock(
           />
         </ProfileRenderBoundary>
       )}
-    </div>
-  );
-}
-
-function renderIntroDetailBlock(
-  block: ProfileCompositionBlock,
-  input: {
-    preview: boolean;
-    music: ProfileMusicData;
-    motionLevel: ProfileMotionLevel;
-    username: string;
-    themeColor: string;
-    socialThemeColor: string;
-    accentColor: string;
-    contrastColor: string;
-    softColor: string;
-    dnaTuning: ProfileDnaTuning;
-    featuredBadges: PublicProfileBadgeEntry[];
-    extraBadgeCount: number;
-    likes: number;
-    dislikes: number;
-    views: number;
-    initialMyReaction: PublicProfileReaction;
-    regularSocialBlocks: PublicSocialBlock[];
-    liveSocialBlocks: PublicSocialBlock[];
-    links: PublicProfileRenderUser["links"];
-    linksStyle: ProfileCompositionLinksStyle;
-    socialsStyle: ProfileComposition["socialsStyle"];
-    revealIndex: number;
-  },
-) {
-  if (block === "music") {
-    return (
-      <div
-        key={block}
-        className={getIntroDetailModuleClassName(block)}
-        data-intro-reveal="item"
-        data-revealed={input.preview ? "true" : "false"}
-        style={getIntroRevealStyle(input.revealIndex)}
-      >
-        <div className="profile-intro-module-stack">
-          <div className="profile-intro-module-copy">
-            <LuMusic4 size={12} />
-            Music
-          </div>
-          <ProfileRenderBoundary label="Music card" compact resetKey={`${input.username}-${block}`}>
-            <ProfileMusicCard
-              music={input.music}
-              themeColor={input.themeColor}
-              accentColor={input.accentColor}
-              contrastColor={input.contrastColor}
-              softColor={input.softColor}
-              compact
-              showPlaceholder={input.preview}
-              motionLevel={input.motionLevel}
-            />
-          </ProfileRenderBoundary>
-        </div>
-      </div>
-    );
-  }
-
-  if (block === "socials") {
-    return (
-      <div
-        key={block}
-        className={getIntroDetailModuleClassName(block)}
-        data-intro-reveal="item"
-        data-revealed={input.preview ? "true" : "false"}
-        style={getIntroRevealStyle(input.revealIndex)}
-      >
-        <div className="profile-intro-module-stack">
-          <div className="profile-intro-module-copy">
-            <LuSparkles size={12} />
-            Socials
-          </div>
-          <ProfileRenderBoundary label="Social presence" compact resetKey={`${input.username}-${block}`}>
-            <SocialPresenceSection
-              blocks={input.regularSocialBlocks}
-              themeColor={input.socialThemeColor}
-              compact
-              preview={input.preview}
-              mode="socials"
-              displayStyle={input.socialsStyle}
-            />
-          </ProfileRenderBoundary>
-        </div>
-      </div>
-    );
-  }
-
-  if (block === "live") {
-    return (
-      <div
-        key={block}
-        className={getIntroDetailModuleClassName(block)}
-        data-intro-reveal="item"
-        data-revealed={input.preview ? "true" : "false"}
-        style={getIntroRevealStyle(input.revealIndex)}
-      >
-        <div className="profile-intro-module-stack">
-          <div className="profile-intro-module-copy">
-            <LuSparkles size={12} />
-            Live
-          </div>
-          <ProfileRenderBoundary label="Live presence" compact resetKey={`${input.username}-${block}`}>
-            <SocialPresenceSection
-              blocks={input.liveSocialBlocks}
-              themeColor={input.socialThemeColor}
-              compact
-              preview={input.preview}
-              mode="live"
-              displayStyle={input.socialsStyle}
-            />
-          </ProfileRenderBoundary>
-        </div>
-      </div>
-    );
-  }
-
-  if (block === "links") {
-    return (
-      <div
-        key={block}
-        className={getIntroDetailModuleClassName(block)}
-        data-intro-reveal="item"
-        data-revealed={input.preview ? "true" : "false"}
-        style={getIntroRevealStyle(input.revealIndex)}
-      >
-        <div className="profile-intro-module-stack">
-          <div className="profile-intro-module-head">
-            <div className="profile-intro-module-copy">
-              <LuSparkles size={12} />
-              Links
-            </div>
-            <div className="profile-intro-module-count">
-              {input.links.length} link{input.links.length === 1 ? "" : "s"}
-            </div>
-          </div>
-          <div className="links-list">
-            {renderModernLinks(
-              input.links,
-              input.themeColor,
-              input.linksStyle,
-              input.dnaTuning,
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (block === "badges") {
-    return (
-      <div
-        key={block}
-        className={getIntroDetailModuleClassName(block)}
-        data-intro-reveal="item"
-        data-revealed={input.preview ? "true" : "false"}
-        style={getIntroRevealStyle(input.revealIndex)}
-      >
-        <div className="profile-intro-module-stack">
-          <div className="profile-intro-module-copy">
-            <LuBadgeCheck size={12} />
-            Badges
-          </div>
-          <div className="profile-badge-rail">
-            {input.featuredBadges.map((item) => {
-              const visual = getProfileBadgeVisual(item.badge, input.themeColor);
-
-              return (
-                <div
-                  key={item.id}
-                  className="profile-badge-pill"
-                  title={item.badge.description || item.badge.name}
-                  style={{
-                    background: visual.pillBackground,
-                    borderColor: visual.pillBorder,
-                    boxShadow: visual.pillShadow,
-                  }}
-                >
-                  <div className="profile-badge-icon">
-                    <BadgeVisual
-                      slug={item.badge.slug}
-                      color={item.badge.color || visual.color}
-                      rarity={item.badge.rarity}
-                      category={item.badge.category}
-                      size={28}
-                      compact
-                    />
-                  </div>
-                  <span className="profile-badge-label" style={{ color: visual.labelColor }}>
-                    {item.badge.name}
-                  </span>
-                </div>
-              );
-            })}
-            {input.extraBadgeCount > 0 ? (
-              <div className="profile-badge-pill">
-                <div className="profile-badge-icon">+{input.extraBadgeCount}</div>
-                <span className="profile-badge-label">More</span>
-              </div>
-            ) : null}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div
-      key={block}
-      className={getIntroDetailModuleClassName(block)}
-      data-intro-reveal="item"
-      data-revealed={input.preview ? "true" : "false"}
-      style={getIntroRevealStyle(input.revealIndex)}
-    >
-      <div className="profile-intro-module-stack">
-        <div className="profile-intro-module-copy">
-          <LuBadgeCheck size={12} />
-          Stats
-        </div>
-        {input.preview ? (
-          <div className="empty-links">
-            <strong style={{ display: "block", color: "#ffffff", marginBottom: "8px" }}>
-              Stats preview
-            </strong>
-            <span>
-              {input.views} views, {input.likes} likes, {input.dislikes} dislikes
-            </span>
-          </div>
-        ) : (
-          <ProfileRenderBoundary label="Profile stats" compact resetKey={`${input.username}-${block}`}>
-            <ProfileHeroClient
-              username={input.username}
-              initialViews={input.views}
-              initialLikes={input.likes}
-              initialDislikes={input.dislikes}
-              themeColor={input.themeColor}
-              initialMyReaction={input.initialMyReaction}
-              preview={input.preview}
-            />
-          </ProfileRenderBoundary>
-        )}
-      </div>
     </div>
   );
 }
