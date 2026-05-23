@@ -50,7 +50,9 @@ export const PROFILE_COMPOSITION_SOCIAL_STYLES = [
 export const PROFILE_COMPOSITION_METADATA_PLACEMENTS = [
   "under-username",
   "bio",
-  "footer",
+  "hero-footer",
+  "screen-bottom-left",
+  "screen-bottom-right",
   "hidden",
 ] as const;
 
@@ -204,17 +206,22 @@ export const PROFILE_COMPOSITION_METADATA_PLACEMENT_OPTIONS = [
   {
     value: "under-username",
     name: "Under username",
-    description: "Keep views, reactions, and location directly in the identity stack.",
+    description: "Keep views, reactions, and location directly beneath the name.",
   },
   {
-    value: "bio",
-    name: "Bio area",
-    description: "Tuck metadata beneath the bio for a more editorial profile flow.",
+    value: "hero-footer",
+    name: "Hero footer",
+    description: "Anchor the stats row lower in the hero for a quieter identity stack.",
   },
   {
-    value: "footer",
-    name: "Footer row",
-    description: "Let metadata sit lower on the page as a quiet profile footer.",
+    value: "screen-bottom-left",
+    name: "Bottom-left corner",
+    description: "Pin views, reactions, and location to the lower-left screen edge.",
+  },
+  {
+    value: "screen-bottom-right",
+    name: "Bottom-right corner",
+    description: "Pin views, reactions, and location to the lower-right screen edge.",
   },
   {
     value: "hidden",
@@ -547,6 +554,14 @@ function normalizeMetadataPlacement(
   value: unknown,
   fallback = DEFAULT_PROFILE_COMPOSITION.metadata.placement,
 ): ProfileCompositionMetadataPlacement {
+  if (typeof value === "string") {
+    const legacyValue = value.trim().toLowerCase();
+
+    if (legacyValue === "footer") {
+      return "hero-footer";
+    }
+  }
+
   return normalizeEnumValue(
     value,
     PROFILE_COMPOSITION_METADATA_PLACEMENTS,

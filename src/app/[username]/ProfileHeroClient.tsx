@@ -16,6 +16,7 @@ type Props = {
   locationText?: string | null;
   align?: "start" | "center";
   preview?: boolean;
+  variant?: "inline" | "corner";
 };
 
 function getDailyViewStorageKey(username: string) {
@@ -32,6 +33,7 @@ export default function ProfileHeroClient({
   locationText,
   align = "start",
   preview = false,
+  variant = "inline",
 }: Props) {
   const [views, setViews] = useState(initialViews);
   const [likes, setLikes] = useState(initialLikes);
@@ -148,7 +150,7 @@ export default function ProfileHeroClient({
         .profile-hero-metrics {
           display: flex;
           align-items: center;
-          gap: 8px;
+          gap: 6px;
           flex-wrap: wrap;
           min-width: 0;
         }
@@ -157,14 +159,19 @@ export default function ProfileHeroClient({
           justify-content: center;
         }
 
+        .profile-hero-metrics[data-variant="corner"] {
+          gap: 7px;
+          max-width: min(88vw, 480px);
+        }
+
         .profile-hero-chip,
         .profile-hero-reaction {
           transition:
-            transform 160ms ease,
-            box-shadow 160ms ease,
-            border-color 160ms ease,
-            background 160ms ease,
-            opacity 160ms ease;
+            transform 180ms ease,
+            box-shadow 180ms ease,
+            border-color 180ms ease,
+            background 180ms ease,
+            opacity 180ms ease;
         }
 
         .profile-hero-reaction:hover:not(:disabled),
@@ -180,9 +187,16 @@ export default function ProfileHeroClient({
           overflow-wrap: anywhere;
         }
 
+        .profile-hero-metrics[data-variant="corner"] .profile-hero-chip,
+        .profile-hero-metrics[data-variant="corner"] .profile-hero-reaction {
+          box-shadow:
+            0 12px 28px rgba(0, 0, 0, 0.22),
+            inset 0 1px 0 rgba(255,255,255,0.05);
+        }
+
         @media (max-width: 640px) {
           .profile-hero-metrics {
-            gap: 7px;
+            gap: 6px;
           }
 
           .profile-hero-location {
@@ -198,14 +212,18 @@ export default function ProfileHeroClient({
         }
       `}</style>
 
-      <div className={`profile-hero-metrics ${align === "center" ? "align-center" : ""}`}>
+      <div
+        className={`profile-hero-metrics ${align === "center" ? "align-center" : ""}`}
+        data-variant={variant}
+      >
         <MetricChip
           label="Views"
           value={views}
           icon={<LuEye size={14} />}
           color="#dbe4f5"
-          background="rgba(255,255,255,0.04)"
-          border="rgba(255,255,255,0.08)"
+          background={variant === "corner" ? "rgba(7,10,18,0.78)" : "rgba(255,255,255,0.035)"}
+          border={variant === "corner" ? "rgba(255,255,255,0.10)" : "rgba(255,255,255,0.07)"}
+          compact={variant === "corner"}
         />
 
         <ReactionButton
@@ -216,8 +234,9 @@ export default function ProfileHeroClient({
           disabled={isSubmitting || preview}
           isActive={myReaction === "like"}
           accentColor={themeColor}
-          background="rgba(69, 212, 131, 0.08)"
-          border="rgba(69, 212, 131, 0.18)"
+          background={variant === "corner" ? "rgba(9, 20, 16, 0.8)" : "rgba(69, 212, 131, 0.06)"}
+          border={variant === "corner" ? "rgba(69, 212, 131, 0.18)" : "rgba(69, 212, 131, 0.14)"}
+          compact={variant === "corner"}
         />
 
         <ReactionButton
@@ -228,8 +247,9 @@ export default function ProfileHeroClient({
           disabled={isSubmitting || preview}
           isActive={myReaction === "dislike"}
           accentColor={themeColor}
-          background="rgba(248, 113, 113, 0.08)"
-          border="rgba(248, 113, 113, 0.16)"
+          background={variant === "corner" ? "rgba(20, 11, 14, 0.8)" : "rgba(248, 113, 113, 0.06)"}
+          border={variant === "corner" ? "rgba(248, 113, 113, 0.18)" : "rgba(248, 113, 113, 0.14)"}
+          compact={variant === "corner"}
         />
 
         {normalizedLocationText ? (
@@ -238,9 +258,10 @@ export default function ProfileHeroClient({
             value={normalizedLocationText}
             icon={<LuMapPin size={14} />}
             color="#edf4ff"
-            background="rgba(255,255,255,0.04)"
-            border="rgba(255,255,255,0.08)"
+            background={variant === "corner" ? "rgba(7,10,18,0.78)" : "rgba(255,255,255,0.035)"}
+            border={variant === "corner" ? "rgba(255,255,255,0.10)" : "rgba(255,255,255,0.07)"}
             className="profile-hero-location"
+            compact={variant === "corner"}
           />
         ) : null}
       </div>
@@ -256,6 +277,7 @@ function MetricChip({
   background,
   border,
   className,
+  compact = false,
 }: {
   label: string;
   value: number | string;
@@ -264,20 +286,23 @@ function MetricChip({
   background: string;
   border: string;
   className?: string;
+  compact?: boolean;
 }) {
   return (
     <div
       className={`profile-hero-chip ${className ?? ""}`.trim()}
       aria-label={`${label}: ${value}`}
       style={{
-        ...chipBaseStyle,
+        ...chipBaseStyle(compact),
         color,
         background,
         border: `1px solid ${border}`,
+        backdropFilter: "blur(10px) saturate(116%)",
+        WebkitBackdropFilter: "blur(10px) saturate(116%)",
       }}
     >
-      <span style={iconWrapStyle}>{icon}</span>
-      <span className="profile-hero-token-copy" style={valueTextStyle}>
+      <span style={iconWrapStyle(compact)}>{icon}</span>
+      <span className="profile-hero-token-copy" style={valueTextStyle(compact)}>
         {typeof value === "number" ? value.toLocaleString() : value}
       </span>
     </div>
@@ -294,6 +319,7 @@ function ReactionButton({
   accentColor,
   background,
   border,
+  compact = false,
 }: {
   label: string;
   value: number;
@@ -304,6 +330,7 @@ function ReactionButton({
   accentColor: string;
   background: string;
   border: string;
+  compact?: boolean;
 }) {
   return (
     <button
@@ -318,11 +345,12 @@ function ReactionButton({
         background,
         border,
         disabled,
-        isActive
+        isActive,
+        compact,
       )}
     >
-      <span style={iconWrapStyle}>{icon}</span>
-      <span style={valueTextStyle}>{value.toLocaleString()}</span>
+      <span style={iconWrapStyle(compact)}>{icon}</span>
+      <span style={valueTextStyle(compact)}>{value.toLocaleString()}</span>
     </button>
   );
 }
@@ -332,49 +360,58 @@ function reactionButtonStyle(
   background: string,
   border: string,
   disabled: boolean,
-  isActive: boolean
+  isActive: boolean,
+  compact: boolean,
 ): CSSProperties {
   return {
-    ...chipBaseStyle,
+    ...chipBaseStyle(compact),
     cursor: disabled ? "not-allowed" : "pointer",
     color: "#f7f9ff",
     background,
     border: `1px solid ${isActive ? `${accentColor}66` : border}`,
     boxShadow: isActive
-      ? `0 0 0 1px ${accentColor}36, 0 10px 24px ${accentColor}14`
-      : `0 8px 20px ${accentColor}0a`,
+      ? `0 0 0 1px ${accentColor}30, 0 12px 28px ${accentColor}14`
+      : `0 10px 24px ${accentColor}0a`,
     opacity: disabled ? 0.7 : 1,
     pointerEvents: disabled ? "none" : "auto",
     fontFamily: "inherit",
+    backdropFilter: "blur(10px) saturate(116%)",
+    WebkitBackdropFilter: "blur(10px) saturate(116%)",
   };
 }
 
-const chipBaseStyle: CSSProperties = {
-  minHeight: "30px",
-  padding: "0 10px",
-  borderRadius: "999px",
-  display: "inline-flex",
-  alignItems: "center",
-  gap: "7px",
-  boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04)",
-  minWidth: 0,
-  boxSizing: "border-box",
-};
+function chipBaseStyle(compact: boolean): CSSProperties {
+  return {
+    minHeight: compact ? "28px" : "30px",
+    padding: compact ? "0 9px" : "0 10px",
+    borderRadius: "999px",
+    display: "inline-flex",
+    alignItems: "center",
+    gap: compact ? "6px" : "7px",
+    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04)",
+    minWidth: 0,
+    boxSizing: "border-box",
+  };
+}
 
-const iconWrapStyle: CSSProperties = {
-  width: "18px",
-  height: "18px",
-  borderRadius: "999px",
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  flexShrink: 0,
-};
+function iconWrapStyle(compact: boolean): CSSProperties {
+  return {
+    width: compact ? "16px" : "18px",
+    height: compact ? "16px" : "18px",
+    borderRadius: "999px",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  };
+}
 
-const valueTextStyle: CSSProperties = {
-  fontSize: "12px",
-  lineHeight: 1,
-  fontWeight: 800,
-  letterSpacing: "0.01em",
-  minWidth: 0,
-};
+function valueTextStyle(compact: boolean): CSSProperties {
+  return {
+    fontSize: compact ? "11px" : "12px",
+    lineHeight: 1,
+    fontWeight: 800,
+    letterSpacing: "0.01em",
+    minWidth: 0,
+  };
+}

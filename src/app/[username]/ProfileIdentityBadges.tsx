@@ -27,14 +27,27 @@ export default function ProfileIdentityBadges({
   }
 
   return (
-    <div className={`profile-identity-badges align-${align}`}>
+    <div className={`profile-identity-badges align-${align}`} role="list" aria-label="Profile badges">
       <style>{`
         .profile-identity-badges {
           display: flex;
           align-items: center;
-          gap: 7px;
+          gap: 6px;
           flex-wrap: wrap;
           min-width: 0;
+          width: fit-content;
+          max-width: 100%;
+          padding: 4px;
+          border-radius: 999px;
+          border: 1px solid rgba(255,255,255,0.08);
+          background:
+            linear-gradient(180deg, rgba(255,255,255,0.05), rgba(7,10,18,0.54)),
+            rgba(7,10,18,0.28);
+          box-shadow:
+            0 14px 34px rgba(0,0,0,0.18),
+            inset 0 1px 0 rgba(255,255,255,0.05);
+          backdrop-filter: blur(14px) saturate(118%);
+          -webkit-backdrop-filter: blur(14px) saturate(118%);
         }
 
         .profile-identity-badges.align-center {
@@ -43,21 +56,26 @@ export default function ProfileIdentityBadges({
 
         .profile-identity-badge {
           position: relative;
-          width: 32px;
-          height: 32px;
-          border: 1px solid rgba(255,255,255,0.09);
+          width: 30px;
+          height: 30px;
+          border: 1px solid rgba(255,255,255,0.08);
           border-radius: 999px;
           display: inline-flex;
           align-items: center;
           justify-content: center;
           background:
-            linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.03)),
-            rgba(7,10,18,0.42);
+            radial-gradient(circle at 30% 24%, rgba(255,255,255,0.16), transparent 54%),
+            linear-gradient(180deg, rgba(255,255,255,0.06), rgba(7,10,18,0.68));
           box-shadow:
             inset 0 1px 0 rgba(255,255,255,0.06),
-            0 10px 24px rgba(0,0,0,0.16);
+            0 10px 24px rgba(0,0,0,0.18);
           color: #f8fbff;
           outline: none;
+          transition:
+            transform 180ms ease,
+            border-color 180ms ease,
+            box-shadow 180ms ease,
+            background 180ms ease;
         }
 
         .profile-identity-badge::before,
@@ -114,6 +132,11 @@ export default function ProfileIdentityBadges({
           transform: translate(-50%, 0);
         }
 
+        .profile-identity-badge:hover,
+        .profile-identity-badge:focus-visible {
+          transform: translateY(-1px);
+        }
+
         .profile-identity-badge-more {
           font-size: 10px;
           font-weight: 900;
@@ -121,6 +144,12 @@ export default function ProfileIdentityBadges({
         }
 
         @media (max-width: 640px) {
+          .profile-identity-badges {
+            width: 100%;
+            justify-content: flex-start;
+            border-radius: 18px;
+          }
+
           .profile-identity-badge::after {
             max-width: min(70vw, 220px);
             white-space: normal;
@@ -151,10 +180,11 @@ export default function ProfileIdentityBadges({
             data-tooltip={item.badge.name}
             tabIndex={0}
             aria-label={item.badge.name}
+            role="listitem"
             style={{
               borderColor: isHighlighted ? `${accentColor}44` : "rgba(255,255,255,0.09)",
               boxShadow: isHighlighted
-                ? `inset 0 1px 0 rgba(255,255,255,0.08), 0 12px 26px ${accentColor}18`
+                ? `inset 0 1px 0 rgba(255,255,255,0.08), 0 14px 28px ${accentColor}20, 0 0 0 1px ${accentColor}18`
                 : "inset 0 1px 0 rgba(255,255,255,0.06), 0 10px 24px rgba(0,0,0,0.16)",
             }}
           >
@@ -163,7 +193,7 @@ export default function ProfileIdentityBadges({
               color={accentColor}
               rarity={item.badge.rarity}
               category={item.badge.category}
-              size={24}
+              size={18}
               compact
             />
           </span>
@@ -176,6 +206,7 @@ export default function ProfileIdentityBadges({
           data-tooltip={`${extraBadgeCount} more badge${extraBadgeCount === 1 ? "" : "s"}`}
           tabIndex={0}
           aria-label={`${extraBadgeCount} more badges`}
+          role="listitem"
         >
           <span className="profile-identity-badge-more">+{extraBadgeCount}</span>
         </span>

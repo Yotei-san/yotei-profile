@@ -271,9 +271,6 @@ function DefaultLayout(props: Props) {
             />
 
             <div style={{ display: "grid", gap: "10px", minWidth: 0 }}>
-              <div style={eyebrowStyle(sceneAppearance.linkThemeColor)}>
-                {sceneAppearance.scene.name}
-              </div>
               <ProfileNamePlate
                 displayName={props.displayName}
                 username={props.user.username}
@@ -299,19 +296,19 @@ function DefaultLayout(props: Props) {
                 initialMyReaction: props.initialMyReaction,
                 preview: props.preview,
               })}
-              <div
-                style={presenceChipStyle(
-                  presence.presenceBackground,
-                  presence.presenceBorder,
-                  cornerTokens,
-                  dnaTuning,
-                )}
-              >
-                {presence.statusLabel}
-              </div>
               <PillRow pills={props.heroPills} compact dnaTuning={dnaTuning} />
               {props.user.bio ? <p style={defaultBioStyle(densityTokens)}>{props.user.bio}</p> : null}
               {renderIdentityMetadataSlot("bio", {
+                composition: props.composition,
+                username: props.user.username,
+                views: props.views,
+                likes: props.likes,
+                dislikes: props.dislikes,
+                themeColor: sceneAppearance.linkThemeColor,
+                initialMyReaction: props.initialMyReaction,
+                preview: props.preview,
+              })}
+              {renderIdentityMetadataSlot("hero-footer", {
                 composition: props.composition,
                 username: props.user.username,
                 views: props.views,
@@ -365,7 +362,17 @@ function DefaultLayout(props: Props) {
               preview: props.preview,
             }),
           )}
-          {renderIdentityMetadataSlot("footer", {
+          {renderIdentityMetadataSlot("screen-bottom-left", {
+            composition: props.composition,
+            username: props.user.username,
+            views: props.views,
+            likes: props.likes,
+            dislikes: props.dislikes,
+            themeColor: sceneAppearance.linkThemeColor,
+            initialMyReaction: props.initialMyReaction,
+            preview: props.preview,
+          })}
+          {renderIdentityMetadataSlot("screen-bottom-right", {
             composition: props.composition,
             username: props.user.username,
             views: props.views,
@@ -465,9 +472,6 @@ function SimplisticLayout(props: Props) {
           />
 
           <div style={{ display: "grid", gap: "10px" }}>
-            <div style={simpleKickerStyle(sceneAppearance.linkThemeColor)}>
-              {sceneAppearance.scene.name}
-            </div>
             <ProfileNamePlate
               displayName={props.displayName}
               username={props.user.username}
@@ -493,18 +497,18 @@ function SimplisticLayout(props: Props) {
               initialMyReaction: props.initialMyReaction,
               preview: props.preview,
             })}
-            <div
-              style={presenceChipStyle(
-                presence.presenceBackground,
-                presence.presenceBorder,
-                cornerTokens,
-                dnaTuning,
-              )}
-            >
-              {presence.statusLabel}
-            </div>
             {props.user.bio ? <p style={simplisticBioStyle(densityTokens)}>{props.user.bio}</p> : null}
             {renderIdentityMetadataSlot("bio", {
+              composition: props.composition,
+              username: props.user.username,
+              views: props.views,
+              likes: props.likes,
+              dislikes: props.dislikes,
+              themeColor: sceneAppearance.linkThemeColor,
+              initialMyReaction: props.initialMyReaction,
+              preview: props.preview,
+            })}
+            {renderIdentityMetadataSlot("hero-footer", {
               composition: props.composition,
               username: props.user.username,
               views: props.views,
@@ -574,7 +578,17 @@ function SimplisticLayout(props: Props) {
             preview: props.preview,
           }),
         )}
-        {renderIdentityMetadataSlot("footer", {
+        {renderIdentityMetadataSlot("screen-bottom-left", {
+          composition: props.composition,
+          username: props.user.username,
+          views: props.views,
+          likes: props.likes,
+          dislikes: props.dislikes,
+          themeColor: sceneAppearance.linkThemeColor,
+          initialMyReaction: props.initialMyReaction,
+          preview: props.preview,
+        })}
+        {renderIdentityMetadataSlot("screen-bottom-right", {
           composition: props.composition,
           username: props.user.username,
           views: props.views,
@@ -691,9 +705,6 @@ function PortfolioLayout(props: Props) {
             depth,
           )}
         >
-          <div style={eyebrowStyle(sceneAppearance.linkThemeColor)}>
-            {sceneAppearance.scene.name}
-          </div>
           <AvatarVisual
             avatarUrl={props.user.avatarUrl}
             avatarInitials={props.avatarInitials}
@@ -739,18 +750,18 @@ function PortfolioLayout(props: Props) {
               initialMyReaction: props.initialMyReaction,
               preview: props.preview,
             })}
-            <div
-              style={presenceChipStyle(
-                presence.presenceBackground,
-                presence.presenceBorder,
-                cornerTokens,
-                dnaTuning,
-              )}
-            >
-              {presence.statusLabel}
-            </div>
             {props.user.bio ? <p style={portfolioBioStyle(densityTokens)}>{props.user.bio}</p> : null}
             {renderIdentityMetadataSlot("bio", {
+              composition: props.composition,
+              username: props.user.username,
+              views: props.views,
+              likes: props.likes,
+              dislikes: props.dislikes,
+              themeColor: sceneAppearance.linkThemeColor,
+              initialMyReaction: props.initialMyReaction,
+              preview: props.preview,
+            })}
+            {renderIdentityMetadataSlot("hero-footer", {
               composition: props.composition,
               username: props.user.username,
               views: props.views,
@@ -819,7 +830,17 @@ function PortfolioLayout(props: Props) {
               preview: props.preview,
             }),
           )}
-          {renderIdentityMetadataSlot("footer", {
+          {renderIdentityMetadataSlot("screen-bottom-left", {
+            composition: props.composition,
+            username: props.user.username,
+            views: props.views,
+            likes: props.likes,
+            dislikes: props.dislikes,
+            themeColor: sceneAppearance.linkThemeColor,
+            initialMyReaction: props.initialMyReaction,
+            preview: props.preview,
+          })}
+          {renderIdentityMetadataSlot("screen-bottom-right", {
             composition: props.composition,
             username: props.user.username,
             views: props.views,
@@ -1192,11 +1213,14 @@ function PillRow({
               : `0 ${Math.max(9, Math.round(10 * dnaTuning.chipScale))}px`,
             borderRadius: "999px",
             color: pill.color,
-            background: subtle ? "rgba(255,255,255,0.04)" : withAlpha(pill.color, "14"),
-            border: `1px solid ${subtle ? "rgba(255,255,255,0.08)" : withAlpha(pill.color, "24")}`,
+            background: subtle
+              ? "linear-gradient(180deg, rgba(255,255,255,0.045), rgba(8,10,16,0.44))"
+              : withAlpha(pill.color, "12"),
+            border: `1px solid ${subtle ? "rgba(255,255,255,0.07)" : withAlpha(pill.color, "20")}`,
             fontSize: `${Math.max(9, Math.round(10 * dnaTuning.chipScale))}px`,
             fontWeight: 800,
             letterSpacing: "0.02em",
+            boxShadow: subtle ? "inset 0 1px 0 rgba(255,255,255,0.04)" : "none",
           }}
         >
           {pill.icon}
@@ -1208,7 +1232,12 @@ function PillRow({
 }
 
 function renderIdentityMetadataSlot(
-  slot: "under-username" | "bio" | "footer",
+  slot:
+    | "under-username"
+    | "bio"
+    | "hero-footer"
+    | "screen-bottom-left"
+    | "screen-bottom-right",
   input: {
     composition: ProfileComposition;
     username: string;
@@ -1224,18 +1253,44 @@ function renderIdentityMetadataSlot(
     return null;
   }
 
+  const isScreenCorner =
+    slot === "screen-bottom-left" || slot === "screen-bottom-right";
+
   return (
-    <ProfileHeroClient
-      username={input.username}
-      initialViews={input.views}
-      initialLikes={input.likes}
-      initialDislikes={input.dislikes}
-      themeColor={input.themeColor}
-      initialMyReaction={input.initialMyReaction}
-      locationText={input.composition.metadata.locationText}
-      preview={input.preview}
-    />
+    <div
+      style={
+        isScreenCorner
+          ? screenMetadataStyle(slot === "screen-bottom-left" ? "left" : "right", input.preview)
+          : undefined
+      }
+    >
+      <ProfileHeroClient
+        username={input.username}
+        initialViews={input.views}
+        initialLikes={input.likes}
+        initialDislikes={input.dislikes}
+        themeColor={input.themeColor}
+        initialMyReaction={input.initialMyReaction}
+        locationText={input.composition.metadata.locationText}
+        preview={input.preview}
+        variant={isScreenCorner ? "corner" : "inline"}
+      />
+    </div>
   );
+}
+
+function screenMetadataStyle(
+  side: "left" | "right",
+  preview = false,
+): CSSProperties {
+  return {
+    position: preview ? "absolute" : "fixed",
+    bottom: preview ? "14px" : "18px",
+    left: side === "left" ? (preview ? "14px" : "18px") : undefined,
+    right: side === "right" ? (preview ? "14px" : "18px") : undefined,
+    zIndex: 3,
+    pointerEvents: "auto",
+  };
 }
 
 function LinksSection({

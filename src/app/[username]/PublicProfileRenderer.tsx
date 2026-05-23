@@ -361,12 +361,10 @@ export default function PublicProfileRenderer({
   );
   const visibleCustomBlocks = safeComposition.customBlocks.filter((block) => block.visible);
   const isFloatingComposition = safeComposition.mode === "floating";
-  const hasFooterMetadata = safeComposition.metadata.placement === "footer";
   const hasIntroDetails =
     Boolean(safeUser.bio) ||
     orderedContentBlocks.length > 0 ||
-    visibleCustomBlocks.length > 0 ||
-    hasFooterMetadata;
+    visibleCustomBlocks.length > 0;
   const avatarAuraAnimation = motionTokens.allowDecorativeMotion
     ? `profile-aura ${motionPersonalityTokens.glowPulseDurationS.toFixed(2)}s ${motionPersonalityTokens.transitionEasing} infinite`
     : "none";
@@ -740,11 +738,10 @@ export default function PublicProfileRenderer({
           position: relative;
           border-radius: var(--profile-panel-radius);
           background: ${panelBackground};
-          border: 1px solid rgba(255, 255, 255, calc(var(--profile-border-alpha) + 0.015));
+          border: 1px solid rgba(255, 255, 255, calc(var(--profile-border-alpha) + 0.006));
           box-shadow:
             ${presence.panelGlow},
-            ${glassTokens.shadowBoost},
-            0 ${Math.round(24 * depth.shadowDepth * dnaTuning.shadowScale)}px ${Math.round(54 * depth.shadowDepth * dnaTuning.shadowScale)}px rgba(0, 0, 0, calc(var(--profile-shadow-alpha) + 0.04)),
+            0 ${Math.round(20 * depth.shadowDepth * dnaTuning.shadowScale)}px ${Math.round(48 * depth.shadowDepth * dnaTuning.shadowScale)}px rgba(0, 0, 0, calc(var(--profile-shadow-alpha) + 0.02)),
             inset 0 1px 0 rgba(255, 255, 255, 0.05);
           overflow: hidden;
           backdrop-filter: ${resolvedPanelBackdropFilter};
@@ -764,7 +761,7 @@ export default function PublicProfileRenderer({
             radial-gradient(circle at top right, ${withAlpha(presence.accent, "14")} 0%, transparent 28%),
             ${presence.auraOverlay};
           pointer-events: none;
-          opacity: calc(0.92 + var(--profile-scroll-focus) * 0.12);
+          opacity: calc(0.84 + var(--profile-scroll-focus) * 0.08);
         }
 
         .profile-floating-grid {
@@ -790,13 +787,12 @@ export default function PublicProfileRenderer({
         }
 
         .profile-links-column {
-          border-left: 1px solid ${withAlpha(presence.accent, "12")};
+          border-left: 1px solid ${withAlpha(presence.accent, "0f")};
           background:
-            linear-gradient(180deg, rgba(255,255,255,0.018), transparent 22%),
+            linear-gradient(180deg, rgba(255,255,255,0.014), transparent 20%),
             ${surfaceBackground};
         }
 
-        .panel-topbar,
         .links-header {
           display: flex;
           align-items: center;
@@ -805,19 +801,18 @@ export default function PublicProfileRenderer({
           flex-wrap: wrap;
         }
 
-        .ambient-chip,
-        .profile-kicker,
         .links-count,
+        .profile-kicker,
         .preview-callout {
           min-height: var(--profile-chip-height);
-          padding: 0 var(--profile-chip-padding-x);
+          padding: 0 ${Math.max(8, Math.round(10 * dnaTuning.chipScale))}px;
           border-radius: var(--profile-chip-radius);
           display: inline-flex;
           align-items: center;
           gap: var(--profile-chip-gap);
           color: #edf2fb;
-          background: rgba(255, 255, 255, 0.04);
-          border: 1px solid rgba(255, 255, 255, var(--profile-border-alpha));
+          background: rgba(255, 255, 255, 0.035);
+          border: 1px solid rgba(255, 255, 255, calc(var(--profile-border-alpha) - 0.01));
           font-size: var(--profile-chip-font-size);
           font-weight: 800;
           letter-spacing: var(--profile-label-tracking);
@@ -831,7 +826,6 @@ export default function PublicProfileRenderer({
             opacity var(--profile-transition-duration) var(--profile-motion-ease);
         }
 
-        .ambient-chip.accent,
         .preview-callout {
           color: #ffe5f1;
           border-color: ${presence.presenceBorder};
@@ -841,28 +835,11 @@ export default function PublicProfileRenderer({
 
         .preview-callout {
           width: fit-content;
-        }
-
-        .presence-chip {
-          width: fit-content;
-          min-height: var(--profile-chip-height);
-          margin-top: 8px;
-          padding: 0 var(--profile-chip-padding-x);
-          border-radius: var(--profile-chip-radius);
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          color: #f7fbff;
-          background: ${presence.presenceBackground};
-          border: 1px solid ${presence.presenceBorder};
-          box-shadow: 0 10px 22px ${withAlpha(presence.accent, dnaTuning.glowScale >= 1.1 ? "16" : "10")};
-          font-size: var(--profile-chip-font-size);
-          font-weight: 800;
-          letter-spacing: calc(var(--profile-label-tracking) - 0.02em);
+          margin-bottom: ${Math.round(12 * spacingScale)}px;
         }
 
         .identity-stack {
-          margin-top: ${preview ? `${Math.round(12 * spacingScale)}px` : `${Math.round(14 * spacingScale)}px`};
+          margin-top: ${preview ? `${Math.round(8 * spacingScale)}px` : `${Math.round(10 * spacingScale)}px`};
           min-width: 0;
           transform: translate3d(0, calc(var(--profile-scroll-settle) * -0.24), 0);
           transition: transform var(--profile-transition-duration) var(--profile-motion-ease);
@@ -1004,33 +981,55 @@ export default function PublicProfileRenderer({
         .profile-pill-row,
         .profile-badge-rail {
           display: flex;
-          gap: 7px;
+          gap: 6px;
           flex-wrap: wrap;
-          margin-top: ${Math.round(11 * spacingScale)}px;
+          margin-top: ${Math.round(10 * spacingScale)}px;
+        }
+
+        .profile-pill-row.identity {
+          max-width: 100%;
         }
 
         .profile-pill {
-          min-height: var(--profile-chip-height);
-          padding: 0 ${Math.max(7, Math.round(9 * dnaTuning.chipScale))}px;
+          min-height: ${Math.max(24, Math.round(28 * dnaTuning.chipScale))}px;
+          padding: 0 ${Math.max(7, Math.round(8 * dnaTuning.chipScale))}px;
           border-radius: var(--profile-chip-radius);
           display: inline-flex;
           align-items: center;
-          gap: 6px;
-          font-size: var(--profile-chip-font-size);
+          gap: 5px;
+          font-size: ${Math.max(10, Math.round(11 * dnaTuning.chipScale))}px;
           font-weight: 800;
           letter-spacing: 0.02em;
-          border: 1px solid rgba(255, 255, 255, var(--profile-border-alpha));
-          background: rgba(255, 255, 255, 0.04);
+          border: 1px solid rgba(255, 255, 255, calc(var(--profile-border-alpha) - 0.01));
+          background: linear-gradient(180deg, rgba(255,255,255,0.045), rgba(8,10,16,0.44));
+          box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+          backdrop-filter: blur(10px) saturate(112%);
+          -webkit-backdrop-filter: blur(10px) saturate(112%);
         }
 
         .profile-bio {
           margin-top: ${preview ? `${Math.round(10 * spacingScale)}px` : `${Math.round(13 * spacingScale)}px`};
-          max-width: 380px;
-          color: #e0e6f0;
+          max-width: 420px;
+          color: #d8e2f1;
           font-size: 13px;
           line-height: ${densityTokens.bioLineHeight};
           white-space: pre-wrap;
           overflow-wrap: anywhere;
+        }
+
+        .profile-screen-metadata {
+          position: ${preview ? "absolute" : "fixed"};
+          bottom: ${preview ? "14px" : "18px"};
+          z-index: 3;
+          pointer-events: auto;
+        }
+
+        .profile-screen-metadata.left {
+          left: ${preview ? "14px" : "18px"};
+        }
+
+        .profile-screen-metadata.right {
+          right: ${preview ? "14px" : "18px"};
         }
 
         .widget-shell {
@@ -1045,20 +1044,20 @@ export default function PublicProfileRenderer({
 
         .widget-shell.music {
           margin-top: ${Math.round(2 * spacingScale)}px;
-          transform: translate3d(4px, 0, 0);
+          transform: translate3d(0, 0, 0);
         }
 
         .widget-shell.social {
           margin-bottom: ${Math.round(2 * spacingScale)}px;
-          transform: translate3d(-4px, 0, 0);
+          transform: translate3d(0, 0, 0);
         }
 
         .widget-shell.live {
-          transform: translate3d(6px, 0, 0);
+          transform: translate3d(0, 0, 0);
         }
 
         .widget-shell.links {
-          transform: translate3d(6px, 0, 0);
+          transform: translate3d(0, 0, 0);
         }
 
         .widget-shell.badges {
@@ -1397,22 +1396,8 @@ export default function PublicProfileRenderer({
           <div className="profile-floating-grid">
             <div className="profile-identity-column">
               <div>
-                <div className="panel-topbar">
-                  <div className="ambient-chip accent">
-                    <LuSparkles size={13} />
-                    {preview ? `${sceneAppearance.scene.name} Preview` : presence.chipText}
-                  </div>
-
-                  <div className="ambient-chip">
-                    <LuMoonStar size={13} />
-                    {aura === "none"
-                      ? "Clean aura"
-                      : `${aura.charAt(0).toUpperCase()}${aura.slice(1)} aura`}
-                  </div>
-                </div>
-
                 {preview ? (
-                  <div style={{ marginTop: "18px" }} className="preview-callout">
+                  <div className="preview-callout">
                     <LuBadgeCheck size={13} />
                     {previewMessage}
                   </div>
@@ -1449,11 +1434,6 @@ export default function PublicProfileRenderer({
                     </div>
 
                     <div className="identity-copy">
-                      <div className="profile-kicker">
-                        <LuBadgeCheck size={13} />
-                        {sceneAppearance.scene.name}
-                      </div>
-
                       <ProfileNamePlate
                         displayName={safeDisplayName}
                         username={safeUser.username}
@@ -1479,12 +1459,7 @@ export default function PublicProfileRenderer({
                         initialMyReaction,
                         preview,
                       })}
-                      <div className="presence-chip">
-                        <LuMoonStar size={13} />
-                        {presence.statusLabel}
-                      </div>
-
-                      <div className="profile-pill-row">
+                      <div className="profile-pill-row identity">
                         {safeHeroPills.map((pill) => (
                           <div
                             key={pill.key}
@@ -1514,6 +1489,17 @@ export default function PublicProfileRenderer({
                     themeColor: sceneAppearance.linkThemeColor,
                     initialMyReaction,
                     preview,
+                  })}
+                  {renderIdentityMetadataSlot("hero-footer", {
+                    composition: safeComposition,
+                    username: safeUser.username,
+                    views,
+                    likes,
+                    dislikes,
+                    themeColor: sceneAppearance.linkThemeColor,
+                    initialMyReaction,
+                    preview,
+                    align: "start",
                   })}
 
                 </div>
@@ -1559,20 +1545,30 @@ export default function PublicProfileRenderer({
                     style: getContainedCustomBlockStyle(block, index),
                   }),
                 )}
-                {renderIdentityMetadataSlot("footer", {
-                  composition: safeComposition,
-                  username: safeUser.username,
-                  views,
-                  likes,
-                  dislikes,
-                  themeColor: sceneAppearance.linkThemeColor,
-                  initialMyReaction,
-                  preview,
-                })}
-              </div>
+                </div>
             </div>
           </div>
         </section>
+        {renderIdentityMetadataSlot("screen-bottom-left", {
+          composition: safeComposition,
+          username: safeUser.username,
+          views,
+          likes,
+          dislikes,
+          themeColor: sceneAppearance.linkThemeColor,
+          initialMyReaction,
+          preview,
+        })}
+        {renderIdentityMetadataSlot("screen-bottom-right", {
+          composition: safeComposition,
+          username: safeUser.username,
+          views,
+          likes,
+          dislikes,
+          themeColor: sceneAppearance.linkThemeColor,
+          initialMyReaction,
+          preview,
+        })}
       </div>
     </main>
   );
@@ -1860,7 +1856,7 @@ function FloatingProfileScene({
           min-width: 0;
         }
 
-        .floating-chip {
+        .floating-preview-chip {
           min-height: 26px;
           padding: 0 9px;
           border-radius: 999px;
@@ -1875,12 +1871,7 @@ function FloatingProfileScene({
           letter-spacing: var(--floating-label-tracking);
           text-transform: uppercase;
           opacity: var(--floating-label-opacity);
-        }
-
-        .floating-chip.accent {
-          background: ${presence.presenceBackground};
-          border-color: ${presence.presenceBorder};
-          color: #fff2fb;
+          box-shadow: 0 12px 24px rgba(0,0,0,0.16);
         }
 
         .floating-name {
@@ -1901,15 +1892,16 @@ function FloatingProfileScene({
 
         .floating-pill {
           min-height: 26px;
-          padding: 0 9px;
+          padding: 0 8px;
           border-radius: 999px;
           display: inline-flex;
           align-items: center;
-          gap: 6px;
+          gap: 5px;
           font-size: 10px;
           font-weight: 800;
-          border: 1px solid rgba(255,255,255,0.08);
-          background: rgba(255,255,255,0.05);
+          border: 1px solid rgba(255,255,255,0.07);
+          background: linear-gradient(180deg, rgba(255,255,255,0.045), rgba(8,10,16,0.48));
+          box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
         }
 
         .floating-bio-strip {
@@ -1930,6 +1922,21 @@ function FloatingProfileScene({
           transition:
             transform var(--floating-transition-duration) var(--floating-motion-ease),
             opacity var(--floating-transition-duration) var(--floating-motion-ease);
+        }
+
+        .profile-screen-metadata {
+          position: ${preview ? "absolute" : "fixed"};
+          bottom: ${preview ? "14px" : "18px"};
+          z-index: 3;
+          pointer-events: auto;
+        }
+
+        .profile-screen-metadata.left {
+          left: ${preview ? "14px" : "18px"};
+        }
+
+        .profile-screen-metadata.right {
+          right: ${preview ? "14px" : "18px"};
         }
 
         .floating-modules-grid {
@@ -2127,16 +2134,12 @@ function FloatingProfileScene({
 
       <section className="floating-profile-body">
         <div className="floating-identity-block">
-          <div className="floating-chip-row">
-            <div className="floating-chip accent">
-              <LuMoonStar size={12} />
-              {presence.statusLabel}
+          {preview ? (
+            <div className="floating-preview-chip">
+              <LuBadgeCheck size={12} />
+              Preview
             </div>
-            <div className="floating-chip">
-              <LuSparkles size={12} />
-              {sceneAppearance.scene.name}
-            </div>
-          </div>
+          ) : null}
 
           <LivingAvatar
             avatarUrl={sanitizeRenderableUrl(user.avatarUrl)}
@@ -2204,6 +2207,17 @@ function FloatingProfileScene({
               ))}
             </div>
           ) : null}
+          {renderIdentityMetadataSlot("hero-footer", {
+            composition,
+            username: user.username,
+            views,
+            likes,
+            dislikes,
+            themeColor: linkThemeColor,
+            initialMyReaction,
+            preview,
+            align: "center",
+          })}
         </div>
 
         {user.bio ? <div className="floating-bio-strip">{user.bio}</div> : null}
@@ -2247,18 +2261,27 @@ function FloatingProfileScene({
           linksStyle={composition.linksStyle}
           socialsStyle={composition.socialsStyle}
         />
-        {renderIdentityMetadataSlot("footer", {
-          composition,
-          username: user.username,
-          views,
-          likes,
-          dislikes,
-          themeColor: linkThemeColor,
-          initialMyReaction,
-          preview,
-          align: "center",
-        })}
       </section>
+      {renderIdentityMetadataSlot("screen-bottom-left", {
+        composition,
+        username: user.username,
+        views,
+        likes,
+        dislikes,
+        themeColor: linkThemeColor,
+        initialMyReaction,
+        preview,
+      })}
+      {renderIdentityMetadataSlot("screen-bottom-right", {
+        composition,
+        username: user.username,
+        views,
+        likes,
+        dislikes,
+        themeColor: linkThemeColor,
+        initialMyReaction,
+        preview,
+      })}
     </main>
   );
 }
@@ -2274,7 +2297,12 @@ function getIntroRevealStyle(
 }
 
 function renderIdentityMetadataSlot(
-  slot: "under-username" | "bio" | "footer",
+  slot:
+    | "under-username"
+    | "bio"
+    | "hero-footer"
+    | "screen-bottom-left"
+    | "screen-bottom-right",
   input: {
     composition: ProfileComposition;
     username: string;
@@ -2291,18 +2319,30 @@ function renderIdentityMetadataSlot(
     return null;
   }
 
+  const isScreenCorner =
+    slot === "screen-bottom-left" || slot === "screen-bottom-right";
+
   return (
-    <ProfileHeroClient
-      username={input.username}
-      initialViews={input.views}
-      initialLikes={input.likes}
-      initialDislikes={input.dislikes}
-      themeColor={input.themeColor}
-      initialMyReaction={input.initialMyReaction}
-      locationText={input.composition.metadata.locationText}
-      align={input.align}
-      preview={input.preview}
-    />
+    <div
+      className={
+        isScreenCorner
+          ? `profile-screen-metadata ${slot === "screen-bottom-left" ? "left" : "right"}`
+          : undefined
+      }
+    >
+      <ProfileHeroClient
+        username={input.username}
+        initialViews={input.views}
+        initialLikes={input.likes}
+        initialDislikes={input.dislikes}
+        themeColor={input.themeColor}
+        initialMyReaction={input.initialMyReaction}
+        locationText={input.composition.metadata.locationText}
+        align={input.align}
+        preview={input.preview}
+        variant={isScreenCorner ? "corner" : "inline"}
+      />
+    </div>
   );
 }
 
@@ -2644,9 +2684,13 @@ function IntroProfileStage({
       typeof window !== "undefined" &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    target.scrollIntoView({
+    const topOffset = Math.max(18, Math.round(window.innerHeight * 0.06));
+    const targetTop =
+      target.getBoundingClientRect().top + window.scrollY - topOffset;
+
+    window.scrollTo({
+      top: Math.max(0, targetTop),
       behavior: prefersReducedMotion ? "auto" : "smooth",
-      block: "start",
     });
   };
 
@@ -2760,7 +2804,10 @@ function IntroProfileStage({
           padding: ${preview ? "24px 14px 8px" : "32px 18px 10px"};
           box-sizing: border-box;
           transform: translate3d(0, calc(var(--intro-scroll-settle) * -0.72), 0);
-          transition: transform var(--intro-transition-duration) var(--intro-motion-ease);
+          opacity: calc(1 - var(--intro-scroll-progress) * 0.28);
+          transition:
+            transform var(--intro-transition-duration) var(--intro-motion-ease),
+            opacity var(--intro-transition-duration) var(--intro-motion-ease);
         }
 
         .profile-intro-shell {
@@ -2782,7 +2829,7 @@ function IntroProfileStage({
               ? "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))"
               : "none"};
           box-shadow:
-            0 28px 60px rgba(0, 0, 0, 0.18),
+            0 24px 52px rgba(0, 0, 0, 0.16),
             0 0 0 1px rgba(255, 255, 255, 0.03),
             inset 0 1px 0 rgba(255, 255, 255, 0.05);
           backdrop-filter: ${cardStyle === "glass" && mode === "cinematic"
@@ -2796,6 +2843,7 @@ function IntroProfileStage({
               ? "blur(12px) saturate(108%)"
               : "blur(8px) saturate(104%)"};
           transform: translate3d(0, calc(var(--intro-scroll-settle) * -0.18), 0);
+          opacity: calc(1 - var(--intro-scroll-progress) * 0.18);
           transition:
             transform var(--intro-transition-duration) var(--intro-motion-ease),
             box-shadow var(--intro-transition-duration) var(--intro-motion-ease),
@@ -2845,10 +2893,10 @@ function IntroProfileStage({
           opacity: var(--intro-label-opacity);
         }
 
-        .profile-intro-chip.accent {
-          border-color: ${presence.presenceBorder};
-          background: ${presence.presenceBackground};
-          color: #fff4fb;
+        .profile-intro-chip.preview {
+          border-color: ${withAlpha(linkThemeColor, "28")};
+          background: linear-gradient(180deg, rgba(255,255,255,0.07), rgba(8,10,16,0.46));
+          box-shadow: 0 14px 28px ${withAlpha(linkThemeColor, "12")};
         }
 
         .profile-intro-avatar,
@@ -2886,16 +2934,17 @@ function IntroProfileStage({
 
         .profile-intro-pill {
           min-height: 26px;
-          padding: 0 9px;
+          padding: 0 8px;
           border-radius: 999px;
           display: inline-flex;
           align-items: center;
-          gap: 6px;
+          gap: 5px;
           font-size: 10px;
           font-weight: 800;
           letter-spacing: calc(var(--intro-label-tracking) - 0.03em);
-          border: 1px solid rgba(255,255,255,0.08);
-          background: rgba(255,255,255,0.05);
+          border: 1px solid rgba(255,255,255,0.07);
+          background: linear-gradient(180deg, rgba(255,255,255,0.045), rgba(8,10,16,0.48));
+          box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
         }
 
         .profile-intro-badge-pill {
@@ -2942,7 +2991,8 @@ function IntroProfileStage({
           transition:
             opacity var(--intro-transition-duration) var(--intro-motion-ease),
             transform var(--intro-transition-duration) var(--intro-motion-ease),
-            border-color var(--intro-transition-duration) var(--intro-motion-ease);
+            border-color var(--intro-transition-duration) var(--intro-motion-ease),
+            box-shadow var(--intro-transition-duration) var(--intro-motion-ease);
         }
 
         .profile-intro-scroll:hover,
@@ -2995,16 +3045,21 @@ function IntroProfileStage({
           gap: ${Math.max(16, introDetailsGap + 6)}px;
           scroll-margin-top: 28px;
           align-items: start;
+          opacity: calc(0.42 + var(--intro-scroll-progress) * 0.58);
+          transform: translate3d(0, calc((1 - var(--intro-scroll-progress)) * 28px), 0);
+          transition:
+            opacity var(--intro-transition-duration) var(--intro-motion-ease),
+            transform var(--intro-transition-duration) var(--intro-motion-ease);
         }
 
         .profile-intro-details[data-revealed="false"] {
-          opacity: 1;
-          transform: none;
+          opacity: calc(0.42 + var(--intro-scroll-progress) * 0.58);
+          transform: translate3d(0, calc((1 - var(--intro-scroll-progress)) * 28px), 0);
         }
 
         .profile-intro-details[data-revealed="true"] {
           opacity: 1;
-          transform: none;
+          transform: translate3d(0, 0, 0);
         }
 
         .profile-intro-chapter,
@@ -3021,15 +3076,15 @@ function IntroProfileStage({
           gap: 14px;
           padding: 16px 18px;
           border-radius: 26px;
-          border: 1px solid rgba(255,255,255,0.06);
+          border: 1px solid rgba(255,255,255,0.055);
           background:
-            linear-gradient(180deg, rgba(255,255,255,0.04), rgba(9,11,17,0.16)),
+            linear-gradient(180deg, rgba(255,255,255,0.032), rgba(9,11,17,0.12)),
             radial-gradient(circle at top, ${withAlpha(presence.accent, "0d")} 0%, transparent 48%);
           box-shadow:
-            0 12px 26px rgba(0,0,0,0.08),
+            0 16px 32px rgba(0,0,0,0.1),
             inset 0 1px 0 rgba(255,255,255,0.04);
-          backdrop-filter: blur(6px) saturate(104%);
-          -webkit-backdrop-filter: blur(6px) saturate(104%);
+          backdrop-filter: blur(8px) saturate(106%);
+          -webkit-backdrop-filter: blur(8px) saturate(106%);
           transition:
             transform var(--intro-transition-duration) var(--intro-motion-ease),
             opacity var(--intro-transition-duration) var(--intro-motion-ease),
@@ -3107,8 +3162,8 @@ function IntroProfileStage({
         }
 
         .profile-intro-chapter-subsection + .profile-intro-chapter-subsection {
-          padding-top: 4px;
-          border-top: 1px solid rgba(255,255,255,0.05);
+          padding-top: 6px;
+          border-top: 1px solid rgba(255,255,255,0.045);
         }
 
         .profile-intro-inline-block {
@@ -3174,12 +3229,12 @@ function IntroProfileStage({
           min-width: 0;
           grid-column: span 6;
           border-radius: ${floating ? "18px" : "24px"};
-          border: 1px solid ${floating ? "rgba(255,255,255,0.05)" : "rgba(255,255,255,0.06)"};
+          border: 1px solid ${floating ? "rgba(255,255,255,0.045)" : "rgba(255,255,255,0.055)"};
           background:
-            linear-gradient(180deg, rgba(255,255,255,${floating ? "0.032" : "0.045"}), rgba(8,10,16,${floating ? "0.6" : "0.68"})),
+            linear-gradient(180deg, rgba(255,255,255,${floating ? "0.028" : "0.038"}), rgba(8,10,16,${floating ? "0.54" : "0.6"})),
             ${sceneAppearance.surfaceBackground};
           box-shadow:
-            0 ${floating ? "16px 30px" : "18px 36px"} rgba(0, 0, 0, 0.14),
+            0 ${floating ? "14px 26px" : "16px 30px"} rgba(0, 0, 0, 0.12),
             inset 0 1px 0 rgba(255,255,255,0.04);
           padding: ${floating ? "12px" : "13px"};
           backdrop-filter: blur(${floating ? "10px" : "12px"}) saturate(108%);
@@ -3188,6 +3243,21 @@ function IntroProfileStage({
             transform var(--intro-transition-duration) var(--intro-motion-ease),
             box-shadow var(--intro-transition-duration) var(--intro-motion-ease),
             opacity var(--intro-transition-duration) var(--intro-motion-ease);
+        }
+
+        .profile-screen-metadata {
+          position: ${preview ? "absolute" : "fixed"};
+          bottom: ${preview ? "14px" : "18px"};
+          z-index: 3;
+          pointer-events: auto;
+        }
+
+        .profile-screen-metadata.left {
+          left: ${preview ? "14px" : "18px"};
+        }
+
+        .profile-screen-metadata.right {
+          right: ${preview ? "14px" : "18px"};
         }
 
         .profile-intro-module[data-revealed="false"],
@@ -3611,19 +3681,8 @@ function IntroProfileStage({
 
       <section className="profile-intro-hero">
         <div className="profile-intro-shell">
-          <div className="profile-intro-chip-row">
-            <div className="profile-intro-chip accent">
-              <LuMoonStar size={12} />
-              {presence.statusLabel}
-            </div>
-            <div className="profile-intro-chip">
-              <LuSparkles size={12} />
-              {sceneAppearance.scene.name}
-            </div>
-          </div>
-
           {preview ? (
-            <div className="profile-intro-chip">
+            <div className="profile-intro-chip preview">
               <LuBadgeCheck size={12} />
               {previewMessage}
             </div>
@@ -3683,7 +3742,7 @@ function IntroProfileStage({
             <div className="profile-intro-bio-hint">{truncateProfileBio(user.bio, 120)}</div>
           ) : null}
 
-          {introPills.length > 0 && mode === "cinematic" ? (
+          {introPills.length > 0 ? (
             <div className="profile-intro-pill-row">
               {introPills.map((pill) => (
                 <div
@@ -3702,6 +3761,17 @@ function IntroProfileStage({
             </div>
           ) : null}
           {renderIdentityMetadataSlot("bio", {
+            composition,
+            username: user.username,
+            views,
+            likes,
+            dislikes,
+            themeColor,
+            initialMyReaction,
+            preview,
+            align: "center",
+          })}
+          {renderIdentityMetadataSlot("hero-footer", {
             composition,
             username: user.username,
             views,
@@ -3770,7 +3840,7 @@ function IntroProfileStage({
           })}
         </section>
       ) : null}
-      {!hasDetails ? renderIdentityMetadataSlot("footer", {
+      {renderIdentityMetadataSlot("screen-bottom-left", {
         composition,
         username: user.username,
         views,
@@ -3779,8 +3849,17 @@ function IntroProfileStage({
         themeColor,
         initialMyReaction,
         preview,
-        align: "center",
-      }) : null}
+      })}
+      {renderIdentityMetadataSlot("screen-bottom-right", {
+        composition,
+        username: user.username,
+        views,
+        likes,
+        dislikes,
+        themeColor,
+        initialMyReaction,
+        preview,
+      })}
     </main>
   );
 }
@@ -4054,17 +4133,24 @@ function renderIntroChapterSequence(input: {
     );
   }
 
-  if (orderedBlockSet.has("links") || interestBlocks.length > 0) {
+  if (
+    orderedBlockSet.has("links") ||
+    interestBlocks.length > 0 ||
+    orderedBlockSet.has("socials") ||
+    orderedBlockSet.has("live")
+  ) {
     pushChapter(
       renderIntroChapter({
-        key: "links-interests",
+        key: "links-socials",
         preview: input.preview,
         revealIndex: revealIndex++,
-        label: "Links / Interests",
+        label: "Links / Socials",
         icon: <LuSparkles size={12} />,
         note:
           orderedBlockSet.has("links") && input.user.links.length > 0
             ? `${input.user.links.length} link${input.user.links.length === 1 ? "" : "s"}`
+            : orderedBlockSet.has("socials") || orderedBlockSet.has("live")
+              ? "Connected presence"
             : undefined,
         children: (
           <div className="profile-intro-chapter-stack">
@@ -4086,7 +4172,7 @@ function renderIntroChapterSequence(input: {
               <div className="profile-intro-chapter-subsection">
                 <div className="profile-intro-chapter-subtitle">
                   <LuArrowUpRight size={12} />
-                  Link collection
+                  Links
                 </div>
                 <div className="links-list">
                   {renderModernLinks(
@@ -4098,34 +4184,12 @@ function renderIntroChapterSequence(input: {
                 </div>
               </div>
             ) : null}
-          </div>
-        ),
-      }),
-    );
-  }
-
-  if (orderedBlockSet.has("socials") || orderedBlockSet.has("live")) {
-    pushChapter(
-      renderIntroChapter({
-        key: "socials",
-        preview: input.preview,
-        revealIndex: revealIndex++,
-        label: "Socials",
-        icon: <LuSparkles size={12} />,
-        note:
-          orderedBlockSet.has("socials") && orderedBlockSet.has("live")
-            ? "Connected presence"
-            : undefined,
-        children: (
-          <div className="profile-intro-chapter-stack">
             {orderedBlockSet.has("socials") ? (
               <div className="profile-intro-chapter-subsection">
-                {orderedBlockSet.has("live") ? (
-                  <div className="profile-intro-chapter-subtitle">
-                    <LuSparkles size={12} />
-                    Social channels
-                  </div>
-                ) : null}
+                <div className="profile-intro-chapter-subtitle">
+                  <LuSparkles size={12} />
+                  Social channels
+                </div>
                 <ProfileRenderBoundary
                   label="Social presence"
                   compact
@@ -4194,42 +4258,6 @@ function renderIntroChapterSequence(input: {
           </div>
         ),
       }),
-    );
-  }
-
-  if (input.composition.metadata.placement === "footer") {
-    if (sections.length > 0) {
-      const divider = renderDivider();
-
-      if (divider) {
-        sections.push(divider);
-      }
-    }
-
-    sections.push(
-      <div
-        key="metadata-footer"
-        className="profile-intro-footer-row"
-        data-intro-reveal="item"
-        data-revealed={input.preview ? "true" : "false"}
-        style={getIntroRevealStyle(revealIndex++, {
-          gridColumn: "1 / -1",
-          justifySelf: "center",
-          width: "100%",
-        })}
-      >
-        {renderIdentityMetadataSlot("footer", {
-          composition: input.composition,
-          username: input.username,
-          views: input.views,
-          likes: input.likes,
-          dislikes: input.dislikes,
-          themeColor: input.themeColor,
-          initialMyReaction: input.initialMyReaction,
-          preview: input.preview,
-          align: "center",
-        })}
-      </div>,
     );
   }
 
