@@ -70,6 +70,7 @@ export default function LiveEmbedPlayer({
           src={src}
           title={title}
           loading="lazy"
+          scrolling="no"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
           allowFullScreen
           referrerPolicy="strict-origin-when-cross-origin"

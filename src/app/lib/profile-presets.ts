@@ -7,6 +7,7 @@ import type {
   ProfileFloatingPersonality,
 } from "@/app/lib/profile-composition";
 import type { ProfileDnaType } from "@/app/lib/profile-dna";
+import type { ProfileMotionPersonality } from "@/app/lib/profile-motion";
 import type {
   ProfileBackgroundIntensity,
   ProfileBannerStyle,
@@ -42,6 +43,7 @@ export type ProfilePresetRenderTuning = {
   widgetWidthScale: number;
   floatingPersonality: ProfileFloatingPersonality | null;
   introStageScale: number;
+  motionPersonality: ProfileMotionPersonality | null;
 };
 
 type ProfilePresetDefinition = {
@@ -79,6 +81,7 @@ const DEFAULT_RENDER_TUNING: ProfilePresetRenderTuning = {
   widgetWidthScale: 1,
   floatingPersonality: null,
   introStageScale: 1,
+  motionPersonality: null,
 };
 
 const PROFILE_PRESET_DEFINITIONS: Record<ProfilePresetId, ProfilePresetDefinition> = {
@@ -121,6 +124,7 @@ const PROFILE_PRESET_DEFINITIONS: Record<ProfilePresetId, ProfilePresetDefinitio
       widgetWidthScale: 1.08,
       floatingPersonality: "cinematic",
       introStageScale: 1.08,
+      motionPersonality: "cinematic",
     },
   },
   ghost: {
@@ -162,6 +166,7 @@ const PROFILE_PRESET_DEFINITIONS: Record<ProfilePresetId, ProfilePresetDefinitio
       widgetWidthScale: 0.92,
       floatingPersonality: "centered",
       introStageScale: 0.94,
+      motionPersonality: "ghost",
     },
   },
   cyber: {
@@ -203,6 +208,7 @@ const PROFILE_PRESET_DEFINITIONS: Record<ProfilePresetId, ProfilePresetDefinitio
       widgetWidthScale: 0.98,
       floatingPersonality: "scattered",
       introStageScale: 0.96,
+      motionPersonality: "cyber",
     },
   },
   minimalist: {
@@ -244,6 +250,7 @@ const PROFILE_PRESET_DEFINITIONS: Record<ProfilePresetId, ProfilePresetDefinitio
       widgetWidthScale: 0.9,
       floatingPersonality: "centered",
       introStageScale: 0.9,
+      motionPersonality: "mono",
     },
   },
   ambient: {
@@ -285,6 +292,7 @@ const PROFILE_PRESET_DEFINITIONS: Record<ProfilePresetId, ProfilePresetDefinitio
       widgetWidthScale: 1,
       floatingPersonality: "minimal",
       introStageScale: 1.04,
+      motionPersonality: "soft",
     },
   },
   floating: {
@@ -326,6 +334,7 @@ const PROFILE_PRESET_DEFINITIONS: Record<ProfilePresetId, ProfilePresetDefinitio
       widgetWidthScale: 1.02,
       floatingPersonality: "centered",
       introStageScale: 0.98,
+      motionPersonality: "soft",
     },
   },
   devcore: {
@@ -367,6 +376,7 @@ const PROFILE_PRESET_DEFINITIONS: Record<ProfilePresetId, ProfilePresetDefinitio
       widgetWidthScale: 0.94,
       floatingPersonality: "minimal",
       introStageScale: 0.94,
+      motionPersonality: "mono",
     },
   },
   afterhours: {
@@ -408,6 +418,7 @@ const PROFILE_PRESET_DEFINITIONS: Record<ProfilePresetId, ProfilePresetDefinitio
       widgetWidthScale: 1.06,
       floatingPersonality: "cinematic",
       introStageScale: 1.06,
+      motionPersonality: "cinematic",
     },
   },
   softglass: {
@@ -449,6 +460,7 @@ const PROFILE_PRESET_DEFINITIONS: Record<ProfilePresetId, ProfilePresetDefinitio
       widgetWidthScale: 0.98,
       floatingPersonality: "minimal",
       introStageScale: 1,
+      motionPersonality: "soft",
     },
   },
 };

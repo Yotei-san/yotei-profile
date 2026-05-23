@@ -8,6 +8,30 @@ html, body {
   overflow-x: hidden;
 }
 
+.yotei-scrollbar-hidden {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.yotei-scrollbar-hidden::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+html.yotei-public-profile-route,
+body.yotei-public-profile-route {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+html.yotei-public-profile-route::-webkit-scrollbar,
+body.yotei-public-profile-route::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
 .custom-cursor-enabled * {
   cursor: none !important;
 }

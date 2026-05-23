@@ -2030,7 +2030,11 @@ export default function ProfileLayoutExperience({
               </div>
             </div>
 
-            <div ref={previewViewportRef} className="profile-preview-viewport" style={previewViewportStyle}>
+            <div
+              ref={previewViewportRef}
+              className="profile-preview-viewport yotei-scrollbar-hidden"
+              style={previewViewportStyle}
+            >
               <div
                 style={previewCanvasScaleStyle(previewCanvasWidth, previewScale)}
               >

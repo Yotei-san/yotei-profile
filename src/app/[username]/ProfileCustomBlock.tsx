@@ -82,7 +82,7 @@ export default function ProfileCustomBlock({
         <div style={{ display: "grid", gap: "10px", textAlign }}>
           <span style={customLabelStyle(resolvedAccent, textAlign, dnaTuning)}>
             <LuMessageSquareQuote size={12} />
-            Quote
+            About
           </span>
           <div
             style={{
@@ -105,19 +105,23 @@ export default function ProfileCustomBlock({
   if (block.type === "text-strip") {
     return (
       <div style={frameStyle}>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: justifyContentForAlignment(block.alignment),
-          }}
-        >
+        <div style={{ display: "grid", gap: "8px" }}>
+          <span style={customLabelStyle(resolvedAccent, textAlign, dnaTuning)}>
+            <LuMessageSquareQuote size={12} />
+            Note
+          </span>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: justifyContentForAlignment(block.alignment),
+            }}
+          >
           <div
             style={{
               color: softColor,
-              fontSize: `${Math.max(10, Math.round((compact ? 11 : 12) * dnaTuning.typographyScale))}px`,
-              fontWeight: 800,
-              letterSpacing: "0.08em",
-              textTransform: "uppercase",
+              fontSize: `${Math.max(11, Math.round((compact ? 12 : 13) * dnaTuning.typographyScale))}px`,
+              fontWeight: 700,
+              letterSpacing: "0.03em",
               whiteSpace: "pre-wrap",
               overflowWrap: "anywhere",
               textAlign,
@@ -125,6 +129,7 @@ export default function ProfileCustomBlock({
           >
             {block.text || "ambient note"}
           </div>
+        </div>
         </div>
       </div>
     );
@@ -136,7 +141,7 @@ export default function ProfileCustomBlock({
         <div style={{ display: "grid", gap: "8px", textAlign }}>
             <span style={customLabelStyle(resolvedAccent, textAlign, dnaTuning)}>
             <LuSparkles size={12} />
-            Mood
+            Current mood
           </span>
           <div
             style={{
@@ -220,6 +225,18 @@ export default function ProfileCustomBlock({
                   "linear-gradient(180deg, rgba(4,6,10,0.08), rgba(4,6,10,0.18) 42%, rgba(4,6,10,0.7) 100%)",
               }}
             />
+            <div
+              style={{
+                position: "absolute",
+                left: "10px",
+                top: "10px",
+              }}
+            >
+              <span style={customLabelStyle(resolvedAccent, "left", dnaTuning)}>
+                <LuGalleryHorizontal size={12} />
+                Project
+              </span>
+            </div>
           </div>
           {block.text || block.secondaryText ? (
             <div style={{ display: "grid", gap: "4px", textAlign }}>
@@ -253,8 +270,8 @@ export default function ProfileCustomBlock({
   }
 
   return (
-    <div style={frameStyle}>
-      <div style={{ display: "grid", gap: "8px", textAlign }}>
+      <div style={frameStyle}>
+        <div style={{ display: "grid", gap: "8px", textAlign }}>
         <span style={customLabelStyle(resolvedAccent, textAlign, dnaTuning)}>
           <LuPanelTop size={12} />
           Status
@@ -291,39 +308,39 @@ function customBlockFrameStyle(
   dnaTuning: ProfileDnaTuning,
   compact: boolean,
 ): CSSProperties {
-  const borderAlpha = block.transparency ? "16" : "28";
-  const backgroundAlphaTop = block.transparency ? "12" : "20";
-  const backgroundAlphaBottom = block.transparency ? "80" : "94";
+  const borderAlpha = block.transparency ? "12" : "20";
+  const backgroundAlphaTop = block.transparency ? "0f" : "18";
+  const backgroundAlphaBottom = block.transparency ? "54" : "7a";
   const compactnessScale = compact ? dnaTuning.compactnessScale : 1;
   const borderTone =
-    dnaTuning.borderScale >= 1.12 ? "38" : dnaTuning.borderScale <= 0.82 ? "18" : borderAlpha;
+    dnaTuning.borderScale >= 1.12 ? "2c" : dnaTuning.borderScale <= 0.82 ? "14" : borderAlpha;
   const backgroundTop =
     dnaTuning.transparencyScale >= 1.12
-      ? "10"
+      ? "0d"
       : dnaTuning.transparencyScale <= 0.94
-        ? "24"
+        ? "1c"
         : backgroundAlphaTop;
   const backgroundBottom =
     dnaTuning.transparencyScale >= 1.12
-      ? "76"
+      ? "4e"
       : dnaTuning.transparencyScale <= 0.94
-        ? "98"
+        ? "84"
         : backgroundAlphaBottom;
   const blurFilter = block.transparency
-    ? `blur(${Math.max(6, Math.round(8 * dnaTuning.blurScale))}px) saturate(${Math.round(
-        104 + (dnaTuning.glowScale - 1) * 22,
+    ? `blur(${Math.max(8, Math.round(10 * dnaTuning.blurScale))}px) saturate(${Math.round(
+        108 + (dnaTuning.glowScale - 1) * 18,
       )}%)`
     : "none";
   const baseShadow = block.glow
-    ? `0 ${Math.round(14 * dnaTuning.shadowScale)}px ${Math.round(32 * dnaTuning.shadowScale)}px ${withAlpha(
+    ? `0 ${Math.round(12 * dnaTuning.shadowScale)}px ${Math.round(26 * dnaTuning.shadowScale)}px ${withAlpha(
         accentColor,
-        dnaTuning.glowScale >= 1.1 ? "22" : "18",
+        dnaTuning.glowScale >= 1.1 ? "1c" : "16",
       )}, inset 0 1px 0 rgba(255,255,255,0.04)`
     : block.type === "divider"
       ? "none"
-      : `0 ${Math.round(12 * dnaTuning.shadowScale)}px ${Math.round(26 * dnaTuning.shadowScale)}px ${withAlpha(
+      : `0 ${Math.round(10 * dnaTuning.shadowScale)}px ${Math.round(22 * dnaTuning.shadowScale)}px ${withAlpha(
           contrastColor,
-          dnaTuning.shadowScale <= 0.86 ? "0d" : "12",
+          dnaTuning.shadowScale <= 0.86 ? "0b" : "0f",
         )}, inset 0 1px 0 rgba(255,255,255,0.03)`;
 
   return {
@@ -342,7 +359,9 @@ function customBlockFrameStyle(
         ? "999px"
         : block.type === "divider"
           ? "18px"
-          : "18px",
+          : block.type === "image-card"
+            ? "22px"
+            : "20px",
     border: `1px solid ${withAlpha(accentColor, borderTone)}`,
     background:
       block.type === "divider"

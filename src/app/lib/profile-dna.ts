@@ -1,3 +1,5 @@
+import type { ProfileMotionPersonality } from "@/app/lib/profile-motion";
+
 export const PROFILE_DNA_TYPES = [
   "ghost",
   "cyber",
@@ -34,6 +36,7 @@ export type ProfileDnaTuning = {
   chipScale: number;
   glowScale: number;
   motionScale: number;
+  motionPersonality: ProfileMotionPersonality;
 };
 
 type ProfileDnaDefinition = ProfileDnaTuning;
@@ -59,6 +62,7 @@ const DEFAULT_PROFILE_DNA_TUNING: ProfileDnaTuning = {
   chipScale: 1,
   glowScale: 1,
   motionScale: 1,
+  motionPersonality: "soft",
 };
 
 const PROFILE_DNA_DEFINITIONS: Record<ProfileDnaType, ProfileDnaDefinition> = {
@@ -83,6 +87,7 @@ const PROFILE_DNA_DEFINITIONS: Record<ProfileDnaType, ProfileDnaDefinition> = {
     chipScale: 0.96,
     glowScale: 0.84,
     motionScale: 0.88,
+    motionPersonality: "ghost",
   },
   cyber: {
     value: "cyber",
@@ -105,6 +110,7 @@ const PROFILE_DNA_DEFINITIONS: Record<ProfileDnaType, ProfileDnaDefinition> = {
     chipScale: 0.94,
     glowScale: 1.22,
     motionScale: 1.12,
+    motionPersonality: "cyber",
   },
   ambient: {
     value: "ambient",
@@ -127,6 +133,7 @@ const PROFILE_DNA_DEFINITIONS: Record<ProfileDnaType, ProfileDnaDefinition> = {
     chipScale: 1.02,
     glowScale: 1.08,
     motionScale: 0.94,
+    motionPersonality: "soft",
   },
   void: {
     value: "void",
@@ -149,6 +156,7 @@ const PROFILE_DNA_DEFINITIONS: Record<ProfileDnaType, ProfileDnaDefinition> = {
     chipScale: 0.96,
     glowScale: 0.9,
     motionScale: 0.9,
+    motionPersonality: "ghost",
   },
   softglass: {
     value: "softglass",
@@ -171,6 +179,7 @@ const PROFILE_DNA_DEFINITIONS: Record<ProfileDnaType, ProfileDnaDefinition> = {
     chipScale: 1,
     glowScale: 1.04,
     motionScale: 0.92,
+    motionPersonality: "soft",
   },
   mono: {
     value: "mono",
@@ -193,6 +202,7 @@ const PROFILE_DNA_DEFINITIONS: Record<ProfileDnaType, ProfileDnaDefinition> = {
     chipScale: 0.92,
     glowScale: 0.72,
     motionScale: 0.82,
+    motionPersonality: "mono",
   },
   pulse: {
     value: "pulse",
@@ -215,6 +225,7 @@ const PROFILE_DNA_DEFINITIONS: Record<ProfileDnaType, ProfileDnaDefinition> = {
     chipScale: 0.96,
     glowScale: 1.24,
     motionScale: 1.16,
+    motionPersonality: "pulse",
   },
   clean: {
     value: "clean",
@@ -237,6 +248,7 @@ const PROFILE_DNA_DEFINITIONS: Record<ProfileDnaType, ProfileDnaDefinition> = {
     chipScale: 0.96,
     glowScale: 0.9,
     motionScale: 0.9,
+    motionPersonality: "soft",
   },
   cinematic: {
     value: "cinematic",
@@ -259,6 +271,7 @@ const PROFILE_DNA_DEFINITIONS: Record<ProfileDnaType, ProfileDnaDefinition> = {
     chipScale: 1.02,
     glowScale: 1.16,
     motionScale: 0.9,
+    motionPersonality: "cinematic",
   },
 };
 
@@ -290,4 +303,3 @@ export function getProfileDnaTuning(value: unknown): ProfileDnaTuning {
 
   return dna ? PROFILE_DNA_DEFINITIONS[dna] : DEFAULT_PROFILE_DNA_TUNING;
 }
-
