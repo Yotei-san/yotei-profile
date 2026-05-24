@@ -55,7 +55,7 @@ export default function ProfileIdentityBadges({
           position: relative;
           display: inline-flex;
           align-items: center;
-          gap: 8px;
+          gap: 7px;
           flex-wrap: wrap;
           min-width: 0;
           width: fit-content;
@@ -104,8 +104,8 @@ export default function ProfileIdentityBadges({
           --profile-badge-tooltip-accent: rgba(255,255,255,0.08);
           position: relative;
           z-index: 1;
-          width: 42px;
-          height: 36px;
+          width: 44px;
+          height: 38px;
           padding: 0;
           border: 1px solid var(--profile-badge-edge);
           border-radius: 14px;
@@ -210,8 +210,8 @@ export default function ProfileIdentityBadges({
         .profile-identity-badge-shell::before {
           content: "";
           position: absolute;
-          inset: 7px;
-          border-radius: 12px;
+          inset: 6px;
+          clip-path: polygon(50% 0%, 79% 10%, 93% 29%, 93% 71%, 79% 90%, 50% 100%, 21% 90%, 7% 71%, 7% 29%, 21% 10%);
           background:
             radial-gradient(circle at 50% 12%, rgba(255,255,255,0.16), transparent 44%),
             linear-gradient(180deg, rgba(8,10,16,0.08), rgba(8,10,16,0.44));
@@ -281,7 +281,7 @@ export default function ProfileIdentityBadges({
                 color={badgeTheme.accent}
                 rarity={item.badge.rarity}
                 category={item.badge.category}
-                size={22}
+                size={24}
                 compact
               />
             </span>

@@ -4,7 +4,6 @@ import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 
 import {
   LuArrowUpRight,
   LuBadgeCheck,
-  LuChevronDown,
   LuMoonStar,
   LuMusic4,
   LuSparkles,
@@ -3335,9 +3334,13 @@ function IntroProfileStage({
           cursor: pointer;
           position: relative;
           overflow: hidden;
-          min-height: 42px;
-          padding: 5px 11px 5px 7px;
-          gap: 11px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 44px;
+          padding: 5px 13px 5px 8px;
+          gap: 10px;
+          border-radius: 999px;
           border-color: rgba(255,255,255,0.12);
           background: linear-gradient(180deg, rgba(255,255,255,0.09), rgba(8,10,16,0.54));
           box-shadow:
@@ -3372,8 +3375,8 @@ function IntroProfileStage({
 
         .profile-intro-scroll-orb {
           position: relative;
-          width: 30px;
-          height: 30px;
+          width: 31px;
+          height: 31px;
           border-radius: 999px;
           display: inline-flex;
           align-items: center;
@@ -3401,7 +3404,43 @@ function IntroProfileStage({
         }
 
         .profile-intro-scroll-arrow {
+          position: relative;
+          display: inline-flex;
+          align-items: flex-start;
+          justify-content: center;
+          width: 14px;
+          height: 16px;
           animation: intro-scroll-hint calc(var(--intro-glow-pulse-duration) * 0.72) var(--intro-motion-ease) infinite;
+        }
+
+        .profile-intro-scroll-arrow::before,
+        .profile-intro-scroll-arrow::after {
+          content: "";
+          position: absolute;
+          left: 50%;
+          transform: translateX(-50%);
+        }
+
+        .profile-intro-scroll-arrow::before {
+          top: 0;
+          width: 2px;
+          height: 9px;
+          border-radius: 999px;
+          background: currentColor;
+          box-shadow:
+            0 0 8px rgba(255,255,255,0.26),
+            0 0 12px ${withAlpha(linkThemeColor, "20")};
+        }
+
+        .profile-intro-scroll-arrow::after {
+          bottom: 0;
+          width: 8px;
+          height: 8px;
+          border-right: 2px solid currentColor;
+          border-bottom: 2px solid currentColor;
+          transform: translateX(-50%) rotate(45deg);
+          box-shadow:
+            1px 1px 8px rgba(255,255,255,0.2);
         }
 
         .profile-intro-scroll-copy {
@@ -3949,11 +3988,15 @@ function IntroProfileStage({
 
         @keyframes intro-scroll-hint {
           0%, 100% {
-            transform: translateY(0);
+            transform: translateY(-1px);
           }
 
-          50% {
+          48% {
             transform: translateY(4px);
+          }
+
+          68% {
+            transform: translateY(1px);
           }
         }
 
@@ -4295,9 +4338,7 @@ function IntroProfileStage({
           >
             <button type="button" className="profile-intro-scroll" onClick={scrollToDetails}>
               <span className="profile-intro-scroll-orb" aria-hidden="true">
-                <span className="profile-intro-scroll-arrow">
-                  <LuChevronDown size={14} />
-                </span>
+                <span className="profile-intro-scroll-arrow" />
               </span>
               <span className="profile-intro-scroll-copy">Scroll down for more</span>
             </button>

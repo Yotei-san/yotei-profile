@@ -80,19 +80,31 @@ export default function ProfileNamePlate({
       </span>
 
       {typewriter ? (
-        <>
-          <span
-            className="profile-name-typewriter-layer profile-name-visible-layer"
-            aria-hidden
-            data-text={text}
-          >
-            {text}
+        <span className="profile-name-typewriter-shell" aria-hidden>
+          <span className="profile-name-typewriter-window">
+            <span
+              className="profile-name-typewriter-layer profile-name-visible-layer"
+              data-text={text}
+            >
+              {text}
+            </span>
+
+            {hasShimmer ? (
+              <span
+                className="profile-name-shimmer-layer profile-name-typewriter-shimmer"
+                data-text={text}
+              >
+                {text}
+              </span>
+            ) : null}
           </span>
-          <span className="profile-name-cursor" aria-hidden />
-        </>
+          <span className="profile-name-cursor-track">
+            <span className="profile-name-cursor" />
+          </span>
+        </span>
       ) : null}
 
-      {hasShimmer ? (
+      {hasShimmer && !typewriter ? (
         <span className="profile-name-shimmer-layer" aria-hidden data-text={text}>
           {text}
         </span>
@@ -219,6 +231,10 @@ const namePlateStyles = `
     min-width: 0;
   }
 
+  .profile-name-text-stack.typewriter-enabled {
+    display: inline-block;
+  }
+
   .profile-name-main-layer,
   .profile-name-visible-layer,
   .profile-name-typewriter-layer,
@@ -271,21 +287,54 @@ const namePlateStyles = `
     color: rgba(92, 216, 255, 0.94);
   }
 
-  .profile-name-typewriter-layer {
-    z-index: 4;
+  .profile-name-text-stack.typewriter-enabled .profile-name-main-layer,
+  .profile-name-text-stack.typewriter-enabled .profile-name-aura-layer,
+  .profile-name-text-stack.typewriter-enabled .profile-name-glitch-layer {
     white-space: nowrap;
+    overflow-wrap: normal;
+  }
+
+  .profile-name-typewriter-shell {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    pointer-events: none;
+  }
+
+  .profile-name-typewriter-window,
+  .profile-name-cursor-track {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
     max-width: 100%;
-    color: inherit;
-    clip-path: inset(0 100% 0 0);
+    inline-size: 0%;
     animation:
-      profile-name-typewriter-mask var(--profile-name-typewriter-duration)
+      profile-name-typewriter-reveal var(--profile-name-typewriter-duration)
         steps(var(--profile-typewriter-characters), end) infinite;
-    will-change: clip-path;
+  }
+
+  .profile-name-typewriter-window {
+    overflow: hidden;
+    will-change: inline-size;
+  }
+
+  .profile-name-typewriter-layer {
+    display: inline-block;
+    min-width: max-content;
+    white-space: nowrap;
+    overflow-wrap: normal;
+    white-space: nowrap;
+    color: inherit;
+  }
+
+  .profile-name-cursor-track {
+    overflow: visible;
   }
 
   .profile-name-cursor {
     position: absolute;
-    left: 0;
+    right: 0;
     bottom: 0.05em;
     z-index: 5;
     width: 0.12em;
@@ -297,11 +346,8 @@ const namePlateStyles = `
     box-shadow:
       0 0 10px rgba(255, 196, 228, 0.44),
       0 0 18px rgba(125, 211, 252, 0.24);
-    transform: translate3d(0, 0, 0);
-    animation:
-      profile-name-cursor-blink 0.92s steps(1) infinite,
-      profile-name-cursor-travel var(--profile-name-typewriter-duration)
-        steps(var(--profile-typewriter-characters), end) infinite;
+    transform: translate3d(50%, 0, 0);
+    animation: profile-name-cursor-blink 0.92s steps(1) infinite;
     opacity: 0.94;
   }
 
@@ -385,12 +431,10 @@ const namePlateStyles = `
   .profile-name-plate.effect-shimmer
     .profile-name-text-stack.typewriter-enabled
     .profile-name-shimmer-layer {
-    clip-path: inset(0 100% 0 0);
-    animation:
-      profile-name-shimmer-text var(--profile-name-shimmer-duration)
-        cubic-bezier(0.19, 1, 0.22, 1) infinite,
-      profile-name-typewriter-mask var(--profile-name-typewriter-duration)
-        steps(var(--profile-typewriter-characters), end) infinite;
+    inset: 0 auto 0 0;
+    min-width: max-content;
+    white-space: nowrap;
+    overflow-wrap: normal;
   }
 
   .profile-name-plate.effect-particles .profile-name-spark {
@@ -487,35 +531,17 @@ const namePlateStyles = `
     }
   }
 
-  @keyframes profile-name-cursor-travel {
+  @keyframes profile-name-typewriter-reveal {
     0%, 8% {
-      transform: translate3d(0, 0, 0);
-    }
-
-    36%, 58% {
-      transform: translate3d(
-        calc(var(--profile-typewriter-characters, 1) * 0.62ch),
-        0,
-        0
-      );
-    }
-
-    88%, 100% {
-      transform: translate3d(0, 0, 0);
-    }
-  }
-
-  @keyframes profile-name-typewriter-mask {
-    0%, 8% {
-      clip-path: inset(0 100% 0 0);
+      inline-size: 0%;
     }
 
     38%, 58% {
-      clip-path: inset(0 0 0 0);
+      inline-size: 100%;
     }
 
     88%, 100% {
-      clip-path: inset(0 100% 0 0);
+      inline-size: 0%;
     }
   }
 
