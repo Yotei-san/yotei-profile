@@ -2,6 +2,7 @@
 
 import type { CSSProperties } from "react";
 import {
+  LuArrowUpRight,
   LuGalleryHorizontal,
   LuMinus,
   LuMessageSquareQuote,
@@ -22,6 +23,13 @@ type Props = {
   dnaTuning?: ProfileDnaTuning;
   preview?: boolean;
   compact?: boolean;
+};
+
+type CardMeta = {
+  badge: string;
+  title: string;
+  description: string | null;
+  icon: typeof LuSparkles;
 };
 
 export default function ProfileCustomBlock({
@@ -79,226 +87,141 @@ export default function ProfileCustomBlock({
   if (block.type === "quote") {
     return (
       <div style={frameStyle}>
-        <div style={{ display: "grid", gap: "10px", textAlign }}>
-          <span style={customLabelStyle(resolvedAccent, textAlign, dnaTuning)}>
-            <LuMessageSquareQuote size={12} />
-            About
-          </span>
-          <div
-            style={{
-              color: softColor,
-              fontSize: `${Math.max(13, Math.round((compact ? 14 : 15) * dnaTuning.typographyScale))}px`,
-              fontWeight: 600,
-              lineHeight: 1.68,
-              fontStyle: "italic",
-              whiteSpace: "pre-wrap",
-              overflowWrap: "anywhere",
-            }}
-          >
-            {block.text || "quiet signal"}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (block.type === "text-strip") {
-    return (
-      <div style={frameStyle}>
-        <div style={{ display: "grid", gap: "8px" }}>
-          <span style={customLabelStyle(resolvedAccent, textAlign, dnaTuning)}>
-            <LuMessageSquareQuote size={12} />
-            Note
-          </span>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: justifyContentForAlignment(block.alignment),
-            }}
-          >
-          <div
-            style={{
-              color: softColor,
-              fontSize: `${Math.max(11, Math.round((compact ? 12 : 13) * dnaTuning.typographyScale))}px`,
-              fontWeight: 700,
-              letterSpacing: "0.03em",
-              whiteSpace: "pre-wrap",
-              overflowWrap: "anywhere",
-              textAlign,
-            }}
-          >
-            {block.text || "ambient note"}
-          </div>
-        </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (block.type === "mood") {
-    return (
-      <div style={frameStyle}>
-        <div style={{ display: "grid", gap: "8px", textAlign }}>
+        <style>{sharedStyles}</style>
+        <div className="profile-custom-card-shell quote" style={{ textAlign }}>
+          <div className="profile-custom-card-glow" style={cardGlowStyle(resolvedAccent)} />
+          <div className="profile-custom-card-content quote">
             <span style={customLabelStyle(resolvedAccent, textAlign, dnaTuning)}>
-            <LuSparkles size={12} />
-            Current mood
-          </span>
-          <div
-            style={{
-              color: "#f8fbff",
-              fontSize: `${Math.max(13, Math.round((compact ? 14 : 15) * dnaTuning.typographyScale))}px`,
-              fontWeight: 800,
-            }}
-          >
-            {block.text || "soft atmosphere"}
-          </div>
-          {block.secondaryText ? (
+              <LuMessageSquareQuote size={12} />
+              About
+            </span>
             <div
               style={{
-                color: "#b8c2d6",
-                fontSize: `${Math.max(11, Math.round(12 * dnaTuning.typographyScale))}px`,
-                lineHeight: 1.55,
+                color: softColor,
+                fontSize: `${Math.max(13, Math.round((compact ? 14 : 15) * dnaTuning.typographyScale))}px`,
+                fontWeight: 600,
+                lineHeight: 1.72,
+                fontStyle: "italic",
+                whiteSpace: "pre-wrap",
+                overflowWrap: "anywhere",
               }}
             >
-              {block.secondaryText}
+              {block.text || "quiet signal"}
             </div>
-          ) : null}
+            {block.secondaryText ? (
+              <div style={descriptionStyle(dnaTuning, compact)}>{block.secondaryText}</div>
+            ) : null}
+          </div>
         </div>
       </div>
     );
   }
 
-  if (block.type === "image-card") {
-    return (
-      <div style={frameStyle}>
-        <div style={{ display: "grid", gap: "10px" }}>
-          <div
-            style={{
-              position: "relative",
-              overflow: "hidden",
-              borderRadius: compact ? "14px" : "16px",
-              minHeight: `${Math.max(118, Math.round((compact ? 132 : 156) * dnaTuning.compactnessScale))}px`,
-              border: `1px solid ${withAlpha(resolvedAccent, dnaTuning.borderScale > 1 ? "28" : "1c")}`,
-              background:
-                block.imageUrl || !preview
-                  ? "rgba(255,255,255,0.03)"
-                  : `linear-gradient(135deg, ${withAlpha(resolvedAccent, "16")}, rgba(10,12,18,0.94))`,
-            }}
-          >
-            {block.imageUrl ? (
-              <img
-                src={block.imageUrl}
-                alt={block.text || block.secondaryText || "Profile image card"}
-                style={{
-                  position: "absolute",
-                  inset: 0,
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "cover",
-                }}
-              />
-            ) : preview ? (
-              <div
-                style={{
-                  position: "absolute",
-                  inset: 0,
-                  display: "grid",
-                  placeItems: "center",
-                  color: "#d9e2f2",
-                  fontSize: "12px",
-                  fontWeight: 800,
-                  letterSpacing: "0.04em",
-                  textTransform: "uppercase",
-                }}
-              >
-                  <span style={customLabelStyle(resolvedAccent, "center", dnaTuning)}>
-                  <LuGalleryHorizontal size={12} />
-                  Image card
-                </span>
-              </div>
-            ) : null}
-            <div
-              style={{
-                position: "absolute",
-                inset: 0,
-                background:
-                  "linear-gradient(180deg, rgba(4,6,10,0.08), rgba(4,6,10,0.18) 42%, rgba(4,6,10,0.7) 100%)",
-              }}
-            />
-            <div
-              style={{
-                position: "absolute",
-                left: "10px",
-                top: "10px",
-              }}
-            >
-              <span style={customLabelStyle(resolvedAccent, "left", dnaTuning)}>
-                <LuGalleryHorizontal size={12} />
-                Project
-              </span>
-            </div>
-          </div>
-          {block.text || block.secondaryText ? (
-            <div style={{ display: "grid", gap: "4px", textAlign }}>
-              {block.text ? (
-                <div
-                  style={{
-                    color: "#f4f7ff",
-                    fontSize: `${Math.max(12, Math.round(13 * dnaTuning.typographyScale))}px`,
-                    fontWeight: 700,
-                  }}
-                >
-                  {block.text}
-                </div>
-              ) : null}
-              {block.secondaryText ? (
-                <div
-                  style={{
-                    color: "#b8c2d6",
-                    fontSize: `${Math.max(11, Math.round(12 * dnaTuning.typographyScale))}px`,
-                    lineHeight: 1.55,
-                  }}
-                >
-                  {block.secondaryText}
-                </div>
-              ) : null}
-            </div>
-          ) : null}
-        </div>
-      </div>
-    );
-  }
+  const meta = getInfoCardMeta(block);
+  const hasLink = Boolean(block.linkUrl && !preview);
 
   return (
-      <div style={frameStyle}>
-        <div style={{ display: "grid", gap: "8px", textAlign }}>
-        <span style={customLabelStyle(resolvedAccent, textAlign, dnaTuning)}>
-          <LuPanelTop size={12} />
-          Status
-        </span>
-        <div
-          style={{
-            color: "#f8fbff",
-            fontSize: `${Math.max(12, Math.round((compact ? 13 : 14) * dnaTuning.typographyScale))}px`,
-            fontWeight: 800,
-          }}
-        >
-          {block.text || "status banner"}
-        </div>
-        {block.secondaryText ? (
-          <div
-            style={{
-              color: "#bfd1e8",
-              fontSize: `${Math.max(11, Math.round(12 * dnaTuning.typographyScale))}px`,
-              lineHeight: 1.55,
-            }}
-          >
-            {block.secondaryText}
+    <div style={frameStyle}>
+      <style>{sharedStyles}</style>
+      <div
+        className={[
+          "profile-custom-card-shell",
+          "info",
+          `type-${block.type}`,
+          block.imageUrl ? "has-image" : "",
+          hasLink ? "has-link" : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
+        style={{
+          minHeight:
+            block.type === "image-card"
+              ? `${Math.max(180, Math.round((compact ? 196 : 224) * dnaTuning.compactnessScale))}px`
+              : `${Math.max(126, Math.round((compact ? 138 : 154) * dnaTuning.compactnessScale))}px`,
+        }}
+      >
+        <div className="profile-custom-card-glow" style={cardGlowStyle(resolvedAccent)} />
+        {block.imageUrl ? (
+          <div className="profile-custom-card-media">
+            <img
+              src={block.imageUrl}
+              alt={meta.title}
+              className="profile-custom-card-media-image"
+            />
+            <div
+              className="profile-custom-card-media-overlay"
+              style={cardMediaOverlayStyle(resolvedAccent, block.type)}
+            />
           </div>
         ) : null}
+
+        <div className="profile-custom-card-content">
+          <div className="profile-custom-card-head">
+            <span style={customLabelStyle(resolvedAccent, "left", dnaTuning)}>
+              <meta.icon size={12} />
+              {meta.badge}
+            </span>
+
+            {hasLink ? (
+              <a
+                href={block.linkUrl ?? undefined}
+                target="_blank"
+                rel="noreferrer"
+                className="profile-custom-card-link"
+                style={linkButtonStyle(resolvedAccent)}
+              >
+                Open
+                <LuArrowUpRight size={13} />
+              </a>
+            ) : null}
+          </div>
+
+          <div className="profile-custom-card-copy" style={{ textAlign }}>
+            <div style={titleStyle(dnaTuning, compact, block.type, softColor)}>{meta.title}</div>
+            {meta.description ? (
+              <div style={descriptionStyle(dnaTuning, compact)}>{meta.description}</div>
+            ) : null}
+          </div>
+        </div>
       </div>
     </div>
   );
+}
+
+function getInfoCardMeta(block: ProfileCustomBlock): CardMeta {
+  if (block.type === "image-card") {
+    return {
+      badge: "Project",
+      title: block.text || "Featured project",
+      description: block.secondaryText || "Visual card",
+      icon: LuGalleryHorizontal,
+    };
+  }
+
+  if (block.type === "status-banner") {
+    return {
+      badge: "Update",
+      title: block.text || "Current status",
+      description: block.secondaryText || "Small timeline update",
+      icon: LuPanelTop,
+    };
+  }
+
+  if (block.type === "mood") {
+    return {
+      badge: "Interest",
+      title: block.text || "Current mood",
+      description: block.secondaryText || "Ambient profile detail",
+      icon: LuSparkles,
+    };
+  }
+
+  return {
+    badge: "Detail",
+    title: block.text || "Profile note",
+    description: block.secondaryText || "Small profile detail",
+    icon: LuMessageSquareQuote,
+  };
 }
 
 function customBlockFrameStyle(
@@ -308,44 +231,45 @@ function customBlockFrameStyle(
   dnaTuning: ProfileDnaTuning,
   compact: boolean,
 ): CSSProperties {
-  const borderAlpha = block.transparency ? "12" : "20";
-  const backgroundAlphaTop = block.transparency ? "0f" : "18";
-  const backgroundAlphaBottom = block.transparency ? "54" : "7a";
+  const borderAlpha = block.transparency ? "14" : "24";
+  const backgroundAlphaTop = block.transparency ? "10" : "18";
+  const backgroundAlphaBottom = block.transparency ? "56" : "7c";
   const compactnessScale = compact ? dnaTuning.compactnessScale : 1;
   const borderTone =
-    dnaTuning.borderScale >= 1.12 ? "2c" : dnaTuning.borderScale <= 0.82 ? "14" : borderAlpha;
+    dnaTuning.borderScale >= 1.12 ? "30" : dnaTuning.borderScale <= 0.82 ? "16" : borderAlpha;
   const backgroundTop =
     dnaTuning.transparencyScale >= 1.12
-      ? "0d"
+      ? "0c"
       : dnaTuning.transparencyScale <= 0.94
-        ? "1c"
+        ? "1a"
         : backgroundAlphaTop;
   const backgroundBottom =
     dnaTuning.transparencyScale >= 1.12
-      ? "4e"
+      ? "48"
       : dnaTuning.transparencyScale <= 0.94
         ? "84"
         : backgroundAlphaBottom;
   const blurFilter = block.transparency
-    ? `blur(${Math.max(8, Math.round(10 * dnaTuning.blurScale))}px) saturate(${Math.round(
-        108 + (dnaTuning.glowScale - 1) * 18,
+    ? `blur(${Math.max(8, Math.round(11 * dnaTuning.blurScale))}px) saturate(${Math.round(
+        110 + (dnaTuning.glowScale - 1) * 20,
       )}%)`
     : "none";
   const baseShadow = block.glow
-    ? `0 ${Math.round(12 * dnaTuning.shadowScale)}px ${Math.round(26 * dnaTuning.shadowScale)}px ${withAlpha(
+    ? `0 ${Math.round(16 * dnaTuning.shadowScale)}px ${Math.round(34 * dnaTuning.shadowScale)}px ${withAlpha(
         accentColor,
-        dnaTuning.glowScale >= 1.1 ? "1c" : "16",
-      )}, inset 0 1px 0 rgba(255,255,255,0.04)`
+        dnaTuning.glowScale >= 1.1 ? "22" : "18",
+      )}, inset 0 1px 0 rgba(255,255,255,0.05)`
     : block.type === "divider"
       ? "none"
-      : `0 ${Math.round(10 * dnaTuning.shadowScale)}px ${Math.round(22 * dnaTuning.shadowScale)}px ${withAlpha(
+      : `0 ${Math.round(12 * dnaTuning.shadowScale)}px ${Math.round(28 * dnaTuning.shadowScale)}px ${withAlpha(
           contrastColor,
-          dnaTuning.shadowScale <= 0.86 ? "0b" : "0f",
-        )}, inset 0 1px 0 rgba(255,255,255,0.03)`;
+          dnaTuning.shadowScale <= 0.86 ? "0b" : "12",
+        )}, inset 0 1px 0 rgba(255,255,255,0.04)`;
 
   return {
     width: "100%",
     minWidth: 0,
+    overflow: "visible",
     padding:
       block.type === "divider"
         ? compact
@@ -353,15 +277,15 @@ function customBlockFrameStyle(
           : `${Math.max(9, Math.round(10 * compactnessScale))}px ${Math.max(11, Math.round(12 * compactnessScale))}px`
         : compact
           ? `${Math.max(10, Math.round(11 * compactnessScale))}px ${Math.max(11, Math.round(12 * compactnessScale))}px`
-          : `${Math.max(12, Math.round(13 * compactnessScale))}px ${Math.max(13, Math.round(14 * compactnessScale))}px`,
+          : `${Math.max(13, Math.round(14 * compactnessScale))}px ${Math.max(13, Math.round(14 * compactnessScale))}px`,
     borderRadius:
-      block.type === "text-strip" || block.type === "status-banner"
-        ? "999px"
-        : block.type === "divider"
-          ? "18px"
+      block.type === "divider"
+        ? "18px"
+        : block.type === "text-strip" || block.type === "status-banner"
+          ? "24px"
           : block.type === "image-card"
-            ? "22px"
-            : "20px",
+            ? "26px"
+            : "24px",
     border: `1px solid ${withAlpha(accentColor, borderTone)}`,
     background:
       block.type === "divider"
@@ -370,6 +294,80 @@ function customBlockFrameStyle(
     boxShadow: baseShadow,
     backdropFilter: blurFilter,
     WebkitBackdropFilter: blurFilter,
+  };
+}
+
+function titleStyle(
+  dnaTuning: ProfileDnaTuning,
+  compact: boolean,
+  type: ProfileCustomBlock["type"],
+  softColor: string,
+): CSSProperties {
+  return {
+    color: softColor,
+    fontSize: `${Math.max(
+      type === "image-card" ? 15 : 13,
+      Math.round((compact ? (type === "image-card" ? 16 : 14) : type === "image-card" ? 18 : 15) * dnaTuning.typographyScale),
+    )}px`,
+    lineHeight: type === "image-card" ? 1.28 : 1.38,
+    fontWeight: type === "image-card" ? 800 : 750,
+    letterSpacing: "-0.015em",
+    whiteSpace: "pre-wrap",
+    overflowWrap: "anywhere",
+  };
+}
+
+function descriptionStyle(
+  dnaTuning: ProfileDnaTuning,
+  compact: boolean,
+): CSSProperties {
+  return {
+    color: "#c4d0e4",
+    fontSize: `${Math.max(11, Math.round((compact ? 12 : 13) * dnaTuning.typographyScale))}px`,
+    lineHeight: 1.62,
+    whiteSpace: "pre-wrap",
+    overflowWrap: "anywhere",
+  };
+}
+
+function linkButtonStyle(accentColor: string): CSSProperties {
+  return {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "6px",
+    minHeight: "28px",
+    padding: "0 10px",
+    borderRadius: "999px",
+    color: "#f5f8ff",
+    background: `linear-gradient(180deg, ${withAlpha(accentColor, "18")}, rgba(8,10,16,0.48))`,
+    border: `1px solid ${withAlpha(accentColor, "34")}`,
+    textDecoration: "none",
+    fontSize: "11px",
+    fontWeight: 800,
+    letterSpacing: "0.03em",
+    boxShadow: `0 12px 26px ${withAlpha(accentColor, "14")}`,
+  };
+}
+
+function cardGlowStyle(accentColor: string): CSSProperties {
+  return {
+    background: `
+      radial-gradient(circle at 14% 18%, ${withAlpha(accentColor, "18")} 0%, transparent 32%),
+      radial-gradient(circle at 84% 14%, ${withAlpha(accentColor, "12")} 0%, transparent 24%),
+      linear-gradient(120deg, rgba(255,255,255,0.05), transparent 18%)
+    `,
+  };
+}
+
+function cardMediaOverlayStyle(
+  accentColor: string,
+  type: ProfileCustomBlock["type"],
+): CSSProperties {
+  return {
+    background:
+      type === "image-card"
+        ? `linear-gradient(180deg, rgba(4,6,10,0.08), rgba(4,6,10,0.18) 34%, rgba(4,6,10,0.82) 100%), radial-gradient(circle at top, ${withAlpha(accentColor, "18")} 0%, transparent 38%)`
+        : `linear-gradient(180deg, rgba(4,6,10,0.28), rgba(4,6,10,0.74) 100%), radial-gradient(circle at top, ${withAlpha(accentColor, "18")} 0%, transparent 44%)`,
   };
 }
 
@@ -418,14 +416,98 @@ function resolveLineAlign(alignment: ProfileCustomBlockAlignment) {
       : "center";
 }
 
-function justifyContentForAlignment(alignment: ProfileCustomBlockAlignment) {
-  return alignment === "start"
-    ? "flex-start"
-    : alignment === "end"
-      ? "flex-end"
-      : "center";
-}
-
 function withAlpha(hex: string, alpha: string) {
   return `${hex}${alpha}`;
 }
+
+const sharedStyles = `
+  .profile-custom-card-shell {
+    position: relative;
+    overflow: hidden;
+    min-width: 0;
+    border-radius: inherit;
+    isolation: isolate;
+  }
+
+  .profile-custom-card-shell.info {
+    transition:
+      transform 180ms cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 180ms ease,
+      border-color 180ms ease;
+  }
+
+  .profile-custom-card-shell.info.has-link:hover,
+  .profile-custom-card-shell.info.has-link:focus-within,
+  .profile-custom-card-shell.info:hover {
+    transform: translateY(-2px);
+  }
+
+  .profile-custom-card-glow,
+  .profile-custom-card-media,
+  .profile-custom-card-media-overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  .profile-custom-card-glow {
+    opacity: 0.96;
+  }
+
+  .profile-custom-card-media-image {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scale(1.02);
+  }
+
+  .profile-custom-card-content {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    gap: 14px;
+    min-height: inherit;
+  }
+
+  .profile-custom-card-content.quote {
+    gap: 10px;
+  }
+
+  .profile-custom-card-head {
+    display: flex;
+    align-items: start;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .profile-custom-card-copy {
+    display: grid;
+    gap: 8px;
+    margin-top: auto;
+    min-width: 0;
+  }
+
+  .profile-custom-card-link {
+    transition:
+      transform 180ms cubic-bezier(0.22, 1, 0.36, 1),
+      border-color 180ms ease,
+      box-shadow 180ms ease;
+  }
+
+  .profile-custom-card-link:hover,
+  .profile-custom-card-link:focus-visible {
+    transform: translateY(-1px);
+    outline: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .profile-custom-card-shell.info,
+    .profile-custom-card-link {
+      transition: none !important;
+      transform: none !important;
+    }
+  }
+`;

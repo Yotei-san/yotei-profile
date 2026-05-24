@@ -37,6 +37,9 @@ import {
   type ProfileMood,
 } from "@/app/lib/profile-presence";
 import {
+  getProfileMusicArtist,
+  getProfileMusicProviderLabel,
+  getProfileMusicTitle,
   shouldRenderProfileMusic,
   type ProfileMusicData,
 } from "@/app/lib/profile-music";
@@ -2340,7 +2343,7 @@ function renderIdentityMetadataSlot(
         locationText={input.composition.metadata.locationText}
         align={input.align}
         preview={input.preview}
-        variant={isScreenCorner ? "corner" : "inline"}
+        variant={isScreenCorner ? "micro" : "inline"}
       />
     </div>
   );
@@ -2405,6 +2408,121 @@ function usePublicProfileScrollbarMode(enabled: boolean) {
       bodyElement.classList.remove("yotei-public-profile-route");
     };
   }, [enabled]);
+}
+
+function animateWindowScrollTo(
+  startTop: number,
+  targetTop: number,
+  durationMs: number,
+  onFrameChange?: (frame: number) => void,
+  onDone?: () => void,
+) {
+  if (typeof window === "undefined") {
+    onDone?.();
+    return 0;
+  }
+
+  const startedAt = window.performance.now();
+  const distance = targetTop - startTop;
+
+  const easeInOutCubic = (value: number) => {
+    return value < 0.5
+      ? 4 * value * value * value
+      : 1 - Math.pow(-2 * value + 2, 3) / 2;
+  };
+
+  const schedule = (callback: FrameRequestCallback) => {
+    const frame = window.requestAnimationFrame(callback);
+    onFrameChange?.(frame);
+    return frame;
+  };
+
+  const step = (timestamp: number) => {
+    const elapsed = timestamp - startedAt;
+    const progress = clampNumber(elapsed / Math.max(durationMs, 1), 0, 1);
+    const eased = easeInOutCubic(progress);
+
+    window.scrollTo({
+      top: Math.round(startTop + distance * eased),
+      behavior: "auto",
+    });
+
+    if (progress >= 1) {
+      onDone?.();
+      return;
+    }
+
+    schedule(step);
+  };
+
+  return schedule(step);
+}
+
+type IntroActionItem = {
+  key: string;
+  href: string;
+  label: string;
+  color: string;
+  icon: ReturnType<typeof getLinkPlatform>["icon"];
+};
+
+function buildIntroActionItems(input: {
+  links: PublicProfileRenderUser["links"];
+  regularSocialBlocks: PublicSocialBlock[];
+  liveSocialBlocks: PublicSocialBlock[];
+}) {
+  const items: IntroActionItem[] = [];
+  const seen = new Set<string>();
+
+  input.links.forEach((link) => {
+    const href = `/go/${link.id}`;
+    const platform = getLinkPlatform(link.url, link.title);
+    const key = `link:${link.id}`;
+
+    if (seen.has(href)) {
+      return;
+    }
+
+    seen.add(href);
+    items.push({
+      key,
+      href,
+      label: link.title || platform.name,
+      color: platform.color,
+      icon: platform.icon,
+    });
+  });
+
+  [...input.regularSocialBlocks, ...input.liveSocialBlocks].forEach((block) => {
+    const href = block.openUrl || block.url;
+
+    if (!href || seen.has(href)) {
+      return;
+    }
+
+    const platform = getLinkPlatform(href, block.title || block.platform);
+
+    seen.add(href);
+    items.push({
+      key: `social:${block.id}`,
+      href,
+      label: block.title || block.username || platform.name,
+      color: block.accentColor || platform.color,
+      icon: platform.icon,
+    });
+  });
+
+  return items;
+}
+
+function shouldRenderIntroMetadataFooter(
+  placement: ProfileComposition["metadata"]["placement"],
+) {
+  return (
+    placement !== "hidden" &&
+    placement !== "screen-bottom-left" &&
+    placement !== "screen-bottom-right"
+  );
 }
 
 function IntroProfileStage({
@@ -2521,9 +2639,18 @@ function IntroProfileStage({
         dnaTuning.compactnessScale,
     ),
   );
-  const introPills = mode === "cinematic" ? heroPills.slice(0, 3) : heroPills.slice(0, 2);
   const resolvedBannerUrl = sanitizeRenderableUrl(user.bannerUrl);
   const detailsSectionId = `profile-details-${user.username}-${mode}${preview ? "-preview" : ""}`;
+  const introStatusText = user.bio
+    ? truncateProfileBio(user.bio, 120)
+    : heroPills.find((pill) => pill.key === "status")?.text ?? null;
+  const introActionItems = buildIntroActionItems({
+    links: user.links,
+    regularSocialBlocks,
+    liveSocialBlocks,
+  }).slice(0, 6);
+  const showHeroMusicCompact =
+    orderedContentBlocks.includes("music") && shouldRenderProfileMusic(music);
   const floatingPersonality = floating
     ? getProfileFloatingCompositionPlan({
         density: composition.density,
@@ -2553,14 +2680,16 @@ function IntroProfileStage({
     Math.round(14 * presetRenderTuning.moduleGapScale * dnaTuning.spacingScale),
   );
   const detailsRef = useRef<HTMLElement | null>(null);
+  const scrollAnimationFrameRef = useRef<number | null>(null);
   const [scrollHintOpacity, setScrollHintOpacity] = useState(1);
+  const scrollAtmosphereEnabled = !preview && hasDetails && motionLevel !== "off";
   const scrollAtmosphereProgress = useScrollAtmosphere(
-    !preview && hasDetails,
-    260,
+    scrollAtmosphereEnabled,
+    360,
   );
 
   useEffect(() => {
-    if (preview || !hasDetails || typeof window === "undefined") {
+    if (preview || !hasDetails || motionLevel === "off" || typeof window === "undefined") {
       return;
     }
 
@@ -2568,7 +2697,7 @@ function IntroProfileStage({
 
     const updateScrollHint = () => {
       frame = 0;
-      const nextOpacity = Math.max(0, 1 - Math.min(window.scrollY / 120, 1));
+      const nextOpacity = Math.max(0, 1 - Math.min(window.scrollY / 168, 1));
       setScrollHintOpacity((current) =>
         Math.abs(current - nextOpacity) < 0.02 ? current : nextOpacity,
       );
@@ -2592,7 +2721,15 @@ function IntroProfileStage({
       }
       window.removeEventListener("scroll", handleScroll);
     };
-  }, [hasDetails, preview]);
+  }, [hasDetails, motionLevel, preview]);
+
+  useEffect(() => {
+    return () => {
+      if (scrollAnimationFrameRef.current && typeof window !== "undefined") {
+        window.cancelAnimationFrame(scrollAnimationFrameRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const detailsElement = detailsRef.current;
@@ -2688,10 +2825,32 @@ function IntroProfileStage({
     const targetTop =
       target.getBoundingClientRect().top + window.scrollY - topOffset;
 
-    window.scrollTo({
-      top: Math.max(0, targetTop),
-      behavior: prefersReducedMotion ? "auto" : "smooth",
-    });
+    const resolvedTargetTop = Math.max(0, targetTop);
+
+    if (prefersReducedMotion) {
+      window.scrollTo({
+        top: resolvedTargetTop,
+        behavior: "auto",
+      });
+      return;
+    }
+
+    if (scrollAnimationFrameRef.current) {
+      window.cancelAnimationFrame(scrollAnimationFrameRef.current);
+      scrollAnimationFrameRef.current = null;
+    }
+
+    scrollAnimationFrameRef.current = animateWindowScrollTo(
+      window.scrollY,
+      resolvedTargetTop,
+      760,
+      (frame) => {
+        scrollAnimationFrameRef.current = frame;
+      },
+      () => {
+        scrollAnimationFrameRef.current = null;
+      },
+    );
   };
 
   return (
@@ -2801,10 +2960,10 @@ function IntroProfileStage({
           display: flex;
           align-items: center;
           justify-content: center;
-          padding: ${preview ? "24px 14px 8px" : "32px 18px 10px"};
+          padding: ${preview ? "28px 14px 12px" : "42px 18px 18px"};
           box-sizing: border-box;
-          transform: translate3d(0, calc(var(--intro-scroll-settle) * -0.72), 0);
-          opacity: calc(1 - var(--intro-scroll-progress) * 0.28);
+          transform: translate3d(0, calc(var(--intro-scroll-settle) * -1.08), 0);
+          opacity: calc(1 - var(--intro-scroll-progress) * 0.42);
           transition:
             transform var(--intro-transition-duration) var(--intro-motion-ease),
             opacity var(--intro-transition-duration) var(--intro-motion-ease);
@@ -2816,50 +2975,54 @@ function IntroProfileStage({
           position: relative;
           display: grid;
           justify-items: center;
-          gap: ${mode === "cinematic" ? "16px" : "13px"};
-          padding: ${mode === "cinematic" ? "22px 20px" : "18px 16px"};
+          gap: ${mode === "cinematic" ? "18px" : "14px"};
+          padding: ${mode === "cinematic" ? "14px 6px 18px" : "10px 4px 14px"};
           text-align: center;
-          border-radius: ${mode === "cinematic" ? "28px" : "24px"};
-          border: 1px solid ${mode === "cinematic" || floating ? withAlpha(presence.accent, "18") : "rgba(255,255,255,0.07)"};
-          background:
-            ${mode === "cinematic" || floating
-              ? "linear-gradient(180deg, rgba(255,255,255,0.045), rgba(8,10,16,0.28) 42%, rgba(8,10,16,0.12) 100%)"
-              : "linear-gradient(180deg, rgba(8,10,16,0.72), rgba(7,8,14,0.52))"},
-            ${cardStyle === "glass"
-              ? "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))"
-              : "none"};
-          box-shadow:
-            0 24px 52px rgba(0, 0, 0, 0.16),
-            0 0 0 1px rgba(255, 255, 255, 0.03),
-            inset 0 1px 0 rgba(255, 255, 255, 0.05);
-          backdrop-filter: ${cardStyle === "glass" && mode === "cinematic"
-            ? "blur(14px) saturate(112%)"
-            : cardStyle === "glass"
-              ? "blur(12px) saturate(108%)"
-              : "blur(8px) saturate(104%)"};
-          -webkit-backdrop-filter: ${cardStyle === "glass" && mode === "cinematic"
-            ? "blur(14px) saturate(112%)"
-            : cardStyle === "glass"
-              ? "blur(12px) saturate(108%)"
-              : "blur(8px) saturate(104%)"};
-          transform: translate3d(0, calc(var(--intro-scroll-settle) * -0.18), 0);
+          overflow: visible;
+          border-radius: 0;
+          border: none;
+          background: none;
+          box-shadow: none;
+          backdrop-filter: none;
+          -webkit-backdrop-filter: none;
+          transform:
+            translate3d(0, calc(var(--intro-scroll-settle) * -0.18), 0)
+            scale(calc(1 - var(--intro-scroll-progress) * 0.018));
           opacity: calc(1 - var(--intro-scroll-progress) * 0.18);
           transition:
             transform var(--intro-transition-duration) var(--intro-motion-ease),
-            box-shadow var(--intro-transition-duration) var(--intro-motion-ease),
             opacity var(--intro-transition-duration) var(--intro-motion-ease);
         }
 
         .profile-intro-shell::before {
           content: "";
           position: absolute;
-          inset: 0;
-          border-radius: inherit;
+          left: 50%;
+          top: -36px;
+          width: min(520px, 92vw);
+          height: 220px;
+          transform: translateX(-50%);
+          border-radius: 999px;
           background:
-            radial-gradient(circle at top, ${withAlpha(presence.soft, mode === "cinematic" ? "18" : "0d")} 0%, transparent 38%),
-            linear-gradient(135deg, rgba(255,255,255,0.05), transparent 20%);
+            radial-gradient(circle, ${withAlpha(presence.soft, mode === "cinematic" ? "20" : "16")} 0%, transparent 62%);
+          filter: blur(18px);
           pointer-events: none;
-          opacity: calc(0.92 + var(--intro-scroll-focus) * 0.16);
+          opacity: calc(0.7 + var(--intro-scroll-focus) * 0.12);
+        }
+
+        .profile-intro-shell::after {
+          content: "";
+          position: absolute;
+          left: 50%;
+          top: 100%;
+          width: 1px;
+          height: 70px;
+          transform: translateX(-50%);
+          border: none;
+          background:
+            linear-gradient(180deg, ${withAlpha(presence.accent, "24")} 0%, rgba(255,255,255,0.08) 26%, transparent 100%);
+          pointer-events: none;
+          opacity: calc(0.42 + var(--intro-scroll-progress) * 0.18);
         }
 
         .profile-intro-chip-row,
@@ -2873,6 +3036,26 @@ function IntroProfileStage({
           gap: 8px;
           flex-wrap: wrap;
           min-width: 0;
+        }
+
+        .profile-intro-identity,
+        .profile-intro-name-block,
+        .profile-intro-action-row {
+          position: relative;
+          z-index: 1;
+          display: grid;
+          justify-items: center;
+          min-width: 0;
+        }
+
+        .profile-intro-identity {
+          gap: 14px;
+          width: 100%;
+        }
+
+        .profile-intro-name-block {
+          gap: 10px;
+          width: 100%;
         }
 
         .profile-intro-chip,
@@ -2906,30 +3089,202 @@ function IntroProfileStage({
           z-index: 1;
         }
 
-        .profile-intro-name {
-          margin: 0;
-          font-size: clamp(${mode === "cinematic" ? "34px" : "28px"}, ${mode === "cinematic" ? "5vw" : "4.6vw"}, ${mode === "cinematic" ? "54px" : "44px"});
-          line-height: 0.92;
-          letter-spacing: -0.08em;
-          text-shadow: 0 16px 38px rgba(0, 0, 0, 0.32);
+        .profile-intro-avatar {
+          transform: translate3d(0, calc(var(--intro-scroll-settle) * -0.14), 0);
           transition: transform var(--intro-transition-duration) var(--intro-motion-emphasis);
         }
 
+        .profile-intro-name {
+          margin: 0;
+          font-size: clamp(${mode === "cinematic" ? "38px" : "30px"}, ${mode === "cinematic" ? "5vw" : "4.6vw"}, ${mode === "cinematic" ? "58px" : "46px"});
+          line-height: 0.9;
+          letter-spacing: -0.075em;
+          text-shadow: 0 18px 42px rgba(0, 0, 0, 0.34);
+          transition:
+            transform var(--intro-transition-duration) var(--intro-motion-emphasis),
+            opacity var(--intro-transition-duration) var(--intro-motion-ease);
+        }
+
         .profile-intro-username {
-          margin-top: -4px;
-          color: #b0bdd6;
-          font-size: 13px;
+          margin-top: -2px;
+          color: #bcc7db;
+          font-size: 12px;
           font-weight: 700;
-          letter-spacing: calc(var(--intro-label-tracking) - 0.03em);
+          letter-spacing: calc(var(--intro-label-tracking) + 0.01em);
+          text-transform: uppercase;
+          opacity: 0.92;
         }
 
         .profile-intro-bio-hint {
           position: relative;
           z-index: 1;
-          max-width: 38ch;
-          color: #cdd8eb;
+          max-width: 42ch;
+          margin-top: 2px;
+          color: #dbe6f7;
           font-size: 13px;
-          line-height: 1.65;
+          line-height: 1.78;
+          opacity: calc(0.94 - var(--intro-scroll-progress) * 0.2);
+          transform: translate3d(0, calc(var(--intro-scroll-settle) * 0.08), 0);
+          transition:
+            transform var(--intro-transition-duration) var(--intro-motion-ease),
+            opacity var(--intro-transition-duration) var(--intro-motion-ease);
+        }
+
+        .profile-intro-action-row {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+          flex-wrap: wrap;
+        }
+
+        .profile-intro-action {
+          --intro-action-accent: #dbeafe;
+          position: relative;
+          width: 38px;
+          height: 38px;
+          border-radius: 14px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          color: #f8fbff;
+          text-decoration: none;
+          border: 1px solid rgba(255,255,255,0.08);
+          background:
+            radial-gradient(circle at 30% 24%, rgba(255,255,255,0.16), transparent 48%),
+            linear-gradient(180deg, rgba(255,255,255,0.07), rgba(8,10,16,0.52));
+          box-shadow:
+            0 14px 28px rgba(0,0,0,0.18),
+            0 0 18px color-mix(in srgb, var(--intro-action-accent) 22%, transparent),
+            inset 0 1px 0 rgba(255,255,255,0.07);
+          transition:
+            transform 180ms cubic-bezier(0.22, 1, 0.36, 1),
+            border-color 180ms ease,
+            box-shadow 180ms ease;
+        }
+
+        .profile-intro-action::before,
+        .profile-intro-action::after {
+          position: absolute;
+          left: 50%;
+          pointer-events: none;
+          opacity: 0;
+          transition:
+            opacity 160ms ease,
+            transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .profile-intro-action::before {
+          content: "";
+          bottom: calc(100% + 5px);
+          transform: translate(-50%, 4px);
+          border-width: 6px 6px 0 6px;
+          border-style: solid;
+          border-color: rgba(8,10,16,0.94) transparent transparent transparent;
+        }
+
+        .profile-intro-action::after {
+          content: attr(data-tooltip);
+          bottom: calc(100% + 12px);
+          transform: translate(-50%, 7px);
+          padding: 8px 10px;
+          border-radius: 12px;
+          border: 1px solid rgba(255,255,255,0.08);
+          background: rgba(8,10,16,0.94);
+          box-shadow: 0 16px 32px rgba(0,0,0,0.28);
+          color: #f8fbff;
+          font-size: 11px;
+          font-weight: 800;
+          white-space: nowrap;
+          letter-spacing: 0.02em;
+        }
+
+        .profile-intro-action:hover,
+        .profile-intro-action:focus-visible {
+          transform: translateY(-2px);
+          border-color: color-mix(in srgb, var(--intro-action-accent) 54%, rgba(255,255,255,0.12));
+          box-shadow:
+            0 16px 30px rgba(0,0,0,0.22),
+            0 0 24px color-mix(in srgb, var(--intro-action-accent) 30%, transparent),
+            inset 0 1px 0 rgba(255,255,255,0.1);
+          outline: none;
+        }
+
+        .profile-intro-action:hover::before,
+        .profile-intro-action:hover::after,
+        .profile-intro-action:focus-visible::before,
+        .profile-intro-action:focus-visible::after {
+          opacity: 1;
+          transform: translate(-50%, 0);
+        }
+
+        .profile-intro-music-inline {
+          position: relative;
+          z-index: 1;
+          display: inline-flex;
+          align-items: center;
+          gap: 10px;
+          max-width: min(100%, 420px);
+          min-height: 44px;
+          padding: 8px 12px;
+          border-radius: 18px;
+          border: 1px solid rgba(255,255,255,0.09);
+          background:
+            linear-gradient(180deg, rgba(255,255,255,0.06), rgba(8,10,16,0.52)),
+            radial-gradient(circle at top left, ${withAlpha(linkThemeColor, "18")} 0%, transparent 34%);
+          box-shadow:
+            0 18px 34px rgba(0,0,0,0.18),
+            0 0 26px ${withAlpha(linkThemeColor, "10")},
+            inset 0 1px 0 rgba(255,255,255,0.08);
+          text-decoration: none;
+          color: #f7fbff;
+          transition:
+            transform 180ms cubic-bezier(0.22, 1, 0.36, 1),
+            border-color 180ms ease,
+            box-shadow 180ms ease;
+        }
+
+        .profile-intro-music-inline:hover,
+        .profile-intro-music-inline:focus-visible {
+          transform: translateY(-2px);
+          border-color: ${withAlpha(linkThemeColor, "2e")};
+          outline: none;
+        }
+
+        .profile-intro-music-kicker,
+        .profile-intro-music-copy {
+          display: grid;
+          gap: 3px;
+          min-width: 0;
+        }
+
+        .profile-intro-music-kicker {
+          align-items: center;
+          justify-items: start;
+          width: fit-content;
+          min-height: 24px;
+          padding: 0 9px;
+          border-radius: 999px;
+          border: 1px solid ${withAlpha(linkThemeColor, "24")};
+          background: ${withAlpha(linkThemeColor, "14")};
+          color: #edf3ff;
+          font-size: 10px;
+          font-weight: 800;
+          letter-spacing: 0.05em;
+          text-transform: uppercase;
+        }
+
+        .profile-intro-music-copy strong {
+          font-size: 13px;
+          font-weight: 800;
+          letter-spacing: -0.02em;
+        }
+
+        .profile-intro-music-copy span {
+          color: #b8c5db;
+          font-size: 11px;
+          line-height: 1.3;
+          overflow-wrap: anywhere;
         }
 
         .profile-intro-pill {
@@ -2968,7 +3323,7 @@ function IntroProfileStage({
         .profile-intro-scroll-wrap {
           position: absolute;
           left: 50%;
-          bottom: ${preview ? "10px" : "20px"};
+          bottom: ${preview ? "12px" : "28px"};
           transform: translateX(-50%);
           z-index: 1;
           transition:
@@ -2979,15 +3334,16 @@ function IntroProfileStage({
         .profile-intro-scroll {
           cursor: pointer;
           position: relative;
-          min-height: 40px;
-          padding: 5px 8px 5px 6px;
-          gap: 10px;
-          border-color: rgba(255,255,255,0.1);
-          background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(8,10,16,0.48));
+          overflow: hidden;
+          min-height: 42px;
+          padding: 5px 11px 5px 7px;
+          gap: 11px;
+          border-color: rgba(255,255,255,0.12);
+          background: linear-gradient(180deg, rgba(255,255,255,0.09), rgba(8,10,16,0.54));
           box-shadow:
-            0 12px 28px rgba(0, 0, 0, 0.18),
-            0 0 22px ${withAlpha(linkThemeColor, "18")},
-            inset 0 1px 0 rgba(255,255,255,0.08);
+            0 16px 34px rgba(0, 0, 0, 0.22),
+            0 0 26px ${withAlpha(linkThemeColor, "1e")},
+            inset 0 1px 0 rgba(255,255,255,0.1);
           transition:
             opacity var(--intro-transition-duration) var(--intro-motion-ease),
             transform var(--intro-transition-duration) var(--intro-motion-ease),
@@ -2995,18 +3351,29 @@ function IntroProfileStage({
             box-shadow var(--intro-transition-duration) var(--intro-motion-ease);
         }
 
+        .profile-intro-scroll::before {
+          content: "";
+          position: absolute;
+          inset: -12px;
+          background: radial-gradient(circle, ${withAlpha(linkThemeColor, "1c")} 0%, transparent 64%);
+          opacity: 0.86;
+          filter: blur(14px);
+          pointer-events: none;
+          animation: intro-scroll-trail calc(var(--intro-glow-pulse-duration) * 0.82) var(--intro-motion-ease) infinite;
+        }
+
         .profile-intro-scroll:hover,
         .profile-intro-scroll:focus-visible {
           opacity: 1;
-          transform: translateY(-2px);
-          border-color: ${withAlpha(linkThemeColor, "32")};
+          transform: translateY(-3px);
+          border-color: ${withAlpha(linkThemeColor, "3a")};
           outline: none;
         }
 
         .profile-intro-scroll-orb {
           position: relative;
-          width: 28px;
-          height: 28px;
+          width: 30px;
+          height: 30px;
           border-radius: 999px;
           display: inline-flex;
           align-items: center;
@@ -3017,8 +3384,20 @@ function IntroProfileStage({
             linear-gradient(180deg, ${withAlpha(linkThemeColor, "32")}, rgba(255,255,255,0.04));
           box-shadow:
             0 0 0 1px ${withAlpha(linkThemeColor, "24")},
-            0 0 18px ${withAlpha(linkThemeColor, "18")};
+            0 0 22px ${withAlpha(linkThemeColor, "20")};
           animation: intro-scroll-pulse calc(var(--intro-glow-pulse-duration) * 0.9) var(--intro-motion-ease) infinite;
+        }
+
+        .profile-intro-scroll-orb::after {
+          content: "";
+          position: absolute;
+          left: 50%;
+          top: calc(100% + 2px);
+          width: 1px;
+          height: 18px;
+          transform: translateX(-50%);
+          background: linear-gradient(180deg, ${withAlpha(linkThemeColor, "34")} 0%, transparent 100%);
+          opacity: 0.72;
         }
 
         .profile-intro-scroll-arrow {
@@ -3029,8 +3408,9 @@ function IntroProfileStage({
           color: #eef4ff;
           font-size: 10px;
           font-weight: 800;
-          letter-spacing: calc(var(--intro-label-tracking) + 0.01em);
+          letter-spacing: calc(var(--intro-label-tracking) + 0.02em);
           text-transform: uppercase;
+          opacity: 0.92;
         }
 
         .profile-intro-details {
@@ -3039,22 +3419,41 @@ function IntroProfileStage({
           width: min(${detailsMaxWidth}px, calc(100% - 28px));
           max-width: ${detailsMaxWidth}px;
           margin: 0 auto ${preview ? "18px" : "28px"};
-          padding-top: ${preview ? "12px" : "24px"};
+          padding-top: ${preview ? "14px" : "30px"};
           display: grid;
           grid-template-columns: minmax(0, 1fr);
           gap: ${Math.max(16, introDetailsGap + 6)}px;
           scroll-margin-top: 28px;
           align-items: start;
-          opacity: calc(0.42 + var(--intro-scroll-progress) * 0.58);
-          transform: translate3d(0, calc((1 - var(--intro-scroll-progress)) * 28px), 0);
+          opacity: calc(0.18 + var(--intro-scroll-progress) * 0.82);
+          transform: translate3d(0, calc((1 - var(--intro-scroll-progress)) * 44px), 0);
           transition:
             opacity var(--intro-transition-duration) var(--intro-motion-ease),
             transform var(--intro-transition-duration) var(--intro-motion-ease);
         }
 
+        .profile-intro-details::before {
+          content: "";
+          position: absolute;
+          top: 0;
+          bottom: 18px;
+          left: 50%;
+          width: 1px;
+          transform: translateX(-50%);
+          background:
+            linear-gradient(180deg, transparent 0%, rgba(255,255,255,0.09) 16%, ${withAlpha(presence.accent, "20")} 50%, rgba(255,255,255,0.08) 78%, transparent 100%);
+          opacity: 0.7;
+          pointer-events: none;
+        }
+
+        .profile-intro-details > * {
+          position: relative;
+          z-index: 1;
+        }
+
         .profile-intro-details[data-revealed="false"] {
-          opacity: calc(0.42 + var(--intro-scroll-progress) * 0.58);
-          transform: translate3d(0, calc((1 - var(--intro-scroll-progress)) * 28px), 0);
+          opacity: calc(0.18 + var(--intro-scroll-progress) * 0.82);
+          transform: translate3d(0, calc((1 - var(--intro-scroll-progress)) * 44px), 0);
         }
 
         .profile-intro-details[data-revealed="true"] {
@@ -3073,22 +3472,31 @@ function IntroProfileStage({
           position: relative;
           overflow: hidden;
           display: grid;
-          gap: 14px;
-          padding: 16px 18px;
-          border-radius: 26px;
-          border: 1px solid rgba(255,255,255,0.055);
+          gap: 15px;
+          padding: 18px 20px;
+          border-radius: 28px;
+          border: 1px solid rgba(255,255,255,0.05);
           background:
-            linear-gradient(180deg, rgba(255,255,255,0.032), rgba(9,11,17,0.12)),
-            radial-gradient(circle at top, ${withAlpha(presence.accent, "0d")} 0%, transparent 48%);
+            linear-gradient(180deg, rgba(255,255,255,0.028), rgba(9,11,17,0.08)),
+            radial-gradient(circle at 50% 0%, ${withAlpha(presence.accent, "10")} 0%, transparent 54%);
           box-shadow:
-            0 16px 32px rgba(0,0,0,0.1),
+            0 22px 42px rgba(0,0,0,0.12),
             inset 0 1px 0 rgba(255,255,255,0.04);
-          backdrop-filter: blur(8px) saturate(106%);
-          -webkit-backdrop-filter: blur(8px) saturate(106%);
+          backdrop-filter: blur(12px) saturate(108%);
+          -webkit-backdrop-filter: blur(12px) saturate(108%);
           transition:
             transform var(--intro-transition-duration) var(--intro-motion-ease),
             opacity var(--intro-transition-duration) var(--intro-motion-ease),
             box-shadow var(--intro-transition-duration) var(--intro-motion-ease);
+        }
+
+        .profile-intro-chapter.chapter-about {
+          background:
+            linear-gradient(180deg, rgba(255,255,255,0.022), rgba(9,11,17,0.05)),
+            radial-gradient(circle at 50% 0%, ${withAlpha(presence.soft, "14")} 0%, transparent 58%);
+          box-shadow:
+            0 26px 46px rgba(0,0,0,0.12),
+            inset 0 1px 0 rgba(255,255,255,0.05);
         }
 
         .profile-intro-chapter::before {
@@ -3149,10 +3557,19 @@ function IntroProfileStage({
 
         .profile-intro-chapter-copy {
           color: #e4ebf8;
-          font-size: 13px;
-          line-height: ${densityTokens.bioLineHeight};
+          font-size: 14px;
+          line-height: ${Math.max(1.72, densityTokens.bioLineHeight + 0.06)};
           white-space: pre-wrap;
           overflow-wrap: anywhere;
+        }
+
+        .profile-intro-chapter.chapter-about .profile-intro-chapter-copy {
+          max-width: 54ch;
+          margin-inline: auto;
+          color: #edf3ff;
+          font-size: 15px;
+          line-height: ${Math.max(1.86, densityTokens.bioLineHeight + 0.16)};
+          text-align: center;
         }
 
         .profile-intro-chapter-subsection {
@@ -3173,6 +3590,33 @@ function IntroProfileStage({
 
         .profile-intro-inline-block.custom-image-card {
           max-width: 100%;
+        }
+
+        .profile-intro-info-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 14px;
+          min-width: 0;
+          align-items: stretch;
+        }
+
+        .profile-intro-info-card {
+          min-width: 0;
+          height: 100%;
+        }
+
+        .profile-intro-info-card.width-normal,
+        .profile-intro-info-card.custom-image-card {
+          grid-column: span 2;
+        }
+
+        .profile-intro-meta-footer {
+          width: min(100%, 720px);
+          justify-self: center;
+          min-width: 0;
+          padding: 6px 0 0;
+          display: flex;
+          justify-content: center;
         }
 
         .profile-intro-divider-row {
@@ -3527,6 +3971,18 @@ function IntroProfileStage({
           }
         }
 
+        @keyframes intro-scroll-trail {
+          0%, 100% {
+            opacity: 0.36;
+            transform: scale(0.94);
+          }
+
+          50% {
+            opacity: 0.86;
+            transform: scale(1.06);
+          }
+        }
+
         @keyframes intro-ambient-drift {
           0%, 100% { transform: translate3d(0, 0, 0); }
           50% { transform: translate3d(0, var(--intro-ambient-drift-distance), 0); }
@@ -3558,26 +4014,40 @@ function IntroProfileStage({
         @media (max-width: 720px) {
           .profile-intro-hero {
             min-height: ${preview ? "460px" : "100svh"};
-            padding: 22px 14px 6px;
+            padding: 26px 14px 10px;
           }
 
           .profile-intro-shell {
             width: min(${Math.min(introMaxWidth, 420)}px, calc(100% - 12px));
-            padding: 16px 14px;
-            border-radius: 22px;
+            padding: 18px 14px 16px;
+            border-radius: 24px;
           }
 
           .profile-intro-details {
             width: min(${Math.min(detailsMaxWidth, 760)}px, calc(100% - 20px));
             margin: 0 auto ${preview ? "18px" : "24px"};
-            padding-top: ${preview ? "10px" : "18px"};
+            padding-top: ${preview ? "12px" : "20px"};
             grid-template-columns: minmax(0, 1fr);
+          }
+
+          .profile-intro-details::before {
+            opacity: 0.42;
           }
 
           .profile-intro-chapter {
             width: 100%;
-            padding: 14px 14px;
+            padding: 15px 14px;
             border-radius: 22px;
+          }
+
+          .profile-intro-info-grid {
+            grid-template-columns: minmax(0, 1fr);
+            gap: 12px;
+          }
+
+          .profile-intro-info-card.width-normal,
+          .profile-intro-info-card.custom-image-card {
+            grid-column: span 1;
           }
 
           .profile-intro-bio-strip,
@@ -3601,13 +4071,24 @@ function IntroProfileStage({
 
           .profile-intro-scroll {
             min-height: 36px;
-            padding-right: 7px;
+            padding-right: 9px;
             gap: 8px;
           }
 
           .profile-intro-scroll-copy {
             font-size: 9px;
             letter-spacing: 0.07em;
+          }
+
+          .profile-intro-action {
+            width: 36px;
+            height: 36px;
+            border-radius: 13px;
+          }
+
+          .profile-intro-music-inline {
+            width: 100%;
+            justify-content: center;
           }
 
           .profile-intro-scroll-orb {
@@ -3642,6 +4123,13 @@ function IntroProfileStage({
         }
 
         @media (prefers-reduced-motion: reduce) {
+          .profile-intro-hero,
+          .profile-intro-shell,
+          .profile-intro-avatar,
+          .profile-intro-name,
+          .profile-intro-bio-hint,
+          .profile-intro-action,
+          .profile-intro-music-inline,
           .profile-intro-details,
           .profile-intro-module,
           .profile-intro-bio-strip,
@@ -3688,100 +4176,112 @@ function IntroProfileStage({
             </div>
           ) : null}
 
-          <div className="profile-intro-avatar">
-            <LivingAvatar
-              avatarUrl={sanitizeRenderableUrl(user.avatarUrl)}
-              avatarInitials={avatarInitials}
-              avatarAlt={user.username}
-              selectedDecoration={user.selectedDecoration}
-              themeColor={themeColor}
-              accentColor={presence.accent}
-              contrastColor={presence.contrast}
-              softColor={presence.soft}
-              pulseColor={presence.pulse}
-              auraBackground={presence.avatarAuraBackground}
-              ringColor={presence.avatarRing}
-              glowColor={presence.avatarGlow}
-              size={introAvatarSize}
-              frameInset={Math.max(6, Math.round(introAvatarSize * 0.05))}
-              decorationScale={decorationScale}
-              decorationOffsetX={decorationOffsetX}
-              decorationOffsetY={decorationOffsetY}
-            />
+          <div className="profile-intro-identity">
+            <div className="profile-intro-avatar">
+              <LivingAvatar
+                avatarUrl={sanitizeRenderableUrl(user.avatarUrl)}
+                avatarInitials={avatarInitials}
+                avatarAlt={user.username}
+                selectedDecoration={user.selectedDecoration}
+                themeColor={themeColor}
+                accentColor={presence.accent}
+                contrastColor={presence.contrast}
+                softColor={presence.soft}
+                pulseColor={presence.pulse}
+                auraBackground={presence.avatarAuraBackground}
+                ringColor={presence.avatarRing}
+                glowColor={presence.avatarGlow}
+                size={introAvatarSize}
+                frameInset={Math.max(6, Math.round(introAvatarSize * 0.05))}
+                decorationScale={decorationScale}
+                decorationOffsetX={decorationOffsetX}
+                decorationOffsetY={decorationOffsetY}
+              />
+            </div>
+
+            <div className="profile-intro-name-block">
+              <ProfileNamePlate
+                displayName={displayName}
+                username={user.username}
+                effects={nameEffects}
+                motionLevel={motionLevel}
+                nameClassName="profile-intro-name"
+                usernameClassName="profile-intro-username"
+              />
+              {composition.metadata.showBadges ? (
+                <div className="profile-intro-badge-row">
+                  <ProfileIdentityBadges
+                    badges={featuredBadges}
+                    extraBadgeCount={extraBadgeCount}
+                    themeColor={themeColor}
+                    align="center"
+                  />
+                </div>
+              ) : null}
+            </div>
           </div>
 
-          <ProfileNamePlate
-            displayName={displayName}
-            username={user.username}
-            effects={nameEffects}
-            motionLevel={motionLevel}
-            nameClassName="profile-intro-name"
-            usernameClassName="profile-intro-username"
-          />
-          {composition.metadata.showBadges ? (
-            <ProfileIdentityBadges
-              badges={featuredBadges}
-              extraBadgeCount={extraBadgeCount}
-              themeColor={themeColor}
-              align="center"
-            />
-          ) : null}
-          {renderIdentityMetadataSlot("under-username", {
-            composition,
-            username: user.username,
-            views,
-            likes,
-            dislikes,
-            themeColor,
-            initialMyReaction,
-            preview,
-            align: "center",
-          })}
-
-          {user.bio && mode === "cinematic" ? (
-            <div className="profile-intro-bio-hint">{truncateProfileBio(user.bio, 120)}</div>
+          {introStatusText ? (
+            <div className="profile-intro-bio-hint">{introStatusText}</div>
           ) : null}
 
-          {introPills.length > 0 ? (
-            <div className="profile-intro-pill-row">
-              {introPills.map((pill) => (
-                <div
-                  key={pill.key}
-                  className="profile-intro-pill"
-                  style={{
-                    color: pill.color,
-                    background: withAlpha(pill.color, "16"),
-                    borderColor: withAlpha(pill.color, "24"),
-                  }}
-                >
-                  {pill.icon}
-                  {pill.text}
-                </div>
-              ))}
+          {introActionItems.length > 0 ? (
+            <div className="profile-intro-action-row" aria-label="Profile actions">
+              {introActionItems.map((item) => {
+                const ActionIcon = item.icon;
+
+                return (
+                  <a
+                    key={item.key}
+                    href={item.href}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="profile-intro-action"
+                    aria-label={item.label}
+                    data-tooltip={item.label}
+                    style={
+                      {
+                        "--intro-action-accent": item.color,
+                      } as CSSProperties
+                    }
+                  >
+                    <ActionIcon size={15} />
+                  </a>
+                );
+              })}
             </div>
           ) : null}
-          {renderIdentityMetadataSlot("bio", {
-            composition,
-            username: user.username,
-            views,
-            likes,
-            dislikes,
-            themeColor,
-            initialMyReaction,
-            preview,
-            align: "center",
-          })}
-          {renderIdentityMetadataSlot("hero-footer", {
-            composition,
-            username: user.username,
-            views,
-            likes,
-            dislikes,
-            themeColor,
-            initialMyReaction,
-            preview,
-            align: "center",
-          })}
+
+          {showHeroMusicCompact ? (
+            music.url ? (
+              <a
+                href={music.url}
+                target="_blank"
+                rel="noreferrer"
+                className="profile-intro-music-inline"
+              >
+                <span className="profile-intro-music-kicker">
+                  <LuMusic4 size={12} />
+                  {getProfileMusicProviderLabel(music.provider)}
+                </span>
+                <span className="profile-intro-music-copy">
+                  <strong>{getProfileMusicTitle(music)}</strong>
+                  <span>{getProfileMusicArtist(music)}</span>
+                </span>
+              </a>
+            ) : (
+              <div className="profile-intro-music-inline">
+                <span className="profile-intro-music-kicker">
+                  <LuMusic4 size={12} />
+                  {getProfileMusicProviderLabel(music.provider)}
+                </span>
+                <span className="profile-intro-music-copy">
+                  <strong>{getProfileMusicTitle(music)}</strong>
+                  <span>{getProfileMusicArtist(music)}</span>
+                </span>
+              </div>
+            )
+          ) : null}
         </div>
 
         {hasDetails ? (
@@ -4011,21 +4511,36 @@ function renderIntroChapterSequence(input: {
 }) {
   const orderedBlockSet = new Set(input.orderedContentBlocks);
   const aboutBlocks = input.customBlocks.filter((block) => block.type === "quote");
-  const interestBlocks = input.customBlocks.filter(
+  const informationBlocks = input.customBlocks.filter(
     (block) =>
       block.type === "text-strip" ||
       block.type === "mood" ||
-      block.type === "status-banner",
+      block.type === "status-banner" ||
+      block.type === "image-card",
   );
-  const workBlocks = input.customBlocks.filter((block) => block.type === "image-card");
   const dividerBlocks = input.customBlocks.filter((block) => block.type === "divider");
+  const informationLabelBlock =
+    informationBlocks.length > 0
+      ? dividerBlocks.find((block) => Boolean(block.text?.trim())) ?? null
+      : null;
+  const chapterDividerBlocks = informationLabelBlock
+    ? dividerBlocks.filter((block) => block.id !== informationLabelBlock.id)
+    : dividerBlocks;
+  const showMusicSection =
+    orderedBlockSet.has("music") &&
+    (input.preview || shouldRenderProfileMusic(input.music));
+  const hasConnectionsSection =
+    showMusicSection ||
+    orderedBlockSet.has("links") ||
+    orderedBlockSet.has("socials") ||
+    orderedBlockSet.has("live");
 
   let revealIndex = 0;
   let dividerIndex = 0;
   const sections: ReactNode[] = [];
 
   const renderDivider = () => {
-    const block = dividerBlocks[dividerIndex];
+    const block = chapterDividerBlocks[dividerIndex];
 
     if (!block) {
       return null;
@@ -4078,6 +4593,7 @@ function renderIntroChapterSequence(input: {
         revealIndex: revealIndex++,
         label: "About",
         icon: <LuMoonStar size={12} />,
+        className: "chapter-about",
         note:
           input.user.bio && aboutBlocks.length > 0
             ? `${aboutBlocks.length + 1} notes`
@@ -4103,69 +4619,72 @@ function renderIntroChapterSequence(input: {
     );
   }
 
-  if (orderedBlockSet.has("music")) {
+  if (informationBlocks.length > 0) {
     pushChapter(
       renderIntroChapter({
-        key: "music",
+        key: "information",
         preview: input.preview,
         revealIndex: revealIndex++,
-        label: "Music",
-        icon: <LuMusic4 size={12} />,
+        label: informationLabelBlock?.text || "Other information",
+        icon: <LuSparkles size={12} />,
+        className: "chapter-information",
+        note: `${informationBlocks.length} card${informationBlocks.length === 1 ? "" : "s"}`,
         children: (
-          <ProfileRenderBoundary
-            label="Music card"
-            compact
-            resetKey={`${input.username}-intro-music`}
-          >
-            <ProfileMusicCard
-              music={input.music}
-              themeColor={input.themeColor}
-              accentColor={input.accentColor}
-              contrastColor={input.contrastColor}
-              softColor={input.softColor}
-              compact
-              showPlaceholder={input.preview}
-              motionLevel={input.motionLevel}
-            />
-          </ProfileRenderBoundary>
+          <div className="profile-intro-info-grid">
+            {informationBlocks.map((block) =>
+              renderIntroInformationCard(block, {
+                key: `information-${block.id}`,
+                preview: input.preview,
+                accentColor: input.themeColor,
+                contrastColor: input.contrastColor,
+                softColor: input.softColor,
+                dnaTuning: input.dnaTuning,
+              }),
+            )}
+          </div>
         ),
       }),
     );
   }
 
-  if (
-    orderedBlockSet.has("links") ||
-    interestBlocks.length > 0 ||
-    orderedBlockSet.has("socials") ||
-    orderedBlockSet.has("live")
-  ) {
+  if (hasConnectionsSection) {
     pushChapter(
       renderIntroChapter({
-        key: "links-socials",
+        key: "connections",
         preview: input.preview,
         revealIndex: revealIndex++,
-        label: "Links / Socials",
-        icon: <LuSparkles size={12} />,
+        label: "Connections",
+        icon: <LuArrowUpRight size={12} />,
         note:
           orderedBlockSet.has("links") && input.user.links.length > 0
             ? `${input.user.links.length} link${input.user.links.length === 1 ? "" : "s"}`
             : orderedBlockSet.has("socials") || orderedBlockSet.has("live")
               ? "Connected presence"
-            : undefined,
+              : undefined,
         children: (
           <div className="profile-intro-chapter-stack">
-            {interestBlocks.length > 0 ? (
+            {showMusicSection ? (
               <div className="profile-intro-chapter-subsection">
-                {interestBlocks.map((block) =>
-                  renderIntroInlineCustomBlock(block, {
-                    key: `interest-${block.id}`,
-                    preview: input.preview,
-                    accentColor: input.themeColor,
-                    contrastColor: input.contrastColor,
-                    softColor: input.softColor,
-                    dnaTuning: input.dnaTuning,
-                  }),
-                )}
+                <div className="profile-intro-chapter-subtitle">
+                  <LuMusic4 size={12} />
+                  Music
+                </div>
+                <ProfileRenderBoundary
+                  label="Music card"
+                  compact
+                  resetKey={`${input.username}-intro-music`}
+                >
+                  <ProfileMusicCard
+                    music={input.music}
+                    themeColor={input.themeColor}
+                    accentColor={input.accentColor}
+                    contrastColor={input.contrastColor}
+                    softColor={input.softColor}
+                    compact
+                    showPlaceholder={input.preview}
+                    motionLevel={input.motionLevel}
+                  />
+                </ProfileRenderBoundary>
               </div>
             ) : null}
             {orderedBlockSet.has("links") ? (
@@ -4234,29 +4753,18 @@ function renderIntroChapterSequence(input: {
     );
   }
 
-  if (workBlocks.length > 0) {
+  if (shouldRenderIntroMetadataFooter(input.composition.metadata.placement)) {
     pushChapter(
-      renderIntroChapter({
-        key: "work",
+      renderIntroMetadataFooter({
         preview: input.preview,
         revealIndex: revealIndex++,
-        label: "Work / Projects",
-        icon: <LuArrowUpRight size={12} />,
-        note: `${workBlocks.length} visual${workBlocks.length === 1 ? "" : "s"}`,
-        children: (
-          <div className="profile-intro-chapter-stack">
-            {workBlocks.map((block) =>
-              renderIntroInlineCustomBlock(block, {
-                key: `work-${block.id}`,
-                preview: input.preview,
-                accentColor: input.themeColor,
-                contrastColor: input.contrastColor,
-                softColor: input.softColor,
-                dnaTuning: input.dnaTuning,
-              }),
-            )}
-          </div>
-        ),
+        username: input.username,
+        views: input.views,
+        likes: input.likes,
+        dislikes: input.dislikes,
+        themeColor: input.themeColor,
+        initialMyReaction: input.initialMyReaction,
+        locationText: input.composition.metadata.locationText,
       }),
     );
   }
@@ -4272,11 +4780,12 @@ function renderIntroChapter(input: {
   icon: ReactNode;
   children: ReactNode;
   note?: string;
+  className?: string;
 }) {
   return (
     <div
       key={input.key}
-      className="profile-intro-chapter"
+      className={["profile-intro-chapter", input.className].filter(Boolean).join(" ")}
       data-intro-reveal="item"
       data-revealed={input.preview ? "true" : "false"}
       style={getIntroRevealStyle(input.revealIndex)}
@@ -4314,6 +4823,70 @@ function renderIntroInlineCustomBlock(
         dnaTuning={input.dnaTuning}
         preview={input.preview}
         compact
+      />
+    </div>
+  );
+}
+
+function renderIntroInformationCard(
+  block: ProfileCustomBlock,
+  input: {
+    key: string;
+    preview: boolean;
+    accentColor: string;
+    contrastColor: string;
+    softColor: string;
+    dnaTuning: ProfileDnaTuning;
+  },
+) {
+  return (
+    <div
+      key={input.key}
+      className={`profile-intro-info-card custom-${block.type} width-${block.width}`}
+    >
+      <ProfileCustomBlockCard
+        block={block}
+        accentColor={block.accentColor || input.accentColor}
+        contrastColor={input.contrastColor}
+        softColor={input.softColor}
+        dnaTuning={input.dnaTuning}
+        preview={input.preview}
+        compact
+      />
+    </div>
+  );
+}
+
+function renderIntroMetadataFooter(input: {
+  preview: boolean;
+  revealIndex: number;
+  username: string;
+  views: number;
+  likes: number;
+  dislikes: number;
+  themeColor: string;
+  initialMyReaction: PublicProfileReaction;
+  locationText?: string | null;
+}) {
+  return (
+    <div
+      key="metadata-footer"
+      className="profile-intro-meta-footer"
+      data-intro-reveal="item"
+      data-revealed={input.preview ? "true" : "false"}
+      style={getIntroRevealStyle(input.revealIndex)}
+    >
+      <ProfileHeroClient
+        username={input.username}
+        initialViews={input.views}
+        initialLikes={input.likes}
+        initialDislikes={input.dislikes}
+        themeColor={input.themeColor}
+        initialMyReaction={input.initialMyReaction}
+        locationText={input.locationText}
+        align="center"
+        preview={input.preview}
+        variant="micro"
       />
     </div>
   );

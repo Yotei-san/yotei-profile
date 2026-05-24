@@ -34,6 +34,7 @@ export type ProfileCustomBlock = {
   text: string | null;
   secondaryText: string | null;
   imageUrl: string | null;
+  linkUrl?: string | null;
 };
 
 export const PROFILE_CUSTOM_BLOCK_TYPE_OPTIONS = [
@@ -92,15 +93,18 @@ export const PROFILE_CUSTOM_BLOCK_WIDTH_OPTIONS = [
 
 export const DEFAULT_PROFILE_CUSTOM_BLOCK_TYPE: ProfileCustomBlockType = "quote";
 
-export function normalizeProfileCustomBlocks(value: unknown) {
+export function normalizeProfileCustomBlocks(value: unknown): ProfileCustomBlock[] {
   if (!Array.isArray(value)) {
-    return [] as ProfileCustomBlock[];
+    return [];
   }
 
-  return value
+  const normalized = value
     .slice(0, MAX_PROFILE_CUSTOM_BLOCKS)
-    .map((entry, index) => normalizeProfileCustomBlock(entry, index))
-    .filter((entry): entry is ProfileCustomBlock => Boolean(entry));
+    .map((entry, index) => normalizeProfileCustomBlock(entry, index));
+
+  return normalized.filter(
+    (entry): entry is ProfileCustomBlock => entry !== null,
+  );
 }
 
 export function normalizeProfileCustomBlockType(
@@ -152,18 +156,32 @@ export function createProfileCustomBlockDraft(
     text: defaultBlockText(type),
     secondaryText: defaultBlockSecondaryText(type),
     imageUrl: null,
+    linkUrl: null,
   };
 }
 
 export function blockSupportsSecondaryText(type: ProfileCustomBlockType) {
-  return type === "mood" || type === "status-banner" || type === "image-card";
+  return (
+    type === "text-strip" ||
+    type === "mood" ||
+    type === "status-banner" ||
+    type === "image-card"
+  );
 }
 
 export function blockSupportsImage(type: ProfileCustomBlockType) {
-  return type === "image-card";
+  return (
+    type === "text-strip" ||
+    type === "mood" ||
+    type === "status-banner" ||
+    type === "image-card"
+  );
 }
 
-function normalizeProfileCustomBlock(value: unknown, index: number) {
+function normalizeProfileCustomBlock(
+  value: unknown,
+  index: number,
+): ProfileCustomBlock | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     return null;
   }
@@ -190,6 +208,10 @@ function normalizeProfileCustomBlock(value: unknown, index: number) {
     imageUrl: blockSupportsImage(type)
       ? sanitizeHttpUrl(candidate.imageUrl)
       : null,
+    linkUrl:
+      type === "divider" || type === "quote"
+        ? null
+        : sanitizeHttpUrl(candidate.linkUrl ?? candidate.url ?? candidate.href),
   } satisfies ProfileCustomBlock;
 }
 
@@ -214,6 +236,10 @@ function defaultBlockText(type: ProfileCustomBlockType) {
 }
 
 function defaultBlockSecondaryText(type: ProfileCustomBlockType) {
+  if (type === "text-strip") {
+    return "small profile detail";
+  }
+
   if (type === "mood") {
     return "late-night clarity";
   }

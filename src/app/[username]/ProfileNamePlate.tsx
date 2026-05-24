@@ -39,11 +39,72 @@ export default function ProfileNamePlate({
   const hasShimmer = effects.includes("shimmer");
   const allowMotion = motionLevel !== "off";
   const showAnimatedTypewriter = hasTypewriter && allowMotion;
+  const alignmentClass = align === "center" ? "align-center" : "align-left";
+
+  const renderTextLayers = (text: string, typewriter = false) => (
+    <span
+      className={[
+        "profile-name-text-stack",
+        typewriter ? "typewriter-enabled" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+    >
+      {hasGlow ? (
+        <span className="profile-name-aura-layer" aria-hidden data-text={text}>
+          {text}
+        </span>
+      ) : null}
+
+      {hasGlitch ? (
+        <>
+          <span
+            className="profile-name-glitch-layer glitch-primary"
+            aria-hidden
+            data-text={text}
+          >
+            {text}
+          </span>
+          <span
+            className="profile-name-glitch-layer glitch-secondary"
+            aria-hidden
+            data-text={text}
+          >
+            {text}
+          </span>
+        </>
+      ) : null}
+
+      <span className="profile-name-main-layer profile-name-visible-layer" data-text={text}>
+        {text}
+      </span>
+
+      {typewriter ? (
+        <>
+          <span
+            className="profile-name-typewriter-layer profile-name-visible-layer"
+            aria-hidden
+            data-text={text}
+          >
+            {text}
+          </span>
+          <span className="profile-name-cursor" aria-hidden />
+        </>
+      ) : null}
+
+      {hasShimmer ? (
+        <span className="profile-name-shimmer-layer" aria-hidden data-text={text}>
+          {text}
+        </span>
+      ) : null}
+    </span>
+  );
 
   return (
     <div
       className={[
         "profile-name-plate",
+        alignmentClass,
         `motion-${motionLevel}`,
         hasGlow ? "effect-glow" : "",
         hasRainbow ? "effect-rainbow" : "",
@@ -72,6 +133,7 @@ export default function ProfileNamePlate({
             <span className="profile-name-spark spark-three" aria-hidden />
             <span className="profile-name-spark spark-four" aria-hidden />
             <span className="profile-name-spark spark-five" aria-hidden />
+            <span className="profile-name-spark spark-six" aria-hidden />
           </>
         ) : null}
 
@@ -79,32 +141,7 @@ export default function ProfileNamePlate({
           className={["profile-name-plate-heading", nameClassName].filter(Boolean).join(" ")}
           style={nameStyle}
         >
-          <span className="profile-name-text-stack">
-            {hasGlitch ? (
-              <>
-                <span className="profile-name-glitch-layer glitch-primary" aria-hidden>
-                  {displayName}
-                </span>
-                <span className="profile-name-glitch-layer glitch-secondary" aria-hidden>
-                  {displayName}
-                </span>
-              </>
-            ) : null}
-
-            <span className="profile-name-plate-heading-text profile-name-main-layer">
-              {displayName}
-            </span>
-
-            {showAnimatedTypewriter ? (
-              <span className="profile-name-typewriter-layer" aria-hidden>
-                {displayName}
-              </span>
-            ) : null}
-          </span>
-
-          {showAnimatedTypewriter ? (
-            <span className="profile-name-cursor" aria-hidden />
-          ) : null}
+          {renderTextLayers(displayName, showAnimatedTypewriter)}
         </HeadingTag>
 
         <div
@@ -113,19 +150,7 @@ export default function ProfileNamePlate({
             .join(" ")}
           style={usernameStyle}
         >
-          <span className="profile-name-text-stack">
-            {hasGlitch ? (
-              <>
-                <span className="profile-name-glitch-layer glitch-primary" aria-hidden>
-                  @{username}
-                </span>
-                <span className="profile-name-glitch-layer glitch-secondary" aria-hidden>
-                  @{username}
-                </span>
-              </>
-            ) : null}
-            <span className="profile-name-main-layer">@{username}</span>
-          </span>
+          {renderTextLayers(`@${username}`)}
         </div>
       </div>
     </div>
@@ -136,20 +161,32 @@ const namePlateStyles = `
   .profile-name-plate {
     position: relative;
     min-width: 0;
-    --profile-name-shimmer-duration: 4.3s;
-    --profile-name-rainbow-duration: 5.4s;
-    --profile-name-glitch-duration: 4.9s;
-    --profile-name-particle-duration: 4.8s;
-    --profile-name-typewriter-duration: 6.2s;
+    --profile-name-shimmer-duration: 3.9s;
+    --profile-name-rainbow-duration: 4.4s;
+    --profile-name-glitch-duration: 4.1s;
+    --profile-name-particle-duration: 4.9s;
+    --profile-name-typewriter-duration: 5.8s;
+    --profile-name-aura-blur: 15px;
+    --profile-name-aura-opacity: 0.82;
+    --profile-name-glow-shadow:
+      0 0 14px rgba(244, 114, 182, 0.28),
+      0 0 34px rgba(192, 132, 252, 0.18),
+      0 0 58px rgba(125, 211, 252, 0.14);
   }
 
   .profile-name-plate-inner {
     position: relative;
-    display: inline-grid;
-    gap: 0;
+    display: grid;
+    gap: 0.14em;
     min-width: 0;
     width: fit-content;
     max-width: 100%;
+    overflow: visible;
+  }
+
+  .profile-name-plate.align-center .profile-name-plate-inner {
+    justify-items: center;
+    margin-inline: auto;
   }
 
   .profile-name-plate-heading,
@@ -163,7 +200,6 @@ const namePlateStyles = `
   .profile-name-plate-heading {
     display: inline-flex;
     align-items: flex-end;
-    gap: 0.16em;
     width: fit-content;
     max-width: 100%;
   }
@@ -171,9 +207,11 @@ const namePlateStyles = `
   .profile-name-text-stack {
     position: relative;
     display: inline-grid;
+    place-items: start;
     width: fit-content;
     max-width: 100%;
     min-width: 0;
+    isolation: isolate;
   }
 
   .profile-name-text-stack > * {
@@ -181,11 +219,16 @@ const namePlateStyles = `
     min-width: 0;
   }
 
-  .profile-name-plate-heading-text,
-  .profile-name-main-layer {
+  .profile-name-main-layer,
+  .profile-name-visible-layer,
+  .profile-name-typewriter-layer,
+  .profile-name-shimmer-layer,
+  .profile-name-aura-layer {
     position: relative;
     z-index: 2;
     min-width: 0;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
   }
 
   .profile-name-plate-username {
@@ -193,70 +236,123 @@ const namePlateStyles = `
     max-width: 100%;
   }
 
-  .profile-name-glitch-layer {
-    position: absolute;
-    inset: 0;
-    z-index: 1;
-    opacity: 0;
+  .profile-name-main-layer {
+    color: inherit;
+  }
+
+  .profile-name-aura-layer {
+    z-index: 0;
+    opacity: var(--profile-name-aura-opacity);
+    color: rgba(255, 196, 228, 0.96);
+    filter: blur(var(--profile-name-aura-blur));
+    transform: translate3d(0, 0, 0) scale(1.02);
+    text-shadow:
+      0 0 18px rgba(244, 114, 182, 0.38),
+      0 0 34px rgba(125, 211, 252, 0.22);
     pointer-events: none;
     mix-blend-mode: screen;
   }
 
+  .profile-name-glitch-layer {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    opacity: 0;
+    pointer-events: none;
+    mix-blend-mode: screen;
+    will-change: transform, opacity, clip-path;
+  }
+
   .profile-name-glitch-layer.glitch-primary {
-    color: rgba(244, 114, 182, 0.9);
+    color: rgba(255, 118, 198, 0.96);
   }
 
   .profile-name-glitch-layer.glitch-secondary {
-    color: rgba(125, 211, 252, 0.9);
+    color: rgba(92, 216, 255, 0.94);
   }
 
   .profile-name-typewriter-layer {
-    position: relative;
-    z-index: 3;
-    overflow: hidden;
+    z-index: 4;
     white-space: nowrap;
-    width: 0ch;
     max-width: 100%;
     color: inherit;
-    animation: profile-name-typewriter var(--profile-name-typewriter-duration) steps(var(--profile-typewriter-characters), end) infinite;
+    clip-path: inset(0 100% 0 0);
+    animation:
+      profile-name-typewriter-mask var(--profile-name-typewriter-duration)
+        steps(var(--profile-typewriter-characters), end) infinite;
+    will-change: clip-path;
   }
 
   .profile-name-cursor {
-    width: 0.11em;
+    position: absolute;
+    left: 0;
+    bottom: 0.05em;
+    z-index: 5;
+    width: 0.12em;
     min-width: 0.11em;
-    height: 0.92em;
+    height: 0.9em;
     border-radius: 999px;
-    background: currentColor;
-    transform: translateY(-0.08em);
+    background:
+      linear-gradient(180deg, #fff8fe 0%, rgba(244, 114, 182, 0.96) 52%, rgba(125, 211, 252, 0.92) 100%);
+    box-shadow:
+      0 0 10px rgba(255, 196, 228, 0.44),
+      0 0 18px rgba(125, 211, 252, 0.24);
+    transform: translate3d(0, 0, 0);
     animation:
       profile-name-cursor-blink 0.92s steps(1) infinite,
-      profile-name-cursor-drift var(--profile-name-typewriter-duration) steps(var(--profile-typewriter-characters), end) infinite;
-    opacity: 0.95;
+      profile-name-cursor-travel var(--profile-name-typewriter-duration)
+        steps(var(--profile-typewriter-characters), end) infinite;
+    opacity: 0.94;
   }
 
-  .profile-name-plate.effect-typewriter-active .profile-name-plate-heading-text.profile-name-main-layer {
+  .profile-name-shimmer-layer {
+    z-index: 4;
+    opacity: 0;
+    color: transparent;
+    background-image:
+      linear-gradient(
+        108deg,
+        transparent 0%,
+        transparent 26%,
+        rgba(255, 255, 255, 0.18) 38%,
+        rgba(255, 255, 255, 0.92) 49%,
+        rgba(255, 255, 255, 0.18) 60%,
+        transparent 72%,
+        transparent 100%
+      );
+    background-size: 220% 100%;
+    background-position: -180% 50%;
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    mix-blend-mode: screen;
+    pointer-events: none;
+  }
+
+  .profile-name-plate.effect-typewriter-active
+    .profile-name-text-stack.typewriter-enabled
+    .profile-name-main-layer {
     opacity: 0;
   }
 
-  .profile-name-plate.effect-glow .profile-name-plate-heading,
-  .profile-name-plate.effect-glow .profile-name-plate-username {
-    text-shadow:
-      0 0 10px rgba(244, 114, 182, 0.18),
-      0 0 26px rgba(125, 211, 252, 0.18);
+  .profile-name-plate.effect-glow .profile-name-main-layer,
+  .profile-name-plate.effect-glow .profile-name-typewriter-layer {
+    text-shadow: var(--profile-name-glow-shadow);
   }
 
-  .profile-name-plate.effect-rainbow .profile-name-plate-heading,
-  .profile-name-plate.effect-rainbow .profile-name-plate-username {
+  .profile-name-plate.effect-rainbow .profile-name-main-layer,
+  .profile-name-plate.effect-rainbow .profile-name-typewriter-layer {
     background-image: linear-gradient(
-      110deg,
+      95deg,
       #ffffff 0%,
-      #f9a8d4 14%,
-      #c084fc 34%,
-      #7dd3fc 58%,
-      #fef08a 82%,
+      #ffd0ee 12%,
+      #ff7eb6 28%,
+      #c084fc 46%,
+      #7dd3fc 67%,
+      #fde68a 84%,
       #ffffff 100%
     );
-    background-size: 260% 100%;
+    background-size: 240% 100%;
     background-clip: text;
     -webkit-background-clip: text;
     color: transparent;
@@ -277,81 +373,108 @@ const namePlateStyles = `
   }
 
   .profile-name-plate.effect-shimmer .profile-name-plate-inner::after {
-    content: "";
-    position: absolute;
-    inset: -14% -20%;
-    background:
-      linear-gradient(
-        112deg,
-        transparent 18%,
-        rgba(255, 255, 255, 0.08) 34%,
-        rgba(255, 255, 255, 0.38) 48%,
-        rgba(255, 255, 255, 0.08) 62%,
-        transparent 78%
-      );
-    transform: translateX(-132%);
-    mix-blend-mode: screen;
-    pointer-events: none;
-    animation: profile-name-shimmer var(--profile-name-shimmer-duration) ease-in-out infinite;
+    content: none;
+  }
+
+  .profile-name-plate.effect-shimmer .profile-name-shimmer-layer {
+    opacity: 0.92;
+    animation: profile-name-shimmer-text var(--profile-name-shimmer-duration)
+      cubic-bezier(0.19, 1, 0.22, 1) infinite;
+  }
+
+  .profile-name-plate.effect-shimmer
+    .profile-name-text-stack.typewriter-enabled
+    .profile-name-shimmer-layer {
+    clip-path: inset(0 100% 0 0);
+    animation:
+      profile-name-shimmer-text var(--profile-name-shimmer-duration)
+        cubic-bezier(0.19, 1, 0.22, 1) infinite,
+      profile-name-typewriter-mask var(--profile-name-typewriter-duration)
+        steps(var(--profile-typewriter-characters), end) infinite;
   }
 
   .profile-name-plate.effect-particles .profile-name-spark {
     position: absolute;
     border-radius: 999px;
-    background: radial-gradient(circle, rgba(255,255,255,0.98) 0%, rgba(244,114,182,0.72) 56%, transparent 72%);
+    background:
+      radial-gradient(circle at 35% 35%, rgba(255,255,255,0.98) 0%, rgba(255,255,255,0.44) 32%, transparent 54%),
+      linear-gradient(135deg, rgba(255, 160, 216, 0.92), rgba(125, 211, 252, 0.88));
     box-shadow:
-      0 0 10px rgba(244, 114, 182, 0.24),
-      0 0 20px rgba(125, 211, 252, 0.14);
-    opacity: 0.86;
+      0 0 12px rgba(244, 114, 182, 0.34),
+      0 0 22px rgba(125, 211, 252, 0.18);
+    opacity: 0.9;
     pointer-events: none;
+    transform-origin: center;
   }
 
   .profile-name-plate.effect-particles .spark-one {
-    top: -7px;
-    left: 6%;
-    width: 8px;
-    height: 8px;
-    animation: profile-name-float calc(var(--profile-name-particle-duration) * 0.95) ease-in-out infinite;
+    top: -10px;
+    left: 4%;
+    width: 7px;
+    height: 7px;
+    animation: profile-name-orbit-a calc(var(--profile-name-particle-duration) * 0.95) ease-in-out infinite;
   }
 
   .profile-name-plate.effect-particles .spark-two {
     top: 12%;
-    right: 8%;
+    right: 5%;
     width: 6px;
     height: 6px;
-    animation: profile-name-float calc(var(--profile-name-particle-duration) * 1.08) ease-in-out infinite reverse;
+    animation: profile-name-orbit-b calc(var(--profile-name-particle-duration) * 1.08) ease-in-out infinite;
   }
 
   .profile-name-plate.effect-particles .spark-three {
-    bottom: 18%;
-    left: -4px;
+    bottom: 16%;
+    left: -6px;
     width: 5px;
     height: 5px;
-    animation: profile-name-float calc(var(--profile-name-particle-duration) * 0.9) ease-in-out infinite;
+    animation: profile-name-orbit-c calc(var(--profile-name-particle-duration) * 0.9) ease-in-out infinite;
   }
 
   .profile-name-plate.effect-particles .spark-four {
-    bottom: 2px;
-    right: 14%;
+    bottom: 0;
+    right: 16%;
     width: 7px;
     height: 7px;
-    animation: profile-name-float calc(var(--profile-name-particle-duration) * 1.12) ease-in-out infinite reverse;
+    animation: profile-name-orbit-a calc(var(--profile-name-particle-duration) * 1.12) ease-in-out infinite reverse;
   }
 
   .profile-name-plate.effect-particles .spark-five {
-    top: -4px;
-    right: 24%;
+    top: -6px;
+    right: 28%;
     width: 4px;
     height: 4px;
-    animation: profile-name-float calc(var(--profile-name-particle-duration) * 1.2) ease-in-out infinite;
+    animation: profile-name-orbit-c calc(var(--profile-name-particle-duration) * 1.2) ease-in-out infinite reverse;
+  }
+
+  .profile-name-plate.effect-particles .spark-six {
+    bottom: -5px;
+    left: 22%;
+    width: 5px;
+    height: 5px;
+    animation: profile-name-orbit-b calc(var(--profile-name-particle-duration) * 1.16) ease-in-out infinite reverse;
   }
 
   .profile-name-plate.motion-subtle {
-    --profile-name-shimmer-duration: 5.2s;
-    --profile-name-rainbow-duration: 6.8s;
-    --profile-name-glitch-duration: 6.4s;
+    --profile-name-shimmer-duration: 4.8s;
+    --profile-name-rainbow-duration: 5.5s;
+    --profile-name-glitch-duration: 5.2s;
     --profile-name-particle-duration: 5.6s;
-    --profile-name-typewriter-duration: 7.2s;
+    --profile-name-typewriter-duration: 6.7s;
+    --profile-name-aura-blur: 12px;
+    --profile-name-aura-opacity: 0.68;
+  }
+
+  .profile-name-plate.motion-off .profile-name-spark,
+  .profile-name-plate.motion-off .profile-name-glitch-layer,
+  .profile-name-plate.motion-off .profile-name-shimmer-layer,
+  .profile-name-plate.motion-off .profile-name-typewriter-layer,
+  .profile-name-plate.motion-off .profile-name-cursor {
+    display: none;
+  }
+
+  .profile-name-plate.motion-off .profile-name-main-layer {
+    opacity: 1 !important;
   }
 
   @keyframes profile-name-cursor-blink {
@@ -364,35 +487,35 @@ const namePlateStyles = `
     }
   }
 
-  @keyframes profile-name-cursor-drift {
+  @keyframes profile-name-cursor-travel {
     0%, 8% {
-      transform: translateY(-0.08em) translateX(0);
+      transform: translate3d(0, 0, 0);
     }
 
-    38%, 52% {
-      transform: translateY(-0.08em) translateX(0.6ch);
+    36%, 58% {
+      transform: translate3d(
+        calc(var(--profile-typewriter-characters, 1) * 0.62ch),
+        0,
+        0
+      );
     }
 
-    100% {
-      transform: translateY(-0.08em) translateX(0);
+    88%, 100% {
+      transform: translate3d(0, 0, 0);
     }
   }
 
-  @keyframes profile-name-typewriter {
+  @keyframes profile-name-typewriter-mask {
     0%, 8% {
-      width: 0ch;
+      clip-path: inset(0 100% 0 0);
     }
 
-    36%, 48% {
-      width: calc(var(--profile-typewriter-characters, 1) * 1ch);
+    38%, 58% {
+      clip-path: inset(0 0 0 0);
     }
 
-    72% {
-      width: calc(var(--profile-typewriter-characters, 1) * 1ch);
-    }
-
-    100% {
-      width: 0ch;
+    88%, 100% {
+      clip-path: inset(0 100% 0 0);
     }
   }
 
@@ -407,46 +530,53 @@ const namePlateStyles = `
   }
 
   @keyframes profile-name-glitch-main {
-    0%, 88%, 100% {
+    0%, 74%, 100% {
       transform: translate3d(0, 0, 0);
       text-shadow: none;
     }
 
-    90% {
-      transform: translate3d(-0.012em, 0, 0);
+    77% {
+      transform: translate3d(-0.015em, 0, 0);
       text-shadow:
-        -0.016em 0 rgba(244, 114, 182, 0.3),
-        0.018em 0 rgba(125, 211, 252, 0.28);
+        -0.02em 0 rgba(244, 114, 182, 0.42),
+        0.024em 0 rgba(125, 211, 252, 0.38);
     }
 
-    92% {
-      transform: translate3d(0.016em, -0.01em, 0);
+    80% {
+      transform: translate3d(0.018em, -0.012em, 0);
       text-shadow:
-        -0.02em 0 rgba(244, 114, 182, 0.28),
-        0.022em 0 rgba(125, 211, 252, 0.26);
+        -0.024em 0 rgba(244, 114, 182, 0.34),
+        0.026em 0 rgba(125, 211, 252, 0.34);
+    }
+
+    83% {
+      transform: translate3d(-0.012em, 0.01em, 0);
+      text-shadow:
+        -0.014em 0 rgba(244, 114, 182, 0.24),
+        0.018em 0 rgba(125, 211, 252, 0.24);
     }
   }
 
   @keyframes profile-name-glitch-layer-one {
-    0%, 86%, 100% {
+    0%, 72%, 100% {
       opacity: 0;
       transform: translate3d(0, 0, 0);
       clip-path: inset(0 0 0 0);
     }
 
-    88% {
-      opacity: 0.65;
-      transform: translate3d(-0.03em, -0.01em, 0);
-      clip-path: inset(8% 0 58% 0);
+    76% {
+      opacity: 0.76;
+      transform: translate3d(-0.034em, -0.015em, 0);
+      clip-path: inset(6% 0 60% 0);
     }
 
-    90% {
-      opacity: 0.56;
-      transform: translate3d(0.028em, 0.01em, 0);
-      clip-path: inset(46% 0 16% 0);
+    79% {
+      opacity: 0.62;
+      transform: translate3d(0.03em, 0.01em, 0);
+      clip-path: inset(44% 0 14% 0);
     }
 
-    93% {
+    82% {
       opacity: 0;
       transform: translate3d(0, 0, 0);
       clip-path: inset(0 0 0 0);
@@ -454,71 +584,96 @@ const namePlateStyles = `
   }
 
   @keyframes profile-name-glitch-layer-two {
-    0%, 84%, 100% {
+    0%, 70%, 100% {
       opacity: 0;
       transform: translate3d(0, 0, 0);
       clip-path: inset(0 0 0 0);
     }
 
-    87% {
+    74% {
+      opacity: 0.68;
+      transform: translate3d(0.032em, 0.012em, 0);
+      clip-path: inset(16% 0 46% 0);
+    }
+
+    78% {
       opacity: 0.58;
-      transform: translate3d(0.028em, 0.01em, 0);
-      clip-path: inset(18% 0 44% 0);
+      transform: translate3d(-0.034em, -0.012em, 0);
+      clip-path: inset(54% 0 8% 0);
     }
 
-    89% {
-      opacity: 0.5;
-      transform: translate3d(-0.032em, -0.01em, 0);
-      clip-path: inset(56% 0 8% 0);
-    }
-
-    92% {
+    81% {
       opacity: 0;
       transform: translate3d(0, 0, 0);
       clip-path: inset(0 0 0 0);
     }
   }
 
-  @keyframes profile-name-shimmer {
+  @keyframes profile-name-shimmer-text {
     0%, 12% {
-      transform: translateX(-132%);
+      background-position: -180% 50%;
       opacity: 0;
     }
 
-    20%, 72% {
-      opacity: 1;
+    18%, 78% {
+      opacity: 0.92;
     }
 
     100% {
-      transform: translateX(132%);
+      background-position: 180% 50%;
       opacity: 0;
     }
   }
 
-  @keyframes profile-name-float {
+  @keyframes profile-name-orbit-a {
     0%, 100% {
-      transform: translate3d(0, 0, 0) scale(0.94);
-      opacity: 0.42;
+      transform: translate3d(0, 0, 0) scale(0.94) rotate(0deg);
+      opacity: 0.48;
     }
 
     50% {
-      transform: translate3d(0, -7px, 0) scale(1.08);
+      transform: translate3d(4px, -8px, 0) scale(1.12) rotate(28deg);
       opacity: 1;
+    }
+  }
+
+  @keyframes profile-name-orbit-b {
+    0%, 100% {
+      transform: translate3d(0, 0, 0) scale(0.92);
+      opacity: 0.44;
+    }
+
+    50% {
+      transform: translate3d(-5px, 6px, 0) scale(1.08);
+      opacity: 0.96;
+    }
+  }
+
+  @keyframes profile-name-orbit-c {
+    0%, 100% {
+      transform: translate3d(0, 0, 0) scale(0.9) rotate(45deg);
+      opacity: 0.4;
+    }
+
+    50% {
+      transform: translate3d(3px, -6px, 0) scale(1.05) rotate(90deg);
+      opacity: 0.92;
     }
   }
 
   @media (max-width: 640px) {
-    .profile-name-plate.effect-particles .spark-five {
+    .profile-name-plate.effect-particles .spark-five,
+    .profile-name-plate.effect-particles .spark-six {
       display: none;
     }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .profile-name-plate.effect-rainbow .profile-name-plate-heading,
-    .profile-name-plate.effect-rainbow .profile-name-plate-username,
+    .profile-name-plate.effect-rainbow .profile-name-main-layer,
+    .profile-name-plate.effect-rainbow .profile-name-typewriter-layer,
     .profile-name-plate.effect-glitch .profile-name-main-layer,
     .profile-name-plate.effect-glitch .profile-name-glitch-layer,
-    .profile-name-plate.effect-shimmer .profile-name-plate-inner::after,
+    .profile-name-plate.effect-shimmer .profile-name-shimmer-layer,
     .profile-name-plate.effect-particles .profile-name-spark,
     .profile-name-typewriter-layer,
     .profile-name-cursor {
@@ -527,14 +682,20 @@ const namePlateStyles = `
     }
 
     .profile-name-plate.effect-glitch .profile-name-glitch-layer,
-    .profile-name-plate.effect-shimmer .profile-name-plate-inner::after,
+    .profile-name-plate.effect-shimmer .profile-name-shimmer-layer,
     .profile-name-typewriter-layer,
     .profile-name-cursor {
       display: none !important;
     }
 
-    .profile-name-plate.effect-typewriter-active .profile-name-plate-heading-text.profile-name-main-layer {
+    .profile-name-plate.effect-typewriter-active
+      .profile-name-text-stack.typewriter-enabled
+      .profile-name-main-layer {
       opacity: 1;
+    }
+
+    .profile-name-plate.effect-rainbow .profile-name-main-layer {
+      background-position: 50% 50%;
     }
   }
 `;

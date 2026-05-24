@@ -16,7 +16,7 @@ type Props = {
   locationText?: string | null;
   align?: "start" | "center";
   preview?: boolean;
-  variant?: "inline" | "corner";
+  variant?: "inline" | "corner" | "micro";
 };
 
 function getDailyViewStorageKey(username: string) {
@@ -164,6 +164,11 @@ export default function ProfileHeroClient({
           max-width: min(88vw, 480px);
         }
 
+        .profile-hero-metrics[data-variant="micro"] {
+          gap: 8px;
+          justify-content: center;
+        }
+
         .profile-hero-chip,
         .profile-hero-reaction {
           transition:
@@ -194,6 +199,29 @@ export default function ProfileHeroClient({
             inset 0 1px 0 rgba(255,255,255,0.05);
         }
 
+        .profile-hero-metrics[data-variant="micro"] .profile-hero-chip,
+        .profile-hero-metrics[data-variant="micro"] .profile-hero-reaction {
+          min-height: 24px;
+          padding-inline: 0;
+          border: none !important;
+          background: transparent !important;
+          box-shadow: none !important;
+          backdrop-filter: none !important;
+          -webkit-backdrop-filter: none !important;
+          color: #c8d3e6;
+          opacity: 0.88;
+        }
+
+        .profile-hero-metrics[data-variant="micro"] .profile-hero-reaction:hover:not(:disabled),
+        .profile-hero-metrics[data-variant="micro"] .profile-hero-reaction:focus-visible {
+          transform: translateY(-1px);
+          color: #f3f7ff;
+        }
+
+        .profile-hero-metrics[data-variant="micro"] .profile-hero-location {
+          max-width: min(100%, 20rem);
+        }
+
         @media (max-width: 640px) {
           .profile-hero-metrics {
             gap: 6px;
@@ -221,9 +249,21 @@ export default function ProfileHeroClient({
           value={views}
           icon={<LuEye size={14} />}
           color="#dbe4f5"
-          background={variant === "corner" ? "rgba(7,10,18,0.78)" : "rgba(255,255,255,0.035)"}
-          border={variant === "corner" ? "rgba(255,255,255,0.10)" : "rgba(255,255,255,0.07)"}
-          compact={variant === "corner"}
+          background={
+            variant === "corner"
+              ? "rgba(7,10,18,0.78)"
+              : variant === "micro"
+                ? "transparent"
+                : "rgba(255,255,255,0.035)"
+          }
+          border={
+            variant === "corner"
+              ? "rgba(255,255,255,0.10)"
+              : variant === "micro"
+                ? "transparent"
+                : "rgba(255,255,255,0.07)"
+          }
+          compact={variant !== "inline"}
         />
 
         <ReactionButton
@@ -234,9 +274,21 @@ export default function ProfileHeroClient({
           disabled={isSubmitting || preview}
           isActive={myReaction === "like"}
           accentColor={themeColor}
-          background={variant === "corner" ? "rgba(9, 20, 16, 0.8)" : "rgba(69, 212, 131, 0.06)"}
-          border={variant === "corner" ? "rgba(69, 212, 131, 0.18)" : "rgba(69, 212, 131, 0.14)"}
-          compact={variant === "corner"}
+          background={
+            variant === "corner"
+              ? "rgba(9, 20, 16, 0.8)"
+              : variant === "micro"
+                ? "transparent"
+                : "rgba(69, 212, 131, 0.06)"
+          }
+          border={
+            variant === "corner"
+              ? "rgba(69, 212, 131, 0.18)"
+              : variant === "micro"
+                ? "transparent"
+                : "rgba(69, 212, 131, 0.14)"
+          }
+          compact={variant !== "inline"}
         />
 
         <ReactionButton
@@ -247,9 +299,21 @@ export default function ProfileHeroClient({
           disabled={isSubmitting || preview}
           isActive={myReaction === "dislike"}
           accentColor={themeColor}
-          background={variant === "corner" ? "rgba(20, 11, 14, 0.8)" : "rgba(248, 113, 113, 0.06)"}
-          border={variant === "corner" ? "rgba(248, 113, 113, 0.18)" : "rgba(248, 113, 113, 0.14)"}
-          compact={variant === "corner"}
+          background={
+            variant === "corner"
+              ? "rgba(20, 11, 14, 0.8)"
+              : variant === "micro"
+                ? "transparent"
+                : "rgba(248, 113, 113, 0.06)"
+          }
+          border={
+            variant === "corner"
+              ? "rgba(248, 113, 113, 0.18)"
+              : variant === "micro"
+                ? "transparent"
+                : "rgba(248, 113, 113, 0.14)"
+          }
+          compact={variant !== "inline"}
         />
 
         {normalizedLocationText ? (
@@ -258,10 +322,22 @@ export default function ProfileHeroClient({
             value={normalizedLocationText}
             icon={<LuMapPin size={14} />}
             color="#edf4ff"
-            background={variant === "corner" ? "rgba(7,10,18,0.78)" : "rgba(255,255,255,0.035)"}
-            border={variant === "corner" ? "rgba(255,255,255,0.10)" : "rgba(255,255,255,0.07)"}
+            background={
+              variant === "corner"
+                ? "rgba(7,10,18,0.78)"
+                : variant === "micro"
+                  ? "transparent"
+                  : "rgba(255,255,255,0.035)"
+            }
+            border={
+              variant === "corner"
+                ? "rgba(255,255,255,0.10)"
+                : variant === "micro"
+                  ? "transparent"
+                  : "rgba(255,255,255,0.07)"
+            }
             className="profile-hero-location"
-            compact={variant === "corner"}
+            compact={variant !== "inline"}
           />
         ) : null}
       </div>
