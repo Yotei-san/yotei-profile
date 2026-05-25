@@ -26,7 +26,7 @@ export const BADGE_DEFINITIONS: BadgeDefinition[] = [
   {
     slug: "owner",
     name: "Owner",
-    icon: "crown",
+    icon: "y-crest",
     description: "Official Yotei founder badge.",
     color: "#f4c97a",
     category: "official",
@@ -37,7 +37,7 @@ export const BADGE_DEFINITIONS: BadgeDefinition[] = [
   {
     slug: "admin",
     name: "Admin",
-    icon: "shield",
+    icon: "command-shield",
     description: "Official Yotei administration badge.",
     color: "#7dc4ff",
     category: "official",
@@ -48,7 +48,7 @@ export const BADGE_DEFINITIONS: BadgeDefinition[] = [
   {
     slug: "staff",
     name: "Staff",
-    icon: "tools",
+    icon: "gear-star",
     description: "Official staff member badge.",
     color: "#8ce6ff",
     category: "official",
@@ -59,7 +59,7 @@ export const BADGE_DEFINITIONS: BadgeDefinition[] = [
   {
     slug: "verified",
     name: "Verified",
-    icon: "verified",
+    icon: "check-shield",
     description: "Official verified account badge.",
     color: "#6ee7b7",
     category: "official",
@@ -70,7 +70,7 @@ export const BADGE_DEFINITIONS: BadgeDefinition[] = [
   {
     slug: "premium",
     name: "Premium",
-    icon: "gem",
+    icon: "gem-star",
     description: "Premium account badge for active subscribers and privileged accounts.",
     color: "#ff8ccb",
     category: "premium",
@@ -81,7 +81,7 @@ export const BADGE_DEFINITIONS: BadgeDefinition[] = [
   {
     slug: "supporter",
     name: "Supporter",
-    icon: "heart",
+    icon: "heart-gem",
     description: "Reserved for supporter rewards and future premium campaigns.",
     color: "#f5d06e",
     category: "premium",
@@ -92,7 +92,7 @@ export const BADGE_DEFINITIONS: BadgeDefinition[] = [
   {
     slug: "early-supporter",
     name: "Early Supporter",
-    icon: "sunrise",
+    icon: "sunrise-star",
     description: "Reserved for early support campaigns and limited Yotei drops.",
     color: "#f59e0b",
     category: "premium",
@@ -103,7 +103,7 @@ export const BADGE_DEFINITIONS: BadgeDefinition[] = [
   {
     slug: "first-profile",
     name: "First Profile",
-    icon: "profile-card",
+    icon: "flag-spark",
     description: "Finished the first core version of your public profile.",
     color: "#7dd3fc",
     category: "achievement",
@@ -114,7 +114,7 @@ export const BADGE_DEFINITIONS: BadgeDefinition[] = [
   {
     slug: "first-link",
     name: "First Link",
-    icon: "link",
+    icon: "chain-link",
     description: "Published the first actionable link on your profile.",
     color: "#c4b5fd",
     category: "achievement",
@@ -125,7 +125,7 @@ export const BADGE_DEFINITIONS: BadgeDefinition[] = [
   {
     slug: "social-starter",
     name: "Social Starter",
-    icon: "nodes",
+    icon: "chat-orbit",
     description: "Activated your first social identity block.",
     color: "#60a5fa",
     category: "achievement",
@@ -136,7 +136,7 @@ export const BADGE_DEFINITIONS: BadgeDefinition[] = [
   {
     slug: "social-pro",
     name: "Social Pro",
-    icon: "network",
+    icon: "network-orbit",
     description: "Built a richer social presence with multiple active blocks.",
     color: "#a78bfa",
     category: "achievement",
@@ -147,7 +147,7 @@ export const BADGE_DEFINITIONS: BadgeDefinition[] = [
   {
     slug: "template-creator",
     name: "Template Creator",
-    icon: "template",
+    icon: "layout-grid",
     description: "Created your first reusable profile template.",
     color: "#f472b6",
     category: "achievement",
@@ -158,7 +158,7 @@ export const BADGE_DEFINITIONS: BadgeDefinition[] = [
   {
     slug: "popular",
     name: "Popular",
-    icon: "eye",
+    icon: "flame",
     description: "Reached a meaningful audience on your public profile.",
     color: "#fb7185",
     category: "achievement",
@@ -169,7 +169,7 @@ export const BADGE_DEFINITIONS: BadgeDefinition[] = [
   {
     slug: "rising",
     name: "Rising",
-    icon: "uptrend",
+    icon: "arrow-star",
     description: "Collected the first wave of positive reactions from visitors.",
     color: "#38bdf8",
     category: "achievement",
@@ -180,7 +180,7 @@ export const BADGE_DEFINITIONS: BadgeDefinition[] = [
   {
     slug: "builder",
     name: "Builder",
-    icon: "code",
+    icon: "hammer-cube",
     description: "Showed your build-in-public side with an active GitHub block.",
     color: "#93c5fd",
     category: "achievement",
@@ -191,7 +191,7 @@ export const BADGE_DEFINITIONS: BadgeDefinition[] = [
   {
     slug: "music-taste",
     name: "Music Taste",
-    icon: "music",
+    icon: "music-wave",
     description: "Connected your music identity through Spotify.",
     color: "#34d399",
     category: "achievement",
@@ -202,7 +202,7 @@ export const BADGE_DEFINITIONS: BadgeDefinition[] = [
   {
     slug: "streamer",
     name: "Streamer",
-    icon: "broadcast",
+    icon: "broadcast-live",
     description: "Reserved for creators with proven live audience and manual Yotei review.",
     color: "#fb7185",
     category: "achievement",

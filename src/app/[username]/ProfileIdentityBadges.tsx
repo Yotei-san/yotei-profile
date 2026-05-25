@@ -6,6 +6,7 @@ type IdentityBadge = {
   badge: {
     slug: string;
     name: string;
+    icon: string;
     color: string | null;
     category: string | null;
     rarity: string | null;
@@ -104,12 +105,11 @@ export default function ProfileIdentityBadges({
           --profile-badge-tooltip-accent: rgba(255,255,255,0.08);
           position: relative;
           z-index: 1;
-          width: 44px;
-          height: 38px;
+          width: 42px;
+          height: 42px;
           padding: 0;
           border: 1px solid var(--profile-badge-edge);
-          border-radius: 14px;
-          clip-path: polygon(16% 0%, 84% 0%, 100% 22%, 100% 78%, 84% 100%, 16% 100%, 0% 78%, 0% 22%);
+          border-radius: 16px;
           display: inline-flex;
           align-items: center;
           justify-content: center;
@@ -261,6 +261,7 @@ export default function ProfileIdentityBadges({
             data-tooltip={item.badge.name}
             tabIndex={0}
             aria-label={item.badge.name}
+            title={item.badge.name}
             role="listitem"
             style={
               {
@@ -278,10 +279,12 @@ export default function ProfileIdentityBadges({
             <span className="profile-identity-badge-shell" aria-hidden="true">
               <BadgeVisual
                 slug={item.badge.slug}
+                icon={item.badge.icon}
+                name={item.badge.name}
                 color={badgeTheme.accent}
                 rarity={item.badge.rarity}
                 category={item.badge.category}
-                size={24}
+                size={26}
                 compact
               />
             </span>
@@ -295,6 +298,7 @@ export default function ProfileIdentityBadges({
           data-tooltip={`${extraBadgeCount} more badge${extraBadgeCount === 1 ? "" : "s"}`}
           tabIndex={0}
           aria-label={`${extraBadgeCount} more badges`}
+          title={`${extraBadgeCount} more badge${extraBadgeCount === 1 ? "" : "s"}`}
           role="listitem"
           style={
             {

@@ -30,6 +30,8 @@ export default function BadgeMissionCard({ badge, activeFilter }: Props) {
         >
           <BadgeVisual
             slug={badge.slug}
+            icon={badge.icon}
+            name={badge.name}
             color={badge.color}
             rarity={badge.rarity}
             category={badge.category}

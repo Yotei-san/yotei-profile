@@ -1,7 +1,9 @@
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 
 type Props = {
-  slug: string;
+  slug?: string | null;
+  icon?: string | null;
+  name?: string | null;
   color?: string | null;
   rarity?: string | null;
   category?: string | null;
@@ -18,17 +20,232 @@ type Palette = {
   accent: string;
 };
 
+type GlyphRenderer = (compact: boolean) => ReactNode;
+
+const BADGE_GLYPHS: Record<string, GlyphRenderer> = {
+  owner: (compact) => (
+    <>
+      <path d="m6 15.7 1.6-6.2 4.4 3.2 4.4-3.2 1.6 6.2" />
+      <path d="m7.6 9.5 2.6 1.9L12 6.2l1.8 5.2 2.6-1.9" />
+      <path d="M8.4 18.1h7.2" />
+      <path d="M12 8.7v5.5" />
+      <path d="m10 12.2 2-1.3 2 1.3" />
+      <circle cx="12" cy="5.5" r={compact ? 0.95 : 1.1} fill="currentColor" stroke="none" />
+    </>
+  ),
+  admin: () => (
+    <>
+      <path d="M12 4.1 18 7v4.4c0 4-2.4 6.8-6 8.5-3.6-1.7-6-4.5-6-8.5V7Z" />
+      <path d="M9.5 12.2h5" />
+      <path d="M12 9.7v5" />
+      <path d="m8.5 9.3 1.3 1.2" />
+      <path d="m15.5 9.3-1.3 1.2" />
+      <path d="m8.5 15.1 1.3-1.2" />
+      <path d="m15.5 15.1-1.3-1.2" />
+    </>
+  ),
+  staff: () => (
+    <>
+      <path d="m12 5.3.9 1.8 2 .4-1.5 1.5.4 2.1-1.8-1-1.8 1 .4-2.1-1.5-1.5 2-.4Z" />
+      <circle cx="12" cy="12.8" r="2" />
+      <path d="M12 8.8v1.5" />
+      <path d="M12 15.3v1.5" />
+      <path d="M8.8 12.8h1.5" />
+      <path d="M13.7 12.8h1.5" />
+      <path d="m9.6 10.4 1 1" />
+      <path d="m14.4 10.4-1 1" />
+      <path d="m9.6 15.2 1-1" />
+      <path d="m14.4 15.2-1-1" />
+    </>
+  ),
+  verified: () => (
+    <>
+      <path d="M12 4.2 14 5.3l2.3-.1 1.1 2 1.9 1.3-.5 2.2.5 2.2-1.9 1.3-1.1 2-2.3-.1-2 1.1-2-1.1-2.3.1-1.1-2-1.9-1.3.5-2.2-.5-2.2L6.6 7.2l1.1-2 2.3.1Z" />
+      <path d="m8.8 12.1 2 2 4.5-4.5" />
+    </>
+  ),
+  premium: () => (
+    <>
+      <path d="m12 4.2 4.1 2.2 1.8 4-1.8 4-4.1 2.2-4.1-2.2-1.8-4 1.8-4Z" />
+      <path d="m12 6.3 1 2 2.2.3-1.6 1.5.4 2.2-2-1.1-2 1.1.4-2.2-1.6-1.5 2.2-.3Z" />
+      <path d="M9.6 14.6 12 16l2.4-1.4" />
+    </>
+  ),
+  supporter: () => (
+    <>
+      <path d="m12 18.2-4-2.8c-1.7-1.2-2.7-2.7-2.7-4.5a3.3 3.3 0 0 1 6.1-1.8A3.3 3.3 0 0 1 18.7 11c0 1.8-1 3.3-2.7 4.5Z" />
+      <path d="m12 8.2.8 1.5 1.7.3-1.2 1.2.3 1.7-1.6-.8-1.6.8.3-1.7-1.2-1.2 1.7-.3Z" />
+    </>
+  ),
+  "early-supporter": () => (
+    <>
+      <path d="M5.4 15.8a6.6 6.6 0 0 1 13.2 0" />
+      <path d="M4.8 18.1h14.4" />
+      <path d="M12 5.2v3.6" />
+      <path d="m8.9 7.4 1.4 1.4" />
+      <path d="m15.1 7.4-1.4 1.4" />
+      <path d="m12 10 .8 1.5 1.7.3-1.2 1.1.3 1.7-1.6-.8-1.6.8.3-1.7-1.2-1.1 1.7-.3Z" />
+    </>
+  ),
+  "first-profile": () => (
+    <>
+      <path d="M7.2 4.8v14.4" />
+      <path d="M7.2 6.1h8.1l-1.6 2.8 1.6 2.8H7.2" />
+      <path d="m15.3 13.4.7 1.4 1.6.2-1.2 1.1.3 1.6-1.4-.8-1.4.8.3-1.6-1.2-1.1 1.6-.2Z" />
+    </>
+  ),
+  "first-link": () => (
+    <>
+      <path d="M10.2 13.8 8 16a2.7 2.7 0 1 1-3.8-3.8l2.2-2.2" />
+      <path d="M13.8 10.2 16 8a2.7 2.7 0 1 1 3.8 3.8l-2.2 2.2" />
+      <path d="m9.3 14.7 5.4-5.4" />
+    </>
+  ),
+  "social-starter": () => (
+    <>
+      <path d="M6.4 8.7A3.7 3.7 0 0 1 10.1 5h3.6a3.7 3.7 0 0 1 3.7 3.7v2a3.6 3.6 0 0 1-3.6 3.6h-2.1l-2.6 1.8v-1.8a3.6 3.6 0 0 1-2.7-3.5Z" />
+      <circle cx="16.8" cy="7.4" r="1.3" />
+      <path d="M17 10.8a3.8 3.8 0 0 1-3.7 3.7" />
+    </>
+  ),
+  "social-pro": () => (
+    <>
+      <circle cx="7.2" cy="7.2" r="1.7" />
+      <circle cx="16.8" cy="7.2" r="1.7" />
+      <circle cx="7.2" cy="16.8" r="1.7" />
+      <circle cx="16.8" cy="16.8" r="1.7" />
+      <circle cx="12" cy="12" r="2.1" />
+      <path d="m8.5 8.5 2 2" />
+      <path d="m15.5 8.5-2 2" />
+      <path d="m8.5 15.5 2-2" />
+      <path d="m15.5 15.5-2-2" />
+    </>
+  ),
+  "template-creator": () => (
+    <>
+      <rect x="4.8" y="5.3" width="14.4" height="13.4" rx="2.4" />
+      <path d="M9.1 5.3v13.4" />
+      <path d="M11.2 9h4.7" />
+      <path d="M11.2 12h4.7" />
+      <path d="M11.2 15h3.2" />
+    </>
+  ),
+  popular: () => (
+    <>
+      <path d="M12 4.8c2.5 2 4.8 4.8 4.8 7.6a4.8 4.8 0 0 1-9.6 0c0-2.8 2.3-5.6 4.8-7.6Z" />
+      <path d="M10.8 13.1c.7-.6 1.1-1.4 1.1-2.3 1.7.7 2.6 1.9 2.6 3a2.3 2.3 0 1 1-4.6 0c0-.2 0-.5.1-.7Z" />
+    </>
+  ),
+  rising: () => (
+    <>
+      <path d="M5.2 17.4h13.6" />
+      <path d="m7.4 14.9 3.7-3.7 2.5 2.5 4.2-4.2" />
+      <path d="M14.9 9.5h3.7v3.7" />
+      <path d="m8.2 9.2.7 1.4 1.5.2-1.1 1 .3 1.5-1.4-.7-1.4.7.3-1.5-1.1-1 1.5-.2Z" />
+    </>
+  ),
+  builder: () => (
+    <>
+      <path d="m8.1 7 2.4 2.4-2.5 2.5-2.4-2.4Z" />
+      <path d="m10.4 9.3 3.7-3.7 2.4 2.4-3.7 3.7" />
+      <path d="m12.4 13.1 5.1 5.1" />
+      <path d="m8.9 14 3 3 3.9-3.3-3-3Z" />
+    </>
+  ),
+  "music-taste": () => (
+    <>
+      <path d="M15.2 5.3v8.5a2 2 0 1 1-1.4-1.9V7.4l-5.4 1.3V15a2 2 0 1 1-1.4-1.9V7.5Z" />
+      <path d="M17.3 8.5c1 .3 1.8 1.1 2 2.2" />
+      <path d="M17 11.4c1.8.4 3 1.7 3.3 3.4" />
+    </>
+  ),
+  streamer: () => (
+    <>
+      <path d="M6 9h6.6a3.9 3.9 0 0 1 3.9 3.9v1.9" />
+      <path d="M6 12.5A5.5 5.5 0 0 1 11.5 7" />
+      <path d="M16.2 15.9a1.6 1.6 0 1 1 3.2 0" />
+      <path d="M14.2 18a3.8 3.8 0 0 1 7.6 0" />
+      <path d="M4.6 16.1h5" />
+    </>
+  ),
+  fallback: (compact) => (
+    <>
+      <path d="M12 4.4 17 7v4.4c0 3.7-2.1 6.4-5 8-2.9-1.6-5-4.3-5-8V7Z" />
+      <path d="M10.1 8.4 12 10.2l1.9-1.8" />
+      <path d="M12 10.2v4.7" />
+      <path d="m9.3 14.7 2.7 1.4 2.7-1.4" />
+      <path d="m12 6.2.8 1.4 1.6.2-1.2 1-.2.2" />
+      <path d="m12 6.2-.8 1.4-1.6.2 1.2 1 .2.2" />
+      <circle cx="12" cy="15.6" r={compact ? 0.9 : 1} fill="currentColor" stroke="none" />
+    </>
+  ),
+};
+
+const BADGE_ALIASES: Record<string, string> = {
+  badge: "fallback",
+  broadcast: "streamer",
+  "broadcast-live": "streamer",
+  chain: "first-link",
+  "chain-link": "first-link",
+  check: "verified",
+  "check-shield": "verified",
+  code: "builder",
+  command: "admin",
+  "command-shield": "admin",
+  crest: "fallback",
+  crown: "owner",
+  "flag-spark": "first-profile",
+  fire: "popular",
+  flame: "popular",
+  gear: "staff",
+  "gear-star": "staff",
+  gem: "premium",
+  "gem-star": "premium",
+  grid: "template-creator",
+  hammer: "builder",
+  "hammer-cube": "builder",
+  heart: "supporter",
+  "heart-gem": "supporter",
+  layout: "template-creator",
+  "layout-grid": "template-creator",
+  link: "first-link",
+  music: "music-taste",
+  "music-wave": "music-taste",
+  network: "social-pro",
+  "network-orbit": "social-pro",
+  nodes: "social-starter",
+  "chat-orbit": "social-starter",
+  orbit: "social-pro",
+  popular: "popular",
+  profile: "first-profile",
+  "profile-card": "first-profile",
+  shield: "admin",
+  spark: "fallback",
+  star: "premium",
+  sunrise: "early-supporter",
+  "sunrise-star": "early-supporter",
+  template: "template-creator",
+  tools: "staff",
+  uptrend: "rising",
+  verified: "verified",
+  "arrow-star": "rising",
+  "y-crest": "owner",
+};
+
 export default function BadgeVisual({
   slug,
+  icon,
+  name,
   color,
   rarity,
   category,
   size = 56,
   compact = false,
 }: Props) {
-  const palette = getBadgePalette({ slug, color, rarity, category });
+  const badgeKey = resolveBadgeKey({ slug, icon, name, category });
+  const palette = getBadgePalette({ slug: badgeKey, color, rarity, category });
   const ringInset = compact ? 1.5 : 2.5;
-  const coreInset = compact ? 6.5 : 8.5;
+  const coreInset = compact ? 6.2 : 8.2;
 
   return (
     <div
@@ -44,7 +261,7 @@ export default function BadgeVisual({
           ...glowStyle,
           background: `radial-gradient(circle, ${palette.glow} 0%, ${alpha(
             palette.glow,
-            "00"
+            "00",
           )} 70%)`,
           transform: compact ? "scale(1.08)" : "scale(1.12)",
         }}
@@ -63,7 +280,7 @@ export default function BadgeVisual({
             ...foilStyle,
             background: `linear-gradient(180deg, ${alpha(
               palette.accent,
-              compact ? "18" : "20"
+              compact ? "18" : "20",
             )}, rgba(255,255,255,0.02))`,
           }}
         />
@@ -73,7 +290,7 @@ export default function BadgeVisual({
             borderColor: alpha(palette.edge, compact ? "d8" : "ff"),
             background: `linear-gradient(180deg, ${alpha(
               palette.accent,
-              compact ? "22" : "2c"
+              compact ? "22" : "2c",
             )}, rgba(7,9,16,0.94))`,
             boxShadow: `0 8px 16px ${alpha(palette.glow, compact ? "18" : "26")}`,
           }}
@@ -84,7 +301,7 @@ export default function BadgeVisual({
             inset: `${coreInset}px`,
             background: `linear-gradient(180deg, ${alpha(
               palette.accent,
-              compact ? "16" : "1b"
+              compact ? "16" : "1b",
             )}, rgba(7,9,16,0.96))`,
             border: `1px solid ${alpha(palette.edge, compact ? "d0" : "ff")}`,
           }}
@@ -92,7 +309,7 @@ export default function BadgeVisual({
           <div
             style={{
               ...shineStyle,
-              background: `linear-gradient(180deg, rgba(255,255,255,0.34), transparent 72%)`,
+              background: "linear-gradient(180deg, rgba(255,255,255,0.34), transparent 72%)",
             }}
           />
           <svg
@@ -100,17 +317,18 @@ export default function BadgeVisual({
             style={{
               position: "relative",
               zIndex: 1,
-              width: compact ? "14px" : "20px",
-              height: compact ? "14px" : "20px",
+              width: compact ? "15px" : "21px",
+              height: compact ? "15px" : "21px",
               color: palette.icon,
+              overflow: "visible",
             }}
             fill="none"
             stroke="currentColor"
-            strokeWidth={compact ? "2.05" : "1.9"}
+            strokeWidth={compact ? "1.95" : "1.85"}
             strokeLinecap="round"
             strokeLinejoin="round"
           >
-            {renderBadgeGlyph(slug)}
+            {BADGE_GLYPHS[badgeKey]?.(compact) ?? BADGE_GLYPHS.fallback(compact)}
           </svg>
         </div>
       </div>
@@ -118,169 +336,34 @@ export default function BadgeVisual({
   );
 }
 
-function renderBadgeGlyph(slug: string) {
-  switch (slug) {
-    case "owner":
-      return (
-        <>
-          <path d="M5.2 17.5 6.9 8.6 12 12l5.1-3.4 1.7 8.9Z" />
-          <path d="M6.9 8.6 9.3 10.9 12 6l2.7 4.9 2.4-2.3" />
-          <path d="M7.4 19h9.2" />
-          <circle cx="12" cy="6" r="0.95" fill="currentColor" stroke="none" />
-        </>
-      );
-    case "admin":
-      return (
-        <>
-          <path d="M12 3.2 18 6.3v4.8c0 4.2-2.6 7.2-6 9-3.4-1.8-6-4.8-6-9V6.3Z" />
-          <circle cx="12" cy="11.2" r="2.1" />
-          <path d="m12 7.8.8 1.5 1.7.2-1.2 1.1.3 1.7-1.6-.8-1.6.8.3-1.7-1.2-1.1 1.7-.2Z" />
-        </>
-      );
-    case "staff":
-      return (
-        <>
-          <path d="M12 3.5 17.7 6v4.8c0 3.7-2.2 6.4-5.7 8.2-3.5-1.8-5.7-4.5-5.7-8.2V6Z" />
-          <circle cx="12" cy="11" r="2.1" />
-          <path d="M12 7.1v1.4" />
-          <path d="M12 13.5v1.4" />
-          <path d="M8.8 11h1.4" />
-          <path d="M13.8 11h1.4" />
-          <path d="m9.7 8.7 1 1" />
-          <path d="m13.3 12.3 1 1" />
-        </>
-      );
-    case "verified":
-      return (
-        <>
-          <path d="M12 3.8 14.2 5l2.5-.1 1.1 2.2 2 1.4-.6 2.4.6 2.4-2 1.4-1.1 2.2-2.5-.1L12 18.2l-2.2-1.2-2.5.1-1.1-2.2-2-1.4.6-2.4-.6-2.4 2-1.4 1.1-2.2 2.5.1Z" />
-          <path d="m8.8 11.9 2.1 2.1 4.3-4.3" />
-        </>
-      );
-    case "premium":
-      return (
-        <>
-          <path d="m12 3.7 4 2 1.9 4.3-1.9 4.2-4 2-4-2-1.9-4.2L8 5.7Z" />
-          <path d="m12 6.5 1.2 2.3 2.6.4-1.9 1.8.5 2.6-2.4-1.3-2.4 1.3.5-2.6-1.9-1.8 2.6-.4Z" />
-        </>
-      );
-    case "supporter":
-      return (
-        <>
-          <path d="m12 18.5-3.6-2.5C6.4 14.5 5.3 12.9 5.3 10.9A3.3 3.3 0 0 1 12 9.3a3.3 3.3 0 0 1 6.7 1.6c0 2-1.1 3.6-3.1 5.1Z" />
-          <path d="m12 7.2 1 1.8 2 .3-1.5 1.4.4 2-1.9-1-1.9 1 .4-2-1.5-1.4 2-.3Z" />
-        </>
-      );
-    case "early-supporter":
-      return (
-        <>
-          <path d="M5 16a7 7 0 0 1 14 0" />
-          <path d="M4.7 18.5h14.6" />
-          <path d="M12 5.3v3.6" />
-          <path d="m9.1 7.4 1.5 1.6" />
-          <path d="m14.9 7.4-1.5 1.6" />
-          <path d="m12 10.1.9 1.6 1.9.3-1.4 1.3.3 1.9-1.7-.9-1.7.9.3-1.9-1.4-1.3 1.9-.3Z" />
-        </>
-      );
-    case "first-profile":
-      return (
-        <>
-          <path d="M7 4.8v14.4" />
-          <path d="M7 6h8.6l-1.8 2.9 1.8 2.9H7" />
-          <path d="m16.2 14.1.8 1.5 1.7.2-1.3 1.1.4 1.7-1.6-.8-1.6.8.4-1.7-1.3-1.1 1.7-.2Z" />
-        </>
-      );
-    case "first-link":
-      return (
-        <>
-          <path d="M10 14 8.1 15.9a2.8 2.8 0 1 1-4-4L6 10" />
-          <path d="M14 10 15.9 8.1a2.8 2.8 0 1 1 4 4L18 14" />
-          <path d="m9 15 6-6" />
-        </>
-      );
-    case "social-starter":
-      return (
-        <>
-          <path d="M7 8.6a3.6 3.6 0 0 1 3.6-3.6h4.1a3.3 3.3 0 0 1 3.3 3.3v2.1a3.3 3.3 0 0 1-3.3 3.3h-2.9l-3 2v-2A3.7 3.7 0 0 1 7 10.1Z" />
-          <circle cx="16.6" cy="7.3" r="1.3" />
-          <path d="M15 15.6a4.1 4.1 0 0 0 4-4.1" />
-        </>
-      );
-    case "social-pro":
-      return (
-        <>
-          <circle cx="7" cy="7" r="1.8" />
-          <circle cx="17" cy="7" r="1.8" />
-          <circle cx="7" cy="17" r="1.8" />
-          <circle cx="17" cy="17" r="1.8" />
-          <circle cx="12" cy="12" r="2" />
-          <path d="M8.4 8.4 10.6 10.6" />
-          <path d="M15.6 8.4 13.4 10.6" />
-          <path d="M8.4 15.6 10.6 13.4" />
-          <path d="M15.6 15.6 13.4 13.4" />
-        </>
-      );
-    case "template-creator":
-      return (
-        <>
-          <rect x="4.5" y="5" width="15" height="14" rx="2.5" />
-          <path d="M9 5v14" />
-          <path d="M10.8 9h5.2" />
-          <path d="M10.8 12h4.2" />
-          <path d="M10.8 15h3.4" />
-        </>
-      );
-    case "popular":
-      return (
-        <>
-          <path d="M12 4.7c2.3 2.1 4.7 4.7 4.7 7.6a4.7 4.7 0 0 1-9.4 0c0-2.9 2.4-5.5 4.7-7.6Z" />
-          <path d="M10.5 13.1c.8-.6 1.2-1.4 1.2-2.4 1.8.8 2.7 2 2.7 3.2a2.4 2.4 0 0 1-4.8 0c0-.3 0-.5.1-.8Z" />
-        </>
-      );
-    case "rising":
-      return (
-        <>
-          <path d="M5.5 17.5h13" />
-          <path d="m7.5 15.5 3.8-3.8 2.5 2.5 4.7-4.7" />
-          <path d="M15.2 9.5H19v3.8" />
-        </>
-      );
-    case "builder":
-      return (
-        <>
-          <path d="m8.2 7.1 2.2 2.2-2.3 2.3-2.2-2.2Z" />
-          <path d="m10.3 9.2 3.8-3.8 2.3 2.3-3.8 3.8" />
-          <path d="m12.5 13.1 5.3 5.3" />
-          <path d="m9.1 14 3 3 4.1-3.3-3-3Z" />
-        </>
-      );
-    case "music-taste":
-      return (
-        <>
-          <path d="M15.4 5.4v8.8a2.2 2.2 0 1 1-1.5-2.1V7.4l-5.7 1.4v6.5a2.2 2.2 0 1 1-1.5-2.1V7.5Z" />
-          <path d="M17.3 8.4c1.1.3 1.8 1.1 2 2.2" />
-          <path d="M17 11.1c1.8.4 3 1.7 3.4 3.5" />
-        </>
-      );
-    case "streamer":
-      return (
-        <>
-          <path d="M6.1 8.2h7.5a4 4 0 0 1 4 4v2.7" />
-          <path d="M6.1 12a6 6 0 0 1 6-6" />
-          <path d="M16.4 16.3a1.7 1.7 0 1 1 3.4 0" />
-          <path d="M14.1 18.4a4 4 0 0 1 8 0" />
-          <path d="M4.7 16.7h4.9" />
-        </>
-      );
-    default:
-      return (
-        <>
-          <circle cx="12" cy="12" r="6" />
-          <path d="M12 8v4" />
-          <path d="M12 16h.01" />
-        </>
-      );
+function resolveBadgeKey(input: {
+  slug?: string | null;
+  icon?: string | null;
+  name?: string | null;
+  category?: string | null;
+}) {
+  const candidates = [input.slug, input.icon, input.name, input.category]
+    .map(normalizeBadgeToken)
+    .filter(Boolean);
+
+  for (const candidate of candidates) {
+    if (candidate in BADGE_GLYPHS) {
+      return candidate;
+    }
+
+    if (candidate in BADGE_ALIASES) {
+      return BADGE_ALIASES[candidate];
+    }
   }
+
+  return "fallback";
+}
+
+function normalizeBadgeToken(value: string | null | undefined) {
+  return (value ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/[_\s]+/g, "-");
 }
 
 function getBadgePalette(input: {
@@ -299,6 +382,17 @@ function getBadgePalette(input: {
       glow: "#f5bf5e",
       icon: "#fff4ca",
       accent: "#f6d37d",
+    };
+  }
+
+  if (input.slug === "premium") {
+    return {
+      outer: "rgba(72,24,53,0.98)",
+      inner: "rgba(24,10,24,0.98)",
+      edge: "#ff96d3",
+      glow: "#ff9dcc",
+      icon: "#fff4d9",
+      accent: "#ff96d3",
     };
   }
 
@@ -324,7 +418,7 @@ function getBadgePalette(input: {
     };
   }
 
-  if (input.rarity === "legendary") {
+  if (input.rarity === "legendary" || input.rarity === "owner") {
     return {
       outer: "rgba(73,48,10,0.98)",
       inner: "rgba(20,14,7,0.98)",
