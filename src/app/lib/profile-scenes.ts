@@ -34,6 +34,11 @@ export type ProfileSceneDepth = {
   vignetteStrength: number;
   foregroundHazeOpacity: number;
   lightingOpacity: number;
+  fogOpacity: number;
+  fogTintStrength: number;
+  grainOpacity: number;
+  bloomOpacity: number;
+  heroAuraOpacity: number;
   shellShadeOpacity: number;
   surfaceShadeOpacity: number;
   spacingScale: number;
@@ -90,6 +95,11 @@ const PROFILE_SCENE_DEFINITIONS: Record<ProfileScene, ProfileSceneDefinition> = 
       vignetteStrength: 0.42,
       foregroundHazeOpacity: 0.18,
       lightingOpacity: 0.34,
+      fogOpacity: 0.22,
+      fogTintStrength: 0.16,
+      grainOpacity: 0.045,
+      bloomOpacity: 0.34,
+      heroAuraOpacity: 0.28,
       shellShadeOpacity: 0.03,
       surfaceShadeOpacity: 0.08,
       spacingScale: 0.88,
@@ -122,6 +132,11 @@ const PROFILE_SCENE_DEFINITIONS: Record<ProfileScene, ProfileSceneDefinition> = 
       vignetteStrength: 0.34,
       foregroundHazeOpacity: 0.14,
       lightingOpacity: 0.44,
+      fogOpacity: 0.18,
+      fogTintStrength: 0.24,
+      grainOpacity: 0.042,
+      bloomOpacity: 0.42,
+      heroAuraOpacity: 0.34,
       shellShadeOpacity: 0.01,
       surfaceShadeOpacity: 0.06,
       spacingScale: 0.82,
@@ -154,6 +169,11 @@ const PROFILE_SCENE_DEFINITIONS: Record<ProfileScene, ProfileSceneDefinition> = 
       vignetteStrength: 0.62,
       foregroundHazeOpacity: 0.1,
       lightingOpacity: 0.2,
+      fogOpacity: 0.16,
+      fogTintStrength: 0.14,
+      grainOpacity: 0.038,
+      bloomOpacity: 0.24,
+      heroAuraOpacity: 0.18,
       shellShadeOpacity: 0.08,
       surfaceShadeOpacity: 0.14,
       spacingScale: 0.92,
@@ -186,6 +206,11 @@ const PROFILE_SCENE_DEFINITIONS: Record<ProfileScene, ProfileSceneDefinition> = 
       vignetteStrength: 0.34,
       foregroundHazeOpacity: 0.26,
       lightingOpacity: 0.5,
+      fogOpacity: 0.28,
+      fogTintStrength: 0.2,
+      grainOpacity: 0.05,
+      bloomOpacity: 0.44,
+      heroAuraOpacity: 0.32,
       shellShadeOpacity: 0.02,
       surfaceShadeOpacity: 0.06,
       spacingScale: 0.9,
@@ -218,6 +243,11 @@ const PROFILE_SCENE_DEFINITIONS: Record<ProfileScene, ProfileSceneDefinition> = 
       vignetteStrength: 0.48,
       foregroundHazeOpacity: 0.16,
       lightingOpacity: 0.52,
+      fogOpacity: 0.2,
+      fogTintStrength: 0.26,
+      grainOpacity: 0.046,
+      bloomOpacity: 0.48,
+      heroAuraOpacity: 0.36,
       shellShadeOpacity: 0.03,
       surfaceShadeOpacity: 0.08,
       spacingScale: 0.84,
@@ -250,6 +280,11 @@ const PROFILE_SCENE_DEFINITIONS: Record<ProfileScene, ProfileSceneDefinition> = 
       vignetteStrength: 0.32,
       foregroundHazeOpacity: 0.22,
       lightingOpacity: 0.4,
+      fogOpacity: 0.26,
+      fogTintStrength: 0.16,
+      grainOpacity: 0.04,
+      bloomOpacity: 0.36,
+      heroAuraOpacity: 0.26,
       shellShadeOpacity: 0.03,
       surfaceShadeOpacity: 0.06,
       spacingScale: 0.88,
@@ -282,6 +317,11 @@ const PROFILE_SCENE_DEFINITIONS: Record<ProfileScene, ProfileSceneDefinition> = 
       vignetteStrength: 0.36,
       foregroundHazeOpacity: 0.16,
       lightingOpacity: 0.38,
+      fogOpacity: 0.22,
+      fogTintStrength: 0.22,
+      grainOpacity: 0.05,
+      bloomOpacity: 0.38,
+      heroAuraOpacity: 0.3,
       shellShadeOpacity: 0.03,
       surfaceShadeOpacity: 0.06,
       spacingScale: 0.86,

@@ -330,6 +330,26 @@ export default function PublicProfileRenderer({
     0.14,
     0.88,
   );
+  const tunedAtmosphereFogOpacity = clampNumber(
+    depth.fogOpacity * dnaTuning.ambientScale * (preview ? 0.82 : 1),
+    0.1,
+    0.44,
+  );
+  const tunedAtmosphereGrainOpacity = clampNumber(
+    depth.grainOpacity * (preview ? 0.78 : 1),
+    0.025,
+    0.08,
+  );
+  const tunedAtmosphereBloomOpacity = clampNumber(
+    depth.bloomOpacity * dnaTuning.glowScale * 0.9,
+    0.18,
+    0.58,
+  );
+  const tunedHeroAuraOpacity = clampNumber(
+    depth.heroAuraOpacity * dnaTuning.glowScale * 0.92,
+    0.14,
+    0.56,
+  );
   const linkHoverLift = preview
     ? 0
     : Number(
@@ -567,6 +587,10 @@ export default function PublicProfileRenderer({
         "--profile-scroll-focus": `${(
           scrollAtmosphereProgress * motionPersonalityTokens.scrollFocusStrength
         ).toFixed(3)}`,
+        "--profile-atmosphere-fog": `${tunedAtmosphereFogOpacity.toFixed(3)}`,
+        "--profile-atmosphere-grain": `${tunedAtmosphereGrainOpacity.toFixed(3)}`,
+        "--profile-atmosphere-bloom": `${tunedAtmosphereBloomOpacity.toFixed(3)}`,
+        "--profile-hero-aura-opacity": `${tunedHeroAuraOpacity.toFixed(3)}`,
         "--profile-stack-gap": `${Math.round(14 * spacingScale)}px`,
         "--profile-chip-height": `${Math.max(24, Math.round(28 * dnaTuning.chipScale))}px`,
         "--profile-chip-padding-x": `${Math.max(8, Math.round(10 * dnaTuning.chipScale))}px`,
@@ -584,6 +608,9 @@ export default function PublicProfileRenderer({
         .profile-stage,
         .profile-stage-media,
         .profile-stage-light,
+        .profile-stage-bloom,
+        .profile-stage-aura,
+        .profile-stage-fog,
         .profile-stage-overlay,
         .profile-stage-depth,
         .profile-stage-vignette,
@@ -605,9 +632,11 @@ export default function PublicProfileRenderer({
           width: 100%;
           height: 100%;
           object-fit: cover;
-          transform: scale(${bannerStyleTokens.mediaScale});
-          filter: ${bannerStyleTokens.mediaFilter};
-          will-change: transform;
+          transform:
+            translate3d(0, calc(var(--profile-scroll-settle) * -0.22), 0)
+            scale(calc(${bannerStyleTokens.mediaScale} + var(--profile-scroll-progress) * 0.02));
+          filter: ${bannerStyleTokens.mediaFilter} blur(calc(var(--profile-scroll-focus) * 1.4px));
+          will-change: transform, filter;
         }
 
         .profile-stage-light {
@@ -615,9 +644,45 @@ export default function PublicProfileRenderer({
             radial-gradient(circle at 18% 16%, ${withAlpha(presence.accent, "16")} 0%, transparent 24%),
             radial-gradient(circle at 82% 22%, ${withAlpha(presence.soft, "12")} 0%, transparent 28%),
             radial-gradient(circle at 50% 72%, ${withAlpha(presence.accent, "10")} 0%, transparent 34%);
-          opacity: calc(${Math.max(0.16, depth.lightingOpacity)} + var(--profile-scroll-focus) * 0.18);
-          transform: translate3d(0, calc(var(--profile-scroll-settle) * -0.2), 0);
+          opacity: calc(${Math.max(0.16, depth.lightingOpacity)} + var(--profile-scroll-focus) * 0.22);
+          transform: translate3d(0, calc(var(--profile-scroll-settle) * -0.24), 0);
           animation: ambient-drift var(--profile-ambient-drift-duration) var(--profile-motion-ease) infinite;
+        }
+
+        .profile-stage-bloom {
+          background:
+            radial-gradient(circle at 50% 20%, rgba(255,255,255,0.12) 0%, transparent 20%),
+            radial-gradient(circle at 50% 32%, ${withAlpha(presence.soft, "28")} 0%, transparent 40%),
+            radial-gradient(circle at 50% 72%, ${withAlpha(presence.accent, "16")} 0%, transparent 36%);
+          opacity: calc(var(--profile-atmosphere-bloom) + var(--profile-scroll-focus) * 0.12);
+          mix-blend-mode: screen;
+          filter: blur(calc(28px + var(--profile-blur-breath-distance) * 2));
+          transform: translate3d(0, calc(var(--profile-scroll-settle) * -0.3), 0) scale(calc(1 + var(--profile-scroll-progress) * 0.02));
+          animation:
+            glow-breathe calc(var(--profile-glow-pulse-duration) * 1.12) var(--profile-motion-ease) infinite,
+            ambient-drift calc(var(--profile-ambient-drift-duration) * 1.18) var(--profile-motion-ease) infinite;
+        }
+
+        .profile-stage-aura {
+          background:
+            radial-gradient(circle at 50% 38%, ${withAlpha(presence.accent, "24")} 0%, transparent 32%),
+            radial-gradient(circle at 50% 56%, ${withAlpha(presence.soft, "1a")} 0%, transparent 44%);
+          opacity: calc(var(--profile-hero-aura-opacity) + var(--profile-scroll-focus) * 0.12);
+          filter: blur(calc(18px + var(--profile-blur-breath-distance)));
+          transform: translate3d(0, calc(var(--profile-scroll-settle) * -0.42), 0) scale(calc(1 + var(--profile-scroll-progress) * 0.032));
+          mix-blend-mode: screen;
+          animation: ambient-drift calc(var(--profile-ambient-drift-duration) * 1.05) var(--profile-motion-ease) infinite reverse;
+        }
+
+        .profile-stage-fog {
+          background:
+            radial-gradient(circle at 50% 46%, rgba(255,255,255,0.08) 0%, transparent 34%),
+            linear-gradient(180deg, transparent 16%, ${withAlpha(presence.soft, "18")} 58%, rgba(3,4,8,0.18) 100%);
+          opacity: calc(var(--profile-atmosphere-fog) + var(--profile-scroll-progress) * 0.1);
+          filter: blur(calc(16px + var(--profile-blur-breath-distance) * 1.8));
+          transform: translate3d(0, calc(var(--profile-scroll-settle) * 0.22), 0) scale(1.03);
+          mix-blend-mode: screen;
+          animation: fog-drift calc(var(--profile-ambient-drift-duration) * 1.22) var(--profile-motion-ease) infinite;
         }
 
         .profile-stage-overlay {
@@ -671,14 +736,16 @@ export default function PublicProfileRenderer({
         }
 
         .profile-stage-noise {
-          opacity: ${Math.min(0.12, 0.04 + depth.lightingOpacity * 0.1)};
+          opacity: calc(${Math.min(0.08, 0.026 + depth.lightingOpacity * 0.06)} + var(--profile-atmosphere-grain));
           background-image:
             ${presence.ambientGrid},
             radial-gradient(rgba(255, 255, 255, 0.82) 0.5px, transparent 0.6px),
-            radial-gradient(rgba(255, 255, 255, 0.4) 0.5px, transparent 0.6px);
-          background-position: 0 0, 0 0, 7px 11px;
-          background-size: 80px 80px, 12px 12px, 15px 15px;
+            radial-gradient(rgba(255, 255, 255, 0.4) 0.5px, transparent 0.6px),
+            repeating-linear-gradient(0deg, rgba(255,255,255,0.03) 0 1px, transparent 1px 3px);
+          background-position: 0 0, 0 0, 7px 11px, 0 0;
+          background-size: 80px 80px, 12px 12px, 15px 15px, 100% 100%;
           mix-blend-mode: soft-light;
+          animation: grain-shift 24s linear infinite;
         }
 
         .profile-stage-glow {
@@ -697,7 +764,8 @@ export default function PublicProfileRenderer({
             linear-gradient(180deg, rgba(5, 6, 10, 0), rgba(5, 6, 10, ${Math.min(0.18, depth.foregroundHazeOpacity).toFixed(3)}) 100%),
             radial-gradient(circle at 50% 90%, ${withAlpha(presence.soft, "14")} 0%, transparent 36%);
           z-index: 1;
-          opacity: calc(1 + var(--profile-scroll-focus) * 0.2);
+          opacity: calc(0.94 + var(--profile-scroll-focus) * 0.26);
+          transform: translate3d(0, calc(var(--profile-scroll-settle) * 0.14), 0);
         }
 
         .profile-stage-blur {
@@ -706,9 +774,9 @@ export default function PublicProfileRenderer({
             ? bannerStyleTokens.previewStageBlurHeight
             : bannerStyleTokens.stageBlurHeight};
           background: linear-gradient(180deg, rgba(4, 5, 9, 0), rgba(4, 5, 9, 0.4) 42%, rgba(4, 5, 9, 0.8) 100%);
-          transform: translate3d(0, var(--profile-scroll-settle), 0);
-          filter: blur(calc(var(--profile-blur-breath-distance) * 0.6));
-          opacity: calc(0.88 + var(--profile-scroll-focus) * 0.18);
+          transform: translate3d(0, calc(var(--profile-scroll-settle) * 1.18), 0);
+          filter: blur(calc(4px + var(--profile-blur-breath-distance) * 0.68));
+          opacity: calc(0.82 + var(--profile-scroll-focus) * 0.22);
         }
 
         .profile-shell {
@@ -767,6 +835,7 @@ export default function PublicProfileRenderer({
           transition:
             transform var(--profile-transition-duration) var(--profile-motion-ease),
             box-shadow var(--profile-transition-duration) var(--profile-motion-ease);
+          will-change: transform;
         }
 
         .profile-floating-panel::before {
@@ -1287,6 +1356,24 @@ export default function PublicProfileRenderer({
           50% { transform: translate3d(0, var(--profile-ambient-drift-distance), 0); }
         }
 
+        @keyframes fog-drift {
+          0%, 100% {
+            transform: translate3d(-1.2%, 0, 0) scale(1.02);
+          }
+
+          50% {
+            transform: translate3d(1.2%, -1.6%, 0) scale(1.05);
+          }
+        }
+
+        @keyframes grain-shift {
+          0% { transform: translate3d(0, 0, 0); }
+          25% { transform: translate3d(-0.8%, 0.4%, 0); }
+          50% { transform: translate3d(0.6%, -0.6%, 0); }
+          75% { transform: translate3d(-0.4%, 0.8%, 0); }
+          100% { transform: translate3d(0, 0, 0); }
+        }
+
         @keyframes glow-breathe {
           0%, 100% { opacity: calc(1 - var(--profile-glow-pulse-opacity)); }
           50% { opacity: calc(1 + var(--profile-glow-pulse-opacity)); }
@@ -1378,6 +1465,24 @@ export default function PublicProfileRenderer({
               inset 0 1px 0 rgba(255, 255, 255, 0.04);
           }
         }
+
+        @media (prefers-reduced-motion: reduce) {
+          .profile-stage-media,
+          .profile-stage-light,
+          .profile-stage-bloom,
+          .profile-stage-aura,
+          .profile-stage-fog,
+          .profile-stage-noise,
+          .profile-stage-glow,
+          .profile-stage-foreground,
+          .profile-stage-blur,
+          .profile-shell,
+          .profile-floating-panel {
+            animation: none !important;
+            transition: none !important;
+            transform: none !important;
+          }
+        }
       `}</style>
 
       <LivingProfileBackground
@@ -1397,7 +1502,10 @@ export default function PublicProfileRenderer({
           className="profile-stage-media"
         />
         <div className="profile-stage-light" />
+        <div className="profile-stage-bloom" />
+        <div className="profile-stage-aura" />
         <div className="profile-stage-glow" />
+        <div className="profile-stage-fog" />
         <div className="profile-stage-overlay" />
         <div className="profile-stage-depth" />
         <div className="profile-stage-vignette" />
@@ -1766,6 +1874,22 @@ function FloatingProfileScene({
     12,
     Math.round(14 * presetRenderTuning.moduleGapScale * dnaTuning.spacingScale),
   );
+  const floatingFogOpacity = clampNumber(
+    depth.fogOpacity * dnaTuning.ambientScale,
+    0.1,
+    0.42,
+  );
+  const floatingGrainOpacity = clampNumber(depth.grainOpacity, 0.024, 0.072);
+  const floatingBloomOpacity = clampNumber(
+    depth.bloomOpacity * dnaTuning.glowScale * 0.82,
+    0.16,
+    0.48,
+  );
+  const floatingHeroAuraOpacity = clampNumber(
+    depth.heroAuraOpacity * dnaTuning.glowScale * 0.86,
+    0.12,
+    0.5,
+  );
 
   return (
     <main
@@ -1801,13 +1925,21 @@ function FloatingProfileScene({
         "--floating-scroll-focus": `${(
           scrollAtmosphereProgress * motionPersonalityTokens.scrollFocusStrength
         ).toFixed(3)}`,
+        "--floating-atmosphere-fog": `${floatingFogOpacity.toFixed(3)}`,
+        "--floating-atmosphere-grain": `${floatingGrainOpacity.toFixed(3)}`,
+        "--floating-atmosphere-bloom": `${floatingBloomOpacity.toFixed(3)}`,
+        "--floating-hero-aura-opacity": `${floatingHeroAuraOpacity.toFixed(3)}`,
       } as CSSProperties}
     >
       <style>{`
         .floating-profile-stage,
         .floating-profile-stage-media,
+        .floating-profile-stage-bloom,
+        .floating-profile-stage-aura,
+        .floating-profile-stage-fog,
         .floating-profile-stage-overlay,
         .floating-profile-stage-glow,
+        .floating-profile-stage-noise,
         .floating-profile-stage-vignette {
           position: absolute;
           inset: 0;
@@ -1818,8 +1950,10 @@ function FloatingProfileScene({
           width: 100%;
           height: 100%;
           object-fit: cover;
-          transform: scale(1.05);
-          filter: brightness(0.82) saturate(1.02);
+          transform:
+            translate3d(0, calc(var(--floating-scroll-settle) * -0.22), 0)
+            scale(calc(1.05 + var(--floating-scroll-progress) * 0.018));
+          filter: brightness(0.82) saturate(1.02) blur(calc(var(--floating-scroll-focus) * 1.2px));
         }
 
         .floating-profile-stage-overlay {
@@ -1829,6 +1963,40 @@ function FloatingProfileScene({
             radial-gradient(circle at 50% 56%, ${withAlpha(presence.soft, decimalOpacityToHex(motionPersonalityTokens.heroSpillOpacity))} 0%, transparent 50%);
         }
 
+        .floating-profile-stage-bloom {
+          background:
+            radial-gradient(circle at 50% 20%, rgba(255,255,255,0.12) 0%, transparent 20%),
+            radial-gradient(circle at 50% 34%, ${withAlpha(presence.soft, "24")} 0%, transparent 42%);
+          opacity: calc(var(--floating-atmosphere-bloom) + var(--floating-scroll-focus) * 0.08);
+          filter: blur(calc(24px + var(--floating-blur-breath-distance) * 2));
+          mix-blend-mode: screen;
+          animation:
+            glow-breathe calc(var(--floating-glow-pulse-duration) * 1.08) var(--floating-motion-ease) infinite,
+            ambient-drift calc(var(--floating-ambient-drift-duration) * 1.12) var(--floating-motion-ease) infinite;
+        }
+
+        .floating-profile-stage-aura {
+          background:
+            radial-gradient(circle at 50% 42%, ${withAlpha(presence.accent, "20")} 0%, transparent 34%),
+            radial-gradient(circle at 50% 58%, ${withAlpha(presence.soft, "16")} 0%, transparent 46%);
+          opacity: calc(var(--floating-hero-aura-opacity) + var(--floating-scroll-focus) * 0.1);
+          filter: blur(calc(14px + var(--floating-blur-breath-distance)));
+          transform: translate3d(0, calc(var(--floating-scroll-settle) * -0.36), 0) scale(calc(1 + var(--floating-scroll-progress) * 0.024));
+          mix-blend-mode: screen;
+          animation: ambient-drift calc(var(--floating-ambient-drift-duration) * 1.04) var(--floating-motion-ease) infinite reverse;
+        }
+
+        .floating-profile-stage-fog {
+          background:
+            radial-gradient(circle at 50% 52%, rgba(255,255,255,0.06) 0%, transparent 32%),
+            linear-gradient(180deg, transparent 20%, ${withAlpha(presence.soft, "14")} 64%, rgba(4,5,9,0.16) 100%);
+          opacity: calc(var(--floating-atmosphere-fog) + var(--floating-scroll-progress) * 0.08);
+          filter: blur(calc(14px + var(--floating-blur-breath-distance) * 1.6));
+          transform: translate3d(0, calc(var(--floating-scroll-settle) * 0.18), 0) scale(1.03);
+          mix-blend-mode: screen;
+          animation: fog-drift calc(var(--floating-ambient-drift-duration) * 1.16) var(--floating-motion-ease) infinite;
+        }
+
         .floating-profile-stage-glow {
           background: ${presence.stageGlow};
           filter: blur(calc(${Math.max(14, Math.round(depth.stageGlowBlur * dnaTuning.ambientScale * dnaTuning.glowScale))}px + var(--floating-blur-breath-distance)));
@@ -1836,6 +2004,19 @@ function FloatingProfileScene({
           animation:
             glow-breathe var(--floating-glow-pulse-duration) var(--floating-motion-ease) infinite,
             ambient-drift var(--floating-ambient-drift-duration) var(--floating-motion-ease) infinite;
+        }
+
+        .floating-profile-stage-noise {
+          opacity: calc(0.018 + var(--floating-atmosphere-grain));
+          background-image:
+            ${presence.ambientGrid},
+            radial-gradient(rgba(255,255,255,0.78) 0.45px, transparent 0.55px),
+            radial-gradient(rgba(255,255,255,0.38) 0.45px, transparent 0.55px),
+            repeating-linear-gradient(0deg, rgba(255,255,255,0.026) 0 1px, transparent 1px 3px);
+          background-position: 0 0, 0 0, 7px 11px, 0 0;
+          background-size: 80px 80px, 12px 12px, 15px 15px, 100% 100%;
+          mix-blend-mode: soft-light;
+          animation: grain-shift 22s linear infinite;
         }
 
         .floating-profile-stage-vignette {
@@ -2143,9 +2324,39 @@ function FloatingProfileScene({
           50% { transform: translate3d(0, var(--floating-ambient-drift-distance), 0); }
         }
 
+        @keyframes fog-drift {
+          0%, 100% { transform: translate3d(-1.1%, 0, 0) scale(1.02); }
+          50% { transform: translate3d(1.1%, -1.4%, 0) scale(1.04); }
+        }
+
+        @keyframes grain-shift {
+          0% { transform: translate3d(0, 0, 0); }
+          25% { transform: translate3d(-0.8%, 0.4%, 0); }
+          50% { transform: translate3d(0.6%, -0.6%, 0); }
+          75% { transform: translate3d(-0.4%, 0.8%, 0); }
+          100% { transform: translate3d(0, 0, 0); }
+        }
+
         @keyframes glow-breathe {
           0%, 100% { opacity: calc(1 - var(--floating-glow-pulse-opacity)); }
           50% { opacity: calc(1 + var(--floating-glow-pulse-opacity)); }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .floating-profile-stage-media,
+          .floating-profile-stage-bloom,
+          .floating-profile-stage-aura,
+          .floating-profile-stage-fog,
+          .floating-profile-stage-glow,
+          .floating-profile-stage-noise,
+          .floating-profile-body,
+          .floating-identity-block,
+          .floating-bio-strip,
+          .floating-module {
+            transition: none !important;
+            animation: none !important;
+            transform: none !important;
+          }
         }
       `}</style>
 
@@ -2165,8 +2376,12 @@ function FloatingProfileScene({
           kind={resolvedBannerUrl ? bannerKind : "unknown"}
           className="floating-profile-stage-media"
         />
+        <div className="floating-profile-stage-bloom" />
+        <div className="floating-profile-stage-aura" />
         <div className="floating-profile-stage-glow" />
+        <div className="floating-profile-stage-fog" />
         <div className="floating-profile-stage-overlay" />
+        <div className="floating-profile-stage-noise" />
         <div className="floating-profile-stage-vignette" />
       </div>
 
@@ -2749,6 +2964,22 @@ function IntroProfileStage({
     scrollAtmosphereEnabled,
     360,
   );
+  const introFogOpacity = clampNumber(
+    depth.fogOpacity * dnaTuning.ambientScale * (mode === "cinematic" ? 1.06 : 0.92),
+    0.12,
+    0.46,
+  );
+  const introGrainOpacity = clampNumber(depth.grainOpacity * 0.92, 0.02, 0.072);
+  const introBloomOpacity = clampNumber(
+    depth.bloomOpacity * dnaTuning.glowScale * (mode === "cinematic" ? 0.96 : 0.82),
+    0.18,
+    0.56,
+  );
+  const introHeroAuraOpacity = clampNumber(
+    depth.heroAuraOpacity * dnaTuning.glowScale * (mode === "cinematic" ? 1 : 0.84),
+    0.14,
+    0.56,
+  );
 
   useEffect(() => {
     if (preview || !hasDetails || motionLevel === "off" || typeof window === "undefined") {
@@ -2954,15 +3185,23 @@ function IntroProfileStage({
         "--intro-scroll-focus": `${(
           scrollAtmosphereProgress * motionPersonalityTokens.scrollFocusStrength
         ).toFixed(3)}`,
+        "--intro-atmosphere-fog": `${introFogOpacity.toFixed(3)}`,
+        "--intro-atmosphere-grain": `${introGrainOpacity.toFixed(3)}`,
+        "--intro-atmosphere-bloom": `${introBloomOpacity.toFixed(3)}`,
+        "--intro-hero-aura-opacity": `${introHeroAuraOpacity.toFixed(3)}`,
       } as CSSProperties}
     >
       <style>{`
         .profile-intro-stage,
         .profile-intro-stage-media,
+        .profile-intro-stage-bloom,
+        .profile-intro-stage-aura,
+        .profile-intro-stage-fog,
         .profile-intro-stage-overlay,
         .profile-intro-stage-glow,
         .profile-intro-stage-vignette,
-        .profile-intro-stage-depth {
+        .profile-intro-stage-depth,
+        .profile-intro-stage-noise {
           position: absolute;
           inset: 0;
           pointer-events: none;
@@ -2976,10 +3215,12 @@ function IntroProfileStage({
           width: 100%;
           height: 100%;
           object-fit: cover;
-          transform: scale(${mode === "cinematic" ? 1.06 : 1.03});
+          transform:
+            translate3d(0, calc(var(--intro-scroll-settle) * -0.28), 0)
+            scale(calc(${mode === "cinematic" ? 1.06 : 1.03} + var(--intro-scroll-progress) * ${mode === "cinematic" ? "0.028" : "0.02"}));
           filter: ${mode === "cinematic"
             ? "brightness(0.9) saturate(1.04)"
-            : "brightness(0.82) saturate(0.98)"};
+            : "brightness(0.82) saturate(0.98)"} blur(calc(var(--intro-scroll-focus) * 1.6px));
         }
 
         .profile-intro-stage-overlay {
@@ -2991,6 +3232,42 @@ function IntroProfileStage({
               rgba(4, 5, 9, 0.82) 100%
             ),
             radial-gradient(circle at 50% 16%, ${withAlpha(presence.accent, mode === "cinematic" ? "2e" : "18")} 0%, transparent 38%);
+        }
+
+        .profile-intro-stage-bloom {
+          background:
+            radial-gradient(circle at 50% 18%, rgba(255,255,255,0.14) 0%, transparent 18%),
+            radial-gradient(circle at 50% 30%, ${withAlpha(presence.soft, mode === "cinematic" ? "28" : "20")} 0%, transparent 42%),
+            radial-gradient(circle at 50% 76%, ${withAlpha(presence.accent, "18")} 0%, transparent 34%);
+          opacity: calc(var(--intro-atmosphere-bloom) + var(--intro-scroll-focus) * 0.12);
+          mix-blend-mode: screen;
+          filter: blur(calc(28px + var(--intro-blur-breath-distance) * 2));
+          transform: translate3d(0, calc(var(--intro-scroll-settle) * -0.34), 0) scale(calc(1 + var(--intro-scroll-progress) * 0.03));
+          animation:
+            intro-glow-breathe calc(var(--intro-glow-pulse-duration) * 1.08) var(--intro-motion-ease) infinite,
+            intro-ambient-drift calc(var(--intro-ambient-drift-duration) * 1.12) var(--intro-motion-ease) infinite;
+        }
+
+        .profile-intro-stage-aura {
+          background:
+            radial-gradient(circle at 50% 38%, ${withAlpha(presence.accent, mode === "cinematic" ? "28" : "20")} 0%, transparent 30%),
+            radial-gradient(circle at 50% 54%, ${withAlpha(presence.soft, mode === "cinematic" ? "1c" : "16")} 0%, transparent 44%);
+          opacity: calc(var(--intro-hero-aura-opacity) + var(--intro-scroll-focus) * 0.12);
+          filter: blur(calc(18px + var(--intro-blur-breath-distance)));
+          transform: translate3d(0, calc(var(--intro-scroll-settle) * -0.5), 0) scale(calc(1 + var(--intro-scroll-progress) * 0.036));
+          mix-blend-mode: screen;
+          animation: intro-aura-breathe calc(var(--intro-glow-pulse-duration) * 1.14) var(--intro-motion-ease) infinite;
+        }
+
+        .profile-intro-stage-fog {
+          background:
+            radial-gradient(circle at 50% 52%, rgba(255,255,255,0.07) 0%, transparent 34%),
+            linear-gradient(180deg, transparent 18%, ${withAlpha(presence.soft, mode === "cinematic" ? "1a" : "14")} 62%, rgba(4,5,9,0.18) 100%);
+          opacity: calc(var(--intro-atmosphere-fog) + var(--intro-scroll-progress) * 0.12);
+          filter: blur(calc(16px + var(--intro-blur-breath-distance) * 1.8));
+          transform: translate3d(0, calc(var(--intro-scroll-settle) * 0.26), 0) scale(1.04);
+          mix-blend-mode: screen;
+          animation: intro-fog-drift calc(var(--intro-ambient-drift-duration) * 1.2) var(--intro-motion-ease) infinite;
         }
 
         .profile-intro-stage-glow {
@@ -3015,6 +3292,19 @@ function IntroProfileStage({
           opacity: calc(1 + var(--intro-scroll-focus) * ${motionPersonalityTokens.heroDepthOpacity.toFixed(3)});
         }
 
+        .profile-intro-stage-noise {
+          opacity: calc(0.014 + var(--intro-atmosphere-grain));
+          background-image:
+            ${presence.ambientGrid},
+            radial-gradient(rgba(255,255,255,0.8) 0.45px, transparent 0.55px),
+            radial-gradient(rgba(255,255,255,0.4) 0.45px, transparent 0.55px),
+            repeating-linear-gradient(0deg, rgba(255,255,255,0.03) 0 1px, transparent 1px 3px);
+          background-position: 0 0, 0 0, 7px 11px, 0 0;
+          background-size: 80px 80px, 12px 12px, 15px 15px, 100% 100%;
+          mix-blend-mode: soft-light;
+          animation: intro-grain-shift 24s linear infinite;
+        }
+
         .profile-intro-hero {
           position: relative;
           z-index: 1;
@@ -3024,11 +3314,15 @@ function IntroProfileStage({
           justify-content: center;
           padding: ${preview ? "28px 14px 12px" : "42px 18px 18px"};
           box-sizing: border-box;
-          transform: translate3d(0, calc(var(--intro-scroll-settle) * -1.08), 0);
-          opacity: calc(1 - var(--intro-scroll-progress) * 0.42);
+          transform:
+            translate3d(0, calc(var(--intro-scroll-settle) * -1.14 - var(--intro-scroll-progress) * 32px), 0)
+            scale(calc(1 - var(--intro-scroll-progress) * 0.018));
+          opacity: calc(1 - var(--intro-scroll-progress) * ${mode === "cinematic" ? "0.52" : "0.42"});
+          filter: saturate(calc(1 - var(--intro-scroll-progress) * 0.08));
           transition:
             transform var(--intro-transition-duration) var(--intro-motion-ease),
-            opacity var(--intro-transition-duration) var(--intro-motion-ease);
+            opacity var(--intro-transition-duration) var(--intro-motion-ease),
+            filter var(--intro-transition-duration) var(--intro-motion-ease);
         }
 
         .profile-intro-shell {
@@ -3048,9 +3342,9 @@ function IntroProfileStage({
           backdrop-filter: none;
           -webkit-backdrop-filter: none;
           transform:
-            translate3d(0, calc(var(--intro-scroll-settle) * -0.18), 0)
-            scale(calc(1 - var(--intro-scroll-progress) * 0.018));
-          opacity: calc(1 - var(--intro-scroll-progress) * 0.18);
+            translate3d(0, calc(var(--intro-scroll-settle) * -0.24), 0)
+            scale(calc(1 - var(--intro-scroll-progress) * 0.026));
+          opacity: calc(1 - var(--intro-scroll-progress) * 0.24);
           transition:
             transform var(--intro-transition-duration) var(--intro-motion-ease),
             opacity var(--intro-transition-duration) var(--intro-motion-ease);
@@ -3069,7 +3363,7 @@ function IntroProfileStage({
             radial-gradient(circle, ${withAlpha(presence.soft, mode === "cinematic" ? "20" : "16")} 0%, transparent 62%);
           filter: blur(18px);
           pointer-events: none;
-          opacity: calc(0.7 + var(--intro-scroll-focus) * 0.12);
+          opacity: calc(0.64 + var(--intro-hero-aura-opacity) * 0.42 + var(--intro-scroll-focus) * 0.12);
         }
 
         .profile-intro-shell::after {
@@ -3527,11 +3821,13 @@ function IntroProfileStage({
           gap: ${Math.max(16, introDetailsGap + 6)}px;
           scroll-margin-top: 28px;
           align-items: start;
-          opacity: calc(0.18 + var(--intro-scroll-progress) * 0.82);
-          transform: translate3d(0, calc((1 - var(--intro-scroll-progress)) * 44px), 0);
+          opacity: calc(0.14 + var(--intro-scroll-progress) * 0.86);
+          transform: translate3d(0, calc((1 - var(--intro-scroll-progress)) * 52px), 0);
+          filter: blur(calc((1 - var(--intro-scroll-progress)) * 5px));
           transition:
             opacity var(--intro-transition-duration) var(--intro-motion-ease),
-            transform var(--intro-transition-duration) var(--intro-motion-ease);
+            transform var(--intro-transition-duration) var(--intro-motion-ease),
+            filter var(--intro-transition-duration) var(--intro-motion-ease);
         }
 
         .profile-intro-details::before {
@@ -3548,19 +3844,33 @@ function IntroProfileStage({
           pointer-events: none;
         }
 
+        .profile-intro-details::after {
+          content: "";
+          position: absolute;
+          inset: 10px 0 auto;
+          height: 160px;
+          background:
+            radial-gradient(circle at 50% 0%, ${withAlpha(presence.soft, "14")} 0%, transparent 66%);
+          opacity: calc(0.42 + var(--intro-scroll-progress) * 0.14);
+          filter: blur(26px);
+          pointer-events: none;
+        }
+
         .profile-intro-details > * {
           position: relative;
           z-index: 1;
         }
 
         .profile-intro-details[data-revealed="false"] {
-          opacity: calc(0.18 + var(--intro-scroll-progress) * 0.82);
-          transform: translate3d(0, calc((1 - var(--intro-scroll-progress)) * 44px), 0);
+          opacity: calc(0.14 + var(--intro-scroll-progress) * 0.86);
+          transform: translate3d(0, calc((1 - var(--intro-scroll-progress)) * 52px), 0);
+          filter: blur(calc((1 - var(--intro-scroll-progress)) * 5px));
         }
 
         .profile-intro-details[data-revealed="true"] {
           opacity: 1;
           transform: translate3d(0, 0, 0);
+          filter: blur(0);
         }
 
         .profile-intro-chapter,
@@ -3813,6 +4123,7 @@ function IntroProfileStage({
         .floating-bio-strip[data-revealed="false"] {
           opacity: 0;
           transform: translate3d(0, var(--intro-reveal-distance), 0) scale(var(--intro-reveal-scale));
+          filter: blur(10px) saturate(0.92);
         }
 
         .profile-intro-module[data-revealed="true"],
@@ -3822,9 +4133,11 @@ function IntroProfileStage({
         .floating-bio-strip[data-revealed="true"] {
           opacity: 1;
           transform: none;
+          filter: blur(0) saturate(1);
           transition:
             opacity var(--intro-reveal-duration) var(--intro-motion-ease),
-            transform var(--intro-reveal-duration) var(--intro-motion-emphasis);
+            transform var(--intro-reveal-duration) var(--intro-motion-emphasis),
+            filter var(--intro-reveal-duration) var(--intro-motion-ease);
           transition-delay: var(--intro-reveal-delay, 0ms);
           will-change: transform, opacity;
         }
@@ -4094,6 +4407,31 @@ function IntroProfileStage({
           50% { transform: translate3d(0, var(--intro-ambient-drift-distance), 0); }
         }
 
+        @keyframes intro-fog-drift {
+          0%, 100% { transform: translate3d(-1.2%, 0, 0) scale(1.02); }
+          50% { transform: translate3d(1.2%, -1.6%, 0) scale(1.05); }
+        }
+
+        @keyframes intro-grain-shift {
+          0% { transform: translate3d(0, 0, 0); }
+          25% { transform: translate3d(-0.8%, 0.4%, 0); }
+          50% { transform: translate3d(0.6%, -0.6%, 0); }
+          75% { transform: translate3d(-0.4%, 0.8%, 0); }
+          100% { transform: translate3d(0, 0, 0); }
+        }
+
+        @keyframes intro-aura-breathe {
+          0%, 100% {
+            opacity: calc(var(--intro-hero-aura-opacity) * 0.92);
+            transform: translate3d(0, calc(var(--intro-scroll-settle) * -0.44), 0) scale(1);
+          }
+
+          50% {
+            opacity: calc(var(--intro-hero-aura-opacity) + var(--intro-glow-pulse-opacity) * 0.8);
+            transform: translate3d(0, calc(var(--intro-scroll-settle) * -0.5), 0) scale(1.04);
+          }
+        }
+
         @keyframes intro-glow-breathe {
           0%, 100% { opacity: calc(1 - var(--intro-glow-pulse-opacity)); }
           50% { opacity: calc(1 + var(--intro-glow-pulse-opacity)); }
@@ -4229,6 +4567,12 @@ function IntroProfileStage({
         }
 
         @media (prefers-reduced-motion: reduce) {
+          .profile-intro-stage-media,
+          .profile-intro-stage-bloom,
+          .profile-intro-stage-aura,
+          .profile-intro-stage-fog,
+          .profile-intro-stage-glow,
+          .profile-intro-stage-noise,
           .profile-intro-hero,
           .profile-intro-shell,
           .profile-intro-avatar,
@@ -4267,9 +4611,13 @@ function IntroProfileStage({
           kind={resolvedBannerUrl ? bannerKind : "unknown"}
           className="profile-intro-stage-media"
         />
+        <div className="profile-intro-stage-bloom" />
+        <div className="profile-intro-stage-aura" />
         <div className="profile-intro-stage-glow" />
+        <div className="profile-intro-stage-fog" />
         <div className="profile-intro-stage-overlay" />
         <div className="profile-intro-stage-depth" />
+        <div className="profile-intro-stage-noise" />
         <div className="profile-intro-stage-vignette" />
       </div>
 

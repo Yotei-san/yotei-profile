@@ -89,6 +89,14 @@ export default function LivingProfileBackground({
           "--living-bg-vignette-opacity": depth.vignetteStrength,
           "--living-bg-foreground-opacity": depth.foregroundHazeOpacity,
           "--living-bg-lighting-opacity": depth.lightingOpacity,
+          "--living-bg-fog-opacity": depth.fogOpacity,
+          "--living-bg-grain-opacity": depth.grainOpacity,
+          "--living-bg-bloom-opacity": depth.bloomOpacity,
+          "--living-bg-aura-opacity": depth.heroAuraOpacity,
+          "--living-bg-tint-strength": depth.fogTintStrength,
+          "--living-bg-theme-bloom": withAlpha(themeColor, "26"),
+          "--living-bg-theme-fog": withAlpha(themeColor, "20"),
+          "--living-bg-theme-foreground": withAlpha(themeColor, "24"),
         } as CSSProperties
       }
       aria-hidden
@@ -314,6 +322,44 @@ const livingBackgroundStyles = `
     isolation: isolate;
   }
 
+  .living-profile-background::before,
+  .living-profile-background::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  .living-profile-background::before {
+    z-index: 3;
+    background:
+      radial-gradient(circle at 50% 18%, rgba(255,255,255,0.08) 0%, transparent 24%),
+      radial-gradient(circle at 50% 30%, var(--living-bg-theme-bloom, rgba(255,255,255,0.12)) 0%, transparent 52%),
+      radial-gradient(circle at 50% 72%, rgba(255,255,255,0.04) 0%, transparent 44%);
+    opacity: calc(var(--living-bg-bloom-opacity, 0.32) * 0.92);
+    mix-blend-mode: screen;
+    filter: blur(20px);
+    animation: living-bg-cinema-breathe 18s ease-in-out infinite;
+  }
+
+  .living-profile-background::after {
+    z-index: 8;
+    inset: -12%;
+    background:
+      radial-gradient(circle at 20% 18%, rgba(255,255,255,0.2) 0 0.8px, transparent 1px),
+      radial-gradient(circle at 76% 30%, rgba(255,255,255,0.14) 0 0.8px, transparent 1px),
+      radial-gradient(circle at 42% 72%, rgba(255,255,255,0.12) 0 0.9px, transparent 1.1px),
+      repeating-linear-gradient(
+        0deg,
+        rgba(255,255,255,0.028) 0 1px,
+        transparent 1px 3px
+      );
+    background-size: 180px 180px, 220px 220px, 260px 260px, 100% 100%;
+    opacity: var(--living-bg-grain-opacity, 0.045);
+    mix-blend-mode: soft-light;
+    animation: living-bg-grain-drift 24s linear infinite;
+  }
+
   .living-profile-layer-base,
   .living-profile-layer-vignette,
   .living-profile-layer-depth,
@@ -359,6 +405,43 @@ const livingBackgroundStyles = `
   .living-profile-layer-foreground {
     z-index: 7;
     opacity: var(--living-bg-foreground-opacity, 0.22);
+  }
+
+  .living-profile-layer-depth::before,
+  .living-profile-layer-foreground::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  .living-profile-layer-depth::before {
+    background:
+      radial-gradient(circle at 50% 48%, rgba(255,255,255,0.03) 0%, transparent 42%),
+      linear-gradient(
+        180deg,
+        transparent 8%,
+        var(--living-bg-theme-fog, rgba(255,255,255,0.08)) 56%,
+        transparent 100%
+      );
+    opacity: calc(var(--living-bg-fog-opacity, 0.2) * 0.88);
+    filter: blur(22px);
+    mix-blend-mode: screen;
+    animation: living-bg-fog-drift 20s ease-in-out infinite;
+  }
+
+  .living-profile-layer-foreground::before {
+    background:
+      radial-gradient(circle at 50% 100%, rgba(255,255,255,0.08) 0%, transparent 44%),
+      linear-gradient(
+        180deg,
+        transparent 18%,
+        var(--living-bg-theme-foreground, rgba(255,255,255,0.1)) 78%,
+        rgba(3,5,10,0.22) 100%
+      );
+    opacity: calc(var(--living-bg-fog-opacity, 0.2) * 1.08);
+    filter: blur(16px);
+    animation: living-bg-fog-drift 26s ease-in-out infinite reverse;
   }
 
   .variant-neon .ambient-one {
@@ -448,7 +531,11 @@ const livingBackgroundStyles = `
 
   .living-profile-background.motion-off .living-profile-layer-lighting,
   .living-profile-background.motion-off .living-profile-layer-ambient,
-  .living-profile-background.motion-off .living-profile-layer-pattern {
+  .living-profile-background.motion-off .living-profile-layer-pattern,
+  .living-profile-background.motion-off::before,
+  .living-profile-background.motion-off::after,
+  .living-profile-background.motion-off .living-profile-layer-depth::before,
+  .living-profile-background.motion-off .living-profile-layer-foreground::before {
     animation: none !important;
     transform: none !important;
   }
@@ -471,6 +558,52 @@ const livingBackgroundStyles = `
     50% {
       opacity: 0.86;
       transform: scale(1.03);
+    }
+  }
+
+  @keyframes living-bg-cinema-breathe {
+    0%,
+    100% {
+      opacity: calc(var(--living-bg-bloom-opacity, 0.32) * 0.82);
+      transform: scale(0.985) translate3d(0, 0, 0);
+    }
+
+    50% {
+      opacity: calc(var(--living-bg-bloom-opacity, 0.32) * 1.06);
+      transform: scale(1.02) translate3d(0, -1%, 0);
+    }
+  }
+
+  @keyframes living-bg-fog-drift {
+    0%,
+    100% {
+      transform: translate3d(-1.4%, 0, 0) scale(1);
+    }
+
+    50% {
+      transform: translate3d(1.6%, -1.6%, 0) scale(1.03);
+    }
+  }
+
+  @keyframes living-bg-grain-drift {
+    0% {
+      transform: translate3d(0, 0, 0);
+    }
+
+    25% {
+      transform: translate3d(-1.2%, 0.6%, 0);
+    }
+
+    50% {
+      transform: translate3d(0.8%, -0.8%, 0);
+    }
+
+    75% {
+      transform: translate3d(-0.5%, 1%, 0);
+    }
+
+    100% {
+      transform: translate3d(0, 0, 0);
     }
   }
 
@@ -640,6 +773,19 @@ const livingBackgroundStyles = `
 
     .living-profile-layer-foreground {
       opacity: calc(var(--living-bg-foreground-opacity, 0.22) * 0.72);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .living-profile-background::before,
+    .living-profile-background::after,
+    .living-profile-layer-depth::before,
+    .living-profile-layer-foreground::before,
+    .living-profile-layer-lighting,
+    .living-profile-layer-ambient,
+    .living-profile-layer-pattern {
+      animation: none !important;
+      transform: none !important;
     }
   }
 `;

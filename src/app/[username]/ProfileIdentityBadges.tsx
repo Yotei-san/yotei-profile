@@ -18,6 +18,9 @@ type BadgeRailTheme = {
   secondary: string;
   edge: string;
   glow: string;
+  aura: string;
+  sheen: string;
+  pulse: string;
   fillTop: string;
   fillBottom: string;
   tooltip: string;
@@ -99,6 +102,9 @@ export default function ProfileIdentityBadges({
           --profile-badge-secondary: #a5b4fc;
           --profile-badge-edge: rgba(255,255,255,0.14);
           --profile-badge-glow: rgba(255,255,255,0.18);
+          --profile-badge-aura: rgba(255,255,255,0.14);
+          --profile-badge-sheen: rgba(255,255,255,0.26);
+          --profile-badge-pulse: 0.08;
           --profile-badge-fill-top: rgba(255,255,255,0.12);
           --profile-badge-fill-bottom: rgba(8,10,16,0.88);
           --profile-badge-tooltip: rgba(8,10,16,0.96);
@@ -110,10 +116,13 @@ export default function ProfileIdentityBadges({
           padding: 0;
           border: 1px solid var(--profile-badge-edge);
           border-radius: 16px;
+          overflow: hidden;
+          isolation: isolate;
           display: inline-flex;
           align-items: center;
           justify-content: center;
           background:
+            radial-gradient(circle at 50% 120%, var(--profile-badge-aura) 0%, transparent 54%),
             radial-gradient(circle at 28% 20%, rgba(255,255,255,0.22), transparent 44%),
             linear-gradient(135deg, var(--profile-badge-fill-top), rgba(255,255,255,0.04) 42%, var(--profile-badge-fill-bottom));
           box-shadow:
@@ -123,6 +132,7 @@ export default function ProfileIdentityBadges({
             inset 0 1px 0 rgba(255,255,255,0.1);
           color: #f8fbff;
           outline: none;
+          animation: profile-badge-breathe 6.8s ease-in-out infinite;
           transition:
             transform 180ms cubic-bezier(0.22, 1, 0.36, 1),
             border-color 180ms ease,
@@ -193,7 +203,7 @@ export default function ProfileIdentityBadges({
           box-shadow:
             0 18px 30px rgba(0,0,0,0.24),
             0 0 0 1px rgba(255,255,255,0.06),
-            0 0 28px var(--profile-badge-glow),
+            0 0 30px var(--profile-badge-glow),
             inset 0 1px 0 rgba(255,255,255,0.14);
           filter: saturate(1.08);
         }
@@ -217,6 +227,33 @@ export default function ProfileIdentityBadges({
             linear-gradient(180deg, rgba(8,10,16,0.08), rgba(8,10,16,0.44));
           box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
           pointer-events: none;
+        }
+
+        .profile-identity-badge-shell::after {
+          content: "";
+          position: absolute;
+          inset: -8px;
+          background:
+            linear-gradient(
+              118deg,
+              transparent 0%,
+              transparent 30%,
+              var(--profile-badge-sheen) 46%,
+              rgba(255,255,255,0.04) 56%,
+              transparent 70%,
+              transparent 100%
+            );
+          background-size: 220% 100%;
+          background-position: -180% 50%;
+          opacity: 0.48;
+          mix-blend-mode: screen;
+          pointer-events: none;
+          animation: profile-badge-sheen 5.6s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+        }
+
+        .profile-identity-badge-shell > * {
+          position: relative;
+          z-index: 1;
         }
 
         .profile-identity-badge-more {
@@ -245,8 +282,47 @@ export default function ProfileIdentityBadges({
         @media (prefers-reduced-motion: reduce) {
           .profile-identity-badge,
           .profile-identity-badge::before,
-          .profile-identity-badge::after {
+          .profile-identity-badge::after,
+          .profile-identity-badge-shell::after {
             transition: none !important;
+            animation: none !important;
+          }
+        }
+
+        @keyframes profile-badge-breathe {
+          0%,
+          100% {
+            box-shadow:
+              0 14px 26px rgba(0,0,0,0.2),
+              0 0 0 1px rgba(255,255,255,0.03),
+              0 0 22px var(--profile-badge-glow),
+              inset 0 1px 0 rgba(255,255,255,0.1);
+          }
+
+          50% {
+            box-shadow:
+              0 16px 28px rgba(0,0,0,0.22),
+              0 0 0 1px rgba(255,255,255,0.04),
+              0 0 30px var(--profile-badge-glow),
+              inset 0 1px 0 rgba(255,255,255,0.12);
+          }
+        }
+
+        @keyframes profile-badge-sheen {
+          0%,
+          18% {
+            background-position: -180% 50%;
+            opacity: 0;
+          }
+
+          30%,
+          74% {
+            opacity: calc(0.22 + var(--profile-badge-pulse));
+          }
+
+          100% {
+            background-position: 180% 50%;
+            opacity: 0;
           }
         }
       `}</style>
@@ -269,6 +345,9 @@ export default function ProfileIdentityBadges({
                 "--profile-badge-secondary": badgeTheme.secondary,
                 "--profile-badge-edge": badgeTheme.edge,
                 "--profile-badge-glow": badgeTheme.glow,
+                "--profile-badge-aura": badgeTheme.aura,
+                "--profile-badge-sheen": badgeTheme.sheen,
+                "--profile-badge-pulse": badgeTheme.pulse,
                 "--profile-badge-fill-top": badgeTheme.fillTop,
                 "--profile-badge-fill-bottom": badgeTheme.fillBottom,
                 "--profile-badge-tooltip": badgeTheme.tooltip,
@@ -306,6 +385,9 @@ export default function ProfileIdentityBadges({
               "--profile-badge-secondary": themeColor,
               "--profile-badge-edge": "rgba(255,255,255,0.16)",
               "--profile-badge-glow": withAlpha(themeColor, "30"),
+              "--profile-badge-aura": withAlpha(themeColor, "18"),
+              "--profile-badge-sheen": "rgba(255,255,255,0.26)",
+              "--profile-badge-pulse": "0.06",
               "--profile-badge-fill-top": "rgba(255,255,255,0.12)",
               "--profile-badge-fill-bottom": "rgba(8,10,16,0.84)",
               "--profile-badge-tooltip": "rgba(8,10,16,0.96)",
@@ -382,6 +464,9 @@ function createRailTheme(
     secondary,
     edge: withAlpha(accent, "72"),
     glow: withAlpha(accent, "38"),
+    aura: withAlpha(secondary, "24"),
+    sheen: withAlpha(secondary, "3c"),
+    pulse: "0.08",
     fillTop: fillTopBase,
     fillBottom: fillBottomBase,
     tooltip: "rgba(8,10,16,0.96)",
