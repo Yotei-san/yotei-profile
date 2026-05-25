@@ -160,6 +160,9 @@ type Props = {
   likes: number;
   dislikes: number;
   views: number;
+  initialCommentCount: number;
+  canComment: boolean;
+  isOwnProfile: boolean;
   socialBlocks: PublicSocialBlock[];
   composition: ProfileComposition;
   initialMyReaction: PublicProfileReaction;
@@ -196,6 +199,9 @@ export default function PublicProfileRenderer({
   likes,
   dislikes,
   views,
+  initialCommentCount,
+  canComment,
+  isOwnProfile,
   socialBlocks,
   composition,
   initialMyReaction,
@@ -412,6 +418,9 @@ export default function PublicProfileRenderer({
         likes={likes}
         dislikes={dislikes}
         views={views}
+        initialCommentCount={initialCommentCount}
+        canComment={canComment}
+        isOwnProfile={isOwnProfile}
         initialMyReaction={initialMyReaction}
         regularSocialBlocks={partitionedSocialBlocks.socials}
         liveSocialBlocks={partitionedSocialBlocks.live}
@@ -454,6 +463,9 @@ export default function PublicProfileRenderer({
         likes={likes}
         dislikes={dislikes}
         views={views}
+        initialCommentCount={initialCommentCount}
+        canComment={canComment}
+        isOwnProfile={isOwnProfile}
         initialMyReaction={initialMyReaction}
         regularSocialBlocks={partitionedSocialBlocks.socials}
         liveSocialBlocks={partitionedSocialBlocks.live}
@@ -494,6 +506,9 @@ export default function PublicProfileRenderer({
         likes={likes}
         dislikes={dislikes}
         views={views}
+        initialCommentCount={initialCommentCount}
+        canComment={canComment}
+        isOwnProfile={isOwnProfile}
         socialBlocks={safeSocialBlocks}
         composition={safeComposition}
         initialMyReaction={initialMyReaction}
@@ -1457,6 +1472,9 @@ export default function PublicProfileRenderer({
                         views,
                         likes,
                         dislikes,
+                        initialCommentCount,
+                        canComment,
+                        isOwnProfile,
                         themeColor: sceneAppearance.linkThemeColor,
                         initialMyReaction,
                         preview,
@@ -1488,6 +1506,9 @@ export default function PublicProfileRenderer({
                     views,
                     likes,
                     dislikes,
+                    initialCommentCount,
+                    canComment,
+                    isOwnProfile,
                     themeColor: sceneAppearance.linkThemeColor,
                     initialMyReaction,
                     preview,
@@ -1498,6 +1519,9 @@ export default function PublicProfileRenderer({
                     views,
                     likes,
                     dislikes,
+                    initialCommentCount,
+                    canComment,
+                    isOwnProfile,
                     themeColor: sceneAppearance.linkThemeColor,
                     initialMyReaction,
                     preview,
@@ -1557,6 +1581,9 @@ export default function PublicProfileRenderer({
           views,
           likes,
           dislikes,
+          initialCommentCount,
+          canComment,
+          isOwnProfile,
           themeColor: sceneAppearance.linkThemeColor,
           initialMyReaction,
           preview,
@@ -1567,6 +1594,9 @@ export default function PublicProfileRenderer({
           views,
           likes,
           dislikes,
+          initialCommentCount,
+          canComment,
+          isOwnProfile,
           themeColor: sceneAppearance.linkThemeColor,
           initialMyReaction,
           preview,
@@ -1605,6 +1635,9 @@ function FloatingProfileScene({
   likes,
   dislikes,
   views,
+  initialCommentCount,
+  canComment,
+  isOwnProfile,
   initialMyReaction,
   regularSocialBlocks,
   liveSocialBlocks,
@@ -1640,6 +1673,9 @@ function FloatingProfileScene({
   likes: number;
   dislikes: number;
   views: number;
+  initialCommentCount: number;
+  canComment: boolean;
+  isOwnProfile: boolean;
   initialMyReaction: PublicProfileReaction;
   regularSocialBlocks: PublicSocialBlock[];
   liveSocialBlocks: PublicSocialBlock[];
@@ -2185,6 +2221,9 @@ function FloatingProfileScene({
             views,
             likes,
             dislikes,
+            initialCommentCount,
+            canComment,
+            isOwnProfile,
             themeColor: linkThemeColor,
             initialMyReaction,
             preview,
@@ -2215,6 +2254,9 @@ function FloatingProfileScene({
             views,
             likes,
             dislikes,
+            initialCommentCount,
+            canComment,
+            isOwnProfile,
             themeColor: linkThemeColor,
             initialMyReaction,
             preview,
@@ -2229,6 +2271,9 @@ function FloatingProfileScene({
           views,
           likes,
           dislikes,
+          initialCommentCount,
+          canComment,
+          isOwnProfile,
           themeColor: linkThemeColor,
           initialMyReaction,
           preview,
@@ -2270,6 +2315,9 @@ function FloatingProfileScene({
         views,
         likes,
         dislikes,
+        initialCommentCount,
+        canComment,
+        isOwnProfile,
         themeColor: linkThemeColor,
         initialMyReaction,
         preview,
@@ -2280,6 +2328,9 @@ function FloatingProfileScene({
         views,
         likes,
         dislikes,
+        initialCommentCount,
+        canComment,
+        isOwnProfile,
         themeColor: linkThemeColor,
         initialMyReaction,
         preview,
@@ -2311,6 +2362,9 @@ function renderIdentityMetadataSlot(
     views: number;
     likes: number;
     dislikes: number;
+    initialCommentCount: number;
+    canComment: boolean;
+    isOwnProfile: boolean;
     themeColor: string;
     initialMyReaction: PublicProfileReaction;
     preview: boolean;
@@ -2337,8 +2391,11 @@ function renderIdentityMetadataSlot(
         initialViews={input.views}
         initialLikes={input.likes}
         initialDislikes={input.dislikes}
+        initialCommentCount={input.initialCommentCount}
         themeColor={input.themeColor}
         initialMyReaction={input.initialMyReaction}
+        canComment={input.canComment}
+        isOwnProfile={input.isOwnProfile}
         locationText={input.composition.metadata.locationText}
         align={input.align}
         preview={input.preview}
@@ -2555,6 +2612,9 @@ function IntroProfileStage({
   likes,
   dislikes,
   views,
+  initialCommentCount,
+  canComment,
+  isOwnProfile,
   initialMyReaction,
   regularSocialBlocks,
   liveSocialBlocks,
@@ -2593,6 +2653,9 @@ function IntroProfileStage({
   likes: number;
   dislikes: number;
   views: number;
+  initialCommentCount: number;
+  canComment: boolean;
+  isOwnProfile: boolean;
   initialMyReaction: PublicProfileReaction;
   regularSocialBlocks: PublicSocialBlock[];
   liveSocialBlocks: PublicSocialBlock[];
@@ -4373,6 +4436,9 @@ function IntroProfileStage({
             likes,
             dislikes,
             views,
+            initialCommentCount,
+            canComment,
+            isOwnProfile,
             initialMyReaction,
             regularSocialBlocks,
             liveSocialBlocks,
@@ -4387,6 +4453,9 @@ function IntroProfileStage({
         views,
         likes,
         dislikes,
+        initialCommentCount,
+        canComment,
+        isOwnProfile,
         themeColor,
         initialMyReaction,
         preview,
@@ -4397,6 +4466,9 @@ function IntroProfileStage({
         views,
         likes,
         dislikes,
+        initialCommentCount,
+        canComment,
+        isOwnProfile,
         themeColor,
         initialMyReaction,
         preview,
@@ -4544,6 +4616,9 @@ function renderIntroChapterSequence(input: {
   likes: number;
   dislikes: number;
   views: number;
+  initialCommentCount: number;
+  canComment: boolean;
+  isOwnProfile: boolean;
   initialMyReaction: PublicProfileReaction;
   regularSocialBlocks: PublicSocialBlock[];
   liveSocialBlocks: PublicSocialBlock[];
@@ -4803,6 +4878,9 @@ function renderIntroChapterSequence(input: {
         views: input.views,
         likes: input.likes,
         dislikes: input.dislikes,
+        initialCommentCount: input.initialCommentCount,
+        canComment: input.canComment,
+        isOwnProfile: input.isOwnProfile,
         themeColor: input.themeColor,
         initialMyReaction: input.initialMyReaction,
         locationText: input.composition.metadata.locationText,
@@ -4905,6 +4983,9 @@ function renderIntroMetadataFooter(input: {
   views: number;
   likes: number;
   dislikes: number;
+  initialCommentCount: number;
+  canComment: boolean;
+  isOwnProfile: boolean;
   themeColor: string;
   initialMyReaction: PublicProfileReaction;
   locationText?: string | null;
@@ -4922,8 +5003,11 @@ function renderIntroMetadataFooter(input: {
         initialViews={input.views}
         initialLikes={input.likes}
         initialDislikes={input.dislikes}
+        initialCommentCount={input.initialCommentCount}
         themeColor={input.themeColor}
         initialMyReaction={input.initialMyReaction}
+        canComment={input.canComment}
+        isOwnProfile={input.isOwnProfile}
         locationText={input.locationText}
         align="center"
         preview={input.preview}

@@ -163,6 +163,9 @@ export default async function ProfileSettingsPage({ searchParams }: PageProps) {
         likes={profileData.likes}
         dislikes={profileData.dislikes}
         views={profileData.views}
+        initialCommentCount={profileData.initialCommentCount}
+        canComment={profileData.canComment}
+        isOwnProfile={profileData.isOwnProfile}
         socialBlocks={profileData.socialBlocks}
         hasPremiumAccess={profileData.hasPremiumState}
       />
@@ -272,6 +275,9 @@ function buildProfileRenderData(user: ProfileUserRecord) {
       0,
     ),
     views: user.profileViews.length,
+    initialCommentCount: user.profileCommentsReceived.length,
+    canComment: true,
+    isOwnProfile: true,
     socialBlocks: mapSocialBlocks(user.socialBlocks),
     hasPremiumState,
   };
@@ -370,6 +376,14 @@ function buildDashboardProfileUserSelect(
       },
     },
     profileViews: {
+      select: {
+        id: true,
+      },
+    },
+    profileCommentsReceived: {
+      where: {
+        isDeleted: false,
+      },
       select: {
         id: true,
       },

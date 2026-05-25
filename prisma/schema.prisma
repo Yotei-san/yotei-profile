@@ -139,6 +139,8 @@ model User {
   reportsAgainstUser Report[] @relation("ReportsAgainstUser")
   reportsReviewed    Report[] @relation("ReportsReviewed")
   profileViews       ProfileView[]
+  profileCommentsReceived ProfileComment[] @relation("ProfileCommentsReceived")
+  profileCommentsAuthored ProfileComment[] @relation("ProfileCommentsAuthored")
 
   @@index([username])
   @@index([status])
@@ -246,6 +248,24 @@ model Preset {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
+}
+
+model ProfileComment {
+  id            String   @id @default(cuid())
+  profileUserId String
+  authorUserId  String?
+  authorName    String?
+  body          String
+  isDeleted     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  profileUser User  @relation("ProfileCommentsReceived", fields: [profileUserId], references: [id], onDelete: Cascade)
+  authorUser  User? @relation("ProfileCommentsAuthored", fields: [authorUserId], references: [id], onDelete: SetNull)
+
+  @@index([profileUserId, createdAt])
+  @@index([authorUserId, createdAt])
+  @@index([profileUserId, isDeleted, createdAt])
 }
 
 model ProfileTemplate {

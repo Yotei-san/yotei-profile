@@ -15,6 +15,7 @@ import {
 } from "@/app/dashboard/components/DashboardUI";
 import { redirectWithClearedSession, requireUser } from "@/app/lib/auth";
 import { buildDashboardOnboardingState } from "@/app/lib/dashboard-onboarding";
+import { getDashboardRankingSummary } from "@/app/lib/leaderboard";
 import { prisma } from "@/app/lib/prisma";
 
 type DashboardLink = {
@@ -43,50 +44,53 @@ type DashboardUser = {
 export default async function DashboardPage() {
   const sessionUser = await requireUser();
 
-  const user = (await prisma.user.findUnique({
-    where: { id: sessionUser.id },
-    select: {
-      username: true,
-      displayName: true,
-      emailVerified: true,
-      avatarUrl: true,
-      bannerUrl: true,
-      profileLayout: true,
-      links: {
-        orderBy: [{ position: "asc" }, { createdAt: "asc" }],
-        select: {
-          id: true,
-          title: true,
-          url: true,
-          _count: {
-            select: {
-              clicks: true,
+  const [user, rankingSummary] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: sessionUser.id },
+      select: {
+        username: true,
+        displayName: true,
+        emailVerified: true,
+        avatarUrl: true,
+        bannerUrl: true,
+        profileLayout: true,
+        links: {
+          orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+          select: {
+            id: true,
+            title: true,
+            url: true,
+            _count: {
+              select: {
+                clicks: true,
+              },
             },
           },
         },
-      },
-      badges: {
-        select: {
-          id: true,
+        badges: {
+          select: {
+            id: true,
+          },
         },
-      },
-      selectedDecoration: {
-        select: {
-          id: true,
+        selectedDecoration: {
+          select: {
+            id: true,
+          },
         },
-      },
-      socialBlocks: {
-        select: {
-          id: true,
+        socialBlocks: {
+          select: {
+            id: true,
+          },
         },
-      },
-      createdTemplates: {
-        select: {
-          id: true,
+        createdTemplates: {
+          select: {
+            id: true,
+          },
         },
-      },
-    } as any,
-  })) as DashboardUser | null;
+      } as any,
+    }) as Promise<DashboardUser | null>,
+    getDashboardRankingSummary(sessionUser.id),
+  ]);
 
   const resolvedUser = user ?? (await redirectWithClearedSession());
   const totalClicks = resolvedUser.links.reduce(
@@ -148,6 +152,39 @@ export default async function DashboardPage() {
       />
 
       <DashboardOnboardingChecklist onboarding={onboarding} />
+
+      {rankingSummary ? (
+        <section style={dashboardSurfaceStyle}>
+          <DashboardSectionHeading
+            eyebrow="Leaderboard"
+            title="Your ranking"
+            description="A quick snapshot of how your public profile is stacking up across visibility and engagement."
+            actions={
+              <Link href="/leaderboard" style={dashboardButtonStyle("secondary")}>
+                Open leaderboard
+              </Link>
+            }
+          />
+
+          <div style={heroStatsGridStyle}>
+            <StatCard
+              title="Views rank"
+              value={`#${rankingSummary.viewsRank}`}
+              hint="Position on the most viewed board"
+            />
+            <StatCard
+              title="Likes rank"
+              value={`#${rankingSummary.likesRank}`}
+              hint="Position on the most liked board"
+            />
+            <StatCard
+              title="Comments"
+              value={String(rankingSummary.commentCount)}
+              hint="Visible public comments on your profile"
+            />
+          </div>
+        </section>
+      ) : null}
 
       <section style={dashboardAutoGridStyle(340)}>
         <section style={dashboardSurfaceStyle}>

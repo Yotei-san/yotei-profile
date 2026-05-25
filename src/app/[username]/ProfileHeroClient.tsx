@@ -2,7 +2,8 @@
 
 import type { CSSProperties, ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
-import { LuEye, LuMapPin, LuThumbsDown, LuThumbsUp } from "react-icons/lu";
+import { LuEye, LuMapPin, LuMessageSquare, LuThumbsDown, LuThumbsUp } from "react-icons/lu";
+import ProfileCommentsModal from "./ProfileCommentsModal";
 
 type MyReaction = "like" | "dislike" | null;
 
@@ -11,8 +12,11 @@ type Props = {
   initialViews: number;
   initialLikes: number;
   initialDislikes: number;
+  initialCommentCount: number;
   themeColor: string;
   initialMyReaction: MyReaction;
+  canComment: boolean;
+  isOwnProfile: boolean;
   locationText?: string | null;
   align?: "start" | "center";
   preview?: boolean;
@@ -28,8 +32,11 @@ export default function ProfileHeroClient({
   initialViews,
   initialLikes,
   initialDislikes,
+  initialCommentCount,
   themeColor,
   initialMyReaction,
+  canComment,
+  isOwnProfile,
   locationText,
   align = "start",
   preview = false,
@@ -38,8 +45,10 @@ export default function ProfileHeroClient({
   const [views, setViews] = useState(initialViews);
   const [likes, setLikes] = useState(initialLikes);
   const [dislikes, setDislikes] = useState(initialDislikes);
+  const [commentCount, setCommentCount] = useState(initialCommentCount);
   const [myReaction, setMyReaction] = useState<MyReaction>(initialMyReaction);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCommentsOpen, setIsCommentsOpen] = useState(false);
 
   const hasTrackedView = useRef(false);
   const isSubmittingRef = useRef(false);
@@ -48,8 +57,9 @@ export default function ProfileHeroClient({
     setViews(initialViews);
     setLikes(initialLikes);
     setDislikes(initialDislikes);
+    setCommentCount(initialCommentCount);
     setMyReaction(initialMyReaction);
-  }, [initialViews, initialLikes, initialDislikes, initialMyReaction]);
+  }, [initialViews, initialLikes, initialDislikes, initialCommentCount, initialMyReaction]);
 
   useEffect(() => {
     if (preview) {
@@ -316,6 +326,30 @@ export default function ProfileHeroClient({
           compact={variant !== "inline"}
         />
 
+        <ActionButton
+          label="Comments"
+          value={commentCount}
+          icon={<LuMessageSquare size={14} />}
+          onClick={() => setIsCommentsOpen(true)}
+          disabled={preview}
+          accentColor={themeColor}
+          background={
+            variant === "corner"
+              ? "rgba(13, 14, 24, 0.82)"
+              : variant === "micro"
+                ? "transparent"
+                : "rgba(135, 118, 255, 0.06)"
+          }
+          border={
+            variant === "corner"
+              ? "rgba(135, 118, 255, 0.18)"
+              : variant === "micro"
+                ? "transparent"
+                : "rgba(135, 118, 255, 0.12)"
+          }
+          compact={variant !== "inline"}
+        />
+
         {normalizedLocationText ? (
           <MetricChip
             label="Location"
@@ -341,6 +375,16 @@ export default function ProfileHeroClient({
           />
         ) : null}
       </div>
+
+      <ProfileCommentsModal
+        username={username}
+        commentCount={commentCount}
+        canComment={canComment}
+        isOwnProfile={isOwnProfile}
+        open={isCommentsOpen}
+        onClose={() => setIsCommentsOpen(false)}
+        onCountChange={setCommentCount}
+      />
     </div>
   );
 }
@@ -422,6 +466,49 @@ function ReactionButton({
         border,
         disabled,
         isActive,
+        compact,
+      )}
+    >
+      <span style={iconWrapStyle(compact)}>{icon}</span>
+      <span style={valueTextStyle(compact)}>{value.toLocaleString()}</span>
+    </button>
+  );
+}
+
+function ActionButton({
+  label,
+  value,
+  icon,
+  onClick,
+  disabled,
+  accentColor,
+  background,
+  border,
+  compact = false,
+}: {
+  label: string;
+  value: number;
+  icon: ReactNode;
+  onClick: () => void;
+  disabled: boolean;
+  accentColor: string;
+  background: string;
+  border: string;
+  compact?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className="profile-hero-reaction"
+      aria-label={`${label}: ${value.toLocaleString()}`}
+      style={reactionButtonStyle(
+        accentColor,
+        background,
+        border,
+        disabled,
+        false,
         compact,
       )}
     >

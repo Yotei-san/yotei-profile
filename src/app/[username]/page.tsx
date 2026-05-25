@@ -60,24 +60,35 @@ export default async function ProfilePage({ params }: Props) {
   }
 
   let initialMyReaction: PublicProfileReaction = null;
-
-  if (currentUser && currentUser.id !== user.id) {
-    const myReaction = await prisma.reaction.findFirst({
+  const [myReaction, commentCount] = await Promise.all([
+    currentUser && currentUser.id !== user.id
+      ? prisma.reaction.findFirst({
+          where: {
+            fromUserId: currentUser.id,
+            toUserId: user.id,
+          },
+          select: {
+            type: true,
+          },
+        })
+      : Promise.resolve(null),
+    prisma.profileComment.count({
       where: {
-        fromUserId: currentUser.id,
-        toUserId: user.id,
+        profileUserId: user.id,
+        isDeleted: false,
       },
-      select: {
-        type: true,
-      },
-    });
+    }),
+  ]);
 
-    if (myReaction?.type === "like" || myReaction?.type === "dislike") {
-      initialMyReaction = myReaction.type;
-    }
+  if (myReaction?.type === "like" || myReaction?.type === "dislike") {
+    initialMyReaction = myReaction.type;
   }
 
-  const profileData = buildProfileRenderData(user);
+  const profileData = buildProfileRenderData(user, {
+    initialCommentCount: commentCount,
+    canComment: Boolean(currentUser),
+    isOwnProfile: currentUser?.id === user.id,
+  });
 
   return (
     <PublicProfileRenderer
@@ -109,7 +120,14 @@ async function getProfileUser(username: string) {
   }
 }
 
-function buildProfileRenderData(user: ProfileUserRecord) {
+function buildProfileRenderData(
+  user: ProfileUserRecord,
+  interactionState: {
+    initialCommentCount: number;
+    canComment: boolean;
+    isOwnProfile: boolean;
+  },
+) {
   const themeColor = normalizeThemeColor(user.themeColor);
   const layout = normalizeProfileLayout(user.profileLayout);
   const displayName = user.displayName || user.username;
@@ -191,6 +209,9 @@ function buildProfileRenderData(user: ProfileUserRecord) {
       0,
     ),
     views: user.profileViews.length,
+    initialCommentCount: interactionState.initialCommentCount,
+    canComment: interactionState.canComment,
+    isOwnProfile: interactionState.isOwnProfile,
     socialBlocks: mapSocialBlocks(user.socialBlocks),
   };
 }

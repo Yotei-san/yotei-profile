@@ -132,6 +132,9 @@ type Props = {
   likes: number;
   dislikes: number;
   views: number;
+  initialCommentCount: number;
+  canComment: boolean;
+  isOwnProfile: boolean;
   socialBlocks: PublicSocialBlock[];
   composition: ProfileComposition;
   initialMyReaction: "like" | "dislike" | null;
@@ -292,6 +295,9 @@ function DefaultLayout(props: Props) {
                 views: props.views,
                 likes: props.likes,
                 dislikes: props.dislikes,
+                initialCommentCount: props.initialCommentCount,
+                canComment: props.canComment,
+                isOwnProfile: props.isOwnProfile,
                 themeColor: sceneAppearance.linkThemeColor,
                 initialMyReaction: props.initialMyReaction,
                 preview: props.preview,
@@ -304,6 +310,9 @@ function DefaultLayout(props: Props) {
                 views: props.views,
                 likes: props.likes,
                 dislikes: props.dislikes,
+                initialCommentCount: props.initialCommentCount,
+                canComment: props.canComment,
+                isOwnProfile: props.isOwnProfile,
                 themeColor: sceneAppearance.linkThemeColor,
                 initialMyReaction: props.initialMyReaction,
                 preview: props.preview,
@@ -314,6 +323,9 @@ function DefaultLayout(props: Props) {
                 views: props.views,
                 likes: props.likes,
                 dislikes: props.dislikes,
+                initialCommentCount: props.initialCommentCount,
+                canComment: props.canComment,
+                isOwnProfile: props.isOwnProfile,
                 themeColor: sceneAppearance.linkThemeColor,
                 initialMyReaction: props.initialMyReaction,
                 preview: props.preview,
@@ -338,6 +350,9 @@ function DefaultLayout(props: Props) {
               likes: props.likes,
               dislikes: props.dislikes,
               views: props.views,
+              initialCommentCount: props.initialCommentCount,
+              canComment: props.canComment,
+              isOwnProfile: props.isOwnProfile,
               initialMyReaction: props.initialMyReaction,
               socialGroups,
               links: props.user.links,
@@ -368,6 +383,9 @@ function DefaultLayout(props: Props) {
             views: props.views,
             likes: props.likes,
             dislikes: props.dislikes,
+            initialCommentCount: props.initialCommentCount,
+            canComment: props.canComment,
+            isOwnProfile: props.isOwnProfile,
             themeColor: sceneAppearance.linkThemeColor,
             initialMyReaction: props.initialMyReaction,
             preview: props.preview,
@@ -378,6 +396,9 @@ function DefaultLayout(props: Props) {
             views: props.views,
             likes: props.likes,
             dislikes: props.dislikes,
+            initialCommentCount: props.initialCommentCount,
+            canComment: props.canComment,
+            isOwnProfile: props.isOwnProfile,
             themeColor: sceneAppearance.linkThemeColor,
             initialMyReaction: props.initialMyReaction,
             preview: props.preview,
@@ -493,6 +514,9 @@ function SimplisticLayout(props: Props) {
               views: props.views,
               likes: props.likes,
               dislikes: props.dislikes,
+              initialCommentCount: props.initialCommentCount,
+              canComment: props.canComment,
+              isOwnProfile: props.isOwnProfile,
               themeColor: sceneAppearance.linkThemeColor,
               initialMyReaction: props.initialMyReaction,
               preview: props.preview,
@@ -504,6 +528,9 @@ function SimplisticLayout(props: Props) {
               views: props.views,
               likes: props.likes,
               dislikes: props.dislikes,
+              initialCommentCount: props.initialCommentCount,
+              canComment: props.canComment,
+              isOwnProfile: props.isOwnProfile,
               themeColor: sceneAppearance.linkThemeColor,
               initialMyReaction: props.initialMyReaction,
               preview: props.preview,
@@ -514,6 +541,9 @@ function SimplisticLayout(props: Props) {
               views: props.views,
               likes: props.likes,
               dislikes: props.dislikes,
+              initialCommentCount: props.initialCommentCount,
+              canComment: props.canComment,
+              isOwnProfile: props.isOwnProfile,
               themeColor: sceneAppearance.linkThemeColor,
               initialMyReaction: props.initialMyReaction,
               preview: props.preview,
@@ -554,6 +584,9 @@ function SimplisticLayout(props: Props) {
             likes: props.likes,
             dislikes: props.dislikes,
             views: props.views,
+            initialCommentCount: props.initialCommentCount,
+            canComment: props.canComment,
+            isOwnProfile: props.isOwnProfile,
             initialMyReaction: props.initialMyReaction,
             socialGroups,
             links: props.user.links,
@@ -584,6 +617,9 @@ function SimplisticLayout(props: Props) {
           views: props.views,
           likes: props.likes,
           dislikes: props.dislikes,
+          initialCommentCount: props.initialCommentCount,
+          canComment: props.canComment,
+          isOwnProfile: props.isOwnProfile,
           themeColor: sceneAppearance.linkThemeColor,
           initialMyReaction: props.initialMyReaction,
           preview: props.preview,
@@ -594,6 +630,9 @@ function SimplisticLayout(props: Props) {
           views: props.views,
           likes: props.likes,
           dislikes: props.dislikes,
+          initialCommentCount: props.initialCommentCount,
+          canComment: props.canComment,
+          isOwnProfile: props.isOwnProfile,
           themeColor: sceneAppearance.linkThemeColor,
           initialMyReaction: props.initialMyReaction,
           preview: props.preview,
@@ -746,6 +785,9 @@ function PortfolioLayout(props: Props) {
               views: props.views,
               likes: props.likes,
               dislikes: props.dislikes,
+              initialCommentCount: props.initialCommentCount,
+              canComment: props.canComment,
+              isOwnProfile: props.isOwnProfile,
               themeColor: sceneAppearance.linkThemeColor,
               initialMyReaction: props.initialMyReaction,
               preview: props.preview,
@@ -757,6 +799,9 @@ function PortfolioLayout(props: Props) {
               views: props.views,
               likes: props.likes,
               dislikes: props.dislikes,
+              initialCommentCount: props.initialCommentCount,
+              canComment: props.canComment,
+              isOwnProfile: props.isOwnProfile,
               themeColor: sceneAppearance.linkThemeColor,
               initialMyReaction: props.initialMyReaction,
               preview: props.preview,
@@ -767,6 +812,9 @@ function PortfolioLayout(props: Props) {
               views: props.views,
               likes: props.likes,
               dislikes: props.dislikes,
+              initialCommentCount: props.initialCommentCount,
+              canComment: props.canComment,
+              isOwnProfile: props.isOwnProfile,
               themeColor: sceneAppearance.linkThemeColor,
               initialMyReaction: props.initialMyReaction,
               preview: props.preview,
@@ -806,6 +854,9 @@ function PortfolioLayout(props: Props) {
               likes: props.likes,
               dislikes: props.dislikes,
               views: props.views,
+              initialCommentCount: props.initialCommentCount,
+              canComment: props.canComment,
+              isOwnProfile: props.isOwnProfile,
               initialMyReaction: props.initialMyReaction,
               socialGroups,
               links: props.user.links,
@@ -836,6 +887,9 @@ function PortfolioLayout(props: Props) {
             views: props.views,
             likes: props.likes,
             dislikes: props.dislikes,
+            initialCommentCount: props.initialCommentCount,
+            canComment: props.canComment,
+            isOwnProfile: props.isOwnProfile,
             themeColor: sceneAppearance.linkThemeColor,
             initialMyReaction: props.initialMyReaction,
             preview: props.preview,
@@ -846,6 +900,9 @@ function PortfolioLayout(props: Props) {
             views: props.views,
             likes: props.likes,
             dislikes: props.dislikes,
+            initialCommentCount: props.initialCommentCount,
+            canComment: props.canComment,
+            isOwnProfile: props.isOwnProfile,
             themeColor: sceneAppearance.linkThemeColor,
             initialMyReaction: props.initialMyReaction,
             preview: props.preview,
@@ -975,6 +1032,9 @@ function renderVariantBlock(
     likes: number;
     dislikes: number;
     views: number;
+    initialCommentCount: number;
+    canComment: boolean;
+    isOwnProfile: boolean;
     initialMyReaction: "like" | "dislike" | null;
     socialGroups: {
       socials: PublicSocialBlock[];
@@ -1244,6 +1304,9 @@ function renderIdentityMetadataSlot(
     views: number;
     likes: number;
     dislikes: number;
+    initialCommentCount: number;
+    canComment: boolean;
+    isOwnProfile: boolean;
     themeColor: string;
     initialMyReaction: "like" | "dislike" | null;
     preview?: boolean;
@@ -1269,8 +1332,11 @@ function renderIdentityMetadataSlot(
         initialViews={input.views}
         initialLikes={input.likes}
         initialDislikes={input.dislikes}
+        initialCommentCount={input.initialCommentCount}
         themeColor={input.themeColor}
         initialMyReaction={input.initialMyReaction}
+        canComment={input.canComment}
+        isOwnProfile={input.isOwnProfile}
         locationText={input.composition.metadata.locationText}
         preview={input.preview}
         variant={isScreenCorner ? "corner" : "inline"}

@@ -164,6 +164,9 @@ type Props = {
   likes: number;
   dislikes: number;
   views: number;
+  initialCommentCount: number;
+  canComment: boolean;
+  isOwnProfile: boolean;
   socialBlocks: PublicSocialBlock[];
   hasPremiumAccess: boolean;
 };
@@ -199,6 +202,9 @@ export default function ProfileLayoutExperience({
   likes,
   dislikes,
   views,
+  initialCommentCount,
+  canComment,
+  isOwnProfile,
   socialBlocks,
   hasPremiumAccess,
 }: Props) {
@@ -2157,6 +2163,9 @@ export default function ProfileLayoutExperience({
                     likes={likes}
                     dislikes={dislikes}
                     views={views}
+                    initialCommentCount={initialCommentCount}
+                    canComment={canComment}
+                    isOwnProfile={isOwnProfile}
                     socialBlocks={socialBlocks}
                     composition={deferredPreviewComposition}
                     initialMyReaction={null}
