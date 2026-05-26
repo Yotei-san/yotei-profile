@@ -1,3 +1,5 @@
+import { dashboardProfileEn } from "@/app/lib/dictionaries/dashboard-profile";
+
 const en = {
   common: {
     appName: "Yotei",
@@ -302,6 +304,7 @@ const en = {
         },
       },
     },
+    profile: dashboardProfileEn,
   },
   pricing: {
     eyebrow: "Pricing",

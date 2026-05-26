@@ -1,11 +1,9 @@
 import type { CSSProperties } from "react";
 import { LuArrowUpRight, LuMusic4, LuRadio } from "react-icons/lu";
+import { useI18n } from "@/app/components/I18nProvider";
 import type { ProfileMotionLevel } from "@/app/lib/profile-customization";
 import {
-  getProfileMusicArtist,
-  getProfileMusicCtaLabel,
   getProfileMusicProviderLabel,
-  getProfileMusicTitle,
   shouldRenderProfileMusic,
   type ProfileMusicData,
 } from "@/app/lib/profile-music";
@@ -31,6 +29,7 @@ export default function ProfileMusicCard({
   showPlaceholder = false,
   motionLevel = "subtle",
 }: Props) {
+  const { t } = useI18n();
   if (!shouldRenderProfileMusic(music)) {
     if (!showPlaceholder) {
       return null;
@@ -44,10 +43,11 @@ export default function ProfileMusicCard({
               <LuMusic4 size={14} />
             </span>
             <div style={{ display: "grid", gap: "4px" }}>
-              <strong style={placeholderTitleStyle}>Profile music preview</strong>
+              <strong style={placeholderTitleStyle}>
+                {t("dashboard.profile.musicCard.placeholderTitle")}
+              </strong>
               <span style={placeholderTextStyle}>
-                Enable profile music and add a title, artist, or link to show the
-                compact public player.
+                {t("dashboard.profile.musicCard.placeholderBody")}
               </span>
             </div>
           </div>
@@ -168,11 +168,17 @@ export default function ProfileMusicCard({
             <span style={providerBadgeStyle(accentColor)}>
               {getProfileMusicProviderLabel(music.provider)}
             </span>
-            <span style={statusBadgeStyle(contrastColor)}>Atmosphere</span>
+            <span style={statusBadgeStyle(contrastColor)}>
+              {t("dashboard.profile.musicCard.atmosphere")}
+            </span>
           </div>
 
-          <strong style={titleStyle(compact)}>{getProfileMusicTitle(music)}</strong>
-          <div style={artistStyle}>{getProfileMusicArtist(music)}</div>
+          <strong style={titleStyle(compact)}>
+            {music.title || t("dashboard.profile.musicCard.defaultTitle")}
+          </strong>
+          <div style={artistStyle}>
+            {music.artist || t("dashboard.profile.musicCard.defaultArtist")}
+          </div>
         </div>
 
         {music.url ? (
@@ -182,15 +188,36 @@ export default function ProfileMusicCard({
             rel="noreferrer"
             style={ctaStyle(accentColor, contrastColor)}
           >
-            {getProfileMusicCtaLabel(music.provider)}
+            {getMusicCtaLabel(music.provider, t)}
             <LuArrowUpRight size={15} />
           </a>
         ) : (
-          <span style={disabledCtaStyle}>Link not set</span>
+          <span style={disabledCtaStyle}>
+            {t("dashboard.profile.musicCard.linkNotSet")}
+          </span>
         )}
       </div>
     </section>
   );
+}
+
+function getMusicCtaLabel(
+  provider: ProfileMusicData["provider"],
+  t: ReturnType<typeof useI18n>["t"],
+) {
+  if (provider === "spotify") {
+    return t("dashboard.profile.musicCard.openSpotify");
+  }
+
+  if (provider === "youtube") {
+    return t("dashboard.profile.musicCard.openYouTube");
+  }
+
+  if (provider === "soundcloud") {
+    return t("dashboard.profile.musicCard.openSoundCloud");
+  }
+
+  return t("dashboard.profile.musicCard.openTrack");
 }
 
 function cardStyle(

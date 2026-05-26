@@ -10,6 +10,7 @@ import {
 } from "react";
 import { LuCheck, LuLayoutTemplate, LuMusic4, LuSparkles } from "react-icons/lu";
 import FormActionButton from "@/app/components/FormActionButton";
+import { useI18n } from "@/app/components/I18nProvider";
 import {
   DashboardSectionHeading,
   dashboardButtonStyle,
@@ -112,6 +113,31 @@ import {
   getProfileSceneOptions,
   type ProfileScene,
 } from "@/app/lib/profile-scenes";
+import {
+  getAuraDescription,
+  getAuraName,
+  getCompositionBlockDescription,
+  getCompositionBlockLabel,
+  getCustomBlockSecondaryPlaceholder,
+  getCustomBlockTextPlaceholder,
+  getDnaAlignmentLabel,
+  getDnaDescription,
+  getDnaName,
+  getHeroPillText,
+  getMoodDescription,
+  getMoodName,
+  getNameEffectDescription,
+  getNameEffectName,
+  getNamedOption,
+  getPresetDescription,
+  getPresetName,
+  getProfileLayoutDescription,
+  getProfileLayoutName,
+  getSceneDescription,
+  getSceneName,
+  getScenePreviewLabel,
+  getStatusText,
+} from "./profileEditorI18n";
 import { saveProfileSettings } from "./actions";
 
 const PROFILE_LAYOUT_OPTIONS = [
@@ -218,6 +244,7 @@ export default function ProfileLayoutExperience({
   socialBlocks,
   hasPremiumAccess,
 }: Props) {
+  const { t } = useI18n();
   const [displayName, setDisplayName] = useState(initialDisplayName);
   const [bio, setBio] = useState(initialBio);
   const [themeColor, setThemeColor] = useState(initialThemeColor);
@@ -254,8 +281,11 @@ export default function ProfileLayoutExperience({
   const previewViewportRef = useRef<HTMLDivElement | null>(null);
   const [previewViewportWidth, setPreviewViewportWidth] = useState(0);
   const sceneOptions = getProfileSceneOptions();
-  const savedSceneName =
-    sceneOptions.find((option) => option.value === savedScene)?.name || "Default";
+  const savedSceneName = getSceneName(
+    t,
+    savedScene,
+    sceneOptions.find((option) => option.value === savedScene)?.name || "Default",
+  );
   const savedPreset = savedComposition?.preset ?? null;
   const savedDna = savedComposition?.dna ?? null;
 
@@ -303,6 +333,13 @@ export default function ProfileLayoutExperience({
     url: deferredProfileMusicUrl,
     provider: deferredProfileMusicProvider,
   });
+  const localizedHeroPills = heroPills.map((pill) => ({
+    ...pill,
+    text:
+      pill.key === "status"
+        ? getStatusText(t, pill.text.toLowerCase(), pill.text)
+        : getHeroPillText(t, pill.key, pill.text),
+  }));
   const previewCanvasWidth = getPreviewCanvasWidth(deferredPreviewLayout);
   const previewScale = getPreviewScale(previewViewportWidth, previewCanvasWidth);
   const isDirty =
@@ -551,38 +588,38 @@ export default function ProfileLayoutExperience({
       <section className="profile-editor-grid" style={editorGridBaseStyle}>
         <form action={saveProfileSettings} style={dashboardSurfaceStyle}>
           <DashboardSectionHeading
-            eyebrow="Core content"
-            title="Profile content and layout"
-            description="Update your public identity and preview the real profile renderer before you save."
+            eyebrow={t("dashboard.profile.editor.core.eyebrow")}
+            title={t("dashboard.profile.editor.core.title")}
+            description={t("dashboard.profile.editor.core.description")}
           />
 
           <div style={dashboardFieldGridStyle}>
             <label style={dashboardLabelStyle}>
-              Display name
+              {t("dashboard.profile.editor.fields.displayName.label")}
               <input
                 type="text"
                 name="displayName"
                 value={displayName}
                 onChange={(event) => setDisplayName(event.target.value)}
-                placeholder="Your visible name"
+                placeholder={t("dashboard.profile.editor.fields.displayName.placeholder")}
                 style={dashboardInputStyle}
               />
             </label>
 
             <label style={dashboardLabelStyle}>
-              Bio
+              {t("dashboard.profile.editor.fields.bio.label")}
               <textarea
                 name="bio"
                 value={bio}
                 onChange={(event) => setBio(event.target.value)}
-                placeholder="Tell visitors what you do."
+                placeholder={t("dashboard.profile.editor.fields.bio.placeholder")}
                 rows={5}
                 style={dashboardTextareaStyle}
               />
             </label>
 
             <label style={dashboardLabelStyle}>
-              Location
+              {t("dashboard.profile.editor.fields.location.label")}
               <input
                 type="text"
                 value={previewComposition.metadata.locationText}
@@ -595,16 +632,16 @@ export default function ProfileLayoutExperience({
                     },
                   }))
                 }
-                placeholder="Brazil, Tokyo JP, Internet, nowhere, with her <3"
+                placeholder={t("dashboard.profile.editor.fields.location.placeholder")}
                 style={dashboardInputStyle}
               />
               <span style={dashboardMutedTextStyle}>
-                Freeform text only. Leave blank to hide location.
+                {t("dashboard.profile.editor.fields.location.helper")}
               </span>
             </label>
 
             <label style={dashboardLabelStyle}>
-              Theme color
+              {t("dashboard.profile.editor.fields.themeColor.label")}
               <input
                 type="text"
                 name="themeColor"
@@ -614,15 +651,15 @@ export default function ProfileLayoutExperience({
                 style={dashboardInputStyle}
               />
               <span style={dashboardMutedTextStyle}>
-                Hex colors keep the preview and the live profile consistent.
+                {t("dashboard.profile.editor.fields.themeColor.helper")}
               </span>
             </label>
 
             <div style={{ display: "grid", gap: "14px" }}>
               <DashboardSectionHeading
-                eyebrow="Username Effects"
-                title="Identity effects"
-                description="Layer up to two lightweight effects on the display name area."
+                eyebrow={t("dashboard.profile.editor.identityEffects.eyebrow")}
+                title={t("dashboard.profile.editor.identityEffects.title")}
+                description={t("dashboard.profile.editor.identityEffects.description")}
               />
 
               {previewNameEffects.length === 0 ? (
@@ -675,32 +712,42 @@ export default function ProfileLayoutExperience({
                     >
                       <div style={effectCardTopStyle}>
                         <span style={effectEffectTagStyle(effectOption.premium, safeThemeColor)}>
-                          {effectOption.premium ? "Premium" : "Free"}
+                          {effectOption.premium
+                            ? t("dashboard.profile.badges.premium")
+                            : t("dashboard.profile.badges.free")}
                         </span>
                         {isSelected ? (
                           <span style={selectedIndicatorStyle(safeThemeColor)}>
-                            Active
+                            {t("dashboard.profile.state.active")}
                           </span>
                         ) : isSaved ? (
-                          <span style={savedIndicatorStyle}>Saved</span>
+                          <span style={savedIndicatorStyle}>
+                            {t("dashboard.profile.state.saved")}
+                          </span>
                         ) : null}
                       </div>
 
                       <div style={{ display: "grid", gap: "8px", minWidth: 0 }}>
                         <div style={livingCardHeaderStyle}>
-                          <span>{effectOption.name}</span>
+                          <span>
+                            {getNameEffectName(t, effectOption.value, effectOption.name)}
+                          </span>
                           {isSelected ? <LuCheck size={16} /> : null}
                         </div>
                         <div style={layoutCardDescriptionStyle}>
-                          {effectOption.description}
+                          {getNameEffectDescription(
+                            t,
+                            effectOption.value,
+                            effectOption.description,
+                          )}
                         </div>
                         {selectionCapReached && !isLocked ? (
                           <div style={dashboardMutedTextStyle}>
-                            Remove one active effect to add another.
+                            {t("dashboard.profile.editor.identityEffects.selectionCap")}
                           </div>
                         ) : isLocked ? (
                           <div style={dashboardMutedTextStyle}>
-                            Requires Premium.
+                            {t("dashboard.profile.editor.identityEffects.requiresPremium")}
                           </div>
                         ) : null}
                       </div>
@@ -711,16 +758,16 @@ export default function ProfileLayoutExperience({
 
               <div style={dashboardMutedTextStyle}>
                 {hasPremiumAccess
-                  ? "Pick up to two effects. Choosing None clears every active effect."
-                  : "Free users can use None and Glow. Premium unlocks Rainbow, Typewriter, Particles, Glitch, and Shimmer."}
+                  ? t("dashboard.profile.editor.identityEffects.premiumHelper")
+                  : t("dashboard.profile.editor.identityEffects.freeHelper")}
               </div>
             </div>
 
             <div style={{ display: "grid", gap: "12px" }}>
               <DashboardSectionHeading
-                eyebrow="Layout"
-                title="Choose profile layout"
-                description="Previewing updates instantly, while the saved state stays visible until you publish changes."
+                eyebrow={t("dashboard.profile.editor.layout.eyebrow")}
+                title={t("dashboard.profile.editor.layout.title")}
+                description={t("dashboard.profile.editor.layout.description")}
               />
 
               <input type="hidden" name="profileLayout" value={previewLayout} readOnly />
@@ -731,10 +778,10 @@ export default function ProfileLayoutExperience({
                   const isSaved = savedLayout === layout.key;
                   const indicatorLabel = isSelected
                     ? isSaved
-                      ? "Current"
-                      : "Previewing"
+                      ? t("dashboard.profile.state.current")
+                      : t("dashboard.profile.state.previewing")
                     : isSaved
-                      ? "Saved"
+                      ? t("dashboard.profile.state.saved")
                       : null;
 
                   return (
@@ -767,10 +814,12 @@ export default function ProfileLayoutExperience({
 
                       <div style={{ display: "grid", gap: "8px", minWidth: 0 }}>
                         <div style={layoutCardHeaderStyle}>
-                          <span>{layout.name}</span>
+                          <span>{getProfileLayoutName(t, layout.key, layout.name)}</span>
                           {isSelected ? <LuCheck size={16} /> : null}
                         </div>
-                        <div style={layoutCardDescriptionStyle}>{layout.description}</div>
+                        <div style={layoutCardDescriptionStyle}>
+                          {getProfileLayoutDescription(t, layout.key, layout.description)}
+                        </div>
                       </div>
                     </button>
                   );
@@ -780,9 +829,9 @@ export default function ProfileLayoutExperience({
 
             <div style={{ display: "grid", gap: "14px" }}>
               <DashboardSectionHeading
-                eyebrow="Living Profile"
-                title="Mood and aura"
-                description="Shape the vibe of the live profile with lightweight atmosphere, pulse, and aura treatments."
+                eyebrow={t("dashboard.profile.editor.livingProfile.eyebrow")}
+                title={t("dashboard.profile.editor.livingProfile.title")}
+                description={t("dashboard.profile.editor.livingProfile.description")}
               />
 
               <input type="hidden" name="profileMood" value={previewMood} readOnly />
@@ -790,7 +839,9 @@ export default function ProfileLayoutExperience({
               <input type="hidden" name="profileScene" value={previewScene} readOnly />
 
               <div style={{ display: "grid", gap: "12px" }}>
-                <div style={livingSectionTitleStyle}>Mood</div>
+                <div style={livingSectionTitleStyle}>
+                  {t("dashboard.profile.editor.livingProfile.mood")}
+                </div>
                 <div style={livingGridStyle}>
                   {PROFILE_MOOD_OPTIONS.map((option) => {
                     const isSelected = previewMood === option.value;
@@ -813,10 +864,12 @@ export default function ProfileLayoutExperience({
                         </div>
                         <div style={{ display: "grid", gap: "6px", minWidth: 0 }}>
                           <div style={livingCardHeaderStyle}>
-                            <span>{option.name}</span>
+                            <span>{getMoodName(t, option.value, option.name)}</span>
                             {isSelected ? <LuCheck size={16} /> : null}
                           </div>
-                          <div style={layoutCardDescriptionStyle}>{option.description}</div>
+                          <div style={layoutCardDescriptionStyle}>
+                            {getMoodDescription(t, option.value, option.description)}
+                          </div>
                         </div>
                       </button>
                     );
@@ -825,7 +878,9 @@ export default function ProfileLayoutExperience({
               </div>
 
               <div style={{ display: "grid", gap: "12px" }}>
-                <div style={livingSectionTitleStyle}>Aura</div>
+                <div style={livingSectionTitleStyle}>
+                  {t("dashboard.profile.editor.livingProfile.aura")}
+                </div>
                 <div style={livingGridStyle}>
                   {PROFILE_AURA_OPTIONS.map((option) => {
                     const isSelected = previewAura === option.value;
@@ -844,10 +899,12 @@ export default function ProfileLayoutExperience({
                         <div style={auraPreviewStyle(option.overlay, option.glow, option.ring)} />
                         <div style={{ display: "grid", gap: "6px", minWidth: 0 }}>
                           <div style={livingCardHeaderStyle}>
-                            <span>{option.name}</span>
+                            <span>{getAuraName(t, option.value, option.name)}</span>
                             {isSelected ? <LuCheck size={16} /> : null}
                           </div>
-                          <div style={layoutCardDescriptionStyle}>{option.description}</div>
+                          <div style={layoutCardDescriptionStyle}>
+                            {getAuraDescription(t, option.value, option.description)}
+                          </div>
                         </div>
                       </button>
                     );
@@ -856,18 +913,20 @@ export default function ProfileLayoutExperience({
               </div>
 
               <div style={{ display: "grid", gap: "12px" }}>
-                <div style={livingSectionTitleStyle}>Profile Scene</div>
+                <div style={livingSectionTitleStyle}>
+                  {t("dashboard.profile.editor.livingProfile.scene")}
+                </div>
                 <div style={sceneGridStyle}>
                   {sceneOptions.map((sceneOption) => {
                     const isSelected = previewScene === sceneOption.value;
                     const isSaved = savedScene === sceneOption.value;
                     const indicatorLabel = isSelected
                       ? isSaved
-                        ? "Current"
-                        : "Previewing"
+                        ? t("dashboard.profile.state.current")
+                        : t("dashboard.profile.state.previewing")
                       : isSaved
-                        ? "Saved"
-                        : "Scene";
+                        ? t("dashboard.profile.state.saved")
+                        : t("dashboard.profile.editor.livingProfile.sceneTag");
 
                     return (
                       <button
@@ -895,7 +954,11 @@ export default function ProfileLayoutExperience({
                           />
                           <div style={scenePreviewChromeStyle(sceneOption.accent)}>
                             <span style={scenePreviewBadgeStyle(sceneOption.accent)}>
-                              {sceneOption.previewLabel}
+                              {getScenePreviewLabel(
+                                t,
+                                sceneOption.value,
+                                sceneOption.previewLabel,
+                              )}
                             </span>
                             <div style={scenePreviewFrameStyle(sceneOption.accent)} />
                           </div>
@@ -914,11 +977,15 @@ export default function ProfileLayoutExperience({
                             </span>
                           </div>
                           <div style={livingCardHeaderStyle}>
-                            <span>{sceneOption.name}</span>
+                            <span>{getSceneName(t, sceneOption.value, sceneOption.name)}</span>
                             {isSelected ? <LuCheck size={16} /> : null}
                           </div>
                           <div style={layoutCardDescriptionStyle}>
-                            {sceneOption.description}
+                            {getSceneDescription(
+                              t,
+                              sceneOption.value,
+                              sceneOption.description,
+                            )}
                           </div>
                         </div>
                       </button>
@@ -930,9 +997,9 @@ export default function ProfileLayoutExperience({
 
             <div style={{ display: "grid", gap: "14px" }}>
               <DashboardSectionHeading
-                eyebrow="Profile Preset"
-                title="Start from a curated vibe"
-                description="Apply a full Yotei preset instantly, then keep customizing every control below. Choosing Custom clears the preset tag without resetting your current edits."
+                eyebrow={t("dashboard.profile.editor.preset.eyebrow")}
+                title={t("dashboard.profile.editor.preset.title")}
+                description={t("dashboard.profile.editor.preset.description")}
               />
 
               <div style={livingGridStyle}>
@@ -950,15 +1017,15 @@ export default function ProfileLayoutExperience({
                   <div style={presetPreviewStyle("custom", safeThemeColor)} />
                   <div style={{ display: "grid", gap: "8px", minWidth: 0 }}>
                     <div style={livingCardHeaderStyle}>
-                      <span>Custom</span>
+                      <span>{t("dashboard.profile.editor.shared.custom")}</span>
                       {previewComposition.preset == null ? <LuCheck size={16} /> : null}
                     </div>
                     <div style={layoutCardDescriptionStyle}>
-                      Keep your current settings and remove preset-only tuning.
+                      {t("dashboard.profile.editor.preset.customDescription")}
                     </div>
                     <div style={presetMetaRowStyle}>
                       <span style={presetMetaBadgeStyle("rgba(255,255,255,0.08)")}>
-                        Manual
+                        {t("dashboard.profile.editor.shared.manual")}
                       </span>
                     </div>
                   </div>
@@ -980,16 +1047,32 @@ export default function ProfileLayoutExperience({
                       <div style={presetPreviewStyle(preset.value, preset.accent)} />
                       <div style={{ display: "grid", gap: "8px", minWidth: 0 }}>
                         <div style={livingCardHeaderStyle}>
-                          <span>{preset.name}</span>
+                          <span>{getPresetName(t, preset.value, preset.name)}</span>
                           {isSelected ? <LuCheck size={16} /> : null}
                         </div>
-                        <div style={layoutCardDescriptionStyle}>{preset.description}</div>
+                        <div style={layoutCardDescriptionStyle}>
+                          {getPresetDescription(t, preset.value, preset.description)}
+                        </div>
                         <div style={presetMetaRowStyle}>
                           <span style={presetMetaBadgeStyle(withAlpha(preset.accent, "1a"))}>
-                            {preset.mode}
+                            {getNamedOption(
+                              t,
+                              "compositionMode",
+                              preset.mode,
+                              "name",
+                              preset.mode,
+                            )}
                           </span>
                           <span style={presetMetaBadgeStyle("rgba(255,255,255,0.08)")}>
-                            {preset.introMode} intro
+                            {t("dashboard.profile.editor.preset.introBadge", {
+                              intro: getNamedOption(
+                                t,
+                                "introMode",
+                                preset.introMode,
+                                "name",
+                                preset.introMode,
+                              ),
+                            })}
                           </span>
                         </div>
                       </div>
@@ -1001,9 +1084,9 @@ export default function ProfileLayoutExperience({
 
             <div style={{ display: "grid", gap: "14px" }}>
               <DashboardSectionHeading
-                eyebrow="Profile DNA"
-                title="Set the visual personality"
-                description="DNA is the procedural baseline for spacing, transparency, glow, compactness, and floating pressure. It updates instantly and still leaves every other control editable."
+                eyebrow={t("dashboard.profile.editor.dna.eyebrow")}
+                title={t("dashboard.profile.editor.dna.title")}
+                description={t("dashboard.profile.editor.dna.description")}
               />
 
               <div style={livingGridStyle}>
@@ -1021,15 +1104,15 @@ export default function ProfileLayoutExperience({
                   <div style={presetPreviewStyle("custom", safeThemeColor)} />
                   <div style={{ display: "grid", gap: "8px", minWidth: 0 }}>
                     <div style={livingCardHeaderStyle}>
-                      <span>Custom</span>
+                      <span>{t("dashboard.profile.editor.shared.custom")}</span>
                       {previewComposition.dna == null ? <LuCheck size={16} /> : null}
                     </div>
                     <div style={layoutCardDescriptionStyle}>
-                      Keep your current styling mix without a DNA baseline.
+                      {t("dashboard.profile.editor.dna.customDescription")}
                     </div>
                     <div style={presetMetaRowStyle}>
                       <span style={presetMetaBadgeStyle("rgba(255,255,255,0.08)")}>
-                        Manual
+                        {t("dashboard.profile.editor.shared.manual")}
                       </span>
                     </div>
                   </div>
@@ -1052,16 +1135,20 @@ export default function ProfileLayoutExperience({
                       <div style={presetPreviewStyle(dna.value ?? "custom", dna.accent)} />
                       <div style={{ display: "grid", gap: "8px", minWidth: 0 }}>
                         <div style={livingCardHeaderStyle}>
-                          <span>{dna.name}</span>
+                          <span>{getDnaName(t, dna.value, dna.name)}</span>
                           {isSelected ? <LuCheck size={16} /> : null}
                         </div>
-                        <div style={layoutCardDescriptionStyle}>{dna.description}</div>
+                        <div style={layoutCardDescriptionStyle}>
+                          {getDnaDescription(t, dna.value, dna.description)}
+                        </div>
                         <div style={presetMetaRowStyle}>
                           <span style={presetMetaBadgeStyle(withAlpha(dna.accent, "1a"))}>
-                            {tuning.alignment}
+                            {getDnaAlignmentLabel(t, tuning.alignment, tuning.alignment)}
                           </span>
                           <span style={presetMetaBadgeStyle("rgba(255,255,255,0.08)")}>
-                            {`${Math.round(tuning.floatingIntensity * 100)}% float`}
+                            {t("dashboard.profile.editor.dna.floatBadge", {
+                              amount: Math.round(tuning.floatingIntensity * 100),
+                            })}
                           </span>
                         </div>
                       </div>
@@ -1073,9 +1160,9 @@ export default function ProfileLayoutExperience({
 
             <div style={{ display: "grid", gap: "14px" }}>
               <DashboardSectionHeading
-                eyebrow="Profile Atmosphere"
-                title="Background and banner tuning"
-                description="Control how visible the scene feels, how strong the glass reads, and how much the banner pushes through."
+                eyebrow={t("dashboard.profile.editor.atmosphere.eyebrow")}
+                title={t("dashboard.profile.editor.atmosphere.title")}
+                description={t("dashboard.profile.editor.atmosphere.description")}
               />
 
               <input
@@ -1109,7 +1196,9 @@ export default function ProfileLayoutExperience({
               />
 
               <div style={{ display: "grid", gap: "12px" }}>
-                <div style={livingSectionTitleStyle}>Intro mode</div>
+                <div style={livingSectionTitleStyle}>
+                  {t("dashboard.profile.editor.atmosphere.introMode")}
+                </div>
                 <div style={livingGridStyle}>
                   {PROFILE_INTRO_MODE_OPTIONS.map((option) => {
                     const isSelected = previewIntroMode === option.value;
@@ -1127,10 +1216,26 @@ export default function ProfileLayoutExperience({
                         <div style={introModePreviewStyle(option.value, safeThemeColor)} />
                         <div style={{ display: "grid", gap: "8px", minWidth: 0 }}>
                           <div style={livingCardHeaderStyle}>
-                            <span>{option.name}</span>
+                            <span>
+                              {getNamedOption(
+                                t,
+                                "introMode",
+                                option.value,
+                                "name",
+                                option.name,
+                              )}
+                            </span>
                             {isSelected ? <LuCheck size={16} /> : null}
                           </div>
-                          <div style={layoutCardDescriptionStyle}>{option.description}</div>
+                          <div style={layoutCardDescriptionStyle}>
+                            {getNamedOption(
+                              t,
+                              "introMode",
+                              option.value,
+                              "description",
+                              option.description,
+                            )}
+                          </div>
                         </div>
                       </button>
                     );
@@ -1139,7 +1244,9 @@ export default function ProfileLayoutExperience({
               </div>
 
               <div style={{ display: "grid", gap: "12px" }}>
-                <div style={livingSectionTitleStyle}>Background intensity</div>
+                <div style={livingSectionTitleStyle}>
+                  {t("dashboard.profile.editor.atmosphere.backgroundIntensity")}
+                </div>
                 <div style={livingGridStyle}>
                   {PROFILE_BACKGROUND_INTENSITY_OPTIONS.map((option) => {
                     const isSelected = previewBackgroundIntensity === option.value;
@@ -1157,10 +1264,26 @@ export default function ProfileLayoutExperience({
                         <div style={atmospherePreviewStyle(option.value, safeThemeColor)} />
                         <div style={{ display: "grid", gap: "8px", minWidth: 0 }}>
                           <div style={livingCardHeaderStyle}>
-                            <span>{option.name}</span>
+                            <span>
+                              {getNamedOption(
+                                t,
+                                "backgroundIntensity",
+                                option.value,
+                                "name",
+                                option.name,
+                              )}
+                            </span>
                             {isSelected ? <LuCheck size={16} /> : null}
                           </div>
-                          <div style={layoutCardDescriptionStyle}>{option.description}</div>
+                          <div style={layoutCardDescriptionStyle}>
+                            {getNamedOption(
+                              t,
+                              "backgroundIntensity",
+                              option.value,
+                              "description",
+                              option.description,
+                            )}
+                          </div>
                         </div>
                       </button>
                     );
@@ -1169,7 +1292,9 @@ export default function ProfileLayoutExperience({
               </div>
 
               <div style={{ display: "grid", gap: "12px" }}>
-                <div style={livingSectionTitleStyle}>Glass intensity</div>
+                <div style={livingSectionTitleStyle}>
+                  {t("dashboard.profile.editor.atmosphere.glassIntensity")}
+                </div>
                 <div style={livingGridStyle}>
                   {PROFILE_GLASS_INTENSITY_OPTIONS.map((option) => {
                     const isSelected = previewGlassIntensity === option.value;
@@ -1187,10 +1312,26 @@ export default function ProfileLayoutExperience({
                         <div style={glassPreviewStyle(option.value, safeThemeColor)} />
                         <div style={{ display: "grid", gap: "8px", minWidth: 0 }}>
                           <div style={livingCardHeaderStyle}>
-                            <span>{option.name}</span>
+                            <span>
+                              {getNamedOption(
+                                t,
+                                "glassIntensity",
+                                option.value,
+                                "name",
+                                option.name,
+                              )}
+                            </span>
                             {isSelected ? <LuCheck size={16} /> : null}
                           </div>
-                          <div style={layoutCardDescriptionStyle}>{option.description}</div>
+                          <div style={layoutCardDescriptionStyle}>
+                            {getNamedOption(
+                              t,
+                              "glassIntensity",
+                              option.value,
+                              "description",
+                              option.description,
+                            )}
+                          </div>
                         </div>
                       </button>
                     );
@@ -1199,7 +1340,9 @@ export default function ProfileLayoutExperience({
               </div>
 
               <div style={{ display: "grid", gap: "12px" }}>
-                <div style={livingSectionTitleStyle}>Banner visibility</div>
+                <div style={livingSectionTitleStyle}>
+                  {t("dashboard.profile.editor.atmosphere.bannerStyle")}
+                </div>
                 <div style={livingGridStyle}>
                   {PROFILE_BANNER_STYLE_OPTIONS.map((option) => {
                     const isSelected = previewBannerStyle === option.value;
@@ -1217,10 +1360,26 @@ export default function ProfileLayoutExperience({
                         <div style={bannerPreviewStyle(option.value, safeThemeColor)} />
                         <div style={{ display: "grid", gap: "8px", minWidth: 0 }}>
                           <div style={livingCardHeaderStyle}>
-                            <span>{option.name}</span>
+                            <span>
+                              {getNamedOption(
+                                t,
+                                "bannerStyle",
+                                option.value,
+                                "name",
+                                option.name,
+                              )}
+                            </span>
                             {isSelected ? <LuCheck size={16} /> : null}
                           </div>
-                          <div style={layoutCardDescriptionStyle}>{option.description}</div>
+                          <div style={layoutCardDescriptionStyle}>
+                            {getNamedOption(
+                              t,
+                              "bannerStyle",
+                              option.value,
+                              "description",
+                              option.description,
+                            )}
+                          </div>
                         </div>
                       </button>
                     );
@@ -1230,13 +1389,15 @@ export default function ProfileLayoutExperience({
 
               <div style={{ display: "grid", gap: "14px" }}>
                 <DashboardSectionHeading
-                  eyebrow="Profile Creator"
-                  title="Shape the layout feel"
-                  description="These controls tune spacing, surfaces, corners, and motion without rebuilding the layout from scratch."
+                  eyebrow={t("dashboard.profile.editor.creator.eyebrow")}
+                  title={t("dashboard.profile.editor.creator.title")}
+                  description={t("dashboard.profile.editor.creator.description")}
                 />
 
                 <div style={{ display: "grid", gap: "12px" }}>
-                  <div style={livingSectionTitleStyle}>Profile density</div>
+                  <div style={livingSectionTitleStyle}>
+                    {t("dashboard.profile.editor.creator.density")}
+                  </div>
                   <div style={livingGridStyle}>
                     {PROFILE_DENSITY_OPTIONS.map((option) => {
                       const isSelected = previewDensity === option.value;
@@ -1254,10 +1415,20 @@ export default function ProfileLayoutExperience({
                           <div style={densityPreviewStyle(option.value, safeThemeColor)} />
                           <div style={{ display: "grid", gap: "8px", minWidth: 0 }}>
                             <div style={livingCardHeaderStyle}>
-                              <span>{option.name}</span>
+                              <span>
+                                {getNamedOption(t, "density", option.value, "name", option.name)}
+                              </span>
                               {isSelected ? <LuCheck size={16} /> : null}
                             </div>
-                            <div style={layoutCardDescriptionStyle}>{option.description}</div>
+                            <div style={layoutCardDescriptionStyle}>
+                              {getNamedOption(
+                                t,
+                                "density",
+                                option.value,
+                                "description",
+                                option.description,
+                              )}
+                            </div>
                           </div>
                         </button>
                       );
@@ -1266,7 +1437,9 @@ export default function ProfileLayoutExperience({
                 </div>
 
                 <div style={{ display: "grid", gap: "12px" }}>
-                  <div style={livingSectionTitleStyle}>Card style</div>
+                  <div style={livingSectionTitleStyle}>
+                    {t("dashboard.profile.editor.creator.cardStyle")}
+                  </div>
                   <div style={livingGridStyle}>
                     {PROFILE_CARD_STYLE_OPTIONS.map((option) => {
                       const isSelected = previewCardStyle === option.value;
@@ -1284,10 +1457,20 @@ export default function ProfileLayoutExperience({
                           <div style={cardStylePreviewStyle(option.value, safeThemeColor)} />
                           <div style={{ display: "grid", gap: "8px", minWidth: 0 }}>
                             <div style={livingCardHeaderStyle}>
-                              <span>{option.name}</span>
+                              <span>
+                                {getNamedOption(t, "cardStyle", option.value, "name", option.name)}
+                              </span>
                               {isSelected ? <LuCheck size={16} /> : null}
                             </div>
-                            <div style={layoutCardDescriptionStyle}>{option.description}</div>
+                            <div style={layoutCardDescriptionStyle}>
+                              {getNamedOption(
+                                t,
+                                "cardStyle",
+                                option.value,
+                                "description",
+                                option.description,
+                              )}
+                            </div>
                           </div>
                         </button>
                       );
@@ -1296,7 +1479,9 @@ export default function ProfileLayoutExperience({
                 </div>
 
                 <div style={{ display: "grid", gap: "12px" }}>
-                  <div style={livingSectionTitleStyle}>Corner style</div>
+                  <div style={livingSectionTitleStyle}>
+                    {t("dashboard.profile.editor.creator.cornerStyle")}
+                  </div>
                   <div style={livingGridStyle}>
                     {PROFILE_CORNER_STYLE_OPTIONS.map((option) => {
                       const isSelected = previewCornerStyle === option.value;
@@ -1314,10 +1499,26 @@ export default function ProfileLayoutExperience({
                           <div style={cornerPreviewStyle(option.value, safeThemeColor)} />
                           <div style={{ display: "grid", gap: "8px", minWidth: 0 }}>
                             <div style={livingCardHeaderStyle}>
-                              <span>{option.name}</span>
+                              <span>
+                                {getNamedOption(
+                                  t,
+                                  "cornerStyle",
+                                  option.value,
+                                  "name",
+                                  option.name,
+                                )}
+                              </span>
                               {isSelected ? <LuCheck size={16} /> : null}
                             </div>
-                            <div style={layoutCardDescriptionStyle}>{option.description}</div>
+                            <div style={layoutCardDescriptionStyle}>
+                              {getNamedOption(
+                                t,
+                                "cornerStyle",
+                                option.value,
+                                "description",
+                                option.description,
+                              )}
+                            </div>
                           </div>
                         </button>
                       );
@@ -1326,7 +1527,9 @@ export default function ProfileLayoutExperience({
                 </div>
 
                 <div style={{ display: "grid", gap: "12px" }}>
-                  <div style={livingSectionTitleStyle}>Motion level</div>
+                  <div style={livingSectionTitleStyle}>
+                    {t("dashboard.profile.editor.creator.motionLevel")}
+                  </div>
                   <div style={livingGridStyle}>
                     {PROFILE_MOTION_LEVEL_OPTIONS.map((option) => {
                       const isSelected = previewMotionLevel === option.value;
@@ -1344,10 +1547,26 @@ export default function ProfileLayoutExperience({
                           <div style={motionPreviewStyle(option.value, safeThemeColor)} />
                           <div style={{ display: "grid", gap: "8px", minWidth: 0 }}>
                             <div style={livingCardHeaderStyle}>
-                              <span>{option.name}</span>
+                              <span>
+                                {getNamedOption(
+                                  t,
+                                  "motionLevel",
+                                  option.value,
+                                  "name",
+                                  option.name,
+                                )}
+                              </span>
                               {isSelected ? <LuCheck size={16} /> : null}
                             </div>
-                            <div style={layoutCardDescriptionStyle}>{option.description}</div>
+                            <div style={layoutCardDescriptionStyle}>
+                              {getNamedOption(
+                                t,
+                                "motionLevel",
+                                option.value,
+                                "description",
+                                option.description,
+                              )}
+                            </div>
                           </div>
                         </button>
                       );
@@ -1359,19 +1578,23 @@ export default function ProfileLayoutExperience({
               <div style={comingSoonCardStyle}>
                 <div style={comingSoonBadgeStyle}>
                   <LuSparkles size={13} />
-                  Profile Props coming soon
+                  {t("dashboard.profile.editor.props.badge")}
                 </div>
                 <div style={{ display: "grid", gap: "8px" }}>
                   <div style={comingSoonTitleStyle}>
-                    Future room objects and stickers are already on the roadmap.
+                    {t("dashboard.profile.editor.props.title")}
                   </div>
                   <div style={layoutCardDescriptionStyle}>
-                    We&apos;re preparing a lightweight props layer for polaroids, stickers,
-                    floating icons, and room objects without dropping performance.
+                    {t("dashboard.profile.editor.props.description")}
                   </div>
                 </div>
                 <div style={comingSoonTagsStyle}>
-                  {["Polaroids", "Stickers", "Floating icons", "Room objects"].map((item) => (
+                  {[
+                    t("dashboard.profile.editor.props.tags.polaroids"),
+                    t("dashboard.profile.editor.props.tags.stickers"),
+                    t("dashboard.profile.editor.props.tags.floatingIcons"),
+                    t("dashboard.profile.editor.props.tags.roomObjects"),
+                  ].map((item) => (
                     <span key={item} style={savedIndicatorStyle}>
                       {item}
                     </span>
@@ -1382,14 +1605,16 @@ export default function ProfileLayoutExperience({
 
             <div style={compositionSectionStyle}>
               <DashboardSectionHeading
-                eyebrow="Profile Composition"
-                title="Structure the public experience"
-                description="Shape the profile into ordered identity sections with cleaner rhythm, alignment, and premium badge and name presentation."
+                eyebrow={t("dashboard.profile.editor.composition.eyebrow")}
+                title={t("dashboard.profile.editor.composition.title")}
+                description={t("dashboard.profile.editor.composition.description")}
               />
 
               <div style={compositionControlsGridStyle}>
                 <div style={{ display: "grid", gap: "10px" }}>
-                  <div style={livingSectionTitleStyle}>Composition mode</div>
+                  <div style={livingSectionTitleStyle}>
+                    {t("dashboard.profile.editor.composition.mode")}
+                  </div>
                   <div style={compositionChoiceGridStyle}>
                     {PROFILE_COMPOSITION_MODE_OPTIONS.map((option) => {
                       const isSelected = previewComposition.mode === option.value;
@@ -1411,10 +1636,26 @@ export default function ProfileLayoutExperience({
                           <div style={compositionModePreviewStyle(option.value, previewPresence.accent)} />
                           <div style={{ display: "grid", gap: "8px", minWidth: 0 }}>
                             <div style={livingCardHeaderStyle}>
-                              <span>{option.name}</span>
+                              <span>
+                                {getNamedOption(
+                                  t,
+                                  "compositionMode",
+                                  option.value,
+                                  "name",
+                                  option.name,
+                                )}
+                              </span>
                               {isSelected ? <LuCheck size={16} /> : null}
                             </div>
-                            <div style={layoutCardDescriptionStyle}>{option.description}</div>
+                            <div style={layoutCardDescriptionStyle}>
+                              {getNamedOption(
+                                t,
+                                "compositionMode",
+                                option.value,
+                                "description",
+                                option.description,
+                              )}
+                            </div>
                           </div>
                         </button>
                       );
@@ -1445,10 +1686,18 @@ export default function ProfileLayoutExperience({
                         >
                           <div style={compositionRowCopyStyle}>
                             <div style={compositionRowTitleStyle}>
-                              {getCompositionBlockLabel(block)}
+                              {getCompositionBlockLabel(
+                                t,
+                                block,
+                                getDefaultCompositionBlockLabel(block),
+                              )}
                             </div>
                             <div style={layoutCardDescriptionStyle}>
-                              {getCompositionBlockDescription(block)}
+                              {getCompositionBlockDescription(
+                                t,
+                                block,
+                                getDefaultCompositionBlockDescription(block),
+                              )}
                             </div>
                           </div>
 
@@ -1459,7 +1708,7 @@ export default function ProfileLayoutExperience({
                               disabled={!canMoveUp}
                               style={compositionMoveButtonStyle(canMoveUp)}
                             >
-                              Up
+                              {t("dashboard.profile.editor.shared.up")}
                             </button>
                             <button
                               type="button"
@@ -1467,7 +1716,7 @@ export default function ProfileLayoutExperience({
                               disabled={!canMoveDown}
                               style={compositionMoveButtonStyle(canMoveDown)}
                             >
-                              Down
+                              {t("dashboard.profile.editor.shared.down")}
                             </button>
                             <label
                               style={compositionToggleStyle(
@@ -1478,10 +1727,10 @@ export default function ProfileLayoutExperience({
                             >
                               <span>
                                 {isIdentity
-                                  ? "Always on"
+                                  ? t("dashboard.profile.editor.composition.alwaysOn")
                                   : isVisible
-                                    ? "Visible"
-                                    : "Hidden"}
+                                    ? t("dashboard.profile.editor.shared.visible")
+                                    : t("dashboard.profile.editor.shared.hidden")}
                               </span>
                               <input
                                 type="checkbox"
@@ -1499,7 +1748,9 @@ export default function ProfileLayoutExperience({
 
                 <div style={compositionOptionGridStyle}>
                     <div style={{ display: "grid", gap: "10px" }}>
-                      <div style={livingSectionTitleStyle}>Widget density</div>
+                      <div style={livingSectionTitleStyle}>
+                        {t("dashboard.profile.editor.composition.widgetDensity")}
+                      </div>
                       <div style={compositionChoiceGridStyle}>
                         {PROFILE_COMPOSITION_DENSITY_OPTIONS.map((option) => {
                           const isSelected = previewComposition.density === option.value;
@@ -1519,10 +1770,26 @@ export default function ProfileLayoutExperience({
                               style={livingCardStyle(isSelected, previewPresence.accent)}
                             >
                               <div style={livingCardHeaderStyle}>
-                                <span>{option.name}</span>
+                                <span>
+                                  {getNamedOption(
+                                    t,
+                                    "compositionDensity",
+                                    option.value,
+                                    "name",
+                                    option.name,
+                                  )}
+                                </span>
                                 {isSelected ? <LuCheck size={16} /> : null}
                               </div>
-                              <div style={layoutCardDescriptionStyle}>{option.description}</div>
+                              <div style={layoutCardDescriptionStyle}>
+                                {getNamedOption(
+                                  t,
+                                  "compositionDensity",
+                                  option.value,
+                                  "description",
+                                  option.description,
+                                )}
+                              </div>
                             </button>
                           );
                         })}
@@ -1530,7 +1797,9 @@ export default function ProfileLayoutExperience({
                     </div>
 
                     <div style={{ display: "grid", gap: "10px" }}>
-                      <div style={livingSectionTitleStyle}>Section alignment</div>
+                      <div style={livingSectionTitleStyle}>
+                        {t("dashboard.profile.editor.composition.sectionAlignment")}
+                      </div>
                       <div style={compositionChoiceGridStyle}>
                         {PROFILE_COMPOSITION_ALIGNMENT_OPTIONS.map((option) => {
                           const isSelected = previewComposition.alignment === option.value;
@@ -1550,10 +1819,26 @@ export default function ProfileLayoutExperience({
                               style={livingCardStyle(isSelected, previewPresence.accent)}
                             >
                               <div style={livingCardHeaderStyle}>
-                                <span>{option.name}</span>
+                                <span>
+                                  {getNamedOption(
+                                    t,
+                                    "compositionAlignment",
+                                    option.value,
+                                    "name",
+                                    option.name,
+                                  )}
+                                </span>
                                 {isSelected ? <LuCheck size={16} /> : null}
                               </div>
-                              <div style={layoutCardDescriptionStyle}>{option.description}</div>
+                              <div style={layoutCardDescriptionStyle}>
+                                {getNamedOption(
+                                  t,
+                                  "compositionAlignment",
+                                  option.value,
+                                  "description",
+                                  option.description,
+                                )}
+                              </div>
                             </button>
                           );
                         })}
@@ -1561,7 +1846,9 @@ export default function ProfileLayoutExperience({
                     </div>
 
                     <div style={{ display: "grid", gap: "10px" }}>
-                      <div style={livingSectionTitleStyle}>Nickname typography</div>
+                      <div style={livingSectionTitleStyle}>
+                        {t("dashboard.profile.editor.composition.nameTypography")}
+                      </div>
                       <div style={compositionChoiceGridStyle}>
                         {PROFILE_NAME_TYPOGRAPHY_STYLE_OPTIONS.map((option) => {
                           const isSelected =
@@ -1585,10 +1872,26 @@ export default function ProfileLayoutExperience({
                               style={livingCardStyle(isSelected, previewPresence.accent)}
                             >
                               <div style={livingCardHeaderStyle}>
-                                <span>{option.name}</span>
+                                <span>
+                                  {getNamedOption(
+                                    t,
+                                    "nameTypography",
+                                    option.value,
+                                    "name",
+                                    option.name,
+                                  )}
+                                </span>
                                 {isSelected ? <LuCheck size={16} /> : null}
                               </div>
-                              <div style={layoutCardDescriptionStyle}>{option.description}</div>
+                              <div style={layoutCardDescriptionStyle}>
+                                {getNamedOption(
+                                  t,
+                                  "nameTypography",
+                                  option.value,
+                                  "description",
+                                  option.description,
+                                )}
+                              </div>
                             </button>
                           );
                         })}
@@ -1596,7 +1899,9 @@ export default function ProfileLayoutExperience({
                     </div>
 
                     <div style={{ display: "grid", gap: "10px" }}>
-                      <div style={livingSectionTitleStyle}>Link display</div>
+                      <div style={livingSectionTitleStyle}>
+                        {t("dashboard.profile.editor.composition.linkDisplay")}
+                      </div>
                       <div style={compositionChoiceGridStyle}>
                         {PROFILE_COMPOSITION_LINK_STYLE_OPTIONS.map((option) => {
                           const isSelected = previewComposition.linksStyle === option.value;
@@ -1616,10 +1921,26 @@ export default function ProfileLayoutExperience({
                               style={livingCardStyle(isSelected, previewPresence.accent)}
                             >
                               <div style={livingCardHeaderStyle}>
-                                <span>{option.name}</span>
+                                <span>
+                                  {getNamedOption(
+                                    t,
+                                    "compositionLinkStyle",
+                                    option.value,
+                                    "name",
+                                    option.name,
+                                  )}
+                                </span>
                                 {isSelected ? <LuCheck size={16} /> : null}
                               </div>
-                              <div style={layoutCardDescriptionStyle}>{option.description}</div>
+                              <div style={layoutCardDescriptionStyle}>
+                                {getNamedOption(
+                                  t,
+                                  "compositionLinkStyle",
+                                  option.value,
+                                  "description",
+                                  option.description,
+                                )}
+                              </div>
                             </button>
                           );
                         })}
@@ -1627,7 +1948,9 @@ export default function ProfileLayoutExperience({
                     </div>
 
                     <div style={{ display: "grid", gap: "10px" }}>
-                      <div style={livingSectionTitleStyle}>Social display</div>
+                      <div style={livingSectionTitleStyle}>
+                        {t("dashboard.profile.editor.composition.socialDisplay")}
+                      </div>
                       <div style={compositionChoiceGridStyle}>
                         {PROFILE_COMPOSITION_SOCIAL_STYLE_OPTIONS.map((option) => {
                           const isSelected = previewComposition.socialsStyle === option.value;
@@ -1647,10 +1970,26 @@ export default function ProfileLayoutExperience({
                               style={livingCardStyle(isSelected, previewPresence.accent)}
                             >
                               <div style={livingCardHeaderStyle}>
-                                <span>{option.name}</span>
+                                <span>
+                                  {getNamedOption(
+                                    t,
+                                    "compositionSocialStyle",
+                                    option.value,
+                                    "name",
+                                    option.name,
+                                  )}
+                                </span>
                                 {isSelected ? <LuCheck size={16} /> : null}
                               </div>
-                              <div style={layoutCardDescriptionStyle}>{option.description}</div>
+                              <div style={layoutCardDescriptionStyle}>
+                                {getNamedOption(
+                                  t,
+                                  "compositionSocialStyle",
+                                  option.value,
+                                  "description",
+                                  option.description,
+                                )}
+                              </div>
                             </button>
                           );
                         })}
@@ -1658,7 +1997,9 @@ export default function ProfileLayoutExperience({
                     </div>
 
                     <div style={{ display: "grid", gap: "10px" }}>
-                      <div style={livingSectionTitleStyle}>Metadata placement</div>
+                      <div style={livingSectionTitleStyle}>
+                        {t("dashboard.profile.editor.composition.metadataPlacement")}
+                      </div>
                       <div style={compositionChoiceGridStyle}>
                         {PROFILE_COMPOSITION_METADATA_PLACEMENT_OPTIONS.map((option) => {
                           const isSelected =
@@ -1682,10 +2023,26 @@ export default function ProfileLayoutExperience({
                               style={livingCardStyle(isSelected, previewPresence.accent)}
                             >
                               <div style={livingCardHeaderStyle}>
-                                <span>{option.name}</span>
+                                <span>
+                                  {getNamedOption(
+                                    t,
+                                    "metadataPlacement",
+                                    option.value,
+                                    "name",
+                                    option.name,
+                                  )}
+                                </span>
                                 {isSelected ? <LuCheck size={16} /> : null}
                               </div>
-                              <div style={layoutCardDescriptionStyle}>{option.description}</div>
+                              <div style={layoutCardDescriptionStyle}>
+                                {getNamedOption(
+                                  t,
+                                  "metadataPlacement",
+                                  option.value,
+                                  "description",
+                                  option.description,
+                                )}
+                              </div>
                             </button>
                           );
                         })}
@@ -1693,7 +2050,9 @@ export default function ProfileLayoutExperience({
                     </div>
 
                     <div style={{ display: "grid", gap: "10px" }}>
-                      <div style={livingSectionTitleStyle}>Identity badges</div>
+                      <div style={livingSectionTitleStyle}>
+                        {t("dashboard.profile.editor.composition.identityBadges")}
+                      </div>
                       <label
                         style={compositionToggleStyle(
                           previewComposition.metadata.showBadges,
@@ -1703,8 +2062,8 @@ export default function ProfileLayoutExperience({
                       >
                         <span>
                           {previewComposition.metadata.showBadges
-                            ? "Visible near name"
-                            : "Hidden"}
+                            ? t("dashboard.profile.editor.composition.visibleNearName")
+                            : t("dashboard.profile.editor.shared.hidden")}
                         </span>
                         <input
                           type="checkbox"
@@ -1724,7 +2083,9 @@ export default function ProfileLayoutExperience({
                     </div>
 
                     <div style={{ display: "grid", gap: "10px" }}>
-                      <div style={livingSectionTitleStyle}>Badge showcase mode</div>
+                      <div style={livingSectionTitleStyle}>
+                        {t("dashboard.profile.editor.composition.badgeShowcaseMode")}
+                      </div>
                       <div style={compositionChoiceGridStyle}>
                         {PROFILE_BADGE_SHOWCASE_MODE_OPTIONS.map((option) => {
                           const isSelected = previewComposition.metadata.badgeMode === option.value;
@@ -1747,10 +2108,26 @@ export default function ProfileLayoutExperience({
                               style={livingCardStyle(isSelected, previewPresence.accent)}
                             >
                               <div style={livingCardHeaderStyle}>
-                                <span>{option.name}</span>
+                                <span>
+                                  {getNamedOption(
+                                    t,
+                                    "badgeShowcaseMode",
+                                    option.value,
+                                    "name",
+                                    option.name,
+                                  )}
+                                </span>
                                 {isSelected ? <LuCheck size={16} /> : null}
                               </div>
-                              <div style={layoutCardDescriptionStyle}>{option.description}</div>
+                              <div style={layoutCardDescriptionStyle}>
+                                {getNamedOption(
+                                  t,
+                                  "badgeShowcaseMode",
+                                  option.value,
+                                  "description",
+                                  option.description,
+                                )}
+                              </div>
                             </button>
                           );
                         })}
@@ -1758,7 +2135,9 @@ export default function ProfileLayoutExperience({
                     </div>
 
                     <div style={{ display: "grid", gap: "10px" }}>
-                      <div style={livingSectionTitleStyle}>Badge glow</div>
+                      <div style={livingSectionTitleStyle}>
+                        {t("dashboard.profile.editor.composition.badgeGlow")}
+                      </div>
                       <div style={compositionChoiceGridStyle}>
                         {PROFILE_BADGE_STYLE_VARIANT_OPTIONS.map((option) => {
                           const isSelected =
@@ -1782,10 +2161,26 @@ export default function ProfileLayoutExperience({
                               style={livingCardStyle(isSelected, previewPresence.accent)}
                             >
                               <div style={livingCardHeaderStyle}>
-                                <span>{option.name}</span>
+                                <span>
+                                  {getNamedOption(
+                                    t,
+                                    "badgeStyle",
+                                    option.value,
+                                    "name",
+                                    option.name,
+                                  )}
+                                </span>
                                 {isSelected ? <LuCheck size={16} /> : null}
                               </div>
-                              <div style={layoutCardDescriptionStyle}>{option.description}</div>
+                              <div style={layoutCardDescriptionStyle}>
+                                {getNamedOption(
+                                  t,
+                                  "badgeStyle",
+                                  option.value,
+                                  "description",
+                                  option.description,
+                                )}
+                              </div>
                             </button>
                           );
                         })}
@@ -1793,7 +2188,9 @@ export default function ProfileLayoutExperience({
                     </div>
 
                     <div style={{ display: "grid", gap: "10px" }}>
-                      <div style={livingSectionTitleStyle}>Seasonal badge hook</div>
+                      <div style={livingSectionTitleStyle}>
+                        {t("dashboard.profile.editor.composition.seasonalBadgeHook")}
+                      </div>
                       <div style={compositionChoiceGridStyle}>
                         {PROFILE_BADGE_SEASONAL_THEME_OPTIONS.map((option) => {
                           const isSelected =
@@ -1817,10 +2214,26 @@ export default function ProfileLayoutExperience({
                               style={livingCardStyle(isSelected, previewPresence.accent)}
                             >
                               <div style={livingCardHeaderStyle}>
-                                <span>{option.name}</span>
+                                <span>
+                                  {getNamedOption(
+                                    t,
+                                    "badgeSeason",
+                                    option.value,
+                                    "name",
+                                    option.name,
+                                  )}
+                                </span>
                                 {isSelected ? <LuCheck size={16} /> : null}
                               </div>
-                              <div style={layoutCardDescriptionStyle}>{option.description}</div>
+                              <div style={layoutCardDescriptionStyle}>
+                                {getNamedOption(
+                                  t,
+                                  "badgeSeason",
+                                  option.value,
+                                  "description",
+                                  option.description,
+                                )}
+                              </div>
                             </button>
                           );
                         })}
@@ -1828,11 +2241,13 @@ export default function ProfileLayoutExperience({
                     </div>
 
                     <div style={{ display: "grid", gap: "10px" }}>
-                      <div style={livingSectionTitleStyle}>Favorite badges</div>
+                      <div style={livingSectionTitleStyle}>
+                        {t("dashboard.profile.editor.composition.favoriteBadges")}
+                      </div>
                       <div style={compositionChoiceGridStyle}>
                         {allBadges.length === 0 ? (
                           <div style={emptyCustomBlocksStyle}>
-                            Earn badges to pin favorites into the public badge showcase.
+                            {t("dashboard.profile.editor.composition.noBadges")}
                           </div>
                         ) : (
                           allBadges.map((badgeEntry) => {
@@ -1855,7 +2270,9 @@ export default function ProfileLayoutExperience({
                                   {isSelected ? <LuCheck size={16} /> : null}
                                 </div>
                                 <div style={layoutCardDescriptionStyle}>
-                                  {badgeEntry.badge.rarity || "common"} badge
+                                  {t("dashboard.profile.editor.composition.badgeRarity", {
+                                    rarity: badgeEntry.badge.rarity || "common",
+                                  })}
                                 </div>
                               </button>
                             );
@@ -1863,7 +2280,7 @@ export default function ProfileLayoutExperience({
                         )}
                       </div>
                       <div style={dashboardMutedTextStyle}>
-                        Up to 4 favorites are prioritized in the public showcase.
+                        {t("dashboard.profile.editor.composition.favoriteBadgesHelper")}
                       </div>
                     </div>
                 </div>
@@ -1872,14 +2289,14 @@ export default function ProfileLayoutExperience({
 
             <div style={compositionSectionStyle}>
               <DashboardSectionHeading
-                eyebrow="Custom Blocks"
-                title="Add showcase sections"
-                description="Use focused identity blocks for showcase, projects, gallery, and extras without turning the profile into a heavy page builder."
+                eyebrow={t("dashboard.profile.editor.customBlocks.eyebrow")}
+                title={t("dashboard.profile.editor.customBlocks.title")}
+                description={t("dashboard.profile.editor.customBlocks.description")}
               />
 
               <div style={{ display: "grid", gap: "12px" }}>
                 <div style={livingSectionTitleStyle}>
-                  Add block
+                  {t("dashboard.profile.editor.customBlocks.addBlock")}
                 </div>
                 <div style={compositionChoiceGridStyle}>
                   {PROFILE_CUSTOM_BLOCK_TYPE_OPTIONS.map((option) => {
@@ -1898,23 +2315,42 @@ export default function ProfileLayoutExperience({
                         <div style={presetPreviewStyle("custom", safeThemeColor)} />
                         <div style={{ display: "grid", gap: "8px", minWidth: 0 }}>
                           <div style={livingCardHeaderStyle}>
-                            <span>{option.name}</span>
+                            <span>
+                              {getNamedOption(
+                                t,
+                                "customBlockType",
+                                option.value,
+                                "name",
+                                option.name,
+                              )}
+                            </span>
                           </div>
-                          <div style={layoutCardDescriptionStyle}>{option.description}</div>
+                          <div style={layoutCardDescriptionStyle}>
+                            {getNamedOption(
+                              t,
+                              "customBlockType",
+                              option.value,
+                              "description",
+                              option.description,
+                            )}
+                          </div>
                         </div>
                       </button>
                     );
                   })}
                 </div>
                 <div style={dashboardMutedTextStyle}>
-                  {previewComposition.customBlocks.length}/{MAX_PROFILE_CUSTOM_BLOCKS} blocks used.
+                  {t("dashboard.profile.editor.customBlocks.blocksUsed", {
+                    used: previewComposition.customBlocks.length,
+                    total: MAX_PROFILE_CUSTOM_BLOCKS,
+                  })}
                 </div>
               </div>
 
               <div style={compositionRowsStyle}>
                 {previewComposition.customBlocks.length === 0 ? (
                   <div style={emptyCustomBlocksStyle}>
-                    No custom blocks yet. Add an about quote, showcase highlight, project card, gallery scene, or extra insert to shape the identity flow.
+                    {t("dashboard.profile.editor.customBlocks.empty")}
                   </div>
                 ) : (
                   previewComposition.customBlocks.map((block, index) => {
@@ -1927,8 +2363,24 @@ export default function ProfileLayoutExperience({
                       <div key={block.id} style={customBlockEditorCardStyle(block, safeThemeColor)}>
                         <div style={customBlockEditorHeaderStyle}>
                           <div style={{ display: "grid", gap: "4px", minWidth: 0 }}>
-                            <div style={compositionRowTitleStyle}>{meta.name}</div>
-                            <div style={layoutCardDescriptionStyle}>{meta.description}</div>
+                            <div style={compositionRowTitleStyle}>
+                              {getNamedOption(
+                                t,
+                                "customBlockType",
+                                meta.value,
+                                "name",
+                                meta.name,
+                              )}
+                            </div>
+                            <div style={layoutCardDescriptionStyle}>
+                              {getNamedOption(
+                                t,
+                                "customBlockType",
+                                meta.value,
+                                "description",
+                                meta.description,
+                              )}
+                            </div>
                           </div>
                           <div style={compositionRowActionsStyle}>
                             <button
@@ -1937,7 +2389,7 @@ export default function ProfileLayoutExperience({
                               disabled={!canMoveUp}
                               style={compositionMoveButtonStyle(canMoveUp)}
                             >
-                              Up
+                              {t("dashboard.profile.editor.shared.up")}
                             </button>
                             <button
                               type="button"
@@ -1945,21 +2397,21 @@ export default function ProfileLayoutExperience({
                               disabled={!canMoveDown}
                               style={compositionMoveButtonStyle(canMoveDown)}
                             >
-                              Down
+                              {t("dashboard.profile.editor.shared.down")}
                             </button>
                             <button
                               type="button"
                               onClick={() => removeCustomBlock(block.id)}
                               style={dashboardButtonStyle("secondary")}
                             >
-                              Remove
+                              {t("dashboard.profile.state.remove")}
                             </button>
                           </div>
                         </div>
 
                         <div style={customBlockEditorFieldsStyle}>
                           <label style={dashboardLabelStyle}>
-                            Block type
+                            {t("dashboard.profile.editor.customBlocks.fields.blockType")}
                             <select
                               value={block.type}
                               onChange={(event) =>
@@ -1983,14 +2435,20 @@ export default function ProfileLayoutExperience({
                             >
                               {PROFILE_CUSTOM_BLOCK_TYPE_OPTIONS.map((option) => (
                                 <option key={option.value} value={option.value}>
-                                  {option.name}
+                                  {getNamedOption(
+                                    t,
+                                    "customBlockType",
+                                    option.value,
+                                    "name",
+                                    option.name,
+                                  )}
                                 </option>
                               ))}
                             </select>
                           </label>
 
                           <label style={dashboardLabelStyle}>
-                            Alignment
+                            {t("dashboard.profile.editor.customBlocks.fields.alignment")}
                             <select
                               value={block.alignment}
                               onChange={(event) =>
@@ -2003,14 +2461,20 @@ export default function ProfileLayoutExperience({
                             >
                               {PROFILE_CUSTOM_BLOCK_ALIGNMENT_OPTIONS.map((option) => (
                                 <option key={option.value} value={option.value}>
-                                  {option.name}
+                                  {getNamedOption(
+                                    t,
+                                    "customBlockAlignment",
+                                    option.value,
+                                    "name",
+                                    option.name,
+                                  )}
                                 </option>
                               ))}
                             </select>
                           </label>
 
                           <label style={dashboardLabelStyle}>
-                            Width
+                            {t("dashboard.profile.editor.customBlocks.fields.width")}
                             <select
                               value={block.width}
                               onChange={(event) =>
@@ -2023,14 +2487,20 @@ export default function ProfileLayoutExperience({
                             >
                               {PROFILE_CUSTOM_BLOCK_WIDTH_OPTIONS.map((option) => (
                                 <option key={option.value} value={option.value}>
-                                  {option.name}
+                                  {getNamedOption(
+                                    t,
+                                    "customBlockWidth",
+                                    option.value,
+                                    "name",
+                                    option.name,
+                                  )}
                                 </option>
                               ))}
                             </select>
                           </label>
 
                           <label style={dashboardLabelStyle}>
-                            Accent color
+                            {t("dashboard.profile.editor.customBlocks.fields.accentColor")}
                             <input
                               type="text"
                               value={block.accentColor || ""}
@@ -2046,7 +2516,7 @@ export default function ProfileLayoutExperience({
                           </label>
 
                           <label style={dashboardLabelStyle}>
-                            Main text
+                            {t("dashboard.profile.editor.customBlocks.fields.mainText")}
                             <input
                               type="text"
                               value={block.text || ""}
@@ -2056,14 +2526,18 @@ export default function ProfileLayoutExperience({
                                   text: event.target.value,
                                 }))
                               }
-                              placeholder={customBlockTextPlaceholder(block)}
+                              placeholder={getCustomBlockTextPlaceholder(
+                                t,
+                                block.type,
+                                getDefaultCustomBlockTextPlaceholder(block),
+                              )}
                               style={dashboardInputStyle}
                             />
                           </label>
 
                           {blockSupportsSecondaryText(block.type) ? (
                             <label style={dashboardLabelStyle}>
-                              Secondary text
+                              {t("dashboard.profile.editor.customBlocks.fields.secondaryText")}
                               <input
                                 type="text"
                                 value={block.secondaryText || ""}
@@ -2073,7 +2547,13 @@ export default function ProfileLayoutExperience({
                                     secondaryText: event.target.value,
                                   }))
                                 }
-                                placeholder={block.type === "image-card" ? "Caption" : "Short supporting line"}
+                                placeholder={getCustomBlockSecondaryPlaceholder(
+                                  t,
+                                  block.type,
+                                  block.type === "image-card"
+                                    ? "Caption"
+                                    : "Short supporting line",
+                                )}
                                 style={dashboardInputStyle}
                               />
                             </label>
@@ -2081,7 +2561,7 @@ export default function ProfileLayoutExperience({
 
                           {blockSupportsImage(block.type) ? (
                             <label style={dashboardLabelStyle}>
-                              Image URL
+                              {t("dashboard.profile.editor.customBlocks.fields.imageUrl")}
                               <input
                                 type="text"
                                 value={block.imageUrl || ""}
@@ -2099,7 +2579,7 @@ export default function ProfileLayoutExperience({
 
                           {blockSupportsLink(block.type) ? (
                             <label style={dashboardLabelStyle}>
-                              Link URL
+                              {t("dashboard.profile.editor.customBlocks.fields.linkUrl")}
                               <input
                                 type="text"
                                 value={block.linkUrl || ""}
@@ -2118,7 +2598,11 @@ export default function ProfileLayoutExperience({
 
                         <div style={customBlockEditorToggleRowStyle}>
                           <label style={compositionToggleStyle(block.visible, safeThemeColor, false)}>
-                            <span>{block.visible ? "Visible" : "Hidden"}</span>
+                            <span>
+                              {block.visible
+                                ? t("dashboard.profile.editor.shared.visible")
+                                : t("dashboard.profile.editor.shared.hidden")}
+                            </span>
                             <input
                               type="checkbox"
                               checked={block.visible}
@@ -2133,7 +2617,11 @@ export default function ProfileLayoutExperience({
                           </label>
 
                           <label style={compositionToggleStyle(block.glow, safeThemeColor, false)}>
-                            <span>{block.glow ? "Glow" : "No glow"}</span>
+                            <span>
+                              {block.glow
+                                ? t("dashboard.profile.editor.customBlocks.glowOn")
+                                : t("dashboard.profile.editor.customBlocks.glowOff")}
+                            </span>
                             <input
                               type="checkbox"
                               checked={block.glow}
@@ -2154,7 +2642,11 @@ export default function ProfileLayoutExperience({
                               false,
                             )}
                           >
-                            <span>{block.transparency ? "Transparent" : "Solid"}</span>
+                            <span>
+                              {block.transparency
+                                ? t("dashboard.profile.editor.customBlocks.transparent")
+                                : t("dashboard.profile.editor.customBlocks.solid")}
+                            </span>
                             <input
                               type="checkbox"
                               checked={block.transparency}
@@ -2177,9 +2669,9 @@ export default function ProfileLayoutExperience({
 
             <div style={musicSectionStyle}>
               <DashboardSectionHeading
-                eyebrow="Profile Music"
-                title="Sound atmosphere"
-                description="Add a track or atmosphere that represents your profile."
+                eyebrow={t("dashboard.profile.editor.music.eyebrow")}
+                title={t("dashboard.profile.editor.music.title")}
+                description={t("dashboard.profile.editor.music.description")}
               />
 
               <input
@@ -2191,9 +2683,11 @@ export default function ProfileLayoutExperience({
 
               <label style={musicToggleStyle(profileMusicEnabled, previewPresence.accent)}>
                 <span style={musicToggleCopyStyle}>
-                  <span style={musicToggleTitleStyle}>Enable profile music</span>
+                  <span style={musicToggleTitleStyle}>
+                    {t("dashboard.profile.editor.music.enableLabel")}
+                  </span>
                   <span style={dashboardMutedTextStyle}>
-                    Show a lightweight music presence card on your public profile.
+                    {t("dashboard.profile.editor.music.enableHelper")}
                   </span>
                 </span>
 
@@ -2207,25 +2701,25 @@ export default function ProfileLayoutExperience({
 
               <div style={musicFieldsGridStyle}>
                 <label style={dashboardLabelStyle}>
-                  Song/title
+                  {t("dashboard.profile.editor.music.fields.title.label")}
                   <input
                     type="text"
                     name="profileMusicTitle"
                     value={profileMusicTitle}
                     onChange={(event) => setProfileMusicTitle(event.target.value)}
-                    placeholder="Night drive loop"
+                    placeholder={t("dashboard.profile.editor.music.fields.title.placeholder")}
                     style={dashboardInputStyle}
                   />
                 </label>
 
                 <label style={dashboardLabelStyle}>
-                  Artist
+                  {t("dashboard.profile.editor.music.fields.artist.label")}
                   <input
                     type="text"
                     name="profileMusicArtist"
                     value={profileMusicArtist}
                     onChange={(event) => setProfileMusicArtist(event.target.value)}
-                    placeholder="Your artist or vibe source"
+                    placeholder={t("dashboard.profile.editor.music.fields.artist.placeholder")}
                     style={dashboardInputStyle}
                   />
                 </label>
@@ -2243,7 +2737,7 @@ export default function ProfileLayoutExperience({
                 </label>
 
                 <label style={dashboardLabelStyle}>
-                  Provider
+                  {t("dashboard.profile.editor.music.fields.provider.label")}
                   <select
                     name="profileMusicProvider"
                     value={profileMusicProvider}
@@ -2266,10 +2760,10 @@ export default function ProfileLayoutExperience({
                 <div style={musicPreviewHeaderStyle}>
                   <div style={dashboardTagStyle(profileMusicEnabled ? "pink" : "violet")}>
                     <LuMusic4 size={13} />
-                    Preview player
+                    {t("dashboard.profile.editor.music.previewPlayer")}
                   </div>
                   <span style={dashboardMutedTextStyle}>
-                    No autoplay, embeds, or background audio.
+                    {t("dashboard.profile.editor.music.previewHelper")}
                   </span>
                 </div>
 
@@ -2287,8 +2781,12 @@ export default function ProfileLayoutExperience({
             </div>
 
             <FormActionButton
-              idleLabel={isDirty ? "Save profile settings" : "Saved state is up to date"}
-              pendingLabel="Saving profile..."
+              idleLabel={
+                isDirty
+                  ? t("dashboard.profile.editor.actions.save")
+                  : t("dashboard.profile.editor.actions.savedState")
+              }
+              pendingLabel={t("dashboard.profile.editor.actions.saving")}
               disabled={!isDirty}
               style={dashboardButtonStyle("primary", { fullWidth: true })}
             />
@@ -2297,81 +2795,206 @@ export default function ProfileLayoutExperience({
 
         <section style={dashboardSurfaceStyle}>
           <DashboardSectionHeading
-            eyebrow="Preview"
-            title="Live profile preview"
-            description="This preview uses the same renderer as your public profile, so layout, spacing, and premium polish match the live page."
+            eyebrow={t("dashboard.profile.preview.eyebrow")}
+            title={t("dashboard.profile.preview.title")}
+            description={t("dashboard.profile.preview.description")}
             actions={
               <>
-                <span style={dashboardTagStyle("pink")}>Previewing {deferredPreviewLayout}</span>
-                <span style={dashboardTagStyle("violet")}>
-                  {getProfilePresetDefinition(deferredPreviewComposition.preset)?.name ?? "Custom"}
+                <span style={dashboardTagStyle("pink")}>
+                  {t("dashboard.profile.preview.layoutTag", {
+                    layout: getProfileLayoutName(
+                      t,
+                      deferredPreviewLayout,
+                      deferredPreviewLayout,
+                    ),
+                  })}
                 </span>
                 <span style={dashboardTagStyle("violet")}>
-                  {getProfileDnaTuning(deferredPreviewComposition.dna).name} DNA
+                  {deferredPreviewComposition.preset
+                    ? getPresetName(
+                        t,
+                        deferredPreviewComposition.preset,
+                        getProfilePresetDefinition(deferredPreviewComposition.preset)?.name ??
+                          deferredPreviewComposition.preset,
+                      )
+                    : t("dashboard.profile.editor.shared.custom")}
                 </span>
-                <span style={dashboardTagStyle("violet")}>{deferredPreviewMood}</span>
-                <span style={dashboardTagStyle("violet")}>{deferredPreviewAura} aura</span>
                 <span style={dashboardTagStyle("violet")}>
-                  {previewSceneAppearance.scene.name}
+                  {t("dashboard.profile.preview.dnaTag", {
+                    dna: getDnaName(
+                      t,
+                      deferredPreviewComposition.dna,
+                      getProfileDnaTuning(deferredPreviewComposition.dna).name,
+                    ),
+                  })}
+                </span>
+                <span style={dashboardTagStyle("violet")}>
+                  {getMoodName(t, deferredPreviewMood, deferredPreviewMood)}
+                </span>
+                <span style={dashboardTagStyle("violet")}>
+                  {t("dashboard.profile.preview.auraTag", {
+                    aura: getAuraName(t, deferredPreviewAura, deferredPreviewAura),
+                  })}
+                </span>
+                <span style={dashboardTagStyle("violet")}>
+                  {getSceneName(
+                    t,
+                    previewSceneAppearance.scene.value,
+                    previewSceneAppearance.scene.name,
+                  )}
                 </span>
                 <span style={dashboardTagStyle("violet")}>
                   {deferredPreviewNameEffects.length > 0
-                    ? deferredPreviewNameEffects.join(" + ")
-                    : "No name effect"}
+                    ? deferredPreviewNameEffects
+                        .map((effect) => getNameEffectName(t, effect, effect))
+                        .join(" + ")
+                    : t("dashboard.profile.preview.noNameEffect")}
                 </span>
                 <span style={dashboardTagStyle("violet")}>
-                  {deferredPreviewBackgroundIntensity} bg
+                  {t("dashboard.profile.preview.backgroundTag", {
+                    value: getNamedOption(
+                      t,
+                      "backgroundIntensity",
+                      deferredPreviewBackgroundIntensity,
+                      "name",
+                      deferredPreviewBackgroundIntensity,
+                    ),
+                  })}
                 </span>
                 <span style={dashboardTagStyle("violet")}>
-                  {deferredPreviewGlassIntensity} glass
+                  {t("dashboard.profile.preview.glassTag", {
+                    value: getNamedOption(
+                      t,
+                      "glassIntensity",
+                      deferredPreviewGlassIntensity,
+                      "name",
+                      deferredPreviewGlassIntensity,
+                    ),
+                  })}
                 </span>
                 <span style={dashboardTagStyle("violet")}>
-                  {deferredPreviewBannerStyle} banner
+                  {t("dashboard.profile.preview.bannerTag", {
+                    value: getNamedOption(
+                      t,
+                      "bannerStyle",
+                      deferredPreviewBannerStyle,
+                      "name",
+                      deferredPreviewBannerStyle,
+                    ),
+                  })}
                 </span>
                 <span style={dashboardTagStyle("violet")}>
-                  {deferredPreviewDensity} density
+                  {t("dashboard.profile.preview.densityTag", {
+                    value: getNamedOption(
+                      t,
+                      "density",
+                      deferredPreviewDensity,
+                      "name",
+                      deferredPreviewDensity,
+                    ),
+                  })}
                 </span>
                 <span style={dashboardTagStyle("violet")}>
-                  {deferredPreviewCardStyle} cards
+                  {t("dashboard.profile.preview.cardsTag", {
+                    value: getNamedOption(
+                      t,
+                      "cardStyle",
+                      deferredPreviewCardStyle,
+                      "name",
+                      deferredPreviewCardStyle,
+                    ),
+                  })}
                 </span>
                 <span style={dashboardTagStyle("violet")}>
-                  {deferredPreviewCornerStyle} corners
+                  {t("dashboard.profile.preview.cornersTag", {
+                    value: getNamedOption(
+                      t,
+                      "cornerStyle",
+                      deferredPreviewCornerStyle,
+                      "name",
+                      deferredPreviewCornerStyle,
+                    ),
+                  })}
                 </span>
                 <span style={dashboardTagStyle("violet")}>
-                  {deferredPreviewMotionLevel} motion
+                  {t("dashboard.profile.preview.motionTag", {
+                    value: getNamedOption(
+                      t,
+                      "motionLevel",
+                      deferredPreviewMotionLevel,
+                      "name",
+                      deferredPreviewMotionLevel,
+                    ),
+                  })}
                 </span>
                 <span style={dashboardTagStyle("violet")}>
-                  {deferredPreviewComposition.mode} mode
+                  {t("dashboard.profile.preview.modeTag", {
+                    value: getNamedOption(
+                      t,
+                      "compositionMode",
+                      deferredPreviewComposition.mode,
+                      "name",
+                      deferredPreviewComposition.mode,
+                    ),
+                  })}
                 </span>
                 <span style={dashboardTagStyle("violet")}>
-                  {deferredPreviewComposition.density} composition
+                  {t("dashboard.profile.preview.compositionDensityTag", {
+                    value: getNamedOption(
+                      t,
+                      "compositionDensity",
+                      deferredPreviewComposition.density,
+                      "name",
+                      deferredPreviewComposition.density,
+                    ),
+                  })}
                 </span>
                 <span style={dashboardTagStyle("violet")}>
-                  {deferredPreviewComposition.linksStyle} links
+                  {t("dashboard.profile.preview.linksTag", {
+                    value: getNamedOption(
+                      t,
+                      "compositionLinkStyle",
+                      deferredPreviewComposition.linksStyle,
+                      "name",
+                      deferredPreviewComposition.linksStyle,
+                    ),
+                  })}
                 </span>
                 <span style={dashboardTagStyle("violet")}>
-                  {deferredPreviewComposition.socialsStyle} socials
+                  {t("dashboard.profile.preview.socialsTag", {
+                    value: getNamedOption(
+                      t,
+                      "compositionSocialStyle",
+                      deferredPreviewComposition.socialsStyle,
+                      "name",
+                      deferredPreviewComposition.socialsStyle,
+                    ),
+                  })}
                 </span>
                 <span style={dashboardTagStyle("violet")}>
-                  {deferredPreviewComposition.customBlocks.length} custom blocks
+                  {t("dashboard.profile.preview.customBlocksTag", {
+                    count: deferredPreviewComposition.customBlocks.length,
+                  })}
                 </span>
                 <span style={dashboardTagStyle(isDirty ? "violet" : "green")}>
-                  {isDirty ? "Unsaved changes" : "Saved state"}
+                  {isDirty
+                    ? t("dashboard.profile.preview.unsaved")
+                    : t("dashboard.profile.state.saved")}
                 </span>
               </>
             }
           />
 
-          <div style={previewFrameStyle}>
-            <div style={previewChromeStyle(previewPresence.accent, previewPresence.contrast)}>
-              <div style={previewChromeBadgeStyle}>
-                <LuLayoutTemplate size={13} />
-                Real public renderer
+            <div style={previewFrameStyle}>
+              <div style={previewChromeStyle(previewPresence.accent, previewPresence.contrast)}>
+                <div style={previewChromeBadgeStyle}>
+                  <LuLayoutTemplate size={13} />
+                  {t("dashboard.profile.preview.rendererBadge")}
+                </div>
+                <div style={previewChromeTextStyle}>
+                  {t("dashboard.profile.preview.rendererDescription")}
+                </div>
               </div>
-              <div style={previewChromeTextStyle}>
-                Instant layout switching, live copy updates, and a shared mood/aura atmosphere.
-              </div>
-            </div>
 
             <div
               ref={previewViewportRef}
@@ -2407,7 +3030,7 @@ export default function ProfileLayoutExperience({
                     decorationOffsetY={decorationOffsetY}
                     featuredBadges={featuredBadges}
                     extraBadgeCount={extraBadgeCount}
-                    heroPills={heroPills}
+                    heroPills={localizedHeroPills}
                     likes={likes}
                     dislikes={dislikes}
                     views={views}
@@ -2418,7 +3041,7 @@ export default function ProfileLayoutExperience({
                     composition={deferredPreviewComposition}
                     initialMyReaction={null}
                     preview
-                    previewMessage="This is exactly how your live profile will look."
+                    previewMessage={t("dashboard.profile.preview.liveMessage")}
                   />
                 </div>
               </div>
@@ -2427,10 +3050,14 @@ export default function ProfileLayoutExperience({
             <div style={previewFooterStyle}>
               <div style={previewFooterCopyStyle}>
                 <LuSparkles size={13} />
-                Saved vibe: {savedMood} with {savedAura} aura in {savedSceneName}
+                {t("dashboard.profile.preview.savedVibe", {
+                  mood: getMoodName(t, savedMood, savedMood),
+                  aura: getAuraName(t, savedAura, savedAura),
+                  scene: savedSceneName,
+                })}
               </div>
               <div style={dashboardMutedTextStyle}>
-                The preview updates from your unsaved editor values first, then the public profile changes after save.
+                {t("dashboard.profile.preview.footerDescription")}
               </div>
             </div>
           </div>
@@ -3382,7 +4009,7 @@ function getVisibilityKeyForBlock(block: ProfileCompositionBlock) {
   return "extras" as const;
 }
 
-function getCompositionBlockLabel(block: ProfileCompositionBlock) {
+function getDefaultCompositionBlockLabel(block: ProfileCompositionBlock) {
   if (block === "identity") {
     return "Identity";
   }
@@ -3418,7 +4045,7 @@ function getCompositionBlockLabel(block: ProfileCompositionBlock) {
   return "Extras";
 }
 
-function getCompositionBlockDescription(block: ProfileCompositionBlock) {
+function getDefaultCompositionBlockDescription(block: ProfileCompositionBlock) {
   if (block === "identity") {
     return "Avatar, name, badges, and the anchor point of the full public identity scene.";
   }
@@ -3628,7 +4255,7 @@ function normalizeThemeColor(value: string) {
   return "#f472b6";
 }
 
-function customBlockTextPlaceholder(block: ProfileCustomBlock) {
+function getDefaultCustomBlockTextPlaceholder(block: ProfileCustomBlock) {
   if (block.type === "quote") {
     return "Short atmospheric quote";
   }

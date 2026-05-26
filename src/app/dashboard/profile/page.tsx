@@ -1,16 +1,7 @@
-import type { CSSProperties } from "react";
-import Link from "next/link";
 import { FaCircle, FaCrown, FaShieldHalved } from "react-icons/fa6";
 import { LuSparkles } from "react-icons/lu";
 import {
-  DashboardNotice,
-  DashboardPageHeader,
-  dashboardAutoGridStyle,
-  dashboardButtonStyle,
-  dashboardMutedTextStyle,
   dashboardPageStyle,
-  dashboardSurfaceStyle,
-  dashboardTagStyle,
 } from "@/app/dashboard/components/DashboardUI";
 import { redirectWithClearedSession, requireUser } from "@/app/lib/auth";
 import { getFeaturedPublicBadges } from "@/app/lib/badges";
@@ -50,8 +41,7 @@ import type {
 } from "@/app/[username]/PublicProfileRenderer";
 import type { PublicProfileLayout } from "@/app/[username]/ProfileLayoutVariants";
 import type { PublicSocialBlock } from "@/app/[username]/SocialPresenceSection";
-import ProfileLayoutExperience from "./ProfileLayoutExperience";
-import ProfileMediaUploader from "./ProfileMediaUploader";
+import ProfileSettingsClient from "./ProfileSettingsClient";
 
 type PageProps = {
   searchParams?: Promise<{
@@ -73,70 +63,17 @@ export default async function ProfileSettingsPage({ searchParams }: PageProps) {
 
   return (
     <main style={dashboardPageStyle}>
-      <DashboardPageHeader
-        eyebrow="Profile editor"
-        title="Refine the public identity visitors see first."
-        description="Update profile copy, theme color, media, and layout while keeping a real preview of the final presentation."
-        actions={
-          <>
-            <Link href="/dashboard" style={dashboardButtonStyle("secondary")}>
-              Back to dashboard
-            </Link>
-            <Link
-              href={`/${resolvedUser.username}`}
-              style={dashboardButtonStyle("primary")}
-              target="_blank"
-            >
-              Open profile
-            </Link>
-          </>
-        }
-        aside={
-          <div style={summaryCardStyle}>
-            <div style={dashboardTagStyle("pink")}>
-              {profileData.layout} layout
-            </div>
-            <div style={{ display: "grid", gap: "8px" }}>
-              <div style={summaryValueStyle}>
-                {resolvedUser.displayName || resolvedUser.username}
-              </div>
-              <div style={dashboardMutedTextStyle}>@{resolvedUser.username}</div>
-              <div style={dashboardMutedTextStyle}>
-                {resolvedUser.bio || "Add a short bio to make the profile feel more complete."}
-              </div>
-            </div>
-          </div>
-        }
-      />
-
-      {params.success === "saved" ? (
-        <DashboardNotice tone="success">Profile saved successfully.</DashboardNotice>
-      ) : null}
-      {params.error === "save-failed" ? (
-        <DashboardNotice tone="error">
-          Unable to save the profile right now.
-        </DashboardNotice>
-      ) : null}
-
-      <section style={dashboardAutoGridStyle(320)}>
-        <ProfileMediaUploader
-          type="avatar"
-          currentUrl={resolvedUser.avatarUrl}
-          themeColor={resolvedUser.themeColor}
-        />
-
-        <ProfileMediaUploader
-          type="banner"
-          currentUrl={resolvedUser.bannerUrl}
-          themeColor={resolvedUser.themeColor}
-        />
-      </section>
-
-      <ProfileLayoutExperience
+      <ProfileSettingsClient
+        username={resolvedUser.username}
+        displayName={resolvedUser.displayName || resolvedUser.username}
+        bio={resolvedUser.bio}
+        themeColor={resolvedUser.themeColor}
+        savedLayout={profileData.layout}
+        showSavedNotice={params.success === "saved"}
+        showSaveFailedNotice={params.error === "save-failed"}
         initialDisplayName={resolvedUser.displayName || ""}
         initialBio={resolvedUser.bio || ""}
         initialThemeColor={resolvedUser.themeColor || "#f472b6"}
-        savedLayout={profileData.layout}
         savedMood={profileData.mood}
         savedAura={profileData.aura}
         savedScene={profileData.scene}
@@ -546,16 +483,3 @@ function readMetadataValue(
   const value = metadata[key];
   return typeof value === "string" && value.trim() ? value.trim() : null;
 }
-
-const summaryCardStyle: CSSProperties = {
-  ...dashboardSurfaceStyle,
-  padding: "20px",
-  gap: "14px",
-};
-
-const summaryValueStyle: CSSProperties = {
-  color: "#ffffff",
-  fontSize: "20px",
-  fontWeight: 900,
-  lineHeight: 1.2,
-};

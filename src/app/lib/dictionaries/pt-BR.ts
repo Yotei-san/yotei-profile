@@ -1,3 +1,5 @@
+import { dashboardProfilePtBR } from "@/app/lib/dictionaries/dashboard-profile";
+
 const ptBR = {
   common: {
     appName: "Yotei",
@@ -302,6 +304,7 @@ const ptBR = {
         },
       },
     },
+    profile: dashboardProfilePtBR,
   },
   pricing: {
     eyebrow: "Preços",

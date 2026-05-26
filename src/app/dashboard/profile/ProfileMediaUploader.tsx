@@ -9,13 +9,14 @@ import {
   PROFILE_BANNER_IMAGE_MAX_BYTES,
   PROFILE_BANNER_VIDEO_MAX_BYTES,
   PROFILE_IMAGE_ACCEPT,
+  formatBytes,
   getMediaKind,
-  getProfileMediaSizeError,
-  getProfileMediaTypeError,
   isProfileBannerVideoMimeType,
   isProfileImageMimeType,
   type ProfileMediaPurpose,
 } from "@/app/lib/profile-media";
+import { useI18n } from "@/app/components/I18nProvider";
+import type { TranslationKey } from "@/app/lib/i18n";
 
 type Props = {
   type: "avatar" | "banner";
@@ -36,11 +37,17 @@ const AVATAR_PREVIEW_SIZE = 190;
 const BANNER_WIDTH = 1600;
 const BANNER_HEIGHT = 500;
 
+type Translator = (
+  key: TranslationKey,
+  values?: Record<string, string | number | boolean | null | undefined>,
+) => string;
+
 export default function ProfileMediaUploader({
   type,
   currentUrl,
   themeColor,
 }: Props) {
+  const { t } = useI18n();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const dragRef = useRef<{
     startX: number;
@@ -127,7 +134,7 @@ export default function ProfileMediaUploader({
 
     if (!file || isBusy) return;
 
-    const validationError = validateSelectedFile(file, type);
+    const validationError = validateSelectedFile(file, type, t);
 
     if (validationError) {
       setError(validationError);
@@ -207,11 +214,11 @@ export default function ProfileMediaUploader({
     setError(null);
 
     try {
-      await saveProfileMedia(isAvatar ? { avatarUrl: "" } : { bannerUrl: "" });
+      await saveProfileMedia(isAvatar ? { avatarUrl: "" } : { bannerUrl: "" }, t);
 
       window.location.reload();
     } catch (err) {
-      setError(getClientUploadErrorMessage(err, "Falha ao remover media."));
+      setError(getClientUploadErrorMessage(err, t("dashboard.profile.media.removeFailed"), t));
     } finally {
       setIsSaving(false);
     }
@@ -241,7 +248,7 @@ export default function ProfileMediaUploader({
         });
       }
 
-      const uploadValidationError = validateSelectedFile(fileToUpload, type);
+      const uploadValidationError = validateSelectedFile(fileToUpload, type, t);
 
       if (uploadValidationError) {
         throw new Error(uploadValidationError);
@@ -262,19 +269,20 @@ export default function ProfileMediaUploader({
       });
 
       if (!uploadResult?.url) {
-        throw new Error("Falha no upload.");
+        throw new Error(t("dashboard.profile.media.uploadFailed"));
       }
 
       setUploadProgress(92);
 
       await saveProfileMedia(
-        isAvatar ? { avatarUrl: uploadResult.url } : { bannerUrl: uploadResult.url }
+        isAvatar ? { avatarUrl: uploadResult.url } : { bannerUrl: uploadResult.url },
+        t,
       );
 
       setUploadProgress(100);
       window.location.reload();
     } catch (err) {
-      setError(getClientUploadErrorMessage(err, "Falha no upload."));
+      setError(getClientUploadErrorMessage(err, t("dashboard.profile.media.uploadFailed"), t));
       setUploadProgress(0);
     } finally {
       setIsUploading(false);
@@ -291,10 +299,14 @@ export default function ProfileMediaUploader({
 
   const accept = isAvatar ? PROFILE_IMAGE_ACCEPT : PROFILE_BANNER_ACCEPT;
   const dropzoneFormats = isAvatar
-    ? "PNG, JPG, WEBP e GIF"
-    : "PNG, JPG, WEBP, GIF, MP4, WebM e MOV";
-  const uploadActionLabel = isAvatar ? "Salvar imagem" : "Salvar banner";
-  const pickActionLabel = isAvatar ? "Escolher imagem" : "Escolher banner";
+    ? t("dashboard.profile.media.avatar.formats")
+    : t("dashboard.profile.media.banner.formats");
+  const uploadActionLabel = isAvatar
+    ? t("dashboard.profile.media.avatar.save")
+    : t("dashboard.profile.media.banner.save");
+  const pickActionLabel = isAvatar
+    ? t("dashboard.profile.media.avatar.pick")
+    : t("dashboard.profile.media.banner.pick");
   const zoomMin = isAvatar ? 0.35 : 1;
   const positionLimit = isAvatar ? 320 : 240;
 
@@ -311,16 +323,18 @@ export default function ProfileMediaUploader({
     >
       <div>
         <h2 style={{ margin: 0, fontSize: "24px" }}>
-          {isAvatar ? "Avatar" : "Banner"}
+          {isAvatar
+            ? t("dashboard.profile.media.avatar.title")
+            : t("dashboard.profile.media.banner.title")}
         </h2>
         <p style={{ color: "#a3a3a3", marginTop: "8px", marginBottom: 0 }}>
           {isAvatar
-            ? "Arraste arquivo, enquadre e compare antes e depois."
-            : "Banners aceitam imagem, GIF ou video MP4/WebM/MOV."}
+            ? t("dashboard.profile.media.avatar.description")
+            : t("dashboard.profile.media.banner.description")}
         </p>
         {!isAvatar ? (
           <p style={{ color: "#71717a", marginTop: "8px", marginBottom: 0, fontSize: "13px" }}>
-            Recomendado: video curto, 5-10s, horizontal, ate 30MB.
+            {t("dashboard.profile.media.banner.recommendation")}
           </p>
         ) : null}
       </div>
@@ -369,18 +383,20 @@ export default function ProfileMediaUploader({
           </div>
 
           <div style={{ fontWeight: 800, fontSize: "16px" }}>
-            {isAvatar ? "Arraste e solte seu avatar aqui" : "Arraste e solte seu banner aqui"}
+            {isAvatar
+              ? t("dashboard.profile.media.avatar.dropTitle")
+              : t("dashboard.profile.media.banner.dropTitle")}
           </div>
 
           <div style={{ color: "#a3a3a3", fontSize: "14px" }}>
-            ou clique para escolher do seu PC
+            {t("dashboard.profile.media.common.dropSubtitle")}
           </div>
 
           <div style={{ color: "#71717a", fontSize: "12px" }}>{dropzoneFormats}</div>
           <div style={{ color: "#71717a", fontSize: "12px" }}>
             {isAvatar
-              ? "Maximo 8MB."
-              : "Imagem/GIF ate 15MB. Video ate 30MB."}
+              ? t("dashboard.profile.media.avatar.limit")
+              : t("dashboard.profile.media.banner.limit")}
           </div>
         </div>
       </div>
@@ -404,7 +420,11 @@ export default function ProfileMediaUploader({
               fontWeight: 700,
             }}
           >
-            <span>{isAvatar ? "Enviando imagem" : "Enviando banner"}</span>
+            <span>
+              {isAvatar
+                ? t("dashboard.profile.media.avatar.uploading")
+                : t("dashboard.profile.media.banner.uploading")}
+            </span>
             <span>{uploadProgress}%</span>
           </div>
 
@@ -436,15 +456,15 @@ export default function ProfileMediaUploader({
           gap: "16px",
         }}
       >
-        <CompareCard title="Antes">
+        <CompareCard title={t("dashboard.profile.media.common.before")}>
           {isAvatar ? (
-            <AvatarStaticPreview imageUrl={currentUrl || ""} accent={accent} />
+            <AvatarStaticPreview imageUrl={currentUrl || ""} accent={accent} t={t} />
           ) : (
-            <BannerStaticPreview mediaUrl={currentUrl || ""} accent={accent} />
+            <BannerStaticPreview mediaUrl={currentUrl || ""} accent={accent} t={t} />
           )}
         </CompareCard>
 
-        <CompareCard title="Depois">
+        <CompareCard title={t("dashboard.profile.media.common.after")}>
           {isAvatar ? (
             <AvatarEditorPreview
               imageUrl={activePreview}
@@ -452,6 +472,7 @@ export default function ProfileMediaUploader({
               fitMode={avatarFitMode}
               accent={accent}
               sourceMime={sourceMime}
+              t={t}
               onPointerDown={onPointerDown}
               onPointerMove={onPointerMove}
               onPointerUp={onPointerUp}
@@ -462,6 +483,7 @@ export default function ProfileMediaUploader({
               crop={crop}
               accent={accent}
               sourceMime={sourceMime}
+              t={t}
               onPointerDown={onPointerDown}
               onPointerMove={onPointerMove}
               onPointerUp={onPointerUp}
@@ -474,28 +496,30 @@ export default function ProfileMediaUploader({
         <div style={{ display: "grid", gap: "12px" }}>
           {isAvatar ? (
             <div style={{ display: "grid", gap: "8px" }}>
-              <div style={labelStyle}>Enquadramento</div>
+              <div style={labelStyle}>{t("dashboard.profile.media.avatar.framing")}</div>
               <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
                 <button
                   type="button"
                   onClick={() => setAvatarFitMode("cover")}
                   style={avatarFitMode === "cover" ? primaryButtonStyle : ghostButtonStyle}
                 >
-                  Preencher avatar
+                  {t("dashboard.profile.media.avatar.fill")}
                 </button>
                 <button
                   type="button"
                   onClick={() => setAvatarFitMode("contain")}
                   style={avatarFitMode === "contain" ? primaryButtonStyle : ghostButtonStyle}
                 >
-                  Mostrar imagem inteira
+                  {t("dashboard.profile.media.avatar.fullImage")}
                 </button>
               </div>
             </div>
           ) : null}
 
           <label style={labelStyle}>
-            Zoom: {crop.zoom.toFixed(2)}x
+            {t("dashboard.profile.media.common.zoom", {
+              amount: crop.zoom.toFixed(2),
+            })}
             <input
               type="range"
               min={String(zoomMin)}
@@ -516,7 +540,7 @@ export default function ProfileMediaUploader({
             }}
           >
             <label style={labelStyle}>
-              Posicao X
+              {t("dashboard.profile.media.common.positionX")}
               <input
                 type="range"
                 min={String(-positionLimit)}
@@ -533,7 +557,7 @@ export default function ProfileMediaUploader({
             </label>
 
             <label style={labelStyle}>
-              Posicao Y
+              {t("dashboard.profile.media.common.positionY")}
               <input
                 type="range"
                 min={String(-positionLimit)}
@@ -573,8 +597,7 @@ export default function ProfileMediaUploader({
 
           {isAvatar ? (
             <div style={{ color: "#a3a3a3", fontSize: "12px", lineHeight: 1.6 }}>
-              Use "Mostrar imagem inteira" para imagens largas. O arquivo salvo respeita o
-              mesmo zoom e deslocamento mostrados no preview.
+              {t("dashboard.profile.media.avatar.fullImageHelper")}
             </div>
           ) : null}
         </div>
@@ -590,8 +613,7 @@ export default function ProfileMediaUploader({
             lineHeight: 1.65,
           }}
         >
-          Video detectado: o banner sera enviado sem recorte e reproduzido com autoplay,
-          muted, loop e playsInline no perfil publico.
+          {t("dashboard.profile.media.banner.videoDetected")}
         </div>
       )}
 
@@ -602,7 +624,7 @@ export default function ProfileMediaUploader({
           disabled={isBusy}
           style={buttonStyleForState(primaryButtonStyle, isBusy)}
         >
-          {isBusy ? "Aguarde..." : pickActionLabel}
+          {isBusy ? t("dashboard.profile.media.common.pleaseWait") : pickActionLabel}
         </button>
 
         <button
@@ -611,7 +633,7 @@ export default function ProfileMediaUploader({
           disabled={!sourceUrl || isBusy}
           style={buttonStyleForState(primaryButtonStyle, !sourceUrl || isBusy)}
         >
-          {isUploading ? "Salvando..." : uploadActionLabel}
+          {isUploading ? t("dashboard.profile.media.common.saving") : uploadActionLabel}
         </button>
 
         <button
@@ -623,7 +645,7 @@ export default function ProfileMediaUploader({
             !sourceUrl || isVideoBannerPreview || isBusy
           )}
         >
-          Resetar ajuste
+          {t("dashboard.profile.media.common.resetAdjustment")}
         </button>
 
         <button
@@ -632,7 +654,7 @@ export default function ProfileMediaUploader({
           disabled={!sourceUrl || isBusy}
           style={buttonStyleForState(ghostButtonStyle, !sourceUrl || isBusy)}
         >
-          Limpar editor
+          {t("dashboard.profile.media.common.clearEditor")}
         </button>
 
         <button
@@ -641,7 +663,9 @@ export default function ProfileMediaUploader({
           disabled={isBusy}
           style={buttonStyleForState(dangerButtonStyle, isBusy)}
         >
-          {isSaving ? "Removendo..." : "Remover"}
+          {isSaving
+            ? t("dashboard.profile.media.common.removing")
+            : t("dashboard.profile.state.remove")}
         </button>
       </div>
 
@@ -706,9 +730,11 @@ function CompareCard({
 function AvatarStaticPreview({
   imageUrl,
   accent,
+  t,
 }: {
   imageUrl: string;
   accent: string;
+  t: Translator;
 }) {
   return (
     <div
@@ -734,7 +760,7 @@ function AvatarStaticPreview({
         {imageUrl ? (
           <img
             src={imageUrl}
-            alt="Avatar atual"
+            alt={t("dashboard.profile.media.avatar.currentAlt")}
             style={{
               width: "100%",
               height: "100%",
@@ -742,7 +768,7 @@ function AvatarStaticPreview({
             }}
           />
         ) : (
-          <EmptyPlaceholder text="Sem avatar atual" />
+          <EmptyPlaceholder text={t("dashboard.profile.media.avatar.noCurrent")} />
         )}
       </div>
     </div>
@@ -752,9 +778,11 @@ function AvatarStaticPreview({
 function BannerStaticPreview({
   mediaUrl,
   accent,
+  t,
 }: {
   mediaUrl: string;
   accent: string;
+  t: Translator;
 }) {
   return (
     <div
@@ -764,7 +792,7 @@ function BannerStaticPreview({
         placeItems: "center",
       }}
     >
-      <BannerFrame mediaUrl={mediaUrl} accent={accent} />
+      <BannerFrame mediaUrl={mediaUrl} accent={accent} t={t} />
     </div>
   );
 }
@@ -775,6 +803,7 @@ function AvatarEditorPreview({
   fitMode,
   accent,
   sourceMime,
+  t,
   onPointerDown,
   onPointerMove,
   onPointerUp,
@@ -784,6 +813,7 @@ function AvatarEditorPreview({
   fitMode: AvatarFitMode;
   accent: string;
   sourceMime: string | null;
+  t: Translator;
   onPointerDown: (e: PointerEvent<HTMLDivElement>) => void;
   onPointerMove: (e: PointerEvent<HTMLDivElement>) => void;
   onPointerUp: () => void;
@@ -861,7 +891,7 @@ function AvatarEditorPreview({
             {layout ? (
               <img
                 src={imageUrl}
-                alt="Avatar preview"
+                alt={t("dashboard.profile.media.avatar.previewAlt")}
                 style={{
                   position: "absolute",
                   left: `${layout.x}px`,
@@ -881,18 +911,18 @@ function AvatarEditorPreview({
                   fontSize: "12px",
                 }}
               >
-                Carregando preview...
+                {t("dashboard.profile.media.common.loadingPreview")}
               </div>
             )}
           </>
         ) : (
-          <EmptyPlaceholder text="Escolha uma imagem" />
+          <EmptyPlaceholder text={t("dashboard.profile.media.common.chooseImage")} />
         )}
       </div>
 
       {isGif ? (
         <div style={{ marginTop: "12px", color: "#a3a3a3", fontSize: "12px" }}>
-          GIF detectado: a animacao sera preservada.
+          {t("dashboard.profile.media.common.gifDetected")}
         </div>
       ) : null}
     </div>
@@ -904,6 +934,7 @@ function BannerEditorPreview({
   crop,
   accent,
   sourceMime,
+  t,
   onPointerDown,
   onPointerMove,
   onPointerUp,
@@ -912,6 +943,7 @@ function BannerEditorPreview({
   crop: CropState;
   accent: string;
   sourceMime: string | null;
+  t: Translator;
   onPointerDown: (e: PointerEvent<HTMLDivElement>) => void;
   onPointerMove: (e: PointerEvent<HTMLDivElement>) => void;
   onPointerUp: () => void;
@@ -932,9 +964,9 @@ function BannerEditorPreview({
     >
       {mediaKind === "video" ? (
         <>
-          <BannerFrame mediaUrl={mediaUrl} accent={accent} mediaKind="video" />
+          <BannerFrame mediaUrl={mediaUrl} accent={accent} mediaKind="video" t={t} />
           <div style={{ marginTop: "12px", color: "#a3a3a3", fontSize: "12px" }}>
-            Video detectado: sera enviado sem recorte.
+            {t("dashboard.profile.media.banner.videoUploadDirect")}
           </div>
         </>
       ) : (
@@ -959,7 +991,7 @@ function BannerEditorPreview({
             {mediaUrl ? (
               <img
                 src={mediaUrl}
-                alt="Banner preview"
+                alt={t("dashboard.profile.media.banner.previewAlt")}
                 style={{
                   width: "100%",
                   height: "100%",
@@ -969,13 +1001,13 @@ function BannerEditorPreview({
                 }}
               />
             ) : (
-              <EmptyPlaceholder text="Escolha uma imagem" />
+              <EmptyPlaceholder text={t("dashboard.profile.media.common.chooseImage")} />
             )}
           </div>
 
           {sourceMime === "image/gif" ? (
             <div style={{ marginTop: "12px", color: "#a3a3a3", fontSize: "12px" }}>
-              GIF detectado: a animacao sera preservada.
+              {t("dashboard.profile.media.common.gifDetected")}
             </div>
           ) : null}
         </>
@@ -988,10 +1020,12 @@ function BannerFrame({
   mediaUrl,
   accent,
   mediaKind,
+  t,
 }: {
   mediaUrl: string;
   accent: string;
   mediaKind?: "video" | "image" | "unknown";
+  t: Translator;
 }) {
   const resolvedMediaKind = mediaKind || getMediaKind(mediaUrl);
 
@@ -1029,7 +1063,7 @@ function BannerFrame({
         ) : (
           <img
             src={mediaUrl}
-            alt="Banner atual"
+            alt={t("dashboard.profile.media.banner.currentAlt")}
             style={{
               width: "100%",
               height: "100%",
@@ -1038,7 +1072,7 @@ function BannerFrame({
           />
         )
       ) : (
-        <EmptyPlaceholder text="Sem banner atual" />
+        <EmptyPlaceholder text={t("dashboard.profile.media.banner.noCurrent")} />
       )}
 
       <div
@@ -1084,7 +1118,7 @@ async function renderCroppedBlob(
   const ctx = canvas.getContext("2d");
 
   if (!ctx) {
-    throw new Error("Canvas nao disponivel.");
+    throw new Error("Canvas unavailable.");
   }
 
   const outWidth = type === "avatar" ? AVATAR_SIZE : BANNER_WIDTH;
@@ -1114,7 +1148,7 @@ async function renderCroppedBlob(
   });
 
   if (!blob) {
-    throw new Error("Falha ao gerar imagem.");
+    throw new Error("Unable to render image.");
   }
 
   return blob;
@@ -1248,14 +1282,20 @@ function getImageLayout(
   };
 }
 
-function validateSelectedFile(file: File, type: "avatar" | "banner") {
+function validateSelectedFile(
+  file: File,
+  type: "avatar" | "banner",
+  t: Translator,
+) {
   const mimeType = file.type.toLowerCase();
   const purpose: ProfileMediaPurpose = type;
   const isImage = isProfileImageMimeType(mimeType);
   const isBannerVideo = purpose === "banner" && isProfileBannerVideoMimeType(mimeType);
 
   if (!isImage && !isBannerVideo) {
-    return getProfileMediaTypeError(purpose);
+    return purpose === "avatar"
+      ? t("dashboard.profile.media.errors.avatarType")
+      : t("dashboard.profile.media.errors.bannerType");
   }
 
   const maxBytes =
@@ -1267,14 +1307,23 @@ function validateSelectedFile(file: File, type: "avatar" | "banner") {
 
   if (file.size > maxBytes) {
     return isBannerVideo
-      ? "Arquivo muito grande. Use vídeo até 30MB ou comprima antes de enviar."
-      : getProfileMediaSizeError(purpose, mimeType);
+      ? t("dashboard.profile.media.errors.videoTooLarge")
+      : t("dashboard.profile.media.errors.fileTooLarge", {
+          subject:
+            purpose === "avatar"
+              ? t("dashboard.profile.media.avatar.title")
+              : t("dashboard.profile.media.banner.title"),
+          limit: formatBytes(maxBytes),
+        });
   }
 
   return null;
 }
 
-async function saveProfileMedia(payload: { avatarUrl?: string; bannerUrl?: string }) {
+async function saveProfileMedia(
+  payload: { avatarUrl?: string; bannerUrl?: string },
+  t: Translator,
+) {
   const response = await fetch("/api/profile/media", {
     method: "POST",
     headers: {
@@ -1286,7 +1335,14 @@ async function saveProfileMedia(payload: { avatarUrl?: string; bannerUrl?: strin
   const data = await readResponseJson(response);
 
   if (!response.ok) {
-    throw new Error(getStatusMessage(response.status, data, "Falha ao salvar no perfil."));
+    throw new Error(
+      getStatusMessage(
+        response.status,
+        data,
+        t("dashboard.profile.media.saveToProfileFailed"),
+        t,
+      ),
+    );
   }
 }
 
@@ -1304,7 +1360,12 @@ async function readResponseJson(response: Response) {
   }
 }
 
-function getStatusMessage(status: number, data: unknown, fallback: string) {
+function getStatusMessage(
+  status: number,
+  data: unknown,
+  fallback: string,
+  t: Translator,
+) {
   const payloadError =
     data && typeof data === "object" && "error" in data && typeof data.error === "string"
       ? data.error
@@ -1315,19 +1376,19 @@ function getStatusMessage(status: number, data: unknown, fallback: string) {
   }
 
   if (status === 400) {
-    return "Arquivo inválido. Revise o formato e tente novamente.";
+    return t("dashboard.profile.media.errors.invalidFile");
   }
 
   if (status === 401) {
-    return "Sua sessao expirou. Entre novamente para continuar.";
+    return t("dashboard.profile.media.errors.sessionExpired");
   }
 
   if (status === 413) {
-    return "Arquivo muito grande. Use vídeo até 30MB ou comprima antes de enviar.";
+    return t("dashboard.profile.media.errors.videoTooLarge");
   }
 
   if (status >= 500) {
-    return "Erro interno no upload. Tente novamente em instantes.";
+    return t("dashboard.profile.media.errors.server");
   }
 
   return fallback;
@@ -1367,7 +1428,7 @@ function buttonStyleForState(baseStyle: CSSProperties, disabled: boolean): CSSPr
   };
 }
 
-function getClientUploadErrorMessage(error: unknown, fallback: string) {
+function getClientUploadErrorMessage(error: unknown, fallback: string, t: Translator) {
   if (!(error instanceof Error)) {
     return fallback;
   }
@@ -1381,19 +1442,26 @@ function getClientUploadErrorMessage(error: unknown, fallback: string) {
     normalized.includes("payload too large") ||
     normalized.includes("content too large")
   ) {
-    return "Arquivo muito grande. Use vídeo até 30MB ou comprima antes de enviar.";
+    return t("dashboard.profile.media.errors.videoTooLarge");
   }
 
   if (normalized.includes("400")) {
-    return "Arquivo inválido. Revise o formato e tente novamente.";
+    return t("dashboard.profile.media.errors.invalidFile");
   }
 
   if (normalized.includes("401")) {
-    return "Sua sessao expirou. Entre novamente para continuar.";
+    return t("dashboard.profile.media.errors.sessionExpired");
   }
 
   if (normalized.includes("500")) {
-    return "Erro interno no upload. Tente novamente em instantes.";
+    return t("dashboard.profile.media.errors.server");
+  }
+
+  if (
+    normalized.includes("canvas unavailable") ||
+    normalized.includes("unable to render image")
+  ) {
+    return fallback;
   }
 
   return message || fallback;
