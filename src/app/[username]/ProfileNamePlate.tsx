@@ -144,8 +144,6 @@ export default function ProfileNamePlate({
             <span className="profile-name-spark spark-two" aria-hidden />
             <span className="profile-name-spark spark-three" aria-hidden />
             <span className="profile-name-spark spark-four" aria-hidden />
-            <span className="profile-name-spark spark-five" aria-hidden />
-            <span className="profile-name-spark spark-six" aria-hidden />
           </>
         ) : null}
 
@@ -174,19 +172,19 @@ const namePlateStyles = `
     position: relative;
     min-width: 0;
     isolation: isolate;
-    --profile-name-shimmer-duration: 3.9s;
-    --profile-name-rainbow-duration: 4.4s;
-    --profile-name-glitch-duration: 4.1s;
-    --profile-name-particle-duration: 4.9s;
-    --profile-name-typewriter-duration: 5.8s;
-    --profile-name-aura-blur: 15px;
-    --profile-name-aura-opacity: 0.82;
-    --profile-name-rgb-split: 0.028em;
+    --profile-name-shimmer-duration: 4.6s;
+    --profile-name-rainbow-duration: 5.2s;
+    --profile-name-glitch-duration: 5s;
+    --profile-name-particle-duration: 6.2s;
+    --profile-name-typewriter-duration: 6.4s;
+    --profile-name-aura-blur: 10px;
+    --profile-name-aura-opacity: 0.7;
+    --profile-name-rgb-split: 0.018em;
     --profile-name-halo-opacity: 0;
     --profile-name-glow-shadow:
-      0 0 14px rgba(244, 114, 182, 0.28),
-      0 0 34px rgba(192, 132, 252, 0.18),
-      0 0 58px rgba(125, 211, 252, 0.14);
+      0 0 10px rgba(244, 114, 182, 0.22),
+      0 0 24px rgba(192, 132, 252, 0.14),
+      0 0 40px rgba(125, 211, 252, 0.1);
   }
 
   .profile-name-plate::before,
@@ -197,15 +195,15 @@ const namePlateStyles = `
   }
 
   .profile-name-plate::before {
-    inset: -0.28em -0.38em -0.22em;
+    inset: -0.18em -0.28em -0.14em;
     z-index: 0;
     border-radius: 999px;
     background:
-      radial-gradient(circle at 50% 50%, rgba(255,255,255,0.1) 0%, transparent 24%),
-      radial-gradient(circle at 26% 40%, rgba(244,114,182,0.28) 0%, transparent 38%),
-      radial-gradient(circle at 74% 52%, rgba(125,211,252,0.24) 0%, transparent 40%);
+      radial-gradient(circle at 50% 50%, rgba(255,255,255,0.08) 0%, transparent 22%),
+      radial-gradient(circle at 26% 40%, rgba(244,114,182,0.18) 0%, transparent 34%),
+      radial-gradient(circle at 74% 52%, rgba(125,211,252,0.16) 0%, transparent 36%);
     opacity: var(--profile-name-halo-opacity);
-    filter: blur(16px);
+    filter: blur(10px);
     mix-blend-mode: screen;
   }
 
@@ -215,13 +213,13 @@ const namePlateStyles = `
     border-radius: 999px;
     background:
       linear-gradient(
-        115deg,
+        112deg,
         transparent 0%,
-        transparent 32%,
-        rgba(255,255,255,0.12) 44%,
-        rgba(255,255,255,0.26) 50%,
-        rgba(255,255,255,0.12) 56%,
-        transparent 68%,
+        transparent 36%,
+        rgba(255,255,255,0.08) 46%,
+        rgba(255,255,255,0.18) 50%,
+        rgba(255,255,255,0.08) 54%,
+        transparent 64%,
         transparent 100%
       );
     background-size: 220% 100%;
@@ -300,7 +298,7 @@ const namePlateStyles = `
     color: inherit;
     text-shadow:
       0 1px 0 rgba(255,255,255,0.06),
-      0 10px 24px rgba(0,0,0,0.2);
+      0 8px 18px rgba(0,0,0,0.18);
   }
 
   .profile-name-aura-layer {
@@ -308,11 +306,11 @@ const namePlateStyles = `
     opacity: var(--profile-name-aura-opacity);
     color: rgba(255, 196, 228, 0.96);
     filter: blur(var(--profile-name-aura-blur)) saturate(1.15);
-    transform: translate3d(0, 0, 0) scale(1.035);
+    transform: translate3d(0, 0, 0) scale(1.018);
     text-shadow:
-      0 0 18px rgba(244, 114, 182, 0.38),
-      0 0 34px rgba(125, 211, 252, 0.22),
-      0 0 56px rgba(192, 132, 252, 0.18);
+      0 0 12px rgba(244, 114, 182, 0.28),
+      0 0 22px rgba(125, 211, 252, 0.16),
+      0 0 36px rgba(192, 132, 252, 0.12);
     pointer-events: none;
     mix-blend-mode: screen;
   }
@@ -324,7 +322,7 @@ const namePlateStyles = `
     opacity: 0;
     pointer-events: none;
     mix-blend-mode: screen;
-    filter: blur(0.35px) saturate(1.18);
+    filter: blur(0.15px) saturate(1.08);
     will-change: transform, opacity, clip-path;
   }
 
@@ -410,12 +408,12 @@ const namePlateStyles = `
       linear-gradient(
         108deg,
         transparent 0%,
-        rgba(255,255,255,0.02) 18%,
-        rgba(255, 255, 255, 0.18) 34%,
-        rgba(255, 244, 252, 0.94) 46%,
-        rgba(125, 211, 252, 0.46) 52%,
-        rgba(255, 255, 255, 0.22) 60%,
-        transparent 76%,
+        rgba(255,255,255,0.02) 24%,
+        rgba(255, 255, 255, 0.12) 38%,
+        rgba(255, 244, 252, 0.84) 48%,
+        rgba(125, 211, 252, 0.34) 54%,
+        rgba(255, 255, 255, 0.16) 62%,
+        transparent 74%,
         transparent 100%
       );
     background-size: 240% 100%;
@@ -437,8 +435,8 @@ const namePlateStyles = `
   .profile-name-plate.effect-glow .profile-name-typewriter-layer {
     text-shadow:
       var(--profile-name-glow-shadow),
-      0 0 78px rgba(244,114,182,0.12);
-    filter: drop-shadow(0 0 10px rgba(255,196,228,0.12));
+      0 0 54px rgba(244,114,182,0.08);
+    filter: drop-shadow(0 0 6px rgba(255,196,228,0.08));
   }
 
   .profile-name-plate.effect-rainbow .profile-name-main-layer,
@@ -459,7 +457,7 @@ const namePlateStyles = `
     color: transparent;
     -webkit-text-fill-color: transparent;
     animation: profile-name-rainbow var(--profile-name-rainbow-duration) linear infinite;
-    filter: drop-shadow(0 0 14px rgba(255,255,255,0.08));
+    filter: drop-shadow(0 0 8px rgba(255,255,255,0.06));
   }
 
   .profile-name-plate.effect-glitch .profile-name-main-layer {
@@ -479,7 +477,7 @@ const namePlateStyles = `
   }
 
   .profile-name-plate.effect-shimmer .profile-name-shimmer-layer {
-    opacity: 0.92;
+    opacity: 0.76;
     animation: profile-name-shimmer-text var(--profile-name-shimmer-duration)
       cubic-bezier(0.19, 1, 0.22, 1) infinite;
   }
@@ -501,8 +499,8 @@ const namePlateStyles = `
       linear-gradient(135deg, rgba(255, 160, 216, 0.92), rgba(125, 211, 252, 0.88));
     box-shadow:
       0 0 12px rgba(244, 114, 182, 0.34),
-      0 0 22px rgba(125, 211, 252, 0.18);
-    opacity: 0.9;
+      0 0 16px rgba(125, 211, 252, 0.12);
+    opacity: 0.76;
     pointer-events: none;
     transform-origin: center;
     mix-blend-mode: screen;
@@ -579,14 +577,14 @@ const namePlateStyles = `
   }
 
   .profile-name-plate.motion-subtle {
-    --profile-name-shimmer-duration: 4.8s;
-    --profile-name-rainbow-duration: 5.5s;
-    --profile-name-glitch-duration: 5.2s;
-    --profile-name-particle-duration: 5.6s;
-    --profile-name-typewriter-duration: 6.7s;
-    --profile-name-aura-blur: 12px;
-    --profile-name-aura-opacity: 0.68;
-    --profile-name-rgb-split: 0.022em;
+    --profile-name-shimmer-duration: 5.2s;
+    --profile-name-rainbow-duration: 5.8s;
+    --profile-name-glitch-duration: 5.6s;
+    --profile-name-particle-duration: 6.8s;
+    --profile-name-typewriter-duration: 7s;
+    --profile-name-aura-blur: 8px;
+    --profile-name-aura-opacity: 0.58;
+    --profile-name-rgb-split: 0.014em;
   }
 
   .profile-name-plate.motion-off .profile-name-spark,
@@ -617,15 +615,15 @@ const namePlateStyles = `
   }
 
   @keyframes profile-name-typewriter-reveal {
-    0%, 8% {
+    0%, 10% {
       inline-size: 0%;
     }
 
-    38%, 58% {
+    34%, 72% {
       inline-size: 100%;
     }
 
-    88%, 100% {
+    92%, 100% {
       inline-size: 0%;
     }
   }
@@ -647,24 +645,24 @@ const namePlateStyles = `
     }
 
     77% {
-      transform: translate3d(-0.015em, 0, 0);
+      transform: translate3d(-0.01em, 0, 0);
       text-shadow:
-        -0.02em 0 rgba(244, 114, 182, 0.42),
-        0.024em 0 rgba(125, 211, 252, 0.38);
+        -0.014em 0 rgba(244, 114, 182, 0.32),
+        0.018em 0 rgba(125, 211, 252, 0.28);
     }
 
     80% {
-      transform: translate3d(0.018em, -0.012em, 0);
+      transform: translate3d(0.012em, -0.008em, 0);
       text-shadow:
-        -0.024em 0 rgba(244, 114, 182, 0.34),
-        0.026em 0 rgba(125, 211, 252, 0.34);
+        -0.018em 0 rgba(244, 114, 182, 0.28),
+        0.02em 0 rgba(125, 211, 252, 0.26);
     }
 
     83% {
-      transform: translate3d(-0.012em, 0.01em, 0);
+      transform: translate3d(-0.008em, 0.006em, 0);
       text-shadow:
-        -0.014em 0 rgba(244, 114, 182, 0.24),
-        0.018em 0 rgba(125, 211, 252, 0.24);
+        -0.01em 0 rgba(244, 114, 182, 0.18),
+        0.012em 0 rgba(125, 211, 252, 0.18);
     }
   }
 
@@ -676,15 +674,15 @@ const namePlateStyles = `
     }
 
     76% {
-      opacity: 0.76;
-      transform: translate3d(-0.034em, -0.015em, 0);
-      clip-path: inset(6% 0 60% 0);
+      opacity: 0.58;
+      transform: translate3d(-0.022em, -0.01em, 0);
+      clip-path: inset(10% 0 58% 0);
     }
 
     79% {
-      opacity: 0.62;
-      transform: translate3d(0.03em, 0.01em, 0);
-      clip-path: inset(44% 0 14% 0);
+      opacity: 0.46;
+      transform: translate3d(0.02em, 0.008em, 0);
+      clip-path: inset(46% 0 16% 0);
     }
 
     82% {
@@ -702,15 +700,15 @@ const namePlateStyles = `
     }
 
     74% {
-      opacity: 0.68;
-      transform: translate3d(0.032em, 0.012em, 0);
-      clip-path: inset(16% 0 46% 0);
+      opacity: 0.54;
+      transform: translate3d(0.02em, 0.008em, 0);
+      clip-path: inset(18% 0 44% 0);
     }
 
     78% {
-      opacity: 0.58;
-      transform: translate3d(-0.034em, -0.012em, 0);
-      clip-path: inset(54% 0 8% 0);
+      opacity: 0.42;
+      transform: translate3d(-0.022em, -0.008em, 0);
+      clip-path: inset(54% 0 10% 0);
     }
 
     81% {
@@ -727,7 +725,7 @@ const namePlateStyles = `
     }
 
     18%, 78% {
-      opacity: 0.92;
+      opacity: 0.76;
     }
 
     100% {
@@ -739,12 +737,12 @@ const namePlateStyles = `
   @keyframes profile-name-halo-breathe {
     0%, 100% {
       opacity: calc(var(--profile-name-halo-opacity) * 0.76);
-      transform: scale(0.985);
+      transform: scale(0.992);
     }
 
     50% {
       opacity: var(--profile-name-halo-opacity);
-      transform: scale(1.025);
+      transform: scale(1.012);
     }
   }
 
@@ -771,8 +769,8 @@ const namePlateStyles = `
     }
 
     50% {
-      transform: translate3d(4px, -8px, 0) scale(1.12) rotate(28deg);
-      opacity: 1;
+      transform: translate3d(3px, -5px, 0) scale(1.04) rotate(20deg);
+      opacity: 0.9;
     }
   }
 
@@ -783,8 +781,8 @@ const namePlateStyles = `
     }
 
     50% {
-      transform: translate3d(-5px, 6px, 0) scale(1.08);
-      opacity: 0.96;
+      transform: translate3d(-3px, 4px, 0) scale(1.02);
+      opacity: 0.82;
     }
   }
 
@@ -795,15 +793,8 @@ const namePlateStyles = `
     }
 
     50% {
-      transform: translate3d(3px, -6px, 0) scale(1.05) rotate(90deg);
-      opacity: 0.92;
-    }
-  }
-
-  @media (max-width: 640px) {
-    .profile-name-plate.effect-particles .spark-five,
-    .profile-name-plate.effect-particles .spark-six {
-      display: none;
+      transform: translate3d(2px, -4px, 0) scale(1.02) rotate(72deg);
+      opacity: 0.8;
     }
   }
 

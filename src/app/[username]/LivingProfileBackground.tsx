@@ -66,6 +66,10 @@ export default function LivingProfileBackground({
     resolvedIntensity,
     previewMode,
   );
+  const particleDensity = (
+    (previewMode ? depth.mobileAmbientDensity : depth.ambientDensity) *
+    (resolvedMotionLevel === "alive" ? 0.82 : 0.72)
+  );
 
   return (
     <div
@@ -75,28 +79,28 @@ export default function LivingProfileBackground({
           "--living-bg-opacity": backgroundOpacity,
           "--living-bg-pattern-opacity":
             resolvedMotionLevel === "off"
-              ? 0.12
+              ? 0.08
               : resolvedMotionLevel === "subtle"
-                ? 0.24
-                : 0.34,
+                ? 0.16
+                : 0.24,
           "--living-bg-particle-opacity":
             resolvedMotionLevel === "off"
-              ? 0.1
+              ? 0.06
               : resolvedMotionLevel === "subtle"
-                ? 0.22
-                : 0.34,
-          "--living-bg-depth-opacity": depth.overlayStrength,
-          "--living-bg-vignette-opacity": depth.vignetteStrength,
-          "--living-bg-foreground-opacity": depth.foregroundHazeOpacity,
-          "--living-bg-lighting-opacity": depth.lightingOpacity,
-          "--living-bg-fog-opacity": depth.fogOpacity,
-          "--living-bg-grain-opacity": depth.grainOpacity,
-          "--living-bg-bloom-opacity": depth.bloomOpacity,
-          "--living-bg-aura-opacity": depth.heroAuraOpacity,
+                ? 0.12
+                : 0.18,
+          "--living-bg-depth-opacity": depth.overlayStrength * 0.84,
+          "--living-bg-vignette-opacity": depth.vignetteStrength * 0.88,
+          "--living-bg-foreground-opacity": depth.foregroundHazeOpacity * 0.76,
+          "--living-bg-lighting-opacity": depth.lightingOpacity * 0.74,
+          "--living-bg-fog-opacity": depth.fogOpacity * 0.62,
+          "--living-bg-grain-opacity": depth.grainOpacity * 0.54,
+          "--living-bg-bloom-opacity": depth.bloomOpacity * 0.62,
+          "--living-bg-aura-opacity": depth.heroAuraOpacity * 0.72,
           "--living-bg-tint-strength": depth.fogTintStrength,
-          "--living-bg-theme-bloom": withAlpha(themeColor, "26"),
-          "--living-bg-theme-fog": withAlpha(themeColor, "20"),
-          "--living-bg-theme-foreground": withAlpha(themeColor, "24"),
+          "--living-bg-theme-bloom": withAlpha(themeColor, "18"),
+          "--living-bg-theme-fog": withAlpha(themeColor, "14"),
+          "--living-bg-theme-foreground": withAlpha(themeColor, "16"),
         } as CSSProperties
       }
       aria-hidden
@@ -126,7 +130,7 @@ export default function LivingProfileBackground({
       <EnvironmentParticles
         type={depth.ambientType}
         motionLevel={resolvedMotionLevel}
-        density={previewMode ? depth.mobileAmbientDensity : depth.ambientDensity}
+        density={particleDensity}
         preview={previewMode}
       />
       <div
@@ -336,9 +340,9 @@ const livingBackgroundStyles = `
       radial-gradient(circle at 50% 18%, rgba(255,255,255,0.08) 0%, transparent 24%),
       radial-gradient(circle at 50% 30%, var(--living-bg-theme-bloom, rgba(255,255,255,0.12)) 0%, transparent 52%),
       radial-gradient(circle at 50% 72%, rgba(255,255,255,0.04) 0%, transparent 44%);
-    opacity: calc(var(--living-bg-bloom-opacity, 0.32) * 0.92);
+    opacity: calc(var(--living-bg-bloom-opacity, 0.32) * 0.74);
     mix-blend-mode: screen;
-    filter: blur(20px);
+    filter: blur(14px);
     animation: living-bg-cinema-breathe 18s ease-in-out infinite;
   }
 
@@ -355,7 +359,7 @@ const livingBackgroundStyles = `
         transparent 1px 3px
       );
     background-size: 180px 180px, 220px 220px, 260px 260px, 100% 100%;
-    opacity: var(--living-bg-grain-opacity, 0.045);
+    opacity: var(--living-bg-grain-opacity, 0.03);
     mix-blend-mode: soft-light;
     animation: living-bg-grain-drift 24s linear infinite;
   }
@@ -382,7 +386,7 @@ const livingBackgroundStyles = `
   }
 
   .living-profile-layer-ambient {
-    opacity: 0.82;
+    opacity: 0.58;
   }
 
   .living-profile-layer-pattern {
@@ -424,8 +428,8 @@ const livingBackgroundStyles = `
         var(--living-bg-theme-fog, rgba(255,255,255,0.08)) 56%,
         transparent 100%
       );
-    opacity: calc(var(--living-bg-fog-opacity, 0.2) * 0.88);
-    filter: blur(22px);
+    opacity: calc(var(--living-bg-fog-opacity, 0.2) * 0.72);
+    filter: blur(16px);
     mix-blend-mode: screen;
     animation: living-bg-fog-drift 20s ease-in-out infinite;
   }
@@ -439,8 +443,8 @@ const livingBackgroundStyles = `
         var(--living-bg-theme-foreground, rgba(255,255,255,0.1)) 78%,
         rgba(3,5,10,0.22) 100%
       );
-    opacity: calc(var(--living-bg-fog-opacity, 0.2) * 1.08);
-    filter: blur(16px);
+    opacity: calc(var(--living-bg-fog-opacity, 0.2) * 0.86);
+    filter: blur(12px);
     animation: living-bg-fog-drift 26s ease-in-out infinite reverse;
   }
 
@@ -521,12 +525,12 @@ const livingBackgroundStyles = `
   }
 
   .living-profile-background.is-preview .living-profile-layer-pattern {
-    opacity: calc(var(--living-bg-pattern-opacity, 0.34) * 0.82);
+    opacity: calc(var(--living-bg-pattern-opacity, 0.34) * 0.68);
   }
 
   .living-profile-background.is-preview .living-profile-layer-depth,
   .living-profile-background.is-preview .living-profile-layer-foreground {
-    opacity: calc(var(--living-bg-foreground-opacity, 0.22) * 0.84);
+    opacity: calc(var(--living-bg-foreground-opacity, 0.22) * 0.72);
   }
 
   .living-profile-background.motion-off .living-profile-layer-lighting,
@@ -741,11 +745,16 @@ const livingBackgroundStyles = `
 
   @media (max-width: 768px) {
     .living-profile-layer-pattern {
-      opacity: calc(var(--living-bg-pattern-opacity, 0.34) * 0.76);
+      opacity: calc(var(--living-bg-pattern-opacity, 0.34) * 0.58);
     }
 
     .living-profile-layer-foreground {
-      opacity: calc(var(--living-bg-foreground-opacity, 0.22) * 0.76);
+      opacity: calc(var(--living-bg-foreground-opacity, 0.22) * 0.62);
+    }
+
+    .living-profile-background::before,
+    .living-profile-background::after {
+      opacity: calc(var(--living-bg-bloom-opacity, 0.32) * 0.5);
     }
   }
 
@@ -755,7 +764,7 @@ const livingBackgroundStyles = `
     }
 
     .living-profile-layer-ambient {
-      opacity: 0.58;
+      opacity: 0.46;
     }
   }
 
@@ -768,11 +777,11 @@ const livingBackgroundStyles = `
     }
 
     .living-profile-layer-pattern {
-      opacity: calc(var(--living-bg-pattern-opacity, 0.34) * 0.66);
+      opacity: calc(var(--living-bg-pattern-opacity, 0.34) * 0.54);
     }
 
     .living-profile-layer-foreground {
-      opacity: calc(var(--living-bg-foreground-opacity, 0.22) * 0.72);
+      opacity: calc(var(--living-bg-foreground-opacity, 0.22) * 0.58);
     }
   }
 

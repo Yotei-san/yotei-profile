@@ -11,6 +11,7 @@ import {
   LuLayoutTemplate,
   LuSparkles,
 } from "react-icons/lu";
+import { useAdaptivePerformance } from "@/app/components/PerformanceProvider";
 
 const EASE_OUT = [0.16, 1, 0.3, 1] as const;
 
@@ -80,7 +81,36 @@ export default function HomePageClient() {
   const [username, setUsername] = useState("");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const router = useRouter();
-  const shouldReduceMotion = useReducedMotion();
+  const { profile } = useAdaptivePerformance();
+  const shouldReduceMotion =
+    useReducedMotion() || !profile.allowDecorativeMotion;
+  const homeExperienceStyle = {
+    ...pageStyle,
+    "--home-atmosphere-opacity":
+      profile.tier === "high" ? "1" : profile.tier === "medium" ? "0.74" : "0.44",
+    "--home-glow-opacity":
+      profile.allowDecorativeMotion
+        ? profile.tier === "high"
+          ? "1"
+          : "0.76"
+        : "0.42",
+    "--home-blur-scale": profile.allowBlurEffects ? profile.blurScale.toFixed(2) : "0",
+    "--home-nav-blur": profile.allowBlurEffects
+      ? profile.tier === "high"
+        ? "10px"
+        : "7px"
+      : "0px",
+    "--home-glass-blur": profile.allowBlurEffects
+      ? profile.tier === "high"
+        ? "16px"
+        : "10px"
+      : "0px",
+    "--home-noise-opacity": profile.safeMode
+      ? "0.03"
+      : profile.tier === "medium"
+        ? "0.06"
+        : "0.08",
+  } as CSSProperties;
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -99,7 +129,7 @@ export default function HomePageClient() {
   }
 
   return (
-    <main style={pageStyle}>
+    <main style={homeExperienceStyle}>
       <style>{`
         .home-shell {
           width: min(1180px, calc(100% - 32px));
@@ -125,7 +155,8 @@ export default function HomePageClient() {
           height: 660px;
           border-radius: 999px;
           background: radial-gradient(circle, rgba(123, 108, 255, 0.28) 0%, rgba(123, 108, 255, 0.08) 34%, rgba(123, 108, 255, 0) 72%);
-          filter: blur(34px);
+          filter: blur(calc(34px * var(--home-blur-scale, 1)));
+          opacity: calc(1 * var(--home-atmosphere-opacity, 1));
         }
 
         .page-orb-b {
@@ -135,7 +166,8 @@ export default function HomePageClient() {
           height: 620px;
           border-radius: 999px;
           background: radial-gradient(circle, rgba(255, 110, 168, 0.22) 0%, rgba(255, 110, 168, 0.06) 34%, rgba(255, 110, 168, 0) 72%);
-          filter: blur(38px);
+          filter: blur(calc(38px * var(--home-blur-scale, 1)));
+          opacity: calc(1 * var(--home-atmosphere-opacity, 1));
         }
 
         .page-orb-c {
@@ -145,8 +177,9 @@ export default function HomePageClient() {
           height: 520px;
           border-radius: 999px;
           background: radial-gradient(circle, rgba(90, 169, 255, 0.14) 0%, rgba(90, 169, 255, 0.04) 36%, rgba(90, 169, 255, 0) 74%);
-          filter: blur(42px);
+          filter: blur(calc(42px * var(--home-blur-scale, 1)));
           transform: translateX(-50%);
+          opacity: calc(1 * var(--home-atmosphere-opacity, 1));
         }
 
         .page-beam {
@@ -157,7 +190,7 @@ export default function HomePageClient() {
           background:
             radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.08), transparent 34%),
             linear-gradient(180deg, rgba(133, 112, 255, 0.12), rgba(133, 112, 255, 0));
-          opacity: 0.65;
+          opacity: calc(0.65 * var(--home-atmosphere-opacity, 1));
         }
 
         .page-grid {
@@ -166,13 +199,13 @@ export default function HomePageClient() {
             linear-gradient(rgba(255, 255, 255, 0.022) 1px, transparent 1px),
             linear-gradient(90deg, rgba(255, 255, 255, 0.022) 1px, transparent 1px);
           background-size: 88px 88px;
-          opacity: 0.22;
+          opacity: calc(0.22 * var(--home-atmosphere-opacity, 1));
           mask-image: linear-gradient(180deg, rgba(0, 0, 0, 1), rgba(0, 0, 0, 0.18));
         }
 
         .page-noise {
           inset: 0;
-          opacity: 0.08;
+          opacity: var(--home-noise-opacity, 0.08);
           background-image:
             radial-gradient(rgba(255, 255, 255, 0.18) 0.7px, transparent 0.7px),
             radial-gradient(rgba(255, 255, 255, 0.12) 0.6px, transparent 0.6px);
@@ -214,7 +247,7 @@ export default function HomePageClient() {
           box-shadow:
             inset 0 1px 0 rgba(255, 255, 255, 0.05),
             0 24px 48px rgba(0, 0, 0, 0.28);
-          backdrop-filter: blur(10px);
+          backdrop-filter: blur(var(--home-nav-blur, 10px));
           min-width: 0;
         }
 
@@ -422,7 +455,7 @@ export default function HomePageClient() {
             rgba(15, 11, 22, 0.92);
           border: 1px solid rgba(255, 255, 255, 0.08);
           box-shadow: 0 24px 48px rgba(0, 0, 0, 0.24);
-          backdrop-filter: blur(16px);
+          backdrop-filter: blur(var(--home-glass-blur, 16px));
           overflow: hidden;
         }
 
@@ -486,7 +519,8 @@ export default function HomePageClient() {
           border-radius: 999px;
           background:
             radial-gradient(circle, rgba(129, 108, 255, 0.22) 0%, rgba(129, 108, 255, 0.08) 34%, rgba(129, 108, 255, 0) 72%);
-          filter: blur(28px);
+          filter: blur(calc(28px * var(--home-blur-scale, 1)));
+          opacity: calc(1 * var(--home-glow-opacity, 1));
           pointer-events: none;
           z-index: -1;
         }
@@ -682,7 +716,7 @@ export default function HomePageClient() {
             radial-gradient(circle, rgba(132, 113, 255, 0.24) 0%, rgba(132, 113, 255, 0.08) 38%, rgba(132, 113, 255, 0) 70%),
             radial-gradient(circle at 68% 34%, rgba(255, 110, 168, 0.18) 0%, rgba(255, 110, 168, 0) 26%),
             radial-gradient(circle at 32% 72%, rgba(90, 169, 255, 0.14) 0%, rgba(90, 169, 255, 0) 24%);
-          opacity: 0.96;
+          opacity: calc(0.96 * var(--home-glow-opacity, 1));
           pointer-events: none;
         }
 

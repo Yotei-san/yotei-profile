@@ -59,25 +59,25 @@ export default function ProfileIdentityBadges({
           position: relative;
           display: inline-flex;
           align-items: center;
-          gap: 7px;
+          gap: 8px;
           flex-wrap: wrap;
           min-width: 0;
           width: fit-content;
           max-width: 100%;
-          padding: 8px 10px;
+          padding: 7px 9px;
           border-radius: 999px;
-          border: 1px solid rgba(255,255,255,0.1);
+          border: 1px solid rgba(255,255,255,0.08);
           background:
-            radial-gradient(circle at 16% 0%, rgba(255,255,255,0.16), transparent 42%),
-            linear-gradient(135deg, rgba(255,255,255,0.08), rgba(8,10,16,0.72) 52%, rgba(8,10,16,0.46)),
-            linear-gradient(180deg, var(--profile-badge-rail-soft), rgba(255,255,255,0.01));
+            radial-gradient(circle at 16% 0%, rgba(255,255,255,0.1), transparent 38%),
+            linear-gradient(135deg, rgba(255,255,255,0.05), rgba(8,10,16,0.62) 52%, rgba(8,10,16,0.34)),
+            linear-gradient(180deg, var(--profile-badge-rail-soft), rgba(255,255,255,0.008));
           box-shadow:
-            0 20px 40px rgba(0,0,0,0.22),
+            0 12px 24px rgba(0,0,0,0.16),
             0 0 0 1px rgba(255,255,255,0.03),
-            0 0 34px var(--profile-badge-rail-soft),
-            inset 0 1px 0 rgba(255,255,255,0.08);
-          backdrop-filter: blur(18px) saturate(118%);
-          -webkit-backdrop-filter: blur(18px) saturate(118%);
+            0 0 18px var(--profile-badge-rail-soft),
+            inset 0 1px 0 rgba(255,255,255,0.06);
+          backdrop-filter: blur(10px) saturate(112%);
+          -webkit-backdrop-filter: blur(10px) saturate(112%);
         }
 
         .profile-identity-badges::before {
@@ -111,28 +111,27 @@ export default function ProfileIdentityBadges({
           --profile-badge-tooltip-accent: rgba(255,255,255,0.08);
           position: relative;
           z-index: 1;
-          width: 42px;
-          height: 42px;
+          width: 40px;
+          height: 40px;
           padding: 0;
           border: 1px solid var(--profile-badge-edge);
-          border-radius: 16px;
+          border-radius: 14px;
           overflow: hidden;
           isolation: isolate;
           display: inline-flex;
           align-items: center;
           justify-content: center;
           background:
-            radial-gradient(circle at 50% 120%, var(--profile-badge-aura) 0%, transparent 54%),
-            radial-gradient(circle at 28% 20%, rgba(255,255,255,0.22), transparent 44%),
+            radial-gradient(circle at 50% 120%, var(--profile-badge-aura) 0%, transparent 52%),
+            radial-gradient(circle at 28% 20%, rgba(255,255,255,0.16), transparent 40%),
             linear-gradient(135deg, var(--profile-badge-fill-top), rgba(255,255,255,0.04) 42%, var(--profile-badge-fill-bottom));
           box-shadow:
-            0 14px 26px rgba(0,0,0,0.2),
+            0 10px 18px rgba(0,0,0,0.16),
             0 0 0 1px rgba(255,255,255,0.03),
-            0 0 22px var(--profile-badge-glow),
-            inset 0 1px 0 rgba(255,255,255,0.1);
+            0 0 14px var(--profile-badge-glow),
+            inset 0 1px 0 rgba(255,255,255,0.08);
           color: #f8fbff;
           outline: none;
-          animation: profile-badge-breathe 6.8s ease-in-out infinite;
           transition:
             transform 180ms cubic-bezier(0.22, 1, 0.36, 1),
             border-color 180ms ease,
@@ -201,11 +200,11 @@ export default function ProfileIdentityBadges({
           transform: translateY(-2px) scale(1.03);
           border-color: var(--profile-badge-accent);
           box-shadow:
-            0 18px 30px rgba(0,0,0,0.24),
+            0 14px 22px rgba(0,0,0,0.18),
             0 0 0 1px rgba(255,255,255,0.06),
-            0 0 30px var(--profile-badge-glow),
-            inset 0 1px 0 rgba(255,255,255,0.14);
-          filter: saturate(1.08);
+            0 0 20px var(--profile-badge-glow),
+            inset 0 1px 0 rgba(255,255,255,0.12);
+          filter: saturate(1.04);
         }
 
         .profile-identity-badge-shell {
@@ -223,7 +222,7 @@ export default function ProfileIdentityBadges({
           inset: 6px;
           clip-path: polygon(50% 0%, 79% 10%, 93% 29%, 93% 71%, 79% 90%, 50% 100%, 21% 90%, 7% 71%, 7% 29%, 21% 10%);
           background:
-            radial-gradient(circle at 50% 12%, rgba(255,255,255,0.16), transparent 44%),
+            radial-gradient(circle at 50% 12%, rgba(255,255,255,0.12), transparent 40%),
             linear-gradient(180deg, rgba(8,10,16,0.08), rgba(8,10,16,0.44));
           box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
           pointer-events: none;
@@ -232,7 +231,7 @@ export default function ProfileIdentityBadges({
         .profile-identity-badge-shell::after {
           content: "";
           position: absolute;
-          inset: -8px;
+          inset: -6px;
           background:
             linear-gradient(
               118deg,
@@ -245,10 +244,10 @@ export default function ProfileIdentityBadges({
             );
           background-size: 220% 100%;
           background-position: -180% 50%;
-          opacity: 0.48;
+          opacity: 0.34;
           mix-blend-mode: screen;
           pointer-events: none;
-          animation: profile-badge-sheen 5.6s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+          animation: profile-badge-sheen 6.4s cubic-bezier(0.22, 1, 0.36, 1) infinite;
         }
 
         .profile-identity-badge-shell > * {
@@ -289,25 +288,6 @@ export default function ProfileIdentityBadges({
           }
         }
 
-        @keyframes profile-badge-breathe {
-          0%,
-          100% {
-            box-shadow:
-              0 14px 26px rgba(0,0,0,0.2),
-              0 0 0 1px rgba(255,255,255,0.03),
-              0 0 22px var(--profile-badge-glow),
-              inset 0 1px 0 rgba(255,255,255,0.1);
-          }
-
-          50% {
-            box-shadow:
-              0 16px 28px rgba(0,0,0,0.22),
-              0 0 0 1px rgba(255,255,255,0.04),
-              0 0 30px var(--profile-badge-glow),
-              inset 0 1px 0 rgba(255,255,255,0.12);
-          }
-        }
-
         @keyframes profile-badge-sheen {
           0%,
           18% {
@@ -317,7 +297,7 @@ export default function ProfileIdentityBadges({
 
           30%,
           74% {
-            opacity: calc(0.22 + var(--profile-badge-pulse));
+            opacity: calc(0.16 + var(--profile-badge-pulse));
           }
 
           100% {
@@ -359,13 +339,13 @@ export default function ProfileIdentityBadges({
               <BadgeVisual
                 slug={item.badge.slug}
                 icon={item.badge.icon}
-                name={item.badge.name}
-                color={badgeTheme.accent}
-                rarity={item.badge.rarity}
-                category={item.badge.category}
-                size={26}
-                compact
-              />
+              name={item.badge.name}
+              color={badgeTheme.accent}
+              rarity={item.badge.rarity}
+              category={item.badge.category}
+              size={24}
+              compact
+            />
             </span>
           </span>
         );

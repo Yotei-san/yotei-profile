@@ -73,6 +73,11 @@ import {
   type ProfileScene,
 } from "@/app/lib/profile-scenes";
 import LivingAvatar from "@/app/components/LivingAvatar";
+import { useAdaptivePerformance } from "@/app/components/PerformanceProvider";
+import {
+  adaptProfileBackgroundIntensity,
+  adaptProfileMotionLevel,
+} from "@/app/lib/performance";
 import LivingProfileBackground from "./LivingProfileBackground";
 import ProfileBannerMedia from "./ProfileBannerMedia";
 import ProfileIdentityBadges from "./ProfileIdentityBadges";
@@ -208,10 +213,19 @@ export default function PublicProfileRenderer({
   preview = false,
   previewMessage = "This is exactly how your live profile will look.",
 }: Props) {
+  const { profile: adaptivePerformance } = useAdaptivePerformance();
   const safeLayout = normalizeProfileLayout(layout);
   const safeScene = normalizeProfileScene(scene);
   const safeMotionLevel = normalizeProfileMotionLevel(motionLevel);
   const safeBackgroundIntensity = normalizeProfileBackgroundIntensity(backgroundIntensity);
+  const adaptiveMotionLevel = adaptProfileMotionLevel(
+    safeMotionLevel,
+    adaptivePerformance,
+  );
+  const adaptiveBackgroundIntensity = adaptProfileBackgroundIntensity(
+    safeBackgroundIntensity,
+    adaptivePerformance,
+  );
   const safeGlassIntensity = glassIntensity;
   const safeBannerStyle = normalizeProfileBannerStyle(bannerStyle);
   const safeIntroMode = normalizeProfileIntroMode(introMode);
@@ -248,11 +262,11 @@ export default function PublicProfileRenderer({
   const densityTokens = getProfileDensityTokens(safeDensity);
   const cardStyleTokens = getProfileCardStyleTokens(safeCardStyle);
   const cornerTokens = getProfileCornerTokens(safeCornerStyle);
-  const motionTokens = getProfileMotionTokens(safeMotionLevel);
+  const motionTokens = getProfileMotionTokens(adaptiveMotionLevel);
   const motionPersonalityTokens = getProfileMotionPersonalityTokens({
     personality:
       presetRenderTuning.motionPersonality ?? dnaTuning.motionPersonality,
-    motionLevel: safeMotionLevel,
+    motionLevel: adaptiveMotionLevel,
   });
   const shellShadeScale =
     presetRenderTuning.shellVisibility === "ghost"
@@ -268,7 +282,12 @@ export default function PublicProfileRenderer({
       : safeCardStyle === "minimal"
         ? "blur(8px) saturate(104%)"
         : "none"
-    : scaleBlurInFilter(panelBackdropFilter, dnaTuning.blurScale);
+    : adaptivePerformance.allowBlurEffects
+      ? scaleBlurInFilter(
+          panelBackdropFilter,
+          dnaTuning.blurScale * adaptivePerformance.blurScale,
+        )
+      : "none";
   const surfaceOpacityScale = clampNumber(1 / dnaTuning.transparencyScale, 0.7, 1.2);
   const spacingScale =
     densityTokens.sectionGap *
@@ -311,42 +330,59 @@ export default function PublicProfileRenderer({
       dnaTuning.compactnessScale,
   );
   const stageGlowBlur =
-    safeMotionLevel === "alive"
+    adaptiveMotionLevel === "alive"
       ? depth.stageGlowBlur
-      : safeMotionLevel === "subtle"
+      : adaptiveMotionLevel === "subtle"
         ? Math.max(12, depth.stageGlowBlur - 4)
         : 10;
   const stageGlowOpacity =
-    safeMotionLevel === "alive"
+    adaptiveMotionLevel === "alive"
       ? depth.stageGlowOpacity
-      : safeMotionLevel === "subtle"
+      : adaptiveMotionLevel === "subtle"
         ? Math.max(0.28, depth.stageGlowOpacity * 0.74)
         : 0.22;
   const tunedStageGlowBlur = Math.round(
-    stageGlowBlur * dnaTuning.ambientScale * dnaTuning.glowScale,
+    stageGlowBlur *
+      dnaTuning.ambientScale *
+      dnaTuning.glowScale *
+      adaptivePerformance.sceneIntensityScale,
   );
   const tunedStageGlowOpacity = clampNumber(
-    stageGlowOpacity * dnaTuning.ambientScale * 0.94,
+    stageGlowOpacity *
+      dnaTuning.ambientScale *
+      adaptivePerformance.sceneIntensityScale *
+      0.94,
     0.14,
     0.88,
   );
   const tunedAtmosphereFogOpacity = clampNumber(
-    depth.fogOpacity * dnaTuning.ambientScale * (preview ? 0.82 : 1),
+    depth.fogOpacity *
+      dnaTuning.ambientScale *
+      adaptivePerformance.sceneIntensityScale *
+      (preview ? 0.82 : 1),
     0.1,
     0.44,
   );
   const tunedAtmosphereGrainOpacity = clampNumber(
-    depth.grainOpacity * (preview ? 0.78 : 1),
+    depth.grainOpacity *
+      adaptivePerformance.sceneIntensityScale *
+      (preview ? 0.78 : 1),
     0.025,
     0.08,
   );
   const tunedAtmosphereBloomOpacity = clampNumber(
-    depth.bloomOpacity * dnaTuning.glowScale * 0.9,
+    depth.bloomOpacity *
+      dnaTuning.glowScale *
+      adaptivePerformance.sceneIntensityScale *
+      0.9,
     0.18,
     0.58,
   );
   const tunedHeroAuraOpacity = clampNumber(
-    depth.heroAuraOpacity * dnaTuning.glowScale * 0.92,
+    depth.heroAuraOpacity *
+      dnaTuning.glowScale *
+      adaptivePerformance.sceneIntensityScale *
+      0.92,
     0.14,
     0.56,
   );
@@ -373,7 +409,8 @@ export default function PublicProfileRenderer({
   const linkTransition = preview
     ? 0
     : Math.round(
-        motionPersonalityTokens.transitionDurationMs /
+        (motionPersonalityTokens.transitionDurationMs *
+          adaptivePerformance.animationDurationScale) /
           clampNumber(dnaTuning.motionScale, 0.82, 1.18),
       );
   const partitionedSocialBlocks = partitionSocialBlocks(safeSocialBlocks);
@@ -394,13 +431,16 @@ export default function PublicProfileRenderer({
     orderedContentBlocks.length > 0 ||
     visibleCustomBlocks.length > 0;
   const avatarAuraAnimation = motionTokens.allowDecorativeMotion
-    ? `profile-aura ${motionPersonalityTokens.glowPulseDurationS.toFixed(2)}s ${motionPersonalityTokens.transitionEasing} infinite`
+    ? `profile-aura ${(motionPersonalityTokens.glowPulseDurationS * adaptivePerformance.animationDurationScale).toFixed(2)}s ${motionPersonalityTokens.transitionEasing} infinite`
     : "none";
   const statusPulseAnimation = motionTokens.allowDecorativeMotion
-    ? `online-pulse ${Math.max(2.6, motionPersonalityTokens.glowPulseDurationS * 0.72).toFixed(2)}s ${motionPersonalityTokens.transitionEasing} infinite`
+    ? `online-pulse ${Math.max(2.6, motionPersonalityTokens.glowPulseDurationS * 0.72 * adaptivePerformance.animationDurationScale).toFixed(2)}s ${motionPersonalityTokens.transitionEasing} infinite`
     : "none";
   const scrollAtmosphereProgress = useScrollAtmosphere(
-    !preview && safeIntroMode === "off",
+    !preview &&
+      safeIntroMode === "off" &&
+      adaptivePerformance.allowAmbientMotion &&
+      adaptiveMotionLevel !== "off",
     380,
   );
   usePublicProfileScrollbarMode(!preview);
@@ -419,10 +459,10 @@ export default function PublicProfileRenderer({
         aura={aura}
         sceneAppearance={sceneAppearance}
         nameEffects={safeNameEffects}
-        backgroundIntensity={safeBackgroundIntensity}
+        backgroundIntensity={adaptiveBackgroundIntensity}
         densityTokens={densityTokens}
         cardStyle={safeCardStyle}
-        motionLevel={safeMotionLevel}
+        motionLevel={adaptiveMotionLevel}
         motionPersonalityTokens={motionPersonalityTokens}
         music={music}
         bannerKind={safeBannerKind}
@@ -463,11 +503,11 @@ export default function PublicProfileRenderer({
         aura={aura}
         sceneAppearance={sceneAppearance}
         nameEffects={safeNameEffects}
-        backgroundIntensity={safeBackgroundIntensity}
+        backgroundIntensity={adaptiveBackgroundIntensity}
         densityTokens={densityTokens}
         cardStyle={safeCardStyle}
         cornerTokens={cornerTokens}
-        motionLevel={safeMotionLevel}
+        motionLevel={adaptiveMotionLevel}
         motionPersonalityTokens={motionPersonalityTokens}
         music={music}
         bannerKind={safeBannerKind}
@@ -507,13 +547,13 @@ export default function PublicProfileRenderer({
         aura={aura}
         scene={safeScene}
         nameEffects={safeNameEffects}
-        backgroundIntensity={safeBackgroundIntensity}
+        backgroundIntensity={adaptiveBackgroundIntensity}
         glassIntensity={safeGlassIntensity}
         bannerStyle={safeBannerStyle}
         density={safeDensity}
         cardStyle={safeCardStyle}
         cornerStyle={safeCornerStyle}
-        motionLevel={safeMotionLevel}
+        motionLevel={adaptiveMotionLevel}
         music={music}
         bannerKind={safeBannerKind}
         avatarInitials={avatarInitials}
@@ -641,22 +681,20 @@ export default function PublicProfileRenderer({
 
         .profile-stage-light {
           background:
-            radial-gradient(circle at 18% 16%, ${withAlpha(presence.accent, "16")} 0%, transparent 24%),
-            radial-gradient(circle at 82% 22%, ${withAlpha(presence.soft, "12")} 0%, transparent 28%),
-            radial-gradient(circle at 50% 72%, ${withAlpha(presence.accent, "10")} 0%, transparent 34%);
-          opacity: calc(${Math.max(0.16, depth.lightingOpacity)} + var(--profile-scroll-focus) * 0.22);
+            radial-gradient(circle at 18% 16%, ${withAlpha(presence.accent, "12")} 0%, transparent 22%),
+            radial-gradient(circle at 82% 22%, ${withAlpha(presence.soft, "0d")} 0%, transparent 24%);
+          opacity: calc(${Math.max(0.1, depth.lightingOpacity * 0.68)} + var(--profile-scroll-focus) * 0.12);
           transform: translate3d(0, calc(var(--profile-scroll-settle) * -0.24), 0);
           animation: ambient-drift var(--profile-ambient-drift-duration) var(--profile-motion-ease) infinite;
         }
 
         .profile-stage-bloom {
           background:
-            radial-gradient(circle at 50% 20%, rgba(255,255,255,0.12) 0%, transparent 20%),
-            radial-gradient(circle at 50% 32%, ${withAlpha(presence.soft, "28")} 0%, transparent 40%),
-            radial-gradient(circle at 50% 72%, ${withAlpha(presence.accent, "16")} 0%, transparent 36%);
-          opacity: calc(var(--profile-atmosphere-bloom) + var(--profile-scroll-focus) * 0.12);
+            radial-gradient(circle at 50% 22%, rgba(255,255,255,0.08) 0%, transparent 18%),
+            radial-gradient(circle at 50% 34%, ${withAlpha(presence.soft, "1d")} 0%, transparent 34%);
+          opacity: calc(var(--profile-atmosphere-bloom) * 0.72 + var(--profile-scroll-focus) * 0.08);
           mix-blend-mode: screen;
-          filter: blur(calc(28px + var(--profile-blur-breath-distance) * 2));
+          filter: blur(calc(18px + var(--profile-blur-breath-distance) * 1.2));
           transform: translate3d(0, calc(var(--profile-scroll-settle) * -0.3), 0) scale(calc(1 + var(--profile-scroll-progress) * 0.02));
           animation:
             glow-breathe calc(var(--profile-glow-pulse-duration) * 1.12) var(--profile-motion-ease) infinite,
@@ -665,21 +703,21 @@ export default function PublicProfileRenderer({
 
         .profile-stage-aura {
           background:
-            radial-gradient(circle at 50% 38%, ${withAlpha(presence.accent, "24")} 0%, transparent 32%),
-            radial-gradient(circle at 50% 56%, ${withAlpha(presence.soft, "1a")} 0%, transparent 44%);
-          opacity: calc(var(--profile-hero-aura-opacity) + var(--profile-scroll-focus) * 0.12);
-          filter: blur(calc(18px + var(--profile-blur-breath-distance)));
-          transform: translate3d(0, calc(var(--profile-scroll-settle) * -0.42), 0) scale(calc(1 + var(--profile-scroll-progress) * 0.032));
+            radial-gradient(circle at 50% 40%, ${withAlpha(presence.accent, "18")} 0%, transparent 28%),
+            radial-gradient(circle at 50% 58%, ${withAlpha(presence.soft, "14")} 0%, transparent 36%);
+          opacity: calc(var(--profile-hero-aura-opacity) * 0.78 + var(--profile-scroll-focus) * 0.08);
+          filter: blur(calc(12px + var(--profile-blur-breath-distance)));
+          transform: translate3d(0, calc(var(--profile-scroll-settle) * -0.34), 0) scale(calc(1 + var(--profile-scroll-progress) * 0.018));
           mix-blend-mode: screen;
           animation: ambient-drift calc(var(--profile-ambient-drift-duration) * 1.05) var(--profile-motion-ease) infinite reverse;
         }
 
         .profile-stage-fog {
           background:
-            radial-gradient(circle at 50% 46%, rgba(255,255,255,0.08) 0%, transparent 34%),
-            linear-gradient(180deg, transparent 16%, ${withAlpha(presence.soft, "18")} 58%, rgba(3,4,8,0.18) 100%);
-          opacity: calc(var(--profile-atmosphere-fog) + var(--profile-scroll-progress) * 0.1);
-          filter: blur(calc(16px + var(--profile-blur-breath-distance) * 1.8));
+            radial-gradient(circle at 50% 46%, rgba(255,255,255,0.05) 0%, transparent 28%),
+            linear-gradient(180deg, transparent 18%, ${withAlpha(presence.soft, "10")} 56%, rgba(3,4,8,0.14) 100%);
+          opacity: calc(var(--profile-atmosphere-fog) * 0.68 + var(--profile-scroll-progress) * 0.04);
+          filter: blur(calc(10px + var(--profile-blur-breath-distance)));
           transform: translate3d(0, calc(var(--profile-scroll-settle) * 0.22), 0) scale(1.03);
           mix-blend-mode: screen;
           animation: fog-drift calc(var(--profile-ambient-drift-duration) * 1.22) var(--profile-motion-ease) infinite;
@@ -736,7 +774,7 @@ export default function PublicProfileRenderer({
         }
 
         .profile-stage-noise {
-          opacity: calc(${Math.min(0.08, 0.026 + depth.lightingOpacity * 0.06)} + var(--profile-atmosphere-grain));
+          opacity: calc(${Math.min(0.05, 0.018 + depth.lightingOpacity * 0.03)} + var(--profile-atmosphere-grain));
           background-image:
             ${presence.ambientGrid},
             radial-gradient(rgba(255, 255, 255, 0.82) 0.5px, transparent 0.6px),
@@ -745,13 +783,13 @@ export default function PublicProfileRenderer({
           background-position: 0 0, 0 0, 7px 11px, 0 0;
           background-size: 80px 80px, 12px 12px, 15px 15px, 100% 100%;
           mix-blend-mode: soft-light;
-          animation: grain-shift 24s linear infinite;
+          animation: grain-shift 28s linear infinite;
         }
 
         .profile-stage-glow {
           background: ${presence.stageGlow};
           filter: blur(calc(${tunedStageGlowBlur}px + var(--profile-blur-breath-distance) + var(--profile-scroll-blur-shift)));
-          opacity: calc(${tunedStageGlowOpacity} + var(--profile-glow-pulse-opacity) * 0.7 + var(--profile-scroll-focus) * 0.08);
+          opacity: calc(${tunedStageGlowOpacity} * 0.72 + var(--profile-glow-pulse-opacity) * 0.46 + var(--profile-scroll-focus) * 0.04);
           animation:
             glow-breathe var(--profile-glow-pulse-duration) var(--profile-motion-ease) infinite,
             ambient-drift calc(var(--profile-ambient-drift-duration) * 1.14) var(--profile-motion-ease) infinite;
@@ -764,7 +802,7 @@ export default function PublicProfileRenderer({
             linear-gradient(180deg, rgba(5, 6, 10, 0), rgba(5, 6, 10, ${Math.min(0.18, depth.foregroundHazeOpacity).toFixed(3)}) 100%),
             radial-gradient(circle at 50% 90%, ${withAlpha(presence.soft, "14")} 0%, transparent 36%);
           z-index: 1;
-          opacity: calc(0.94 + var(--profile-scroll-focus) * 0.26);
+          opacity: calc(0.72 + var(--profile-scroll-focus) * 0.14);
           transform: translate3d(0, calc(var(--profile-scroll-settle) * 0.14), 0);
         }
 
@@ -773,10 +811,10 @@ export default function PublicProfileRenderer({
           height: ${preview
             ? bannerStyleTokens.previewStageBlurHeight
             : bannerStyleTokens.stageBlurHeight};
-          background: linear-gradient(180deg, rgba(4, 5, 9, 0), rgba(4, 5, 9, 0.4) 42%, rgba(4, 5, 9, 0.8) 100%);
+          background: linear-gradient(180deg, rgba(4, 5, 9, 0), rgba(4, 5, 9, 0.28) 42%, rgba(4, 5, 9, 0.58) 100%);
           transform: translate3d(0, calc(var(--profile-scroll-settle) * 1.18), 0);
-          filter: blur(calc(4px + var(--profile-blur-breath-distance) * 0.68));
-          opacity: calc(0.82 + var(--profile-scroll-focus) * 0.22);
+          filter: blur(calc(2px + var(--profile-blur-breath-distance) * 0.32));
+          opacity: calc(0.62 + var(--profile-scroll-focus) * 0.14);
         }
 
         .profile-shell {
@@ -791,17 +829,17 @@ export default function PublicProfileRenderer({
           padding: ${shellPadding};
           box-sizing: border-box;
           min-width: 0;
-          transform: translate3d(0, calc(var(--profile-scroll-settle) * -0.68), 0);
+          transform: translate3d(0, calc(var(--profile-scroll-settle) * -0.28), 0);
           transition: transform var(--profile-transition-duration) var(--profile-motion-ease);
         }
 
         .profile-shell-orb {
           inset: auto;
-          width: 84px;
-          height: 84px;
+          width: 58px;
+          height: 58px;
           border-radius: 999px;
-          background: radial-gradient(circle, ${withAlpha(presence.accent, "12")} 0%, transparent 72%);
-          opacity: ${preview ? 0.22 : 0.34};
+          background: radial-gradient(circle, ${withAlpha(presence.accent, "0f")} 0%, transparent 72%);
+          opacity: ${preview ? 0.12 : 0.18};
           z-index: 0;
           animation: ambient-drift calc(var(--profile-ambient-drift-duration) * 0.94) var(--profile-motion-ease) infinite;
         }
@@ -825,13 +863,12 @@ export default function PublicProfileRenderer({
           background: ${panelBackground};
           border: 1px solid rgba(255, 255, 255, calc(var(--profile-border-alpha) + 0.006));
           box-shadow:
-            ${presence.panelGlow},
-            0 ${Math.round(20 * depth.shadowDepth * dnaTuning.shadowScale)}px ${Math.round(48 * depth.shadowDepth * dnaTuning.shadowScale)}px rgba(0, 0, 0, calc(var(--profile-shadow-alpha) + 0.02)),
-            inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            0 ${Math.round(14 * depth.shadowDepth * dnaTuning.shadowScale)}px ${Math.round(34 * depth.shadowDepth * dnaTuning.shadowScale)}px rgba(0, 0, 0, calc(var(--profile-shadow-alpha) - 0.02)),
+            inset 0 1px 0 rgba(255, 255, 255, 0.04);
           overflow: hidden;
           backdrop-filter: ${resolvedPanelBackdropFilter};
           -webkit-backdrop-filter: ${resolvedPanelBackdropFilter};
-          transform: translate3d(0, calc(var(--profile-scroll-settle) * -0.3), 0);
+          transform: translate3d(0, calc(var(--profile-scroll-settle) * -0.16), 0);
           transition:
             transform var(--profile-transition-duration) var(--profile-motion-ease),
             box-shadow var(--profile-transition-duration) var(--profile-motion-ease);
@@ -847,7 +884,7 @@ export default function PublicProfileRenderer({
             radial-gradient(circle at top right, ${withAlpha(presence.accent, "14")} 0%, transparent 28%),
             ${presence.auraOverlay};
           pointer-events: none;
-          opacity: calc(0.84 + var(--profile-scroll-focus) * 0.08);
+          opacity: calc(0.54 + var(--profile-scroll-focus) * 0.04);
         }
 
         .profile-floating-grid {
@@ -855,7 +892,7 @@ export default function PublicProfileRenderer({
           z-index: 1;
           display: grid;
           grid-template-columns: minmax(220px, 0.64fr) minmax(0, 0.84fr);
-          gap: ${preview ? "0" : `${Math.round(8 * spacingScale)}px`};
+          gap: ${preview ? "0" : `${Math.round(4 * spacingScale)}px`};
           min-width: 0;
         }
 
@@ -869,13 +906,13 @@ export default function PublicProfileRenderer({
           display: flex;
           flex-direction: column;
           justify-content: ${preview ? "flex-start" : "space-between"};
-          gap: ${preview ? `${Math.round(10 * spacingScale)}px` : `${Math.round(4 * spacingScale)}px`};
+          gap: ${preview ? `${Math.round(10 * spacingScale)}px` : `${Math.round(8 * spacingScale)}px`};
         }
 
         .profile-links-column {
           border-left: 1px solid ${withAlpha(presence.accent, "0f")};
           background:
-            linear-gradient(180deg, rgba(255,255,255,0.014), transparent 20%),
+            linear-gradient(180deg, rgba(255,255,255,0.01), transparent 18%),
             ${surfaceBackground};
         }
 
@@ -897,14 +934,14 @@ export default function PublicProfileRenderer({
           align-items: center;
           gap: var(--profile-chip-gap);
           color: #edf2fb;
-          background: rgba(255, 255, 255, 0.035);
-          border: 1px solid rgba(255, 255, 255, calc(var(--profile-border-alpha) - 0.01));
+          background: rgba(255, 255, 255, 0.026);
+          border: 1px solid rgba(255, 255, 255, calc(var(--profile-border-alpha) - 0.018));
           font-size: var(--profile-chip-font-size);
           font-weight: 800;
           letter-spacing: var(--profile-label-tracking);
           text-transform: uppercase;
           opacity: var(--profile-label-opacity);
-          box-shadow: 0 10px 20px rgba(0, 0, 0, calc(var(--profile-shadow-alpha) - 0.04));
+          box-shadow: 0 6px 14px rgba(0, 0, 0, calc(var(--profile-shadow-alpha) - 0.08));
           backdrop-filter: blur(var(--profile-panel-blur));
           -webkit-backdrop-filter: blur(var(--profile-panel-blur));
           transition:
@@ -921,20 +958,20 @@ export default function PublicProfileRenderer({
 
         .preview-callout {
           width: fit-content;
-          margin-bottom: ${Math.round(12 * spacingScale)}px;
+          margin-bottom: ${Math.round(10 * spacingScale)}px;
         }
 
         .identity-stack {
-          margin-top: ${preview ? `${Math.round(8 * spacingScale)}px` : `${Math.round(10 * spacingScale)}px`};
+          margin-top: ${preview ? `${Math.round(6 * spacingScale)}px` : `${Math.round(8 * spacingScale)}px`};
           min-width: 0;
-          transform: translate3d(0, calc(var(--profile-scroll-settle) * -0.24), 0);
+          transform: translate3d(0, calc(var(--profile-scroll-settle) * -0.12), 0);
           transition: transform var(--profile-transition-duration) var(--profile-motion-ease);
         }
 
         .avatar-and-copy {
           display: grid;
           grid-template-columns: auto minmax(0, 1fr);
-          gap: ${Math.round(12 * spacingScale)}px;
+          gap: ${Math.round(14 * spacingScale)}px;
           align-items: flex-start;
           min-width: 0;
         }
@@ -951,8 +988,8 @@ export default function PublicProfileRenderer({
           inset: 8px;
           border-radius: 999px;
           background: ${presence.avatarAuraBackground};
-          filter: blur(calc(16px + var(--profile-blur-breath-distance)));
-          transform: scale(1.12);
+          filter: blur(calc(10px + var(--profile-blur-breath-distance) * 0.8));
+          transform: scale(1.06);
           animation: ${avatarAuraAnimation};
         }
 
@@ -980,8 +1017,8 @@ export default function PublicProfileRenderer({
           background: linear-gradient(180deg, rgba(8, 9, 16, 0.96), rgba(11, 12, 20, 0.98));
           box-shadow:
             0 0 0 1px ${presence.avatarRing},
-            0 22px 54px rgba(0, 0, 0, 0.26),
-            0 0 34px ${presence.avatarGlow};
+            0 14px 30px rgba(0, 0, 0, 0.2),
+            0 0 18px ${presence.avatarGlow};
           z-index: 2;
         }
 
@@ -1042,13 +1079,13 @@ export default function PublicProfileRenderer({
         }
 
         .profile-name {
-          margin: 10px 0 0;
+          margin: 6px 0 0;
           font-size: ${preview
             ? `clamp(${Math.round(26 * densityTokens.bannerScale)}px, 4.1vw, ${Math.round(42 * densityTokens.bannerScale)}px)`
             : `clamp(${Math.round(31 * densityTokens.bannerScale)}px, 4.4vw, ${Math.round(48 * densityTokens.bannerScale)}px)`};
           line-height: 0.92;
           letter-spacing: -0.08em;
-          text-shadow: 0 16px 34px rgba(0, 0, 0, 0.28);
+          text-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
           transition: transform var(--profile-transition-duration) var(--profile-motion-emphasis);
         }
 
@@ -1067,9 +1104,9 @@ export default function PublicProfileRenderer({
         .profile-pill-row,
         .profile-badge-rail {
           display: flex;
-          gap: 6px;
+          gap: 8px;
           flex-wrap: wrap;
-          margin-top: ${Math.round(10 * spacingScale)}px;
+          margin-top: ${Math.round(12 * spacingScale)}px;
         }
 
         .profile-pill-row.identity {
@@ -1087,15 +1124,15 @@ export default function PublicProfileRenderer({
           font-weight: 800;
           letter-spacing: 0.02em;
           border: 1px solid rgba(255, 255, 255, calc(var(--profile-border-alpha) - 0.01));
-          background: linear-gradient(180deg, rgba(255,255,255,0.045), rgba(8,10,16,0.44));
-          box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
-          backdrop-filter: blur(10px) saturate(112%);
-          -webkit-backdrop-filter: blur(10px) saturate(112%);
+          background: linear-gradient(180deg, rgba(255,255,255,0.034), rgba(8,10,16,0.36));
+          box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+          backdrop-filter: blur(8px) saturate(108%);
+          -webkit-backdrop-filter: blur(8px) saturate(108%);
         }
 
         .profile-bio {
-          margin-top: ${preview ? `${Math.round(10 * spacingScale)}px` : `${Math.round(13 * spacingScale)}px`};
-          max-width: 420px;
+          margin-top: ${preview ? `${Math.round(10 * spacingScale)}px` : `${Math.round(15 * spacingScale)}px`};
+          max-width: 46ch;
           color: #d8e2f1;
           font-size: 13px;
           line-height: ${densityTokens.bioLineHeight};
@@ -1129,12 +1166,10 @@ export default function PublicProfileRenderer({
         }
 
         .widget-shell.music {
-          margin-top: ${Math.round(2 * spacingScale)}px;
           transform: translate3d(0, 0, 0);
         }
 
         .widget-shell.social {
-          margin-bottom: ${Math.round(2 * spacingScale)}px;
           transform: translate3d(0, 0, 0);
         }
 
@@ -1147,11 +1182,11 @@ export default function PublicProfileRenderer({
         }
 
         .widget-shell.badges {
-          transform: translate3d(-2px, 0, 0);
+          transform: translate3d(0, 0, 0);
         }
 
         .widget-shell.stats {
-          transform: translate3d(4px, 0, 0);
+          transform: translate3d(0, 0, 0);
         }
 
         .widget-shell::before {
@@ -1162,9 +1197,8 @@ export default function PublicProfileRenderer({
           background:
             radial-gradient(circle at 16% 18%, ${withAlpha(presence.accent, "0e")} 0%, transparent 34%),
             radial-gradient(circle at 84% 72%, ${withAlpha(presence.soft, "0c")} 0%, transparent 30%);
-          opacity: var(--profile-widget-glow-opacity);
+          opacity: calc(var(--profile-widget-glow-opacity) * 0.22);
           z-index: -1;
-          animation: glow-breathe calc(var(--profile-glow-pulse-duration) * 1.2) var(--profile-motion-ease) infinite;
         }
 
         .profile-badge-pill {
@@ -1197,7 +1231,7 @@ export default function PublicProfileRenderer({
 
         .links-list {
           display: grid;
-          gap: ${Math.round(9 * spacingScale)}px;
+          gap: ${Math.round(10 * spacingScale)}px;
           margin-top: ${preview ? `${Math.round(10 * spacingScale)}px` : `${Math.round(12 * spacingScale)}px`};
           min-width: 0;
         }
@@ -1217,12 +1251,12 @@ export default function PublicProfileRenderer({
           padding: 12px 12px 12px 11px;
           border-radius: var(--profile-card-radius);
           background:
-            linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.016)),
-            linear-gradient(180deg, rgba(10, 12, 18, 0.58), rgba(9, 10, 16, 0.68));
-          border: 1px solid rgba(255, 255, 255, calc(var(--profile-border-alpha) - 0.01));
+            linear-gradient(180deg, rgba(255, 255, 255, 0.022), rgba(255, 255, 255, 0.01)),
+            linear-gradient(180deg, rgba(10, 12, 18, 0.46), rgba(9, 10, 16, 0.56));
+          border: 1px solid rgba(255, 255, 255, calc(var(--profile-border-alpha) - 0.02));
           box-shadow:
-            0 12px 24px rgba(0, 0, 0, var(--profile-shadow-alpha)),
-            inset 0 1px 0 rgba(255, 255, 255, 0.04);
+            0 8px 18px rgba(0, 0, 0, calc(var(--profile-shadow-alpha) - 0.04)),
+            inset 0 1px 0 rgba(255, 255, 255, 0.03);
           transition:
             transform var(--profile-transition-duration) var(--profile-motion-ease),
             border-color var(--profile-transition-duration) var(--profile-motion-ease),
@@ -1235,35 +1269,35 @@ export default function PublicProfileRenderer({
         .profile-link-card:focus-visible {
           transform: translateY(var(--profile-link-hover-lift)) scale(var(--profile-link-hover-scale));
           box-shadow:
-            0 calc(14px + var(--profile-link-hover-lift) * 4) calc(26px + var(--profile-link-hover-lift) * 5) rgba(0, 0, 0, calc(var(--profile-shadow-alpha) + 0.04)),
-            inset 0 1px 0 rgba(255, 255, 255, 0.06);
+            0 calc(10px + var(--profile-link-hover-lift) * 3) calc(20px + var(--profile-link-hover-lift) * 4) rgba(0, 0, 0, calc(var(--profile-shadow-alpha))),
+            inset 0 1px 0 rgba(255, 255, 255, 0.05);
         }
 
         .profile-link-card.float-a {
-          margin-inline-end: 6px;
+          margin-inline-end: 0;
         }
 
         .profile-link-card.float-b {
-          margin-inline-start: 8px;
+          margin-inline-start: 0;
         }
 
         .profile-link-glow {
           position: absolute;
           inset: 0 auto 0 0;
           width: 26%;
-          opacity: 0.44;
+          opacity: 0.24;
           pointer-events: none;
         }
 
         .profile-link-icon {
-          width: 42px;
-          height: 42px;
+          width: 40px;
+          height: 40px;
           border-radius: calc(var(--profile-card-radius) - 4px);
           display: flex;
           align-items: center;
           justify-content: center;
           border: 1px solid rgba(255, 255, 255, 0.08);
-          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
           flex-shrink: 0;
           position: relative;
           z-index: 1;
@@ -1317,16 +1351,16 @@ export default function PublicProfileRenderer({
         }
 
         .profile-link-arrow {
-          width: 30px;
-          height: 30px;
+          width: 28px;
+          height: 28px;
           border-radius: calc(var(--profile-card-radius) - 7px);
           display: flex;
           align-items: center;
           justify-content: center;
           color: #dce3f2;
-          background: rgba(255, 255, 255, 0.04);
-          border: 1px solid rgba(255, 255, 255, 0.07);
-          opacity: 0.82;
+          background: rgba(255, 255, 255, 0.026);
+          border: 1px solid rgba(255, 255, 255, 0.06);
+          opacity: 0.74;
           position: relative;
           z-index: 1;
           flex-shrink: 0;
@@ -1440,9 +1474,18 @@ export default function PublicProfileRenderer({
             display: none;
           }
 
+          .profile-stage-bloom,
+          .profile-stage-aura,
+          .profile-stage-fog,
+          .profile-stage-glow,
+          .profile-stage-noise,
+          .widget-shell::before {
+            display: none;
+          }
+
           .profile-link-card {
-            gap: 10px;
-            padding: 12px 11px;
+            gap: 9px;
+            padding: 11px 10px;
           }
         }
 
@@ -1491,8 +1534,8 @@ export default function PublicProfileRenderer({
         themeColor={safeThemeColor}
         scene={safeScene}
         previewMode={preview}
-        intensity={safeBackgroundIntensity}
-        motionLevel={safeMotionLevel}
+        intensity={adaptiveBackgroundIntensity}
+        motionLevel={adaptiveMotionLevel}
       />
 
       <div className="profile-stage" aria-hidden>
@@ -1563,7 +1606,7 @@ export default function PublicProfileRenderer({
                         displayName={safeDisplayName}
                         username={safeUser.username}
                         effects={safeNameEffects}
-                        motionLevel={safeMotionLevel}
+                        motionLevel={adaptiveMotionLevel}
                         nameClassName="profile-name"
                         usernameClassName="profile-username"
                       />
@@ -1646,7 +1689,7 @@ export default function PublicProfileRenderer({
                   renderModernCompositionBlock(block, {
                     preview,
                     music,
-                    motionLevel: safeMotionLevel,
+                    motionLevel: adaptiveMotionLevel,
                     username: safeUser.username,
                     themeColor: sceneAppearance.linkThemeColor,
                     socialThemeColor: sceneAppearance.socialThemeColor,
@@ -1965,10 +2008,10 @@ function FloatingProfileScene({
 
         .floating-profile-stage-bloom {
           background:
-            radial-gradient(circle at 50% 20%, rgba(255,255,255,0.12) 0%, transparent 20%),
-            radial-gradient(circle at 50% 34%, ${withAlpha(presence.soft, "24")} 0%, transparent 42%);
-          opacity: calc(var(--floating-atmosphere-bloom) + var(--floating-scroll-focus) * 0.08);
-          filter: blur(calc(24px + var(--floating-blur-breath-distance) * 2));
+            radial-gradient(circle at 50% 20%, rgba(255,255,255,0.08) 0%, transparent 18%),
+            radial-gradient(circle at 50% 34%, ${withAlpha(presence.soft, "1a")} 0%, transparent 36%);
+          opacity: calc(var(--floating-atmosphere-bloom) * 0.72 + var(--floating-scroll-focus) * 0.06);
+          filter: blur(calc(16px + var(--floating-blur-breath-distance) * 1.2));
           mix-blend-mode: screen;
           animation:
             glow-breathe calc(var(--floating-glow-pulse-duration) * 1.08) var(--floating-motion-ease) infinite,
@@ -1977,21 +2020,21 @@ function FloatingProfileScene({
 
         .floating-profile-stage-aura {
           background:
-            radial-gradient(circle at 50% 42%, ${withAlpha(presence.accent, "20")} 0%, transparent 34%),
-            radial-gradient(circle at 50% 58%, ${withAlpha(presence.soft, "16")} 0%, transparent 46%);
-          opacity: calc(var(--floating-hero-aura-opacity) + var(--floating-scroll-focus) * 0.1);
-          filter: blur(calc(14px + var(--floating-blur-breath-distance)));
-          transform: translate3d(0, calc(var(--floating-scroll-settle) * -0.36), 0) scale(calc(1 + var(--floating-scroll-progress) * 0.024));
+            radial-gradient(circle at 50% 42%, ${withAlpha(presence.accent, "16")} 0%, transparent 30%),
+            radial-gradient(circle at 50% 58%, ${withAlpha(presence.soft, "12")} 0%, transparent 38%);
+          opacity: calc(var(--floating-hero-aura-opacity) * 0.78 + var(--floating-scroll-focus) * 0.08);
+          filter: blur(calc(10px + var(--floating-blur-breath-distance)));
+          transform: translate3d(0, calc(var(--floating-scroll-settle) * -0.28), 0) scale(calc(1 + var(--floating-scroll-progress) * 0.016));
           mix-blend-mode: screen;
           animation: ambient-drift calc(var(--floating-ambient-drift-duration) * 1.04) var(--floating-motion-ease) infinite reverse;
         }
 
         .floating-profile-stage-fog {
           background:
-            radial-gradient(circle at 50% 52%, rgba(255,255,255,0.06) 0%, transparent 32%),
-            linear-gradient(180deg, transparent 20%, ${withAlpha(presence.soft, "14")} 64%, rgba(4,5,9,0.16) 100%);
-          opacity: calc(var(--floating-atmosphere-fog) + var(--floating-scroll-progress) * 0.08);
-          filter: blur(calc(14px + var(--floating-blur-breath-distance) * 1.6));
+            radial-gradient(circle at 50% 52%, rgba(255,255,255,0.04) 0%, transparent 28%),
+            linear-gradient(180deg, transparent 20%, ${withAlpha(presence.soft, "0f")} 62%, rgba(4,5,9,0.14) 100%);
+          opacity: calc(var(--floating-atmosphere-fog) * 0.66 + var(--floating-scroll-progress) * 0.04);
+          filter: blur(calc(10px + var(--floating-blur-breath-distance)));
           transform: translate3d(0, calc(var(--floating-scroll-settle) * 0.18), 0) scale(1.03);
           mix-blend-mode: screen;
           animation: fog-drift calc(var(--floating-ambient-drift-duration) * 1.16) var(--floating-motion-ease) infinite;
@@ -2000,14 +2043,14 @@ function FloatingProfileScene({
         .floating-profile-stage-glow {
           background: ${presence.stageGlow};
           filter: blur(calc(${Math.max(14, Math.round(depth.stageGlowBlur * dnaTuning.ambientScale * dnaTuning.glowScale))}px + var(--floating-blur-breath-distance)));
-          opacity: calc(${clampNumber(depth.stageGlowOpacity * 0.62 * dnaTuning.ambientScale, 0.26, 0.8)} + var(--floating-glow-pulse-opacity));
+          opacity: calc(${clampNumber(depth.stageGlowOpacity * 0.48 * dnaTuning.ambientScale, 0.18, 0.68)} + var(--floating-glow-pulse-opacity) * 0.5);
           animation:
             glow-breathe var(--floating-glow-pulse-duration) var(--floating-motion-ease) infinite,
             ambient-drift var(--floating-ambient-drift-duration) var(--floating-motion-ease) infinite;
         }
 
         .floating-profile-stage-noise {
-          opacity: calc(0.018 + var(--floating-atmosphere-grain));
+          opacity: calc(0.01 + var(--floating-atmosphere-grain) * 0.6);
           background-image:
             ${presence.ambientGrid},
             radial-gradient(rgba(255,255,255,0.78) 0.45px, transparent 0.55px),
@@ -2177,14 +2220,14 @@ function FloatingProfileScene({
           border-radius: ${Math.max(cornerTokens.cardRadius - 2, 16)}px;
           border: 1px solid rgba(255,255,255,0.05);
           background:
-            linear-gradient(180deg, rgba(255,255,255,0.028), rgba(8,10,16,0.72)),
+            linear-gradient(180deg, rgba(255,255,255,0.022), rgba(8,10,16,0.58)),
             ${sceneAppearance.surfaceBackground};
           box-shadow:
-            0 16px 30px rgba(0,0,0,0.14),
+            0 10px 20px rgba(0,0,0,0.1),
             inset 0 1px 0 rgba(255,255,255,0.03);
           padding: 12px;
-          backdrop-filter: ${cardStyle === "glass" ? "blur(8px) saturate(106%)" : "none"};
-          -webkit-backdrop-filter: ${cardStyle === "glass" ? "blur(8px) saturate(106%)" : "none"};
+          backdrop-filter: ${cardStyle === "glass" ? "blur(6px) saturate(104%)" : "none"};
+          -webkit-backdrop-filter: ${cardStyle === "glass" ? "blur(6px) saturate(104%)" : "none"};
           transition:
             transform var(--floating-transition-duration) var(--floating-motion-ease),
             box-shadow var(--floating-transition-duration) var(--floating-motion-ease),
@@ -2199,7 +2242,7 @@ function FloatingProfileScene({
             radial-gradient(circle at top right, ${withAlpha(presence.accent, "0f")} 0%, transparent 28%),
             linear-gradient(120deg, rgba(255,255,255,0.04), transparent 18%);
           pointer-events: none;
-          opacity: calc(0.92 + var(--floating-scroll-focus) * 0.12);
+          opacity: calc(0.58 + var(--floating-scroll-focus) * 0.06);
         }
 
         .floating-module > * {
@@ -2256,13 +2299,13 @@ function FloatingProfileScene({
         .floating-module.links .profile-link-card:nth-child(odd) {
           justify-self: start;
           max-width: ${personality === "cinematic" ? "320px" : "300px"};
-          margin-top: ${personality === "scattered" ? "8px" : "0"};
+          margin-top: 0;
         }
 
         .floating-module.links .profile-link-card:nth-child(even) {
           justify-self: end;
           max-width: ${personality === "minimal" ? "100%" : "280px"};
-          margin-top: ${personality === "cinematic" ? "18px" : personality === "scattered" ? "14px" : "10px"};
+          margin-top: 0;
         }
 
         .floating-module .profile-badge-rail {
@@ -3047,18 +3090,10 @@ function IntroProfileStage({
     if (
       preview ||
       !hasDetails ||
+      motionLevel === "off" ||
       typeof window === "undefined" ||
       typeof IntersectionObserver === "undefined"
     ) {
-      showAll();
-      return;
-    }
-
-    const prefersReducedMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
-
-    if (prefersReducedMotion) {
       showAll();
       return;
     }
@@ -3094,6 +3129,7 @@ function IntroProfileStage({
   }, [
     customBlocks,
     hasDetails,
+    motionLevel,
     orderedContentBlocks,
     preview,
     user.bio,
@@ -3110,9 +3146,7 @@ function IntroProfileStage({
       return;
     }
 
-    const prefersReducedMotion =
-      typeof window !== "undefined" &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const prefersReducedMotion = motionLevel === "off";
 
     const topOffset = Math.max(18, Math.round(window.innerHeight * 0.06));
     const targetTop =
@@ -3422,8 +3456,8 @@ function IntroProfileStage({
           display: inline-flex;
           align-items: center;
           gap: 6px;
-          border: 1px solid rgba(255,255,255,0.1);
-          background: rgba(255,255,255,0.05);
+          border: 1px solid rgba(255,255,255,0.08);
+          background: rgba(255,255,255,0.035);
           color: #eef3fc;
           font-size: 10px;
           font-weight: 800;
@@ -3434,8 +3468,8 @@ function IntroProfileStage({
 
         .profile-intro-chip.preview {
           border-color: ${withAlpha(linkThemeColor, "28")};
-          background: linear-gradient(180deg, rgba(255,255,255,0.07), rgba(8,10,16,0.46));
-          box-shadow: 0 14px 28px ${withAlpha(linkThemeColor, "12")};
+          background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(8,10,16,0.38));
+          box-shadow: 0 8px 18px ${withAlpha(linkThemeColor, "0c")};
         }
 
         .profile-intro-avatar,
@@ -3455,7 +3489,7 @@ function IntroProfileStage({
           font-size: clamp(${mode === "cinematic" ? "38px" : "30px"}, ${mode === "cinematic" ? "5vw" : "4.6vw"}, ${mode === "cinematic" ? "58px" : "46px"});
           line-height: 0.9;
           letter-spacing: -0.075em;
-          text-shadow: 0 18px 42px rgba(0, 0, 0, 0.34);
+          text-shadow: 0 10px 20px rgba(0, 0, 0, 0.22);
           transition:
             transform var(--intro-transition-duration) var(--intro-motion-emphasis),
             opacity var(--intro-transition-duration) var(--intro-motion-ease);
@@ -3510,9 +3544,9 @@ function IntroProfileStage({
             radial-gradient(circle at 30% 24%, rgba(255,255,255,0.16), transparent 48%),
             linear-gradient(180deg, rgba(255,255,255,0.07), rgba(8,10,16,0.52));
           box-shadow:
-            0 14px 28px rgba(0,0,0,0.18),
-            0 0 18px color-mix(in srgb, var(--intro-action-accent) 22%, transparent),
-            inset 0 1px 0 rgba(255,255,255,0.07);
+            0 8px 18px rgba(0,0,0,0.14),
+            0 0 10px color-mix(in srgb, var(--intro-action-accent) 14%, transparent),
+            inset 0 1px 0 rgba(255,255,255,0.06);
           transition:
             transform 180ms cubic-bezier(0.22, 1, 0.36, 1),
             border-color 180ms ease,
@@ -3557,11 +3591,11 @@ function IntroProfileStage({
 
         .profile-intro-action:hover,
         .profile-intro-action:focus-visible {
-          transform: translateY(-2px);
+          transform: translateY(-1px);
           border-color: color-mix(in srgb, var(--intro-action-accent) 54%, rgba(255,255,255,0.12));
           box-shadow:
-            0 16px 30px rgba(0,0,0,0.22),
-            0 0 24px color-mix(in srgb, var(--intro-action-accent) 30%, transparent),
+            0 12px 22px rgba(0,0,0,0.18),
+            0 0 14px color-mix(in srgb, var(--intro-action-accent) 20%, transparent),
             inset 0 1px 0 rgba(255,255,255,0.1);
           outline: none;
         }
@@ -3589,8 +3623,8 @@ function IntroProfileStage({
             linear-gradient(180deg, rgba(255,255,255,0.06), rgba(8,10,16,0.52)),
             radial-gradient(circle at top left, ${withAlpha(linkThemeColor, "18")} 0%, transparent 34%);
           box-shadow:
-            0 18px 34px rgba(0,0,0,0.18),
-            0 0 26px ${withAlpha(linkThemeColor, "10")},
+            0 10px 20px rgba(0,0,0,0.14),
+            0 0 14px ${withAlpha(linkThemeColor, "08")},
             inset 0 1px 0 rgba(255,255,255,0.08);
           text-decoration: none;
           color: #f7fbff;
@@ -3654,8 +3688,8 @@ function IntroProfileStage({
           font-weight: 800;
           letter-spacing: calc(var(--intro-label-tracking) - 0.03em);
           border: 1px solid rgba(255,255,255,0.07);
-          background: linear-gradient(180deg, rgba(255,255,255,0.045), rgba(8,10,16,0.48));
-          box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+          background: linear-gradient(180deg, rgba(255,255,255,0.034), rgba(8,10,16,0.4));
+          box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
         }
 
         .profile-intro-badge-pill {
@@ -3679,7 +3713,7 @@ function IntroProfileStage({
         .profile-intro-scroll-wrap {
           position: absolute;
           left: 50%;
-          bottom: ${preview ? "12px" : "28px"};
+          bottom: ${preview ? "10px" : "22px"};
           transform: translateX(-50%);
           z-index: 1;
           transition:
@@ -3695,15 +3729,15 @@ function IntroProfileStage({
           align-items: center;
           justify-content: center;
           min-height: 44px;
-          padding: 5px 13px 5px 8px;
+          padding: 4px 12px 4px 8px;
           gap: 10px;
           border-radius: 999px;
           border-color: rgba(255,255,255,0.12);
           background: linear-gradient(180deg, rgba(255,255,255,0.09), rgba(8,10,16,0.54));
           box-shadow:
-            0 16px 34px rgba(0, 0, 0, 0.22),
-            0 0 26px ${withAlpha(linkThemeColor, "1e")},
-            inset 0 1px 0 rgba(255,255,255,0.1);
+            0 10px 20px rgba(0, 0, 0, 0.16),
+            0 0 14px ${withAlpha(linkThemeColor, "12")},
+            inset 0 1px 0 rgba(255,255,255,0.08);
           transition:
             opacity var(--intro-transition-duration) var(--intro-motion-ease),
             transform var(--intro-transition-duration) var(--intro-motion-ease),
@@ -3716,8 +3750,8 @@ function IntroProfileStage({
           position: absolute;
           inset: -12px;
           background: radial-gradient(circle, ${withAlpha(linkThemeColor, "1c")} 0%, transparent 64%);
-          opacity: 0.86;
-          filter: blur(14px);
+          opacity: 0.54;
+          filter: blur(10px);
           pointer-events: none;
           animation: intro-scroll-trail calc(var(--intro-glow-pulse-duration) * 0.82) var(--intro-motion-ease) infinite;
         }
@@ -3725,15 +3759,15 @@ function IntroProfileStage({
         .profile-intro-scroll:hover,
         .profile-intro-scroll:focus-visible {
           opacity: 1;
-          transform: translateY(-3px);
+          transform: translateY(-1px);
           border-color: ${withAlpha(linkThemeColor, "3a")};
           outline: none;
         }
 
         .profile-intro-scroll-orb {
           position: relative;
-          width: 31px;
-          height: 31px;
+          width: 28px;
+          height: 28px;
           border-radius: 999px;
           display: inline-flex;
           align-items: center;
@@ -3744,7 +3778,7 @@ function IntroProfileStage({
             linear-gradient(180deg, ${withAlpha(linkThemeColor, "32")}, rgba(255,255,255,0.04));
           box-shadow:
             0 0 0 1px ${withAlpha(linkThemeColor, "24")},
-            0 0 22px ${withAlpha(linkThemeColor, "20")};
+            0 0 12px ${withAlpha(linkThemeColor, "14")};
           animation: intro-scroll-pulse calc(var(--intro-glow-pulse-duration) * 0.9) var(--intro-motion-ease) infinite;
         }
 
@@ -3754,7 +3788,7 @@ function IntroProfileStage({
           left: 50%;
           top: calc(100% + 2px);
           width: 1px;
-          height: 18px;
+          height: 14px;
           transform: translateX(-50%);
           background: linear-gradient(180deg, ${withAlpha(linkThemeColor, "34")} 0%, transparent 100%);
           opacity: 0.72;
@@ -3785,8 +3819,8 @@ function IntroProfileStage({
           border-radius: 999px;
           background: currentColor;
           box-shadow:
-            0 0 8px rgba(255,255,255,0.26),
-            0 0 12px ${withAlpha(linkThemeColor, "20")};
+            0 0 6px rgba(255,255,255,0.18),
+            0 0 8px ${withAlpha(linkThemeColor, "16")};
         }
 
         .profile-intro-scroll-arrow::after {
@@ -3821,9 +3855,9 @@ function IntroProfileStage({
           gap: ${Math.max(16, introDetailsGap + 6)}px;
           scroll-margin-top: 28px;
           align-items: start;
-          opacity: calc(0.14 + var(--intro-scroll-progress) * 0.86);
-          transform: translate3d(0, calc((1 - var(--intro-scroll-progress)) * 52px), 0);
-          filter: blur(calc((1 - var(--intro-scroll-progress)) * 5px));
+          opacity: calc(0.28 + var(--intro-scroll-progress) * 0.72);
+          transform: translate3d(0, calc((1 - var(--intro-scroll-progress)) * 36px), 0);
+          filter: blur(calc((1 - var(--intro-scroll-progress)) * 2.5px));
           transition:
             opacity var(--intro-transition-duration) var(--intro-motion-ease),
             transform var(--intro-transition-duration) var(--intro-motion-ease),
@@ -3840,7 +3874,7 @@ function IntroProfileStage({
           transform: translateX(-50%);
           background:
             linear-gradient(180deg, transparent 0%, rgba(255,255,255,0.09) 16%, ${withAlpha(presence.accent, "20")} 50%, rgba(255,255,255,0.08) 78%, transparent 100%);
-          opacity: 0.7;
+          opacity: 0.5;
           pointer-events: none;
         }
 
@@ -3851,8 +3885,8 @@ function IntroProfileStage({
           height: 160px;
           background:
             radial-gradient(circle at 50% 0%, ${withAlpha(presence.soft, "14")} 0%, transparent 66%);
-          opacity: calc(0.42 + var(--intro-scroll-progress) * 0.14);
-          filter: blur(26px);
+          opacity: calc(0.26 + var(--intro-scroll-progress) * 0.1);
+          filter: blur(18px);
           pointer-events: none;
         }
 
@@ -3862,9 +3896,9 @@ function IntroProfileStage({
         }
 
         .profile-intro-details[data-revealed="false"] {
-          opacity: calc(0.14 + var(--intro-scroll-progress) * 0.86);
-          transform: translate3d(0, calc((1 - var(--intro-scroll-progress)) * 52px), 0);
-          filter: blur(calc((1 - var(--intro-scroll-progress)) * 5px));
+          opacity: calc(0.28 + var(--intro-scroll-progress) * 0.72);
+          transform: translate3d(0, calc((1 - var(--intro-scroll-progress)) * 36px), 0);
+          filter: blur(calc((1 - var(--intro-scroll-progress)) * 2.5px));
         }
 
         .profile-intro-details[data-revealed="true"] {
@@ -4278,11 +4312,11 @@ function IntroProfileStage({
             linear-gradient(180deg, rgba(255,255,255,0.032), rgba(8,10,16,0.54)),
             ${sceneAppearance.surfaceBackground};
           box-shadow:
-            0 16px 30px rgba(0,0,0,0.12),
+            0 10px 20px rgba(0,0,0,0.1),
             inset 0 1px 0 rgba(255,255,255,0.03);
           padding: 12px;
-          backdrop-filter: ${cardStyle === "glass" ? "blur(10px) saturate(108%)" : "blur(8px) saturate(104%)"};
-          -webkit-backdrop-filter: ${cardStyle === "glass" ? "blur(10px) saturate(108%)" : "blur(8px) saturate(104%)"};
+          backdrop-filter: ${cardStyle === "glass" ? "blur(8px) saturate(104%)" : "blur(6px) saturate(102%)"};
+          -webkit-backdrop-filter: ${cardStyle === "glass" ? "blur(8px) saturate(104%)" : "blur(6px) saturate(102%)"};
         }
 
         .floating-module::before {
@@ -4349,30 +4383,26 @@ function IntroProfileStage({
         .floating-module.links .profile-link-card:nth-child(odd) {
           justify-self: start;
           max-width: ${floatingPersonality === "cinematic" ? "320px" : "300px"};
-          margin-top: ${floatingPersonality === "scattered" ? "8px" : "0"};
+          margin-top: 0;
         }
 
         .floating-module.links .profile-link-card:nth-child(even) {
           justify-self: end;
           max-width: ${floatingPersonality === "minimal" ? "100%" : "280px"};
-          margin-top: ${floatingPersonality === "cinematic"
-            ? "18px"
-            : floatingPersonality === "scattered"
-              ? "14px"
-              : "10px"};
+          margin-top: 0;
         }
 
         @keyframes intro-scroll-hint {
           0%, 100% {
-            transform: translateY(-1px);
+            transform: translateY(0);
           }
 
           48% {
-            transform: translateY(4px);
+            transform: translateY(2px);
           }
 
           68% {
-            transform: translateY(1px);
+            transform: translateY(0.5px);
           }
         }
 
@@ -4380,25 +4410,25 @@ function IntroProfileStage({
           0%, 100% {
             box-shadow:
               0 0 0 1px ${withAlpha(linkThemeColor, "24")},
-              0 0 14px ${withAlpha(linkThemeColor, "14")};
+              0 0 8px ${withAlpha(linkThemeColor, "10")};
           }
 
           50% {
             box-shadow:
-              0 0 0 1px ${withAlpha(linkThemeColor, "34")},
-              0 0 24px ${withAlpha(linkThemeColor, "22")};
+              0 0 0 1px ${withAlpha(linkThemeColor, "2e")},
+              0 0 14px ${withAlpha(linkThemeColor, "16")};
           }
         }
 
         @keyframes intro-scroll-trail {
           0%, 100% {
-            opacity: 0.36;
-            transform: scale(0.94);
+            opacity: 0.22;
+            transform: scale(0.96);
           }
 
           50% {
-            opacity: 0.86;
-            transform: scale(1.06);
+            opacity: 0.44;
+            transform: scale(1.02);
           }
         }
 
@@ -4456,6 +4486,14 @@ function IntroProfileStage({
         }
 
         @media (max-width: 720px) {
+          .profile-intro-stage-bloom,
+          .profile-intro-stage-aura,
+          .profile-intro-stage-fog,
+          .profile-intro-stage-glow,
+          .profile-intro-stage-noise {
+            display: none;
+          }
+
           .profile-intro-hero {
             min-height: ${preview ? "460px" : "100svh"};
             padding: 26px 14px 10px;
@@ -5717,8 +5755,8 @@ function renderModernLinks(
         rel="noreferrer"
         className={`profile-link-card ${isStacked ? "" : index % 2 === 0 ? "float-a" : "float-b"}`}
         style={{
-          borderColor: withAlpha(color, isMinimal ? "18" : "24"),
-          boxShadow: `0 ${Math.round(18 * dnaTuning.shadowScale)}px ${Math.round(34 * dnaTuning.shadowScale)}px ${withAlpha(color, isMinimal ? "08" : dnaTuning.glowScale >= 1.08 ? "12" : "0f")}`,
+          borderColor: withAlpha(color, isMinimal ? "14" : "1e"),
+          boxShadow: `0 ${Math.round(10 * dnaTuning.shadowScale)}px ${Math.round(20 * dnaTuning.shadowScale)}px ${withAlpha(color, isMinimal ? "06" : dnaTuning.glowScale >= 1.08 ? "0e" : "0b")}`,
           padding: isPill
             ? `${Math.max(9, Math.round(10 * dnaTuning.compactnessScale))}px ${Math.max(11, Math.round(12 * dnaTuning.compactnessScale))}px`
             : isMinimal
@@ -5727,16 +5765,16 @@ function renderModernLinks(
                 ? `${Math.max(12, Math.round(14 * dnaTuning.compactnessScale))}px ${Math.max(12, Math.round(14 * dnaTuning.compactnessScale))}px ${Math.max(12, Math.round(14 * dnaTuning.compactnessScale))}px ${Math.max(12, Math.round(13 * dnaTuning.compactnessScale))}px`
                 : undefined,
           background: isMinimal
-            ? "rgba(255,255,255,0.02)"
+            ? "rgba(255,255,255,0.016)"
             : isPill
-              ? "linear-gradient(180deg, rgba(255,255,255,0.025), rgba(8,10,16,0.76))"
+              ? "linear-gradient(180deg, rgba(255,255,255,0.02), rgba(8,10,16,0.64))"
               : undefined,
         }}
       >
         <div
           className="profile-link-glow"
           style={{
-            background: `linear-gradient(90deg, ${withAlpha(color, isMinimal ? "14" : "20")}, transparent)`,
+            background: `linear-gradient(90deg, ${withAlpha(color, isMinimal ? "10" : "16")}, transparent)`,
             width: isPill ? "18%" : "26%",
           }}
         />
@@ -5747,8 +5785,8 @@ function renderModernLinks(
             width: isPill ? "38px" : "42px",
             height: isPill ? "38px" : "42px",
             background: `linear-gradient(180deg, ${withAlpha(color, "20")}, ${withAlpha(color, "0c")})`,
-            borderColor: withAlpha(color, "30"),
-            boxShadow: `0 ${Math.round(12 * dnaTuning.shadowScale)}px ${Math.round(24 * dnaTuning.shadowScale)}px ${withAlpha(color, dnaTuning.glowScale >= 1.08 ? "18" : "14")}`,
+            borderColor: withAlpha(color, "24"),
+            boxShadow: `0 ${Math.round(8 * dnaTuning.shadowScale)}px ${Math.round(16 * dnaTuning.shadowScale)}px ${withAlpha(color, dnaTuning.glowScale >= 1.08 ? "14" : "10")}`,
           }}
         >
           <PlatformIcon size={isPill ? 16 : 18} color={color} aria-hidden="true" />
@@ -5761,7 +5799,7 @@ function renderModernLinks(
               className="profile-link-platform"
               style={{
                 color,
-                background: withAlpha(color, "10"),
+                background: withAlpha(color, "0c"),
               }}
             >
               {platform.name}

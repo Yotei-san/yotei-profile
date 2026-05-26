@@ -69,7 +69,7 @@ export default function ProfileCustomBlock({
               height: "1px",
               background: `linear-gradient(90deg, transparent, ${withAlpha(resolvedAccent, block.glow ? "b8" : "72")}, transparent)`,
               boxShadow: block.glow
-                ? `0 0 18px ${withAlpha(resolvedAccent, "40")}`
+                ? `0 0 12px ${withAlpha(resolvedAccent, "28")}`
                 : "none",
             }}
           />
@@ -231,9 +231,9 @@ function customBlockFrameStyle(
   dnaTuning: ProfileDnaTuning,
   compact: boolean,
 ): CSSProperties {
-  const borderAlpha = block.transparency ? "14" : "24";
-  const backgroundAlphaTop = block.transparency ? "10" : "18";
-  const backgroundAlphaBottom = block.transparency ? "56" : "7c";
+  const borderAlpha = block.transparency ? "10" : "1c";
+  const backgroundAlphaTop = block.transparency ? "0a" : "12";
+  const backgroundAlphaBottom = block.transparency ? "46" : "68";
   const compactnessScale = compact ? dnaTuning.compactnessScale : 1;
   const borderTone =
     dnaTuning.borderScale >= 1.12 ? "30" : dnaTuning.borderScale <= 0.82 ? "16" : borderAlpha;
@@ -250,21 +250,21 @@ function customBlockFrameStyle(
         ? "84"
         : backgroundAlphaBottom;
   const blurFilter = block.transparency
-    ? `blur(${Math.max(8, Math.round(11 * dnaTuning.blurScale))}px) saturate(${Math.round(
-        110 + (dnaTuning.glowScale - 1) * 20,
+    ? `blur(${Math.max(6, Math.round(8 * dnaTuning.blurScale))}px) saturate(${Math.round(
+        106 + (dnaTuning.glowScale - 1) * 14,
       )}%)`
     : "none";
   const baseShadow = block.glow
-    ? `0 ${Math.round(16 * dnaTuning.shadowScale)}px ${Math.round(34 * dnaTuning.shadowScale)}px ${withAlpha(
+    ? `0 ${Math.round(12 * dnaTuning.shadowScale)}px ${Math.round(24 * dnaTuning.shadowScale)}px ${withAlpha(
         accentColor,
-        dnaTuning.glowScale >= 1.1 ? "22" : "18",
-      )}, inset 0 1px 0 rgba(255,255,255,0.05)`
+        dnaTuning.glowScale >= 1.1 ? "18" : "14",
+      )}, inset 0 1px 0 rgba(255,255,255,0.04)`
     : block.type === "divider"
       ? "none"
-      : `0 ${Math.round(12 * dnaTuning.shadowScale)}px ${Math.round(28 * dnaTuning.shadowScale)}px ${withAlpha(
+      : `0 ${Math.round(10 * dnaTuning.shadowScale)}px ${Math.round(20 * dnaTuning.shadowScale)}px ${withAlpha(
           contrastColor,
-          dnaTuning.shadowScale <= 0.86 ? "0b" : "12",
-        )}, inset 0 1px 0 rgba(255,255,255,0.04)`;
+          dnaTuning.shadowScale <= 0.86 ? "08" : "0e",
+        )}, inset 0 1px 0 rgba(255,255,255,0.03)`;
 
   return {
     width: "100%",
@@ -345,7 +345,7 @@ function linkButtonStyle(accentColor: string): CSSProperties {
     fontSize: "11px",
     fontWeight: 800,
     letterSpacing: "0.03em",
-    boxShadow: `0 12px 26px ${withAlpha(accentColor, "14")}`,
+    boxShadow: `0 8px 18px ${withAlpha(accentColor, "10")}`,
   };
 }
 
@@ -353,8 +353,8 @@ function cardGlowStyle(accentColor: string): CSSProperties {
   return {
     background: `
       radial-gradient(circle at 14% 18%, ${withAlpha(accentColor, "18")} 0%, transparent 32%),
-      radial-gradient(circle at 84% 14%, ${withAlpha(accentColor, "12")} 0%, transparent 24%),
-      linear-gradient(120deg, rgba(255,255,255,0.05), transparent 18%)
+      radial-gradient(circle at 84% 14%, ${withAlpha(accentColor, "0c")} 0%, transparent 22%),
+      linear-gradient(120deg, rgba(255,255,255,0.035), transparent 18%)
     `,
   };
 }
@@ -367,7 +367,7 @@ function cardMediaOverlayStyle(
     background:
       type === "image-card"
         ? `linear-gradient(180deg, rgba(4,6,10,0.08), rgba(4,6,10,0.18) 34%, rgba(4,6,10,0.82) 100%), radial-gradient(circle at top, ${withAlpha(accentColor, "18")} 0%, transparent 38%)`
-        : `linear-gradient(180deg, rgba(4,6,10,0.28), rgba(4,6,10,0.74) 100%), radial-gradient(circle at top, ${withAlpha(accentColor, "18")} 0%, transparent 44%)`,
+        : `linear-gradient(180deg, rgba(4,6,10,0.22), rgba(4,6,10,0.66) 100%), radial-gradient(circle at top, ${withAlpha(accentColor, "14")} 0%, transparent 40%)`,
   };
 }
 
@@ -439,7 +439,7 @@ const sharedStyles = `
   .profile-custom-card-shell.info.has-link:hover,
   .profile-custom-card-shell.info.has-link:focus-within,
   .profile-custom-card-shell.info:hover {
-    transform: translateY(-2px);
+    transform: translateY(-1px);
   }
 
   .profile-custom-card-glow,
@@ -451,7 +451,7 @@ const sharedStyles = `
   }
 
   .profile-custom-card-glow {
-    opacity: 0.96;
+    opacity: 0.7;
   }
 
   .profile-custom-card-media-image {
@@ -467,7 +467,7 @@ const sharedStyles = `
     position: relative;
     z-index: 1;
     display: grid;
-    gap: 14px;
+    gap: 12px;
     min-height: inherit;
   }
 

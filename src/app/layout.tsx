@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import CustomCursor from "./components/CustomCursor";
+import AppClientShell from "./components/AppClientShell";
 
 export const metadata: Metadata = {
   title: "Yotei Profile",
@@ -16,8 +16,7 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <body>
-        <CustomCursor />
-        {children}
+        <AppClientShell>{children}</AppClientShell>
       </body>
     </html>
   );

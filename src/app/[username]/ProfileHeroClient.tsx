@@ -1,9 +1,14 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import type { CSSProperties, ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 import { LuEye, LuMapPin, LuMessageSquare, LuThumbsDown, LuThumbsUp } from "react-icons/lu";
-import ProfileCommentsModal from "./ProfileCommentsModal";
+import { useAdaptivePerformance } from "@/app/components/PerformanceProvider";
+
+const ProfileCommentsModal = dynamic(() => import("./ProfileCommentsModal"), {
+  loading: () => null,
+});
 
 type MyReaction = "like" | "dislike" | null;
 
@@ -42,6 +47,7 @@ export default function ProfileHeroClient({
   preview = false,
   variant = "inline",
 }: Props) {
+  const { profile } = useAdaptivePerformance();
   const [views, setViews] = useState(initialViews);
   const [likes, setLikes] = useState(initialLikes);
   const [dislikes, setDislikes] = useState(initialDislikes);
@@ -153,6 +159,8 @@ export default function ProfileHeroClient({
   }
 
   const normalizedLocationText = locationText?.trim() || "";
+  const allowGlassEffects = profile.allowBlurEffects && variant !== "micro";
+  const allowElevatedEffects = profile.allowDecorativeMotion && variant !== "micro";
 
   return (
     <div>
@@ -160,7 +168,7 @@ export default function ProfileHeroClient({
         .profile-hero-metrics {
           display: flex;
           align-items: center;
-          gap: 6px;
+          gap: 8px;
           flex-wrap: wrap;
           min-width: 0;
         }
@@ -205,8 +213,8 @@ export default function ProfileHeroClient({
         .profile-hero-metrics[data-variant="corner"] .profile-hero-chip,
         .profile-hero-metrics[data-variant="corner"] .profile-hero-reaction {
           box-shadow:
-            0 12px 28px rgba(0, 0, 0, 0.22),
-            inset 0 1px 0 rgba(255,255,255,0.05);
+            0 8px 18px rgba(0, 0, 0, 0.16),
+            inset 0 1px 0 rgba(255,255,255,0.04);
         }
 
         .profile-hero-metrics[data-variant="micro"] .profile-hero-chip,
@@ -234,7 +242,7 @@ export default function ProfileHeroClient({
 
         @media (max-width: 640px) {
           .profile-hero-metrics {
-            gap: 6px;
+            gap: 7px;
           }
 
           .profile-hero-location {
@@ -274,6 +282,8 @@ export default function ProfileHeroClient({
                 : "rgba(255,255,255,0.07)"
           }
           compact={variant !== "inline"}
+          allowGlassEffects={allowGlassEffects}
+          allowElevatedEffects={allowElevatedEffects}
         />
 
         <ReactionButton
@@ -299,6 +309,8 @@ export default function ProfileHeroClient({
                 : "rgba(69, 212, 131, 0.14)"
           }
           compact={variant !== "inline"}
+          allowGlassEffects={allowGlassEffects}
+          allowElevatedEffects={allowElevatedEffects}
         />
 
         <ReactionButton
@@ -324,6 +336,8 @@ export default function ProfileHeroClient({
                 : "rgba(248, 113, 113, 0.14)"
           }
           compact={variant !== "inline"}
+          allowGlassEffects={allowGlassEffects}
+          allowElevatedEffects={allowElevatedEffects}
         />
 
         <ActionButton
@@ -348,6 +362,8 @@ export default function ProfileHeroClient({
                 : "rgba(135, 118, 255, 0.12)"
           }
           compact={variant !== "inline"}
+          allowGlassEffects={allowGlassEffects}
+          allowElevatedEffects={allowElevatedEffects}
         />
 
         {normalizedLocationText ? (
@@ -372,19 +388,23 @@ export default function ProfileHeroClient({
             }
             className="profile-hero-location"
             compact={variant !== "inline"}
+            allowGlassEffects={allowGlassEffects}
+            allowElevatedEffects={allowElevatedEffects}
           />
         ) : null}
       </div>
 
-      <ProfileCommentsModal
-        username={username}
-        commentCount={commentCount}
-        canComment={canComment}
-        isOwnProfile={isOwnProfile}
-        open={isCommentsOpen}
-        onClose={() => setIsCommentsOpen(false)}
-        onCountChange={setCommentCount}
-      />
+      {isCommentsOpen ? (
+        <ProfileCommentsModal
+          username={username}
+          commentCount={commentCount}
+          canComment={canComment}
+          isOwnProfile={isOwnProfile}
+          open={isCommentsOpen}
+          onClose={() => setIsCommentsOpen(false)}
+          onCountChange={setCommentCount}
+        />
+      ) : null}
     </div>
   );
 }
@@ -398,6 +418,8 @@ function MetricChip({
   border,
   className,
   compact = false,
+  allowGlassEffects,
+  allowElevatedEffects,
 }: {
   label: string;
   value: number | string;
@@ -407,18 +429,20 @@ function MetricChip({
   border: string;
   className?: string;
   compact?: boolean;
+  allowGlassEffects: boolean;
+  allowElevatedEffects: boolean;
 }) {
   return (
     <div
       className={`profile-hero-chip ${className ?? ""}`.trim()}
       aria-label={`${label}: ${value}`}
       style={{
-        ...chipBaseStyle(compact),
+        ...chipBaseStyle(compact, allowElevatedEffects),
         color,
         background,
         border: `1px solid ${border}`,
-        backdropFilter: "blur(10px) saturate(116%)",
-        WebkitBackdropFilter: "blur(10px) saturate(116%)",
+        backdropFilter: allowGlassEffects ? "blur(10px) saturate(116%)" : "none",
+        WebkitBackdropFilter: allowGlassEffects ? "blur(10px) saturate(116%)" : "none",
       }}
     >
       <span style={iconWrapStyle(compact)}>{icon}</span>
@@ -440,6 +464,8 @@ function ReactionButton({
   background,
   border,
   compact = false,
+  allowGlassEffects,
+  allowElevatedEffects,
 }: {
   label: string;
   value: number;
@@ -451,6 +477,8 @@ function ReactionButton({
   background: string;
   border: string;
   compact?: boolean;
+  allowGlassEffects: boolean;
+  allowElevatedEffects: boolean;
 }) {
   return (
     <button
@@ -467,6 +495,8 @@ function ReactionButton({
         disabled,
         isActive,
         compact,
+        allowGlassEffects,
+        allowElevatedEffects,
       )}
     >
       <span style={iconWrapStyle(compact)}>{icon}</span>
@@ -485,6 +515,8 @@ function ActionButton({
   background,
   border,
   compact = false,
+  allowGlassEffects,
+  allowElevatedEffects,
 }: {
   label: string;
   value: number;
@@ -495,6 +527,8 @@ function ActionButton({
   background: string;
   border: string;
   compact?: boolean;
+  allowGlassEffects: boolean;
+  allowElevatedEffects: boolean;
 }) {
   return (
     <button
@@ -510,6 +544,8 @@ function ActionButton({
         disabled,
         false,
         compact,
+        allowGlassEffects,
+        allowElevatedEffects,
       )}
     >
       <span style={iconWrapStyle(compact)}>{icon}</span>
@@ -525,33 +561,42 @@ function reactionButtonStyle(
   disabled: boolean,
   isActive: boolean,
   compact: boolean,
+  allowGlassEffects: boolean,
+  allowElevatedEffects: boolean,
 ): CSSProperties {
   return {
-    ...chipBaseStyle(compact),
+    ...chipBaseStyle(compact, allowElevatedEffects),
     cursor: disabled ? "not-allowed" : "pointer",
     color: "#f7f9ff",
     background,
     border: `1px solid ${isActive ? `${accentColor}66` : border}`,
-    boxShadow: isActive
-      ? `0 0 0 1px ${accentColor}30, 0 12px 28px ${accentColor}14`
-      : `0 10px 24px ${accentColor}0a`,
+    boxShadow: !allowElevatedEffects
+      ? "none"
+      : isActive
+      ? `0 0 0 1px ${accentColor}26, 0 8px 18px ${accentColor}12`
+      : `0 6px 14px ${accentColor}08`,
     opacity: disabled ? 0.7 : 1,
     pointerEvents: disabled ? "none" : "auto",
     fontFamily: "inherit",
-    backdropFilter: "blur(10px) saturate(116%)",
-    WebkitBackdropFilter: "blur(10px) saturate(116%)",
+    backdropFilter: allowGlassEffects ? "blur(10px) saturate(116%)" : "none",
+    WebkitBackdropFilter: allowGlassEffects ? "blur(10px) saturate(116%)" : "none",
   };
 }
 
-function chipBaseStyle(compact: boolean): CSSProperties {
+function chipBaseStyle(
+  compact: boolean,
+  allowElevatedEffects: boolean,
+): CSSProperties {
   return {
-    minHeight: compact ? "28px" : "30px",
-    padding: compact ? "0 9px" : "0 10px",
+    minHeight: compact ? "28px" : "32px",
+    padding: compact ? "0 9px" : "0 11px",
     borderRadius: "999px",
     display: "inline-flex",
     alignItems: "center",
     gap: compact ? "6px" : "7px",
-    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04)",
+    boxShadow: allowElevatedEffects
+      ? "inset 0 1px 0 rgba(255,255,255,0.04)"
+      : "none",
     minWidth: 0,
     boxSizing: "border-box",
   };

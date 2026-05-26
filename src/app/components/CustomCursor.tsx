@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
+import { useAdaptivePerformance } from "@/app/components/PerformanceProvider";
 
 type Point = {
   x: number;
@@ -20,6 +21,7 @@ const PUBLIC_PROFILE_ROUTE_PATTERN = /^\/[^/]+$/;
 
 export default function CustomCursor() {
   const pathname = usePathname();
+  const { profile } = useAdaptivePerformance();
   const cursorRef = useRef<HTMLDivElement | null>(null);
   const ringRef = useRef<HTMLDivElement | null>(null);
   const trailRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -30,27 +32,15 @@ export default function CustomCursor() {
   const shouldDisable =
     pathname.startsWith("/dashboard") ||
     DISABLED_ROUTES.has(pathname) ||
-    isPublicProfileRoute;
+    isPublicProfileRoute ||
+    !profile.allowCursorEffects;
 
   useEffect(() => {
     if (shouldDisable || typeof window === "undefined") {
       return;
     }
 
-    const finePointer = window.matchMedia("(pointer: fine)").matches;
-    const reducedMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)"
-    ).matches;
-    const lowPowerDevice =
-      typeof navigator !== "undefined" &&
-      "deviceMemory" in navigator &&
-      typeof navigator.deviceMemory === "number" &&
-      navigator.deviceMemory <= 4;
-    const shouldRenderTrail = !reducedMotion && !lowPowerDevice;
-
-    if (!finePointer) {
-      return;
-    }
+    const shouldRenderTrail = profile.tier === "high";
 
     const cursorEl = cursorRef.current;
     const ringEl = ringRef.current;
@@ -186,7 +176,7 @@ export default function CustomCursor() {
         window.cancelAnimationFrame(rafRef.current);
       }
     };
-  }, [shouldDisable]);
+  }, [profile.tier, shouldDisable]);
 
   if (shouldDisable) {
     return null;

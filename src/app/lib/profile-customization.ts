@@ -461,9 +461,9 @@ export function getProfileBackgroundVisibility(
   previewMode = false,
 ) {
   const base =
-    intensity === "low" ? 0.62 : intensity === "high" ? 1 : 0.84;
+    intensity === "low" ? 0.54 : intensity === "high" ? 0.9 : 0.74;
 
-  return previewMode ? Math.min(base, 0.9) : base;
+  return previewMode ? Math.min(base, 0.82) : base;
 }
 
 export function getProfileBackgroundSaturation(
@@ -476,26 +476,26 @@ export function getProfileGlassTokens(intensity: ProfileGlassIntensity) {
   if (intensity === "low") {
     return {
       backgroundLayer:
-        "linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.006))",
-      backdropFilter: "blur(10px) saturate(108%)",
-      shadowBoost: "0 14px 30px rgba(0,0,0,0.18)",
+        "linear-gradient(180deg, rgba(255,255,255,0.012), rgba(255,255,255,0.004))",
+      backdropFilter: "blur(8px) saturate(106%)",
+      shadowBoost: "0 10px 24px rgba(0,0,0,0.14)",
     };
   }
 
   if (intensity === "high") {
     return {
       backgroundLayer:
-        "linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.022))",
-      backdropFilter: "blur(22px) saturate(136%)",
-      shadowBoost: "0 20px 44px rgba(0,0,0,0.24)",
+        "linear-gradient(180deg, rgba(255,255,255,0.056), rgba(255,255,255,0.016))",
+      backdropFilter: "blur(18px) saturate(128%)",
+      shadowBoost: "0 16px 36px rgba(0,0,0,0.2)",
     };
   }
 
   return {
     backgroundLayer:
-      "linear-gradient(180deg, rgba(255,255,255,0.036), rgba(255,255,255,0.014))",
-    backdropFilter: "blur(16px) saturate(122%)",
-    shadowBoost: "0 18px 38px rgba(0,0,0,0.2)",
+      "linear-gradient(180deg, rgba(255,255,255,0.026), rgba(255,255,255,0.01))",
+    backdropFilter: "blur(12px) saturate(116%)",
+    shadowBoost: "0 14px 30px rgba(0,0,0,0.17)",
   };
 }
 
@@ -539,32 +539,32 @@ export function getProfileCardStyleTokens(cardStyle: ProfileCardStyle) {
   if (cardStyle === "solid") {
     return {
       shellOverlay:
-        "linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01))",
-      shellOpacity: 0.96,
-      borderOpacity: 0.16,
+        "linear-gradient(180deg, rgba(255,255,255,0.016), rgba(255,255,255,0.008))",
+      shellOpacity: 0.94,
+      borderOpacity: 0.12,
       backdropFilter: "none",
-      highlightOpacity: 0.04,
+      highlightOpacity: 0.025,
     };
   }
 
   if (cardStyle === "minimal") {
     return {
       shellOverlay:
-        "linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00))",
-      shellOpacity: 0.86,
-      borderOpacity: 0.09,
-      backdropFilter: "blur(10px) saturate(108%)",
-      highlightOpacity: 0.02,
+        "linear-gradient(180deg, rgba(255,255,255,0.008), rgba(255,255,255,0.00))",
+      shellOpacity: 0.82,
+      borderOpacity: 0.07,
+      backdropFilter: "blur(8px) saturate(104%)",
+      highlightOpacity: 0.015,
     };
   }
 
   return {
     shellOverlay:
-      "linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02))",
-    shellOpacity: 0.92,
-    borderOpacity: 0.12,
-    backdropFilter: "blur(18px) saturate(128%)",
-    highlightOpacity: 0.05,
+      "linear-gradient(180deg, rgba(255,255,255,0.032), rgba(255,255,255,0.014))",
+    shellOpacity: 0.88,
+    borderOpacity: 0.1,
+    backdropFilter: "blur(14px) saturate(118%)",
+    highlightOpacity: 0.03,
   };
 }
 
@@ -636,17 +636,17 @@ export function getProfileBannerStyleTokens(style: ProfileBannerStyle) {
     return {
       mediaScale: 1.02,
       mediaFilter: "brightness(0.98) saturate(1.06) contrast(1.02)",
-      stageBlurHeight: "18vh",
+      stageBlurHeight: "14vh",
       previewStageBlurHeight: "14%",
-      stageOverlayTop: 0.08,
-      stageOverlayMid: 0.22,
-      stageOverlayBottom: 0.58,
-      stageAccentOpacity: 0.16,
-      vignetteOpacity: 0.24,
-      sideShadeOpacity: 0.22,
-      surfaceOverlayTop: 0.08,
-      surfaceOverlayMid: 0.18,
-      surfaceOverlayBottom: 0.44,
+      stageOverlayTop: 0.06,
+      stageOverlayMid: 0.18,
+      stageOverlayBottom: 0.5,
+      stageAccentOpacity: 0.12,
+      vignetteOpacity: 0.2,
+      sideShadeOpacity: 0.18,
+      surfaceOverlayTop: 0.06,
+      surfaceOverlayMid: 0.14,
+      surfaceOverlayBottom: 0.38,
     };
   }
 
@@ -654,36 +654,36 @@ export function getProfileBannerStyleTokens(style: ProfileBannerStyle) {
     return {
       mediaScale: 1.08,
       mediaFilter: "brightness(0.78) saturate(0.98) contrast(1.06)",
-      stageBlurHeight: "32vh",
+      stageBlurHeight: "26vh",
       previewStageBlurHeight: "22%",
-      stageOverlayTop: 0.22,
-      stageOverlayMid: 0.44,
-      stageOverlayBottom: 0.9,
-      stageAccentOpacity: 0.18,
-      vignetteOpacity: 0.5,
-      sideShadeOpacity: 0.4,
-      surfaceOverlayTop: 0.18,
-      surfaceOverlayMid: 0.36,
-      surfaceOverlayBottom: 0.78,
+      stageOverlayTop: 0.18,
+      stageOverlayMid: 0.38,
+      stageOverlayBottom: 0.82,
+      stageAccentOpacity: 0.14,
+      vignetteOpacity: 0.42,
+      sideShadeOpacity: 0.32,
+      surfaceOverlayTop: 0.14,
+      surfaceOverlayMid: 0.3,
+      surfaceOverlayBottom: 0.68,
     };
   }
 
-  return {
-    mediaScale: 1.05,
-    mediaFilter: "brightness(0.92) saturate(1.04) contrast(1.04)",
-    stageBlurHeight: "26vh",
-    previewStageBlurHeight: "18%",
-    stageOverlayTop: 0.18,
-    stageOverlayMid: 0.36,
-    stageOverlayBottom: 0.74,
-    stageAccentOpacity: 0.22,
-    vignetteOpacity: 0.38,
-    sideShadeOpacity: 0.42,
-    surfaceOverlayTop: 0.1,
-    surfaceOverlayMid: 0.28,
-    surfaceOverlayBottom: 0.68,
-  };
-}
+    return {
+      mediaScale: 1.05,
+      mediaFilter: "brightness(0.92) saturate(1.04) contrast(1.04)",
+      stageBlurHeight: "20vh",
+      previewStageBlurHeight: "18%",
+      stageOverlayTop: 0.14,
+      stageOverlayMid: 0.3,
+      stageOverlayBottom: 0.66,
+      stageAccentOpacity: 0.16,
+      vignetteOpacity: 0.3,
+      sideShadeOpacity: 0.3,
+      surfaceOverlayTop: 0.08,
+      surfaceOverlayMid: 0.22,
+      surfaceOverlayBottom: 0.56,
+    };
+  }
 
 export function isMissingProfileCustomizationColumnError(error: unknown) {
   if (!error || typeof error !== "object") {
