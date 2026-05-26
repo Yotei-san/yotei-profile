@@ -1,3 +1,5 @@
+import type { TranslationKey } from "@/app/lib/i18n";
+
 export type DashboardOnboardingInput = {
   emailVerified: Date | null;
   avatarUrl: string | null;
@@ -42,70 +44,71 @@ export type DashboardOnboardingState = {
 };
 
 export function buildDashboardOnboardingState(
-  input: DashboardOnboardingInput
+  input: DashboardOnboardingInput,
+  t: (key: TranslationKey, values?: Record<string, string | number | boolean | null | undefined>) => string,
 ): DashboardOnboardingState {
   const items: DashboardChecklistItem[] = [
     {
       id: "verify-email",
       icon: "shield",
-      title: "Verify email",
-      description: "Confirm your inbox so locked Yotei features can be unlocked safely.",
+      title: t("dashboard.onboarding.items.verifyEmail.title"),
+      description: t("dashboard.onboarding.items.verifyEmail.description"),
       href: "/verify-email",
-      ctaLabel: "Verify now",
+      ctaLabel: t("dashboard.onboarding.items.verifyEmail.cta"),
       isComplete: Boolean(input.emailVerified),
     },
     {
       id: "add-avatar",
       icon: "avatar",
-      title: "Add avatar",
-      description: "Give your profile a recognizable face before people land on it.",
+      title: t("dashboard.onboarding.items.addAvatar.title"),
+      description: t("dashboard.onboarding.items.addAvatar.description"),
       href: "/dashboard/profile",
-      ctaLabel: "Open profile",
+      ctaLabel: t("dashboard.onboarding.items.addAvatar.cta"),
       isComplete: Boolean(input.avatarUrl),
     },
     {
       id: "add-banner",
       icon: "image",
-      title: "Add banner",
-      description: "Set the mood with a premium header image or stronger visual identity.",
+      title: t("dashboard.onboarding.items.addBanner.title"),
+      description: t("dashboard.onboarding.items.addBanner.description"),
       href: "/dashboard/profile",
-      ctaLabel: "Upload banner",
+      ctaLabel: t("dashboard.onboarding.items.addBanner.cta"),
       isComplete: Boolean(input.bannerUrl),
     },
     {
       id: "add-first-link",
       icon: "link",
-      title: "Add first link",
-      description: "Create the first action your visitors can actually click.",
+      title: t("dashboard.onboarding.items.addFirstLink.title"),
+      description: t("dashboard.onboarding.items.addFirstLink.description"),
       href: "/dashboard/links",
-      ctaLabel: "Add link",
+      ctaLabel: t("dashboard.onboarding.items.addFirstLink.cta"),
       isComplete: input.linkCount > 0,
     },
     {
       id: "choose-layout",
       icon: "layout",
-      title: "Choose profile layout",
-      description: "Move beyond the starter presentation and pick a layout that feels intentional.",
+      title: t("dashboard.onboarding.items.chooseLayout.title"),
+      description: t("dashboard.onboarding.items.chooseLayout.description"),
       href: "/dashboard/profile",
-      ctaLabel: "Choose layout",
+      ctaLabel: t("dashboard.onboarding.items.chooseLayout.cta"),
       isComplete: normalizeLayout(input.profileLayout) !== "modern",
     },
     {
       id: "add-social-block",
       icon: "social",
-      title: "Add a social block",
-      description: "Connect a richer identity block like Discord, GitHub, Spotify or Live.",
+      title: t("dashboard.onboarding.items.addSocialBlock.title"),
+      description: t("dashboard.onboarding.items.addSocialBlock.description"),
       href: "/dashboard/socials",
-      ctaLabel: "Add social",
+      ctaLabel: t("dashboard.onboarding.items.addSocialBlock.cta"),
       isComplete: input.socialBlockCount > 0,
     },
     {
       id: "create-template",
       icon: "template",
-      title: "Create or use a template",
-      description: "Build your first reusable template so your profile setup can be repeated and shared.",
+      title: t("dashboard.onboarding.items.createTemplate.title"),
+      description: t("dashboard.onboarding.items.createTemplate.description"),
       href: "/dashboard/templates",
-      ctaLabel: "Open templates",
+      ctaLabel: t("dashboard.onboarding.items.createTemplate.cta"),
       isComplete: input.templateCount > 0,
     },
   ];

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import AppClientShell from "./components/AppClientShell";
+import { getRequestLocale } from "@/app/lib/i18n";
 
 export const metadata: Metadata = {
   title: "Yotei Profile",
@@ -8,15 +9,17 @@ export const metadata: Metadata = {
     "Premium profile pages with links, creator identity, and visual customization.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const initialLocale = await getRequestLocale();
+
   return (
-    <html lang="pt-BR">
+    <html lang={initialLocale}>
       <body>
-        <AppClientShell>{children}</AppClientShell>
+        <AppClientShell initialLocale={initialLocale}>{children}</AppClientShell>
       </body>
     </html>
   );

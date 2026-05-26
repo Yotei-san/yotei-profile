@@ -11,25 +11,31 @@ import {
   SubmitButton,
   useAuthSubmit,
 } from "@/app/components/AuthExperience";
+import { useI18n } from "@/app/components/I18nProvider";
 import { registerUser } from "./actions";
 
 export default function RegisterPage() {
   const { error, isPending, submit } = useAuthSubmit(registerUser);
+  const { t } = useI18n();
 
   return (
     <AuthShell
-      badge="Identity Creation"
-      title="Crie sua conta e entre no Yotei."
-      subtitle="Monte sua presenca digital com uma experiencia de cadastro mais forte, limpa e pronta para durar."
+      badge={t("auth.register.badge")}
+      title={t("auth.register.title")}
+      subtitle={t("auth.register.subtitle")}
       backHref="/"
-      backLabel="Voltar para a home"
-      formIntro="Configure seu acesso inicial. O Yotei ja entra com sessao persistente moderna para evitar logins repetidos."
-      statusChips={["Premium Onboarding", "Persistent Session", "Creator Ready"]}
+      backLabel={t("auth.register.backLabel")}
+      formIntro={t("auth.register.formIntro")}
+      statusChips={[
+        t("auth.register.statusPremiumOnboarding"),
+        t("auth.register.statusPersistentSession"),
+        t("auth.register.statusCreatorReady"),
+      ]}
       footer={
         <AuthFooterLinks
           links={[
-            { href: "/login", label: "Ja tenho conta" },
-            { href: "/forgot-password", label: "Esqueci minha senha" },
+            { href: "/login", label: t("auth.register.alreadyHaveAccount") },
+            { href: "/forgot-password", label: t("auth.register.forgotPassword") },
           ]}
         />
       }
@@ -37,42 +43,42 @@ export default function RegisterPage() {
       <AuthForm onSubmit={submit}>
         <AuthField
           name="displayName"
-          label="Nome de exibicao"
+          label={t("auth.register.displayNameLabel")}
           type="text"
-          placeholder="como seu nome aparece"
+          placeholder={t("auth.register.displayNamePlaceholder")}
           autoComplete="nickname"
         />
 
         <AuthField
           name="username"
-          label="Username"
+          label={t("auth.register.usernameLabel")}
           type="text"
-          placeholder="seu username"
+          placeholder={t("auth.register.usernamePlaceholder")}
           required
           autoComplete="username"
         />
 
         <AuthField
           name="email"
-          label="Email"
+          label={t("auth.register.emailLabel")}
           type="email"
-          placeholder="voce@exemplo.com"
+          placeholder={t("auth.register.emailPlaceholder")}
           required
           autoComplete="email"
         />
 
         <PasswordField
           name="password"
-          label="Senha"
-          placeholder="crie uma senha segura"
+          label={t("auth.register.passwordLabel")}
+          placeholder={t("auth.register.passwordPlaceholder")}
           autoComplete="new-password"
         />
 
         <RememberField />
         <AuthAlert tone="error" message={error} />
         <SubmitButton
-          idleLabel="Criar conta"
-          pendingLabel="Criando conta..."
+          idleLabel={t("auth.register.submitIdle")}
+          pendingLabel={t("auth.register.submitPending")}
           pending={isPending}
         />
       </AuthForm>

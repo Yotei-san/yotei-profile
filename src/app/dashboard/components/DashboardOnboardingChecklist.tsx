@@ -13,36 +13,43 @@ import type {
   DashboardChecklistItem,
   DashboardOnboardingState,
 } from "@/app/lib/dashboard-onboarding";
+import { createTranslator, type Locale } from "@/app/lib/i18n";
 
 type Props = {
   onboarding: DashboardOnboardingState;
+  locale: Locale;
 };
 
-export default function DashboardOnboardingChecklist({ onboarding }: Props) {
+export default function DashboardOnboardingChecklist({ onboarding, locale }: Props) {
+  const t = createTranslator(locale);
+
   return (
     <section style={panelStyle}>
       <div style={headerRowStyle}>
         <div style={{ display: "grid", gap: "12px", minWidth: 0 }}>
-          <div style={badgeStyle}>Yotei Onboarding</div>
+          <div style={badgeStyle}>{t("dashboard.onboarding.badge")}</div>
           <div style={{ display: "grid", gap: "8px", minWidth: 0 }}>
             <h2 style={titleStyle}>
               {onboarding.isLaunchReady
-                ? "Profile launch ready"
-                : "Finish the essentials before you launch"}
+                ? t("dashboard.onboarding.readyTitle")
+                : t("dashboard.onboarding.pendingTitle")}
             </h2>
             <p style={descriptionStyle}>
               {onboarding.isLaunchReady
-                ? "Your profile has the core identity, content, and structure it needs to feel complete."
-                : "Follow the checklist to tighten identity, links, layout, and content so new visitors immediately understand who you are."}
+                ? t("dashboard.onboarding.readyDescription")
+                : t("dashboard.onboarding.pendingDescription")}
             </p>
           </div>
         </div>
 
         <div style={summaryCardStyle}>
-          <div style={summaryKickerStyle}>Completion</div>
+          <div style={summaryKickerStyle}>{t("dashboard.onboarding.completion")}</div>
           <div style={summaryValueStyle}>{onboarding.progressPercent}%</div>
           <div style={summaryLabelStyle}>
-            {onboarding.completedCount} of {onboarding.totalCount} completed
+            {t("dashboard.onboarding.completedSummary", {
+              completed: onboarding.completedCount,
+              total: onboarding.totalCount,
+            })}
           </div>
         </div>
       </div>
@@ -60,15 +67,17 @@ export default function DashboardOnboardingChecklist({ onboarding }: Props) {
         <div style={progressMetaRowStyle}>
           <div style={metaPillStyle}>
             {onboarding.isLaunchReady
-              ? "All checklist items complete"
+              ? t("dashboard.onboarding.allComplete")
               : onboarding.nextStep
-                ? `Next: ${onboarding.nextStep.title}`
-                : "Checklist synced"}
+                ? t("dashboard.onboarding.next", {
+                    title: onboarding.nextStep.title,
+                  })
+                : t("dashboard.onboarding.synced")}
           </div>
           <div style={metaTextStyle}>
             {onboarding.isLaunchReady
-              ? "Profile launch ready"
-              : "Premium setup progress"}
+              ? t("dashboard.onboarding.readyTitle")
+              : t("dashboard.onboarding.progressLabel")}
           </div>
         </div>
       </div>
@@ -87,7 +96,7 @@ export default function DashboardOnboardingChecklist({ onboarding }: Props) {
                     : incompleteStepPillStyle
                 }
               >
-                Step {index + 1}
+                {t("dashboard.onboarding.step", { index: index + 1 })}
               </div>
 
               <div
@@ -95,7 +104,9 @@ export default function DashboardOnboardingChecklist({ onboarding }: Props) {
                   item.isComplete ? completeBadgeStyle : incompleteBadgeStyle
                 }
               >
-                {item.isComplete ? "Completed" : "Incomplete"}
+                {item.isComplete
+                  ? t("dashboard.onboarding.completed")
+                  : t("dashboard.onboarding.incomplete")}
               </div>
             </div>
 
@@ -117,15 +128,15 @@ export default function DashboardOnboardingChecklist({ onboarding }: Props) {
             <div style={itemFooterStyle}>
               <div style={itemHintStyle}>
                 {item.isComplete
-                  ? "This part of your profile is already in place."
-                  : "Complete this step to move closer to a launch-ready profile."}
+                  ? t("dashboard.onboarding.completeHint")
+                  : t("dashboard.onboarding.incompleteHint")}
               </div>
 
               <Link
                 href={item.href}
                 style={item.isComplete ? secondaryLinkStyle : primaryLinkStyle}
               >
-                {item.isComplete ? "Review" : item.ctaLabel}
+                {item.isComplete ? t("dashboard.onboarding.review") : item.ctaLabel}
               </Link>
             </div>
           </article>

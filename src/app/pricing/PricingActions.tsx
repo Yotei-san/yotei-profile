@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useI18n } from "@/app/components/I18nProvider";
 
 type Props = {
   isSignedIn: boolean;
@@ -11,6 +12,7 @@ export default function PricingActions({
   isSignedIn,
   hasPremiumAccess,
 }: Props) {
+  const { t } = useI18n();
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [isPending, startTransition] = useTransition();
@@ -30,23 +32,23 @@ export default function PricingActions({
           setError(
             data?.error ||
               (endpoint === "/api/stripe/portal"
-                ? "Unable to open the billing portal right now."
-                : "Unable to start premium checkout right now.")
+                ? t("pricing.openPortalError")
+                : t("pricing.startCheckoutError"))
           );
           return;
         }
 
         setMessage(
           endpoint === "/api/stripe/portal"
-            ? "Opening billing portal..."
-            : "Redirecting to Stripe checkout..."
+            ? t("pricing.openingBillingPortal")
+            : t("pricing.redirectingCheckout")
         );
         window.location.href = data.url;
       } catch {
         setError(
           endpoint === "/api/stripe/portal"
-            ? "Unable to open the billing portal right now."
-            : "Unable to start premium checkout right now."
+            ? t("pricing.openPortalError")
+            : t("pricing.startCheckoutError")
         );
       }
     });
@@ -56,7 +58,7 @@ export default function PricingActions({
     return (
       <div style={{ display: "grid", gap: "10px" }}>
         <a href="/login" style={primaryButtonStyle}>
-          Sign in to upgrade
+          {t("pricing.signInToUpgrade")}
         </a>
       </div>
     );
@@ -75,7 +77,7 @@ export default function PricingActions({
             cursor: isPending ? "wait" : "pointer",
           }}
         >
-          {isPending ? "Opening portal..." : "Manage subscription"}
+          {isPending ? t("pricing.openingPortal") : t("pricing.manageSubscription")}
         </button>
       ) : (
         <button
@@ -88,7 +90,7 @@ export default function PricingActions({
             cursor: isPending ? "wait" : "pointer",
           }}
         >
-          {isPending ? "Starting checkout..." : "Start premium test checkout"}
+          {isPending ? t("pricing.startingCheckout") : t("pricing.startCheckout")}
         </button>
       )}
 

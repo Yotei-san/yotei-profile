@@ -21,6 +21,8 @@ import {
   LuX,
   LuSparkles,
 } from "react-icons/lu";
+import { useI18n } from "@/app/components/I18nProvider";
+import LanguageSwitcher from "@/app/components/LanguageSwitcher";
 import { useAdaptivePerformance } from "@/app/components/PerformanceProvider";
 import { useBodyScrollLock } from "@/app/components/useBodyScrollLock";
 
@@ -46,13 +48,6 @@ const stagger: Variants = {
     },
   },
 };
-
-const navLinks = [
-  { label: "Discord", href: "#community" },
-  { label: "Leaderboard", href: "/leaderboard" },
-  { label: "Help", href: "#support" },
-  { label: "Pricing", href: "/pricing" },
-] as const;
 
 const featureCards = [
   {
@@ -92,12 +87,19 @@ export default function HomePageClient() {
   const [username, setUsername] = useState("");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const router = useRouter();
+  const { t } = useI18n();
   const { profile } = useAdaptivePerformance();
   const mobileMenuId = useId();
   const mobileMenuCloseRef = useRef<HTMLButtonElement>(null);
   const shouldReduceMotion =
     useReducedMotion() || !profile.allowDecorativeMotion;
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
+  const navLinks = [
+    { label: t("nav.discord"), href: "#community" },
+    { label: t("nav.leaderboard"), href: "/leaderboard" },
+    { label: t("nav.help"), href: "#support" },
+    { label: t("nav.pricing"), href: "/pricing" },
+  ] as const;
 
   useBodyScrollLock(isMobileMenuOpen);
 
@@ -1561,7 +1563,7 @@ export default function HomePageClient() {
                 </div>
                 <div className="brand-copy">
                   <strong>Yotei</strong>
-                  <span>Profile OS for standout identity</span>
+                  <span>{t("home.brandSubtitle")}</span>
                 </div>
               </Link>
 
@@ -1575,17 +1577,18 @@ export default function HomePageClient() {
 
               <div className="nav-actions">
                 <Link href="/login" className="nav-ghost">
-                  Login
+                  {t("nav.login")}
                 </Link>
                 <Link href="/register" className="nav-cta">
-                  Sign Up
+                  {t("nav.signUp")}
                 </Link>
+                <LanguageSwitcher variant="compact" />
               </div>
 
               <button
                 type="button"
                 className={`nav-mobile-toggle${isMobileMenuOpen ? " is-open" : ""}`}
-                aria-label={isMobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+                aria-label={isMobileMenuOpen ? t("nav.closeMenu") : t("nav.openMenu")}
                 aria-expanded={isMobileMenuOpen}
                 aria-controls={mobileMenuId}
                 onClick={() => setIsMobileMenuOpen((current) => !current)}
@@ -1625,18 +1628,20 @@ export default function HomePageClient() {
                     <div className="nav-mobile-panel-header">
                       <div className="nav-mobile-panel-title">
                         <LuLayoutPanelTop size={16} />
-                        Menu
+                        {t("home.mobileMenuTitle")}
                       </div>
                       <button
                         ref={mobileMenuCloseRef}
                         type="button"
                         className="nav-mobile-close"
-                        aria-label="Close navigation menu"
+                        aria-label={t("nav.closeMenu")}
                         onClick={closeMobileMenu}
                       >
                         <LuX size={18} />
                       </button>
                     </div>
+
+                    <LanguageSwitcher />
 
                     <nav className="nav-mobile-links" aria-label="Mobile navigation">
                       {navLinks.map((item) => (
@@ -1658,14 +1663,14 @@ export default function HomePageClient() {
                         className="nav-ghost"
                         onClick={closeMobileMenu}
                       >
-                        Login
+                        {t("nav.login")}
                       </Link>
                       <Link
                         href="/register"
                         className="nav-cta"
                         onClick={closeMobileMenu}
                       >
-                        Sign Up
+                        {t("nav.signUp")}
                       </Link>
                     </div>
                   </motion.div>
@@ -1686,22 +1691,21 @@ export default function HomePageClient() {
           >
             <motion.div className="eyebrow" variants={fadeUp}>
               <LuSparkles size={14} />
-              Premium profile platform for creators, gamers and devs
+              {t("home.heroEyebrow")}
             </motion.div>
 
             <motion.h1 className="hero-title" variants={fadeUp}>
-              Your Digital Identity,
+              {t("home.heroTitleLineOne")}
               <br />
-              <span className="hero-gradient">On Your Terms</span>
+              <span className="hero-gradient">{t("home.heroTitleHighlight")}</span>
             </motion.h1>
 
             <motion.p className="hero-body" variants={fadeUp}>
-              Create a premium profile that brings your links, identity, visuals and
-              social presence into one beautiful page.
+              {t("home.heroBody")}
             </motion.p>
 
             <motion.div className="claim-caption" variants={fadeUp}>
-              Reserve your handle first. Shape the page, mood and presence after.
+              {t("home.claimCaption")}
             </motion.div>
 
             <motion.form
@@ -1716,14 +1720,14 @@ export default function HomePageClient() {
                   className="claim-input"
                   value={username}
                   onChange={(event) => setUsername(event.target.value)}
-                  placeholder="username"
+                  placeholder={t("home.claimPlaceholder")}
                   autoComplete="off"
                   spellCheck={false}
                 />
               </label>
 
               <button type="submit" className="claim-button">
-                Reserve Username
+                {t("home.claimButton")}
                 <LuArrowRight size={17} />
               </button>
             </motion.form>
@@ -1828,23 +1832,22 @@ export default function HomePageClient() {
             <div>
               <div className="eyebrow">
                 <LuBadgeCheck size={14} />
-                Community, help and pricing
+                {t("home.supportEyebrow")}
               </div>
-              <h3>Launch fast, learn fast and keep the page feeling premium.</h3>
+              <h3>{t("home.supportTitle")}</h3>
               <p>
-                Join the Discord community, study the leaderboard and explore pricing
-                when you are ready. <span id="support">Yotei keeps the path simple from
-                first claim to public profile.</span>
+                {t("home.supportBody")}{" "}
+                <span id="support">{t("home.supportHighlight")}</span>
               </p>
             </div>
 
             <div className="support-actions">
               <Link href="/register" className="support-link primary">
-                Start Free
+                {t("home.startFree")}
                 <LuArrowRight size={16} />
               </Link>
               <Link href="/pricing" className="support-link">
-                View Pricing
+                {t("home.viewPricing")}
               </Link>
             </div>
           </motion.div>

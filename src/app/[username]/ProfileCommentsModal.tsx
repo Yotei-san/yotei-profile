@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { LuLoaderCircle, LuMessageSquare, LuTrash2, LuX } from "react-icons/lu";
+import { useI18n } from "@/app/components/I18nProvider";
+import { toIntlLocale } from "@/app/lib/i18n";
 
 type ProfileCommentItem = {
   id: string;
@@ -33,6 +35,7 @@ export default function ProfileCommentsModal({
   onClose,
   onCountChange,
 }: Props) {
+  const { locale, t } = useI18n();
   const [comments, setComments] = useState<ProfileCommentItem[]>([]);
   const [sort, setSort] = useState<CommentSort>("newest");
   const [draft, setDraft] = useState("");
@@ -87,7 +90,7 @@ export default function ProfileCommentsModal({
       const payload = await response.json().catch(() => null);
 
       if (!response.ok || !payload) {
-        setError(payload?.error || "Unable to load comments right now.");
+        setError(payload?.error || t("publicProfile.loadCommentsError"));
         return;
       }
 
@@ -95,7 +98,7 @@ export default function ProfileCommentsModal({
       onCountChange(typeof payload.count === "number" ? payload.count : 0);
       setHasLoaded(true);
     } catch {
-      setError("Unable to load comments right now.");
+      setError(t("publicProfile.loadCommentsError"));
     } finally {
       setLoading(false);
     }
@@ -122,7 +125,7 @@ export default function ProfileCommentsModal({
       const payload = await response.json().catch(() => null);
 
       if (!response.ok || !payload) {
-        setError(payload?.error || "Unable to post that comment right now.");
+        setError(payload?.error || t("publicProfile.postCommentError"));
         return;
       }
 
@@ -130,7 +133,7 @@ export default function ProfileCommentsModal({
       onCountChange(typeof payload.count === "number" ? payload.count : commentCount + 1);
       await loadComments(sort);
     } catch {
-      setError("Unable to post that comment right now.");
+      setError(t("publicProfile.postCommentError"));
     } finally {
       setSubmitting(false);
     }
@@ -154,14 +157,14 @@ export default function ProfileCommentsModal({
       const payload = await response.json().catch(() => null);
 
       if (!response.ok || !payload) {
-        setError(payload?.error || "Unable to delete that comment right now.");
+        setError(payload?.error || t("publicProfile.deleteCommentError"));
         return;
       }
 
       onCountChange(typeof payload.count === "number" ? payload.count : Math.max(0, commentCount - 1));
       await loadComments(sort);
     } catch {
-      setError("Unable to delete that comment right now.");
+      setError(t("publicProfile.deleteCommentError"));
     } finally {
       setDeletingId(null);
     }
@@ -233,29 +236,48 @@ export default function ProfileCommentsModal({
           <div style={{ display: "grid", gap: "8px" }}>
             <div style={eyebrowStyle}>
               <LuMessageSquare size={13} />
-              Public Interaction
+              {t("publicProfile.commentModalEyebrow")}
             </div>
             <div id="profile-comments-title" style={titleStyle}>
-              Profile Comments
+              {t("publicProfile.commentModalTitle")}
             </div>
             <div style={subtitleStyle}>
-              {commentCount.toLocaleString()} comment{commentCount === 1 ? "" : "s"}
+              {commentCount === 1
+                ? t("publicProfile.commentCountOne", {
+                    count: commentCount.toLocaleString(toIntlLocale(locale)),
+                  })
+                : t("publicProfile.commentCountOther", {
+                    count: commentCount.toLocaleString(toIntlLocale(locale)),
+                  })}
             </div>
           </div>
 
-          <button type="button" onClick={onClose} style={closeButtonStyle} aria-label="Close comments">
+          <button
+            type="button"
+            onClick={onClose}
+            style={closeButtonStyle}
+            aria-label={t("publicProfile.closeComments")}
+          >
             <LuX size={18} />
           </button>
         </div>
 
         <div style={toolbarStyle}>
           <div style={sortGroupStyle}>
-            <SortButton label="Newest" active={sort === "newest"} onClick={() => setSort("newest")} />
-            <SortButton label="Oldest" active={sort === "oldest"} onClick={() => setSort("oldest")} />
+            <SortButton
+              label={t("publicProfile.newest")}
+              active={sort === "newest"}
+              onClick={() => setSort("newest")}
+            />
+            <SortButton
+              label={t("publicProfile.oldest")}
+              active={sort === "oldest"}
+              onClick={() => setSort("oldest")}
+            />
           </div>
 
           {isOwnProfile ? (
-            <div style={ownerNoteStyle}>You can comment on your own profile if you want to leave notes.</div>
+            <div style={ownerNoteStyle}>{t("publicProfile.ownProfileNote")}</div>
           ) : null}
         </div>
 
@@ -268,28 +290,32 @@ export default function ProfileCommentsModal({
               rows={4}
               placeholder={
                 isOwnProfile
-                  ? "Leave a note on your own profile..."
-                  : `Write something for @${username}...`
+                  ? t("publicProfile.ownProfilePlaceholder")
+                  : t("publicProfile.visitorPlaceholder", { username })
               }
               style={textareaStyle}
             />
             <div style={composerFooterStyle}>
               <div style={charCountStyle}>{draft.length}/300</div>
               <button type="submit" disabled={submitting} style={submitButtonStyle(submitting)}>
-                {submitting ? "Posting..." : isOwnProfile ? "Write Comment (Own Profile)" : "Post Comment"}
+                {submitting
+                  ? t("publicProfile.postingComment")
+                  : isOwnProfile
+                    ? t("publicProfile.writeCommentOwnProfile")
+                    : t("publicProfile.postComment")}
               </button>
             </div>
           </form>
         ) : (
           <div style={signinPanelStyle}>
             <div style={{ display: "grid", gap: "6px" }}>
-              <strong style={{ color: "#ffffff" }}>Sign in to join the conversation.</strong>
+              <strong style={{ color: "#ffffff" }}>{t("publicProfile.signInConversation")}</strong>
               <span style={{ color: "#9aa8c2", fontSize: "13px", lineHeight: 1.7 }}>
-                Comments are account-based in this phase to keep profile interactions safer and easier to moderate.
+                {t("publicProfile.signInConversationBody")}
               </span>
             </div>
             <Link href="/login" style={signinButtonStyle} onClick={onClose}>
-              Sign in
+              {t("publicProfile.signIn")}
             </Link>
           </div>
         )}
@@ -300,11 +326,14 @@ export default function ProfileCommentsModal({
           {loading && !hasLoaded ? (
             <div style={loadingStateStyle}>
               <LuLoaderCircle size={18} className="spin" />
-              Loading comments...
+              {t("publicProfile.loadingComments")}
             </div>
           ) : comments.length === 0 ? (
             <div style={emptyStateStyle}>
-              No comments yet. {canComment ? "Start the first thread." : "Be the first after signing in."}
+              {t("publicProfile.noCommentsYet")}{" "}
+              {canComment
+                ? t("publicProfile.startFirstThread")
+                : t("publicProfile.beFirstAfterSignIn")}
             </div>
           ) : (
             comments.map((comment) => (
@@ -313,7 +342,7 @@ export default function ProfileCommentsModal({
                   <div style={{ display: "grid", gap: "4px" }}>
                     <strong style={{ color: "#ffffff", fontSize: "14px" }}>{comment.authorName}</strong>
                     <span style={{ color: "#7f8ba3", fontSize: "12px" }}>
-                      {formatCommentDate(comment.createdAt)}
+                      {formatCommentDate(comment.createdAt, locale, t)}
                     </span>
                   </div>
 
@@ -325,7 +354,9 @@ export default function ProfileCommentsModal({
                       style={deleteButtonStyle(deletingId === comment.id)}
                     >
                       <LuTrash2 size={13} />
-                      {deletingId === comment.id ? "Deleting..." : "Delete"}
+                      {deletingId === comment.id
+                        ? t("publicProfile.deleting")
+                        : t("publicProfile.delete")}
                     </button>
                   ) : null}
                 </div>
@@ -356,14 +387,18 @@ function SortButton({
   );
 }
 
-function formatCommentDate(value: string) {
+function formatCommentDate(
+  value: string,
+  locale: ReturnType<typeof useI18n>["locale"],
+  t: ReturnType<typeof useI18n>["t"],
+) {
   const parsed = new Date(value);
 
   if (Number.isNaN(parsed.getTime())) {
-    return "Just now";
+    return t("publicProfile.justNow");
   }
 
-  return new Intl.DateTimeFormat("en-US", {
+  return new Intl.DateTimeFormat(toIntlLocale(locale), {
     month: "short",
     day: "numeric",
     year: "numeric",

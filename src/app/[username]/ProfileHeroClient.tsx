@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import type { CSSProperties, ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 import { LuEye, LuMapPin, LuMessageSquare, LuThumbsDown, LuThumbsUp } from "react-icons/lu";
+import { useI18n } from "@/app/components/I18nProvider";
 import { useAdaptivePerformance } from "@/app/components/PerformanceProvider";
 
 const ProfileCommentsModal = dynamic(() => import("./ProfileCommentsModal"), {
@@ -47,6 +48,7 @@ export default function ProfileHeroClient({
   preview = false,
   variant = "inline",
 }: Props) {
+  const { t } = useI18n();
   const { profile } = useAdaptivePerformance();
   const [views, setViews] = useState(initialViews);
   const [likes, setLikes] = useState(initialLikes);
@@ -263,7 +265,7 @@ export default function ProfileHeroClient({
         data-variant={variant}
       >
         <MetricChip
-          label="Views"
+          label={t("publicProfile.views")}
           value={views}
           icon={<LuEye size={14} />}
           color="#dbe4f5"
@@ -287,7 +289,7 @@ export default function ProfileHeroClient({
         />
 
         <ReactionButton
-          label="Likes"
+          label={t("publicProfile.likes")}
           value={likes}
           icon={<LuThumbsUp size={14} />}
           onClick={() => sendReaction("like")}
@@ -314,7 +316,7 @@ export default function ProfileHeroClient({
         />
 
         <ReactionButton
-          label="Dislikes"
+          label={t("publicProfile.dislikes")}
           value={dislikes}
           icon={<LuThumbsDown size={14} />}
           onClick={() => sendReaction("dislike")}
@@ -341,7 +343,7 @@ export default function ProfileHeroClient({
         />
 
         <ActionButton
-          label="Comments"
+          label={t("publicProfile.comments")}
           value={commentCount}
           icon={<LuMessageSquare size={14} />}
           onClick={() => setIsCommentsOpen(true)}
@@ -368,7 +370,7 @@ export default function ProfileHeroClient({
 
         {normalizedLocationText ? (
           <MetricChip
-            label="Location"
+            label={t("publicProfile.location")}
             value={normalizedLocationText}
             icon={<LuMapPin size={14} />}
             color="#edf4ff"

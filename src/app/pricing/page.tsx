@@ -1,10 +1,13 @@
 import Link from "next/link";
 import PricingActions from "./PricingActions";
 import { getCurrentUser } from "@/app/lib/auth";
+import { createTranslator, getRequestLocale } from "@/app/lib/i18n";
 import { hasPremiumAccess } from "@/app/lib/premium";
 import { prisma } from "@/app/lib/prisma";
 
 export default async function PricingPage() {
+  const locale = await getRequestLocale();
+  const t = createTranslator(locale);
   const sessionUser = await getCurrentUser();
   const user = sessionUser
     ? await prisma.user.findUnique({
@@ -48,39 +51,35 @@ export default async function PricingPage() {
           }}
         >
           <div style={{ display: "grid", gap: "14px" }}>
-            <div style={eyebrowStyle}>Pricing</div>
+            <div style={eyebrowStyle}>{t("pricing.eyebrow")}</div>
             <div>
               <h1 style={{ fontSize: "48px", lineHeight: 0.95, margin: 0 }}>
-                Premium that stays in test mode.
+                {t("pricing.title")}
               </h1>
-              <p style={heroTextStyle}>
-                Keep Stripe safely pointed at test mode while presenting a cleaner,
-                more stable upgrade experience for demos, internal reviews, and sales
-                conversations.
-              </p>
+              <p style={heroTextStyle}>{t("pricing.description")}</p>
             </div>
             <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
               <Link href="/dashboard" style={secondaryLinkStyle}>
-                Back to dashboard
+                {t("pricing.backToDashboard")}
               </Link>
               <Link href="/" style={ghostLinkStyle}>
-                Open home
+                {t("pricing.openHome")}
               </Link>
             </div>
           </div>
 
           <div style={summaryPanelStyle}>
             <div style={premium ? premiumBadgeStyle : freeBadgeStyle}>
-              {premium ? "Premium active" : "Free plan"}
+              {premium ? t("pricing.premiumActive") : t("pricing.freePlan")}
             </div>
             <div style={{ display: "grid", gap: "8px" }}>
               <div style={{ fontSize: "28px", fontWeight: 900 }}>
-                {premium ? "Your account has premium access." : "Your account is on free."}
+                {premium ? t("pricing.premiumSummary") : t("pricing.freeSummary")}
               </div>
               <div style={summaryTextStyle}>
                 {premium
-                  ? "Billing controls stay available through Stripe test mode without touching production settings."
-                  : "Upgrade testing stays available, and the webhook flow remains unchanged for future production rollout."}
+                  ? t("pricing.premiumSummaryBody")
+                  : t("pricing.freeSummaryBody")}
               </div>
             </div>
           </div>
@@ -94,37 +93,31 @@ export default async function PricingPage() {
           }}
         >
           <article style={freeCardStyle}>
-            <div style={freeBadgeStyle}>Starter</div>
-            <h2 style={planTitleStyle}>Free</h2>
-            <p style={planTextStyle}>
-              The core profile setup for creators who want a clean launch-ready page
-              with links, profile media, and public identity basics.
-            </p>
+            <div style={freeBadgeStyle}>{t("pricing.starter")}</div>
+            <h2 style={planTitleStyle}>{t("pricing.freeTitle")}</h2>
+            <p style={planTextStyle}>{t("pricing.freeDescription")}</p>
             <div style={featureListStyle}>
-              <div>Up to 5 links</div>
-              <div>Up to 2 gallery images</div>
-              <div>Basic analytics</div>
-              <div>Public reactions</div>
-              <div>Core profile customization</div>
+              <div>{t("pricing.freeFeatureLinks")}</div>
+              <div>{t("pricing.freeFeatureGallery")}</div>
+              <div>{t("pricing.freeFeatureAnalytics")}</div>
+              <div>{t("pricing.freeFeatureReactions")}</div>
+              <div>{t("pricing.freeFeatureCustomization")}</div>
             </div>
             <div style={currentPlanStyle(!premium)}>
-              {!premium ? "Current plan" : "Available anytime"}
+              {!premium ? t("pricing.currentPlan") : t("pricing.availableAnytime")}
             </div>
           </article>
 
           <article style={premiumCardStyle}>
-            <div style={premiumBadgeStyle}>Premium</div>
-            <h2 style={planTitleStyle}>Premium</h2>
-            <p style={planTextStyle}>
-              The fuller presentation layer for richer visuals, more customization,
-              and a stronger premium profile impression during demos and creator sales.
-            </p>
+            <div style={premiumBadgeStyle}>{t("pricing.premiumTitle")}</div>
+            <h2 style={planTitleStyle}>{t("pricing.premiumTitle")}</h2>
+            <p style={planTextStyle}>{t("pricing.premiumDescription")}</p>
             <div style={featureListStyle}>
-              <div>Unlimited links</div>
-              <div>Expanded gallery slots</div>
-              <div>Video banner support</div>
-              <div>Premium badge state</div>
-              <div>Saved presets and advanced layouts</div>
+              <div>{t("pricing.premiumFeatureLinks")}</div>
+              <div>{t("pricing.premiumFeatureGallery")}</div>
+              <div>{t("pricing.premiumFeatureVideo")}</div>
+              <div>{t("pricing.premiumFeatureBadge")}</div>
+              <div>{t("pricing.premiumFeatureLayouts")}</div>
             </div>
             <div
               style={{
@@ -137,8 +130,7 @@ export default async function PricingPage() {
               }}
             >
               <div style={{ color: "#c7d2fe", fontSize: "13px", lineHeight: 1.6 }}>
-                Stripe remains in test mode. No production switch was made in this cleanup
-                pass.
+                {t("pricing.stripeTestMode")}
               </div>
               <PricingActions
                 isSignedIn={Boolean(sessionUser)}

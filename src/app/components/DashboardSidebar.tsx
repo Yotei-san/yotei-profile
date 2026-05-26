@@ -4,6 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { type CSSProperties, useEffect, useId, useRef, useState } from "react";
 import { LuMenu, LuPanelLeftClose, LuX } from "react-icons/lu";
+import { useI18n } from "@/app/components/I18nProvider";
+import LanguageSwitcher from "@/app/components/LanguageSwitcher";
 import {
   dashboardButtonStyle,
   dashboardTagStyle,
@@ -80,6 +82,7 @@ export default function DashboardSidebar({ user, items, lockedHrefs = [] }: Prop
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const mobileDrawerId = useId();
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const { t } = useI18n();
 
   const visibleItems = items.filter(
     (item) => !item.adminOnly || user.role === "admin" || user.role === "owner"
@@ -311,14 +314,20 @@ export default function DashboardSidebar({ user, items, lockedHrefs = [] }: Prop
           <span className="dashboard-sidebar-mobile-brand-mark">Y</span>
           <span className="dashboard-sidebar-mobile-brand-copy">
             <strong>yotei profile</strong>
-            <span>dashboard control</span>
+            <span>{t("dashboard.sidebar.control")}</span>
           </span>
         </Link>
+
+        <LanguageSwitcher variant="compact" />
 
         <button
           type="button"
           className="dashboard-sidebar-menu-button"
-          aria-label={isMobileDrawerOpen ? "Close dashboard navigation" : "Open dashboard navigation"}
+          aria-label={
+            isMobileDrawerOpen
+              ? t("dashboard.sidebar.closeNavigation")
+              : t("dashboard.sidebar.openNavigation")
+          }
           aria-expanded={isMobileDrawerOpen}
           aria-controls={mobileDrawerId}
           onClick={() => setIsMobileDrawerOpen((current) => !current)}
@@ -337,6 +346,7 @@ export default function DashboardSidebar({ user, items, lockedHrefs = [] }: Prop
           lockedHrefs={lockedHrefs}
           isPremium={isPremium}
           style={desktopPanelStyle}
+          t={t}
         />
       </div>
 
@@ -345,7 +355,7 @@ export default function DashboardSidebar({ user, items, lockedHrefs = [] }: Prop
           <button
             type="button"
             className="dashboard-sidebar-backdrop"
-            aria-label="Close dashboard navigation"
+            aria-label={t("dashboard.sidebar.closeNavigation")}
             onClick={closeMobileDrawer}
           />
 
@@ -359,19 +369,21 @@ export default function DashboardSidebar({ user, items, lockedHrefs = [] }: Prop
             <div className="dashboard-sidebar-drawer-header">
               <div className="dashboard-sidebar-drawer-title">
                 <LuPanelLeftClose size={16} />
-                Navigation
+                {t("dashboard.sidebar.navigation")}
               </div>
 
               <button
                 ref={closeButtonRef}
                 type="button"
                 className="dashboard-sidebar-close-button"
-                aria-label="Close dashboard navigation"
+                aria-label={t("dashboard.sidebar.closeNavigation")}
                 onClick={closeMobileDrawer}
               >
                 <LuX size={18} />
               </button>
             </div>
+
+            <LanguageSwitcher />
 
             <div className="dashboard-sidebar-drawer-panel">
               <SidebarPanel
@@ -384,6 +396,7 @@ export default function DashboardSidebar({ user, items, lockedHrefs = [] }: Prop
                 isPremium={isPremium}
                 style={mobilePanelStyle}
                 onNavigate={closeMobileDrawer}
+                t={t}
               />
             </div>
           </div>
@@ -403,6 +416,7 @@ function SidebarPanel({
   isPremium,
   style,
   onNavigate,
+  t,
 }: {
   user: SidebarUser;
   pathname: string;
@@ -413,6 +427,7 @@ function SidebarPanel({
   isPremium: boolean;
   style: CSSProperties;
   onNavigate?: () => void;
+  t: ReturnType<typeof useI18n>["t"];
 }) {
   return (
     <aside style={style}>
@@ -448,7 +463,9 @@ function SidebarPanel({
           <div style={{ fontSize: "16px", fontWeight: 900, color: "#fff" }}>
             yotei profile
           </div>
-          <div style={{ fontSize: "12px", color: "#6b7280" }}>dashboard control</div>
+          <div style={{ fontSize: "12px", color: "#6b7280" }}>
+            {t("dashboard.sidebar.control")}
+          </div>
         </div>
       </div>
 
@@ -511,7 +528,7 @@ function SidebarPanel({
           }}
         >
           <div style={dashboardTagStyle(isPremium ? "pink" : "violet")}>
-            {isPremium ? "Premium" : "Free"}
+            {isPremium ? t("dashboard.sidebar.premium") : t("dashboard.sidebar.free")}
           </div>
           <div
             style={{
@@ -520,7 +537,9 @@ function SidebarPanel({
               lineHeight: 1.5,
             }}
           >
-            {isPremium ? "Premium profile active" : "Upgrade-ready workspace"}
+            {isPremium
+              ? t("dashboard.sidebar.premiumActive")
+              : t("dashboard.sidebar.freeReady")}
           </div>
         </div>
       </div>
@@ -537,6 +556,7 @@ function SidebarPanel({
           pathname={pathname}
           lockedHrefs={lockedHrefs}
           onNavigate={onNavigate}
+          t={t}
         />
 
         <SidebarSection
@@ -545,6 +565,7 @@ function SidebarPanel({
           pathname={pathname}
           lockedHrefs={lockedHrefs}
           onNavigate={onNavigate}
+          t={t}
         />
 
         {adminItems.length > 0 ? (
@@ -554,8 +575,13 @@ function SidebarPanel({
             pathname={pathname}
             lockedHrefs={lockedHrefs}
             onNavigate={onNavigate}
+            t={t}
           />
         ) : null}
+      </div>
+
+      <div style={{ display: "flex", justifyContent: "flex-start" }}>
+        <LanguageSwitcher />
       </div>
 
       <div
@@ -571,14 +597,14 @@ function SidebarPanel({
           style={dashboardButtonStyle("secondary", { fullWidth: true })}
           onClick={onNavigate}
         >
-          View public profile
+          {t("dashboard.sidebar.viewPublicProfile")}
         </Link>
         <Link
           href="/dashboard/profile"
           style={dashboardButtonStyle("primary", { fullWidth: true })}
           onClick={onNavigate}
         >
-          Edit profile
+          {t("dashboard.sidebar.editProfile")}
         </Link>
       </div>
     </aside>
@@ -591,12 +617,14 @@ function SidebarSection({
   pathname,
   lockedHrefs,
   onNavigate,
+  t,
 }: {
   title: string;
   items: DashboardNavItem[];
   pathname: string;
   lockedHrefs: string[];
   onNavigate?: () => void;
+  t: ReturnType<typeof useI18n>["t"];
 }) {
   return (
     <div
@@ -607,7 +635,13 @@ function SidebarSection({
         padding: "14px",
       }}
     >
-      {groupTitle(title)}
+      {groupTitle(
+        title === "main"
+          ? t("dashboard.sections.main")
+          : title === "customization"
+            ? t("dashboard.sections.customization")
+            : t("dashboard.sections.admin"),
+      )}
       <div style={{ display: "grid", gap: "8px" }}>
         {items.map((item) => (
           <SidebarLink
@@ -616,6 +650,7 @@ function SidebarSection({
             active={pathname === item.href}
             locked={lockedHrefs.includes(item.href)}
             onNavigate={onNavigate}
+            t={t}
           />
         ))}
       </div>
@@ -628,11 +663,13 @@ function SidebarLink({
   active,
   locked,
   onNavigate,
+  t,
 }: {
   item: DashboardNavItem;
   active: boolean;
   locked: boolean;
   onNavigate?: () => void;
+  t: ReturnType<typeof useI18n>["t"];
 }) {
   const content = (
     <>
@@ -651,7 +688,7 @@ function SidebarLink({
       >
         {item.icon}
       </span>
-      <span style={{ minWidth: 0 }}>{item.label}</span>
+      <span style={{ minWidth: 0 }}>{t(item.labelKey)}</span>
       {locked ? (
         <span
           style={{
@@ -671,7 +708,7 @@ function SidebarLink({
             flexShrink: 0,
           }}
         >
-          Verify
+          {t("dashboard.sidebar.verify")}
         </span>
       ) : null}
     </>
@@ -680,7 +717,7 @@ function SidebarLink({
   if (locked) {
     return (
       <div
-        title="Verify your email to unlock this area."
+        title={t("dashboard.sidebar.verifyTooltip")}
         style={{
           color: "#8d93a2",
           background: "rgba(255,255,255,0.02)",

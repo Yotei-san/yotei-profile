@@ -73,6 +73,7 @@ import {
   type ProfileScene,
 } from "@/app/lib/profile-scenes";
 import LivingAvatar from "@/app/components/LivingAvatar";
+import { useI18n } from "@/app/components/I18nProvider";
 import { useAdaptivePerformance } from "@/app/components/PerformanceProvider";
 import {
   adaptProfileBackgroundIntensity,
@@ -213,6 +214,7 @@ export default function PublicProfileRenderer({
   preview = false,
   previewMessage = "This is exactly how your live profile will look.",
 }: Props) {
+  const { t } = useI18n();
   const { profile: adaptivePerformance } = useAdaptivePerformance();
   const safeLayout = normalizeProfileLayout(layout);
   const safeScene = normalizeProfileScene(scene);
@@ -2922,6 +2924,7 @@ function IntroProfileStage({
   customBlocks: ProfileCustomBlock[];
   hasDetails: boolean;
 }) {
+  const { t } = useI18n();
   const { presence, depth, socialThemeColor, linkThemeColor } = sceneAppearance;
   const introAvatarSize = Math.max(
     mode === "cinematic" ? 132 : 108,
@@ -4789,7 +4792,7 @@ function IntroProfileStage({
               <span className="profile-intro-scroll-orb" aria-hidden="true">
                 <span className="profile-intro-scroll-arrow" />
               </span>
-              <span className="profile-intro-scroll-copy">Scroll down for more</span>
+              <span className="profile-intro-scroll-copy">{t("publicProfile.scrollForMore")}</span>
             </button>
           </div>
         ) : null}

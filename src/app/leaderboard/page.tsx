@@ -1,6 +1,12 @@
 import Link from "next/link";
 import type { CSSProperties } from "react";
 import {
+  createTranslator,
+  getRequestLocale,
+  toIntlLocale,
+  type Locale,
+} from "@/app/lib/i18n";
+import {
   getLeaderboardEntries,
   normalizeLeaderboardTab,
   type LeaderboardTab,
@@ -12,45 +18,46 @@ type LeaderboardPageProps = {
   }>;
 };
 
-const TAB_ITEMS: Array<{
-  key: LeaderboardTab;
-  label: string;
-  eyebrow: string;
-  description: string;
-}> = [
-  {
-    key: "views",
-    label: "Most viewed",
-    eyebrow: "Reach",
-    description: "Profiles pulling the most attention right now.",
-  },
-  {
-    key: "likes",
-    label: "Most liked",
-    eyebrow: "Affection",
-    description: "Profiles earning the strongest positive reactions.",
-  },
-  {
-    key: "dislikes",
-    label: "Most disliked",
-    eyebrow: "Heat",
-    description: "Profiles collecting the most negative reactions.",
-  },
-  {
-    key: "newest",
-    label: "Newest profiles",
-    eyebrow: "Fresh faces",
-    description: "The latest public profiles to join the Yotei board.",
-  },
-];
-
 export default async function LeaderboardPage({
   searchParams,
 }: LeaderboardPageProps) {
+  const locale = await getRequestLocale();
+  const t = createTranslator(locale);
+  const tabItems: Array<{
+    key: LeaderboardTab;
+    label: string;
+    eyebrow: string;
+    description: string;
+  }> = [
+    {
+      key: "views",
+      label: t("leaderboard.tabs.views.label"),
+      eyebrow: t("leaderboard.tabs.views.eyebrow"),
+      description: t("leaderboard.tabs.views.description"),
+    },
+    {
+      key: "likes",
+      label: t("leaderboard.tabs.likes.label"),
+      eyebrow: t("leaderboard.tabs.likes.eyebrow"),
+      description: t("leaderboard.tabs.likes.description"),
+    },
+    {
+      key: "dislikes",
+      label: t("leaderboard.tabs.dislikes.label"),
+      eyebrow: t("leaderboard.tabs.dislikes.eyebrow"),
+      description: t("leaderboard.tabs.dislikes.description"),
+    },
+    {
+      key: "newest",
+      label: t("leaderboard.tabs.newest.label"),
+      eyebrow: t("leaderboard.tabs.newest.eyebrow"),
+      description: t("leaderboard.tabs.newest.description"),
+    },
+  ];
   const resolvedSearchParams = (await searchParams) ?? {};
   const activeTab = normalizeLeaderboardTab(resolvedSearchParams.tab);
   const activeTabMeta =
-    TAB_ITEMS.find((item) => item.key === activeTab) ?? TAB_ITEMS[0];
+    tabItems.find((item) => item.key === activeTab) ?? tabItems[0];
   const entries = await getLeaderboardEntries(activeTab, 50);
 
   return (
@@ -60,23 +67,24 @@ export default async function LeaderboardPage({
           <div style={{ display: "grid", gap: "14px", minWidth: 0 }}>
             <div style={eyebrowStyle}>{activeTabMeta.eyebrow}</div>
             <div style={{ display: "grid", gap: "10px", minWidth: 0 }}>
-              <h1 style={titleStyle}>Leaderboard</h1>
+              <h1 style={titleStyle}>{t("leaderboard.title")}</h1>
               <p style={descriptionStyle}>
-                {activeTabMeta.description} All boards are limited to active public
-                profiles and refresh from the same counts used on profile pages.
+                {t("leaderboard.heroDescription", {
+                  description: activeTabMeta.description,
+                })}
               </p>
             </div>
           </div>
 
           <div style={heroActionsStyle}>
             <Link href="/dashboard" style={secondaryButtonStyle}>
-              Back to dashboard
+              {t("leaderboard.backToDashboard")}
             </Link>
           </div>
         </section>
 
         <section style={tabsShellStyle}>
-          {TAB_ITEMS.map((item) => (
+          {tabItems.map((item) => (
             <Link
               key={item.key}
               href={`/leaderboard?tab=${item.key}`}
@@ -94,12 +102,12 @@ export default async function LeaderboardPage({
               <div style={sectionEyebrowStyle}>{activeTabMeta.eyebrow}</div>
               <h2 style={sectionTitleStyle}>{activeTabMeta.label}</h2>
             </div>
-            <div style={boardMetaStyle}>Top 50 active public profiles</div>
+            <div style={boardMetaStyle}>{t("leaderboard.boardMeta")}</div>
           </div>
 
           <div style={listStyle}>
             {entries.length === 0 ? (
-              <div style={emptyStyle}>No leaderboard data is available yet.</div>
+              <div style={emptyStyle}>{t("leaderboard.noData")}</div>
             ) : (
               entries.map((entry) => (
                 <article key={`${activeTab}-${entry.id}`} style={rowStyle(entry.rank)}>
@@ -126,21 +134,29 @@ export default async function LeaderboardPage({
                   </div>
 
                   <div style={rightClusterStyle}>
-                    <MetricPill label="Views" value={entry.views} highlight={activeTab === "views"} />
-                    <MetricPill label="Likes" value={entry.likes} highlight={activeTab === "likes"} />
                     <MetricPill
-                      label="Dislikes"
+                      label={t("leaderboard.metrics.views")}
+                      value={entry.views}
+                      highlight={activeTab === "views"}
+                    />
+                    <MetricPill
+                      label={t("leaderboard.metrics.likes")}
+                      value={entry.likes}
+                      highlight={activeTab === "likes"}
+                    />
+                    <MetricPill
+                      label={t("leaderboard.metrics.dislikes")}
                       value={entry.dislikes}
                       highlight={activeTab === "dislikes"}
                     />
                     <MetricPill
-                      label="Joined"
-                      value={formatJoinedDate(entry.createdAt)}
+                      label={t("leaderboard.metrics.joined")}
+                      value={formatJoinedDate(entry.createdAt, locale)}
                       highlight={activeTab === "newest"}
                       compact
                     />
                     <Link href={`/${entry.username}`} style={primaryButtonStyle} target="_blank">
-                      Open profile
+                      {t("leaderboard.openProfile")}
                     </Link>
                   </div>
                 </article>
@@ -238,8 +254,8 @@ function MetricPill({
   );
 }
 
-function formatJoinedDate(value: Date) {
-  return new Intl.DateTimeFormat("en-US", {
+function formatJoinedDate(value: Date, locale: Locale) {
+  return new Intl.DateTimeFormat(toIntlLocale(locale), {
     month: "short",
     day: "numeric",
   }).format(value);

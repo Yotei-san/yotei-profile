@@ -4,9 +4,29 @@ import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { useEffect } from "react";
 import CustomCursor from "./CustomCursor";
+import { I18nProvider } from "./I18nProvider";
+import LanguageSwitcher from "./LanguageSwitcher";
 import { PerformanceProvider } from "./PerformanceProvider";
+import type { Locale } from "@/app/lib/i18n";
 
-export default function AppClientShell({ children }: { children: ReactNode }) {
+const RESERVED_PUBLIC_PATHS = new Set([
+  "",
+  "dashboard",
+  "login",
+  "register",
+  "forgot-password",
+  "verify-email",
+  "leaderboard",
+  "pricing",
+]);
+
+export default function AppClientShell({
+  children,
+  initialLocale,
+}: {
+  children: ReactNode;
+  initialLocale: Locale;
+}) {
   const pathname = usePathname();
 
   useEffect(() => {
@@ -25,10 +45,28 @@ export default function AppClientShell({ children }: { children: ReactNode }) {
     };
   }, [pathname]);
 
+  const segments = pathname.split("/").filter(Boolean);
+  const showFloatingLanguageSwitcher =
+    segments.length === 1 && !RESERVED_PUBLIC_PATHS.has(segments[0] ?? "");
+
   return (
-    <PerformanceProvider>
-      <CustomCursor />
-      {children}
-    </PerformanceProvider>
+    <I18nProvider initialLocale={initialLocale}>
+      <PerformanceProvider>
+        <CustomCursor />
+        {children}
+        {showFloatingLanguageSwitcher ? (
+          <div
+            style={{
+              position: "fixed",
+              right: "16px",
+              bottom: "16px",
+              zIndex: 85,
+            }}
+          >
+            <LanguageSwitcher variant="floating" />
+          </div>
+        ) : null}
+      </PerformanceProvider>
+    </I18nProvider>
   );
 }

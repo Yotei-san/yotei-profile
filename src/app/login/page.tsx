@@ -11,25 +11,31 @@ import {
   SubmitButton,
   useAuthSubmit,
 } from "@/app/components/AuthExperience";
+import { useI18n } from "@/app/components/I18nProvider";
 import { loginUser } from "./actions";
 
 export default function LoginPage() {
   const { error, isPending, submit } = useAuthSubmit(loginUser);
+  const { t } = useI18n();
 
   return (
     <AuthShell
-      badge="Access Node"
-      title="Entrar no seu espaco Yotei."
-      subtitle="Volte para sua identidade digital com uma entrada mais estavel, limpa e premium."
+      badge={t("auth.login.badge")}
+      title={t("auth.login.title")}
+      subtitle={t("auth.login.subtitle")}
       backHref="/"
-      backLabel="Voltar para a home"
-      formIntro="Use email ou username para acessar seu dashboard. Sua sessao pode continuar ativa neste dispositivo."
-      statusChips={["Secure Session", "Dashboard Access", "Identity Ready"]}
+      backLabel={t("auth.login.backLabel")}
+      formIntro={t("auth.login.formIntro")}
+      statusChips={[
+        t("auth.login.statusSecureSession"),
+        t("auth.login.statusDashboardAccess"),
+        t("auth.login.statusIdentityReady"),
+      ]}
       footer={
         <AuthFooterLinks
           links={[
-            { href: "/forgot-password", label: "Esqueci minha senha" },
-            { href: "/register", label: "Criar conta" },
+            { href: "/forgot-password", label: t("auth.login.forgotPassword") },
+            { href: "/register", label: t("auth.login.createAccount") },
           ]}
         />
       }
@@ -37,25 +43,25 @@ export default function LoginPage() {
       <AuthForm onSubmit={submit}>
         <AuthField
           name="identifier"
-          label="Email ou username"
+          label={t("auth.login.identifierLabel")}
           type="text"
-          placeholder="seu email ou username"
+          placeholder={t("auth.login.identifierPlaceholder")}
           required
           autoComplete="username"
         />
 
         <PasswordField
           name="password"
-          label="Senha"
-          placeholder="digite sua senha"
+          label={t("auth.login.passwordLabel")}
+          placeholder={t("auth.login.passwordPlaceholder")}
           autoComplete="current-password"
         />
 
         <RememberField />
         <AuthAlert tone="error" message={error} />
         <SubmitButton
-          idleLabel="Entrar"
-          pendingLabel="Entrando..."
+          idleLabel={t("auth.login.submitIdle")}
+          pendingLabel={t("auth.login.submitPending")}
           pending={isPending}
         />
       </AuthForm>

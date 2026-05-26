@@ -17,6 +17,7 @@ import {
   LuShieldCheck,
   LuSparkles,
 } from "react-icons/lu";
+import { useI18n } from "@/app/components/I18nProvider";
 
 type AuthShellProps = {
   badge: string;
@@ -58,6 +59,8 @@ export function AuthShell({
   footer,
   children,
 }: AuthShellProps) {
+  const { t } = useI18n();
+
   return (
     <main style={mainStyle}>
       <style>{authCss}</style>
@@ -73,7 +76,7 @@ export function AuthShell({
             <span className="auth-brand-mark">Y</span>
             <div className="auth-brand-copy">
               <strong>Yotei Identity</strong>
-              <span>Digital identity system for gamers, creators and devs</span>
+              <span>{t("auth.identitySystem")}</span>
             </div>
           </div>
 
@@ -102,7 +105,7 @@ export function AuthShell({
 
           <div className="auth-hero-note">
             <LuShieldCheck size={15} />
-            Persistent login, cleaner flows and a safer premium experience.
+            {t("auth.heroNote")}
           </div>
         </aside>
 
@@ -115,11 +118,11 @@ export function AuthShell({
                 {backLabel}
               </Link>
 
-              <div className="auth-panel-badge">Secure Access</div>
+              <div className="auth-panel-badge">{t("auth.secureAccess")}</div>
             </div>
 
             <div className="auth-form-header">
-              <div className="auth-form-badge">Yotei Identity</div>
+              <div className="auth-form-badge">{t("auth.identityBadge")}</div>
               <p className="auth-form-intro">{formIntro}</p>
             </div>
 
@@ -190,6 +193,7 @@ export function PasswordField({
 }: PasswordFieldProps) {
   const fieldId = useId();
   const [isVisible, setIsVisible] = useState(false);
+  const { t } = useI18n();
 
   return (
     <label htmlFor={fieldId} className="auth-label">
@@ -207,7 +211,7 @@ export function PasswordField({
         <button
           type="button"
           className="auth-password-toggle"
-          aria-label={isVisible ? "Ocultar senha" : "Mostrar senha"}
+          aria-label={isVisible ? t("auth.hidePassword") : t("auth.showPassword")}
           aria-pressed={isVisible}
           onClick={() => setIsVisible((current) => !current)}
         >
@@ -219,6 +223,8 @@ export function PasswordField({
 }
 
 export function RememberField({ defaultChecked = true }: RememberFieldProps) {
+  const { t } = useI18n();
+
   return (
     <label className="auth-remember">
       <input
@@ -227,7 +233,7 @@ export function RememberField({ defaultChecked = true }: RememberFieldProps) {
         value="1"
         defaultChecked={defaultChecked}
       />
-      <span>Manter login neste dispositivo</span>
+      <span>{t("auth.rememberMe")}</span>
     </label>
   );
 }
@@ -282,6 +288,7 @@ export function AuthFooterLinks({
 export function useAuthSubmit<
   T extends (...args: never[]) => Promise<{ error?: string; success?: string } | void>,
 >(action: T) {
+  const { t } = useI18n();
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [isPending, startTransition] = useTransition();
@@ -311,7 +318,7 @@ export function useAuthSubmit<
           setSuccess(result.success);
         }
       } catch (err) {
-        const message = err instanceof Error ? err.message : "Ocorreu um erro inesperado.";
+        const message = err instanceof Error ? err.message : t("auth.unexpectedError");
 
         if (message.includes("NEXT_REDIRECT")) {
           throw err;

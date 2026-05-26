@@ -15,6 +15,7 @@ import {
 } from "@/app/dashboard/components/DashboardUI";
 import { redirectWithClearedSession, requireUser } from "@/app/lib/auth";
 import { buildDashboardOnboardingState } from "@/app/lib/dashboard-onboarding";
+import { createTranslator, getRequestLocale } from "@/app/lib/i18n";
 import { getDashboardRankingSummary } from "@/app/lib/leaderboard";
 import { prisma } from "@/app/lib/prisma";
 
@@ -42,6 +43,8 @@ type DashboardUser = {
 };
 
 export default async function DashboardPage() {
+  const locale = await getRequestLocale();
+  const t = createTranslator(locale);
   const sessionUser = await requireUser();
 
   const [user, rankingSummary] = await Promise.all([
@@ -108,14 +111,16 @@ export default async function DashboardPage() {
     linkCount: resolvedUser.links.length,
     socialBlockCount: resolvedUser.socialBlocks.length,
     templateCount: resolvedUser.createdTemplates.length,
-  });
+  }, t);
 
   return (
     <main style={dashboardPageStyle}>
       <DashboardPageHeader
-        eyebrow="Dashboard overview"
-        title={`Welcome back, ${resolvedUser.displayName || resolvedUser.username}`}
-        description="Track setup progress, keep key profile systems aligned, and focus on the next actions that make your public page feel launch ready."
+        eyebrow={t("dashboard.overview.eyebrow")}
+        title={t("dashboard.overview.title", {
+          name: resolvedUser.displayName || resolvedUser.username,
+        })}
+        description={t("dashboard.overview.description")}
         actions={
           <>
             <Link
@@ -123,64 +128,64 @@ export default async function DashboardPage() {
               style={dashboardButtonStyle("primary")}
               target="_blank"
             >
-              Open profile
+              {t("dashboard.overview.openProfile")}
             </Link>
             <Link href="/dashboard/profile" style={dashboardButtonStyle("secondary")}>
-              Edit profile
+              {t("dashboard.overview.editProfile")}
             </Link>
           </>
         }
         aside={
           <div style={heroStatsGridStyle}>
             <StatCard
-              title="Links"
+              title={t("dashboard.overview.links")}
               value={String(resolvedUser.links.length)}
-              hint="Clickable profile actions"
+              hint={t("dashboard.overview.clickableActions")}
             />
             <StatCard
-              title="Total clicks"
+              title={t("dashboard.overview.totalClicks")}
               value={String(totalClicks)}
-              hint="Traffic across your links"
+              hint={t("dashboard.overview.linkTraffic")}
             />
             <StatCard
-              title="Social blocks"
+              title={t("dashboard.overview.socialBlocks")}
               value={String(resolvedUser.socialBlocks.length)}
-              hint="Identity blocks configured"
+              hint={t("dashboard.overview.identityBlocks")}
             />
           </div>
         }
       />
 
-      <DashboardOnboardingChecklist onboarding={onboarding} />
+      <DashboardOnboardingChecklist onboarding={onboarding} locale={locale} />
 
       {rankingSummary ? (
         <section style={dashboardSurfaceStyle}>
           <DashboardSectionHeading
-            eyebrow="Leaderboard"
-            title="Your ranking"
-            description="A quick snapshot of how your public profile is stacking up across visibility and engagement."
+            eyebrow={t("dashboard.overview.leaderboardEyebrow")}
+            title={t("dashboard.overview.rankingTitle")}
+            description={t("dashboard.overview.rankingDescription")}
             actions={
               <Link href="/leaderboard" style={dashboardButtonStyle("secondary")}>
-                Open leaderboard
+                {t("dashboard.overview.openLeaderboard")}
               </Link>
             }
           />
 
           <div style={heroStatsGridStyle}>
             <StatCard
-              title="Views rank"
+              title={t("dashboard.overview.viewsRank")}
               value={`#${rankingSummary.viewsRank}`}
-              hint="Position on the most viewed board"
+              hint={t("dashboard.overview.viewsHint")}
             />
             <StatCard
-              title="Likes rank"
+              title={t("dashboard.overview.likesRank")}
               value={`#${rankingSummary.likesRank}`}
-              hint="Position on the most liked board"
+              hint={t("dashboard.overview.likesHint")}
             />
             <StatCard
-              title="Comments"
+              title={t("dashboard.overview.comments")}
               value={String(rankingSummary.commentCount)}
-              hint="Visible public comments on your profile"
+              hint={t("dashboard.overview.commentsHint")}
             />
           </div>
         </section>
@@ -189,12 +194,12 @@ export default async function DashboardPage() {
       <section style={dashboardAutoGridStyle(340)}>
         <section style={dashboardSurfaceStyle}>
           <DashboardSectionHeading
-            eyebrow="Performance"
-            title="Top links"
-            description="A ranked snapshot of the destinations currently getting the most clicks."
+            eyebrow={t("dashboard.overview.performanceEyebrow")}
+            title={t("dashboard.overview.topLinks")}
+            description={t("dashboard.overview.topLinksDescription")}
             actions={
               <Link href="/dashboard/analytics" style={dashboardButtonStyle("secondary")}>
-                Open analytics
+                {t("dashboard.overview.openAnalytics")}
               </Link>
             }
           />
@@ -205,17 +210,19 @@ export default async function DashboardPage() {
                 <div key={link.id} style={rowStyle}>
                   <div style={{ minWidth: 0, display: "grid", gap: "6px" }}>
                     <div style={rowTitleStyle}>
-                      #{index + 1} {link.title || "Untitled link"}
+                      #{index + 1} {link.title || t("dashboard.overview.untitledLink")}
                     </div>
                     <div style={dashboardMutedTextStyle}>{link.url}</div>
                   </div>
-                  <div style={dashboardTagStyle("pink")}>{link._count.clicks} clicks</div>
+                  <div style={dashboardTagStyle("pink")}>
+                    {t("dashboard.overview.clicks", { count: link._count.clicks })}
+                  </div>
                 </div>
               ))
             ) : (
               <DashboardEmptyState
-                title="No link activity yet"
-                description="Your analytics panel will start filling in as soon as visitors interact with your first published links."
+                title={t("dashboard.overview.noLinkActivityTitle")}
+                description={t("dashboard.overview.noLinkActivityDescription")}
               />
             )}
           </div>
@@ -223,12 +230,12 @@ export default async function DashboardPage() {
 
         <section style={dashboardSurfaceStyle}>
           <DashboardSectionHeading
-            eyebrow="Inventory"
-            title="All links"
-            description="A quick reference view of the destinations currently powering your profile."
+            eyebrow={t("dashboard.overview.inventoryEyebrow")}
+            title={t("dashboard.overview.allLinks")}
+            description={t("dashboard.overview.allLinksDescription")}
             actions={
               <Link href="/dashboard/links" style={dashboardButtonStyle("secondary")}>
-                Manage links
+                {t("dashboard.overview.manageLinks")}
               </Link>
             }
           />
@@ -237,18 +244,22 @@ export default async function DashboardPage() {
             {resolvedUser.links.length > 0 ? (
               resolvedUser.links.map((link) => (
                 <div key={link.id} style={dashboardListItemStyle}>
-                  <div style={rowTitleStyle}>{link.title || "Untitled link"}</div>
+                  <div style={rowTitleStyle}>
+                    {link.title || t("dashboard.overview.untitledLink")}
+                  </div>
                   <div style={dashboardMutedTextStyle}>{link.url}</div>
-                  <div style={dashboardTagStyle("violet")}>{link._count.clicks} clicks</div>
+                  <div style={dashboardTagStyle("violet")}>
+                    {t("dashboard.overview.clicks", { count: link._count.clicks })}
+                  </div>
                 </div>
               ))
             ) : (
               <DashboardEmptyState
-                title="No links created yet"
-                description="Create your first link to give visitors a clear place to click from your profile."
+                title={t("dashboard.overview.noLinksTitle")}
+                description={t("dashboard.overview.noLinksDescription")}
                 action={
                   <Link href="/dashboard/links" style={dashboardButtonStyle("primary")}>
-                    Create first link
+                    {t("dashboard.overview.createFirstLink")}
                   </Link>
                 }
               />

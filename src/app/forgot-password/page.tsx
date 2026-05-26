@@ -9,8 +9,10 @@ import {
   AuthShell,
   SubmitButton,
 } from "@/app/components/AuthExperience";
+import { useI18n } from "@/app/components/I18nProvider";
 
 export default function ForgotPasswordPage() {
+  const { t } = useI18n();
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [isPending, startTransition] = useTransition();
@@ -24,36 +26,38 @@ export default function ForgotPasswordPage() {
     const email = String(formData.get("email") ?? "").trim();
 
     if (!email) {
-      setError("Digite seu email.");
+      setError(t("auth.forgotPassword.emailRequired"));
       return;
     }
 
     startTransition(async () => {
       try {
         await new Promise((resolve) => setTimeout(resolve, 900));
-        setMessage(
-          "Se existir uma conta com esse email, voce recebera instrucoes para redefinir a senha."
-        );
+        setMessage(t("auth.forgotPassword.success"));
       } catch {
-        setError("Erro ao solicitar redefinicao.");
+        setError(t("auth.forgotPassword.error"));
       }
     });
   }
 
   return (
     <AuthShell
-      badge="Recovery Link"
-      title="Recupere o acesso sem sair do fluxo."
-      subtitle="Um fluxo mais claro, seguro e imersivo para voltar rapido ao seu espaco Yotei."
+      badge={t("auth.forgotPassword.badge")}
+      title={t("auth.forgotPassword.title")}
+      subtitle={t("auth.forgotPassword.subtitle")}
       backHref="/login"
-      backLabel="Voltar para login"
-      formIntro="Digite seu email e enviaremos as instrucoes de redefinicao caso a conta exista."
-      statusChips={["Password Reset", "Secure Flow", "Inbox Ready"]}
+      backLabel={t("auth.forgotPassword.backLabel")}
+      formIntro={t("auth.forgotPassword.formIntro")}
+      statusChips={[
+        t("auth.forgotPassword.statusPasswordReset"),
+        t("auth.forgotPassword.statusSecureFlow"),
+        t("auth.forgotPassword.statusInboxReady"),
+      ]}
       footer={
         <AuthFooterLinks
           links={[
-            { href: "/login", label: "Voltar para login" },
-            { href: "/register", label: "Criar conta nova" },
+            { href: "/login", label: t("auth.forgotPassword.backToLogin") },
+            { href: "/register", label: t("auth.forgotPassword.createNewAccount") },
           ]}
         />
       }
@@ -61,9 +65,9 @@ export default function ForgotPasswordPage() {
       <AuthForm onSubmit={handleSubmit}>
         <AuthField
           name="email"
-          label="Email"
+          label={t("auth.forgotPassword.emailLabel")}
           type="email"
-          placeholder="voce@exemplo.com"
+          placeholder={t("auth.forgotPassword.emailPlaceholder")}
           required
           autoComplete="email"
         />
@@ -71,8 +75,8 @@ export default function ForgotPasswordPage() {
         <AuthAlert tone="error" message={error} />
         <AuthAlert tone="success" message={message} />
         <SubmitButton
-          idleLabel="Enviar instrucoes"
-          pendingLabel="Enviando..."
+          idleLabel={t("auth.forgotPassword.submitIdle")}
+          pendingLabel={t("auth.forgotPassword.submitPending")}
           pending={isPending}
         />
       </AuthForm>
