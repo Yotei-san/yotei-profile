@@ -178,12 +178,16 @@ function DefaultLayout(props: Props) {
   const motionTokens = getProfileMotionTokens(props.motionLevel);
   const socialGroups = partitionSocialBlocks(props.socialBlocks);
   const orderedBlocks = getRenderableCompositionOrder(props.composition, {
-    hero: true,
+    identity: true,
+    about: false,
+    presence: props.user.links.length > 0 || socialGroups.live.length > 0,
     music: props.preview ? true : shouldRenderProfileMusic(props.music),
     socials: socialGroups.socials.length > 0,
-    live: socialGroups.live.length > 0,
-    links: true,
-  }).filter((block) => block !== "hero");
+    showcase: false,
+    projects: false,
+    gallery: false,
+    extras: false,
+  }).filter((block) => block !== "identity");
   const customBlocks = props.composition.customBlocks.filter((block) => block.visible);
   const resolvedBackdrop =
     scaleBlurInFilter(
@@ -433,12 +437,16 @@ function SimplisticLayout(props: Props) {
     );
   const socialGroups = partitionSocialBlocks(props.socialBlocks);
   const orderedBlocks = getRenderableCompositionOrder(props.composition, {
-    hero: true,
+    identity: true,
+    about: false,
+    presence: props.user.links.length > 0 || socialGroups.live.length > 0,
     music: props.preview ? true : shouldRenderProfileMusic(props.music),
     socials: socialGroups.socials.length > 0,
-    live: socialGroups.live.length > 0,
-    links: true,
-  }).filter((block) => block !== "hero");
+    showcase: false,
+    projects: false,
+    gallery: false,
+    extras: false,
+  }).filter((block) => block !== "identity");
   const customBlocks = props.composition.customBlocks.filter((block) => block.visible);
 
   return (
@@ -673,12 +681,16 @@ function PortfolioLayout(props: Props) {
   );
   const socialGroups = partitionSocialBlocks(props.socialBlocks);
   const orderedBlocks = getRenderableCompositionOrder(props.composition, {
-    hero: true,
+    identity: true,
+    about: false,
+    presence: props.user.links.length > 0 || socialGroups.live.length > 0,
     music: props.preview ? true : shouldRenderProfileMusic(props.music),
     socials: socialGroups.socials.length > 0,
-    live: socialGroups.live.length > 0,
-    links: true,
-  }).filter((block) => block !== "hero");
+    showcase: false,
+    projects: false,
+    gallery: false,
+    extras: false,
+  }).filter((block) => block !== "identity");
   const customBlocks = props.composition.customBlocks.filter((block) => block.visible);
 
   return (
@@ -1015,7 +1027,7 @@ function DetachedWidget({
 }
 
 function renderVariantBlock(
-  block: ProfileCompositionBlock,
+  block: string,
   input: {
     layout: "default" | "simplistic" | "portfolio";
     preview?: boolean;
@@ -1091,7 +1103,7 @@ function renderVariantBlock(
     );
   }
 
-  if (block === "live") {
+  if (block === "presence") {
     return (
       <DetachedWidget
         key={block}
@@ -1099,37 +1111,42 @@ function renderVariantBlock(
         accent={input.accentColor}
         dnaTuning={input.dnaTuning}
       >
-        <ProfileRenderBoundary label="Live presence" compact resetKey={`${input.username}-${block}`}>
-          <SocialPresenceSection
-            blocks={input.socialGroups.live}
-            themeColor={input.socialThemeColor}
-            compact
-            preview={input.preview}
-            mode="live"
-            displayStyle={input.composition.socialsStyle}
-          />
-        </ProfileRenderBoundary>
+        <div style={{ display: "grid", gap: "12px" }}>
+          {input.links.length > 0 ? (
+            <LinksSection
+              key={`${block}-links`}
+              layout={input.layout}
+              links={input.links}
+              themeColor={input.themeColor}
+              surfaceBackground="rgba(255,255,255,0.02)"
+              surfaceBorder="rgba(255,255,255,0.08)"
+              density={input.density}
+              cardStyle={input.cardStyle}
+              cornerTokens={input.cornerTokens}
+              motionTokens={input.motionTokens}
+              depth={input.depth}
+              linksStyle={input.composition.linksStyle}
+              dnaTuning={input.dnaTuning}
+            />
+          ) : null}
+          {input.socialGroups.live.length > 0 ? (
+            <ProfileRenderBoundary
+              label="Live presence"
+              compact
+              resetKey={`${input.username}-${block}-live`}
+            >
+              <SocialPresenceSection
+                blocks={input.socialGroups.live}
+                themeColor={input.socialThemeColor}
+                compact
+                preview={input.preview}
+                mode="live"
+                displayStyle={input.composition.socialsStyle}
+              />
+            </ProfileRenderBoundary>
+          ) : null}
+        </div>
       </DetachedWidget>
-    );
-  }
-
-  if (block === "links") {
-    return (
-      <LinksSection
-        key={block}
-        layout={input.layout}
-        links={input.links}
-        themeColor={input.themeColor}
-        surfaceBackground="rgba(255,255,255,0.02)"
-        surfaceBorder="rgba(255,255,255,0.08)"
-        density={input.density}
-        cardStyle={input.cardStyle}
-        cornerTokens={input.cornerTokens}
-        motionTokens={input.motionTokens}
-        depth={input.depth}
-        linksStyle={input.composition.linksStyle}
-        dnaTuning={input.dnaTuning}
-      />
     );
   }
 

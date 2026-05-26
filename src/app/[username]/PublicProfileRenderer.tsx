@@ -416,17 +416,23 @@ export default function PublicProfileRenderer({
           clampNumber(dnaTuning.motionScale, 0.82, 1.18),
       );
   const partitionedSocialBlocks = partitionSocialBlocks(safeSocialBlocks);
-  const renderableCompositionOrder = getRenderableCompositionOrder(safeComposition, {
-    hero: true,
-    music: preview ? true : shouldRenderProfileMusic(music),
-    socials: partitionedSocialBlocks.socials.length > 0,
-    live: partitionedSocialBlocks.live.length > 0,
-    links: true,
-  });
-  const orderedContentBlocks = renderableCompositionOrder.filter(
-    (block) => block !== "hero",
-  );
   const visibleCustomBlocks = safeComposition.customBlocks.filter((block) => block.visible);
+  const renderableCompositionOrder = getRenderableCompositionOrder(
+    safeComposition,
+    getCompositionSectionAvailability({
+      user: safeUser,
+      composition: safeComposition,
+      customBlocks: visibleCustomBlocks,
+      preview,
+      music,
+      regularSocialBlocks: partitionedSocialBlocks.socials,
+      liveSocialBlocks: partitionedSocialBlocks.live,
+      allowMetadataSection: safeIntroMode !== "off",
+    }),
+  );
+  const orderedContentBlocks = renderableCompositionOrder.filter(
+    (block) => block !== "identity",
+  );
   const isFloatingComposition = safeComposition.mode === "floating";
   const hasIntroDetails =
     Boolean(safeUser.bio) ||
@@ -1608,7 +1614,9 @@ export default function PublicProfileRenderer({
                         displayName={safeDisplayName}
                         username={safeUser.username}
                         effects={safeNameEffects}
+                        typographyStyle={safeComposition.metadata.nameTypography}
                         motionLevel={adaptiveMotionLevel}
+                        align={safeComposition.alignment === "center" ? "center" : "left"}
                         nameClassName="profile-name"
                         usernameClassName="profile-username"
                       />
@@ -1617,6 +1625,11 @@ export default function PublicProfileRenderer({
                           badges={safeFeaturedBadges}
                           extraBadgeCount={safeExtraBadgeCount}
                           themeColor={sceneAppearance.linkThemeColor}
+                          mode={safeComposition.metadata.badgeMode}
+                          styleVariant={safeComposition.metadata.badgeStyle}
+                          seasonalTheme={safeComposition.metadata.badgeSeason}
+                          favoriteSlugs={safeComposition.metadata.favoriteBadgeSlugs}
+                          align={safeComposition.alignment === "center" ? "center" : "start"}
                         />
                       ) : null}
                       {renderIdentityMetadataSlot("under-username", {
@@ -1687,44 +1700,37 @@ export default function PublicProfileRenderer({
 
             <div className="profile-links-column">
               <div className="links-list">
-                {orderedContentBlocks.map((block) =>
-                  renderModernCompositionBlock(block, {
-                    preview,
-                    music,
-                    motionLevel: adaptiveMotionLevel,
-                    username: safeUser.username,
-                    themeColor: sceneAppearance.linkThemeColor,
-                    socialThemeColor: sceneAppearance.socialThemeColor,
-                    accentColor: presence.accent,
-                    contrastColor: presence.contrast,
-                    softColor: presence.soft,
-                    dnaTuning,
-                    featuredBadges: safeFeaturedBadges,
-                    extraBadgeCount: safeExtraBadgeCount,
-                    likes,
-                    dislikes,
-                    views,
-                    initialMyReaction,
-                    regularSocialBlocks: partitionedSocialBlocks.socials,
-                    liveSocialBlocks: partitionedSocialBlocks.live,
-                    previewMessage,
-                    links: safeUser.links,
-                    linksStyle: safeComposition.linksStyle,
-                    socialsStyle: safeComposition.socialsStyle,
-                  }),
-                )}
-                {visibleCustomBlocks.map((block, index) =>
-                  renderContainedCustomBlock(block, {
-                    key: `custom-${block.id}`,
-                    preview,
-                    accentColor: sceneAppearance.linkThemeColor,
-                    contrastColor: presence.contrast,
-                    softColor: presence.soft,
-                    dnaTuning,
-                    style: getContainedCustomBlockStyle(block, index),
-                  }),
-                )}
-                </div>
+                {renderIntroChapterSequence({
+                  preview,
+                  user: safeUser,
+                  orderedContentBlocks: orderedContentBlocks,
+                  customBlocks: visibleCustomBlocks,
+                  music,
+                  motionLevel: adaptiveMotionLevel,
+                  username: safeUser.username,
+                  themeColor: sceneAppearance.linkThemeColor,
+                  socialThemeColor: sceneAppearance.socialThemeColor,
+                  accentColor: presence.accent,
+                  contrastColor: presence.contrast,
+                  softColor: presence.soft,
+                  composition: safeComposition,
+                  dnaTuning,
+                  featuredBadges: safeFeaturedBadges,
+                  extraBadgeCount: safeExtraBadgeCount,
+                  likes,
+                  dislikes,
+                  views,
+                  initialCommentCount,
+                  canComment,
+                  isOwnProfile,
+                  initialMyReaction,
+                  regularSocialBlocks: partitionedSocialBlocks.socials,
+                  liveSocialBlocks: partitionedSocialBlocks.live,
+                  linksStyle: safeComposition.linksStyle,
+                  socialsStyle: safeComposition.socialsStyle,
+                  suppressMetadataFooter: true,
+                })}
+              </div>
             </div>
           </div>
         </section>
@@ -2463,7 +2469,9 @@ function FloatingProfileScene({
             displayName={displayName}
             username={user.username}
             effects={nameEffects}
+            typographyStyle={composition.metadata.nameTypography}
             motionLevel={motionLevel}
+            align={composition.alignment === "center" ? "center" : "left"}
             nameClassName="floating-name"
             usernameClassName="floating-username"
           />
@@ -2473,6 +2481,10 @@ function FloatingProfileScene({
               extraBadgeCount={extraBadgeCount}
               themeColor={linkThemeColor}
               align="center"
+              mode={composition.metadata.badgeMode}
+              styleVariant={composition.metadata.badgeStyle}
+              seasonalTheme={composition.metadata.badgeSeason}
+              favoriteSlugs={composition.metadata.favoriteBadgeSlugs}
             />
           ) : null}
           {renderIdentityMetadataSlot("under-username", {
@@ -2548,6 +2560,8 @@ function FloatingProfileScene({
           widgetWidthScale={presetRenderTuning.widgetWidthScale}
           dnaTuning={dnaTuning}
           preview={preview}
+          user={user}
+          composition={composition}
           username={user.username}
           music={music}
           motionLevel={motionLevel}
@@ -2561,6 +2575,9 @@ function FloatingProfileScene({
           likes={likes}
           dislikes={dislikes}
           views={views}
+          initialCommentCount={initialCommentCount}
+          canComment={canComment}
+          isOwnProfile={isOwnProfile}
           initialMyReaction={initialMyReaction}
           regularSocialBlocks={regularSocialBlocks}
           liveSocialBlocks={liveSocialBlocks}
@@ -4699,7 +4716,9 @@ function IntroProfileStage({
                 displayName={displayName}
                 username={user.username}
                 effects={nameEffects}
+                typographyStyle={composition.metadata.nameTypography}
                 motionLevel={motionLevel}
+                align={composition.alignment === "center" ? "center" : "left"}
                 nameClassName="profile-intro-name"
                 usernameClassName="profile-intro-username"
               />
@@ -4710,6 +4729,10 @@ function IntroProfileStage({
                     extraBadgeCount={extraBadgeCount}
                     themeColor={themeColor}
                     align="center"
+                    mode={composition.metadata.badgeMode}
+                    styleVariant={composition.metadata.badgeStyle}
+                    seasonalTheme={composition.metadata.badgeSeason}
+                    favoriteSlugs={composition.metadata.favoriteBadgeSlugs}
                   />
                 </div>
               ) : null}
@@ -4874,6 +4897,8 @@ function FloatingModulesField(input: {
   widgetWidthScale: number;
   dnaTuning: ProfileDnaTuning;
   preview: boolean;
+  user: PublicProfileRenderUser;
+  composition: ProfileComposition;
   music: ProfileMusicData;
   motionLevel: ProfileMotionLevel;
   username: string;
@@ -4887,6 +4912,9 @@ function FloatingModulesField(input: {
   likes: number;
   dislikes: number;
   views: number;
+  initialCommentCount: number;
+  canComment: boolean;
+  isOwnProfile: boolean;
   initialMyReaction: PublicProfileReaction;
   regularSocialBlocks: PublicSocialBlock[];
   liveSocialBlocks: PublicSocialBlock[];
@@ -4914,7 +4942,10 @@ function FloatingModulesField(input: {
           widgetWidthScale: input.widgetWidthScale,
           dnaTuning: input.dnaTuning,
           preview: input.preview,
+          user: input.user,
+          composition: input.composition,
           username: input.username,
+          customBlocks: input.customBlocks,
           music: input.music,
           motionLevel: input.motionLevel,
           themeColor: input.themeColor,
@@ -4927,6 +4958,9 @@ function FloatingModulesField(input: {
           likes: input.likes,
           dislikes: input.dislikes,
           views: input.views,
+          initialCommentCount: input.initialCommentCount,
+          canComment: input.canComment,
+          isOwnProfile: input.isOwnProfile,
           initialMyReaction: input.initialMyReaction,
           regularSocialBlocks: input.regularSocialBlocks,
           liveSocialBlocks: input.liveSocialBlocks,
@@ -4934,24 +4968,6 @@ function FloatingModulesField(input: {
           linksStyle: input.linksStyle,
           socialsStyle: input.socialsStyle,
           revealIndex: revealOffset + index,
-        }),
-      )}
-      {input.customBlocks.map((block, index) =>
-        renderFloatingCustomBlock(block, {
-          key: `custom-${block.id}`,
-          personality: input.personality,
-          widgetWidthScale: input.widgetWidthScale,
-          dnaTuning: input.dnaTuning,
-          placement: getFloatingCustomBlockPlacement(
-            block,
-            index,
-            input.personality,
-          ),
-          preview: input.preview,
-          accentColor: input.accentColor,
-          contrastColor: input.contrastColor,
-          softColor: input.softColor,
-          revealIndex: revealOffset + input.orderedContentBlocks.length + index,
         }),
       )}
     </div>
@@ -4985,6 +5001,77 @@ function renderContainedCustomBlock(
   );
 }
 
+function getCompositionSectionAvailability(input: {
+  user: PublicProfileRenderUser;
+  composition: ProfileComposition;
+  customBlocks: ProfileCustomBlock[];
+  preview: boolean;
+  music: ProfileMusicData;
+  regularSocialBlocks: PublicSocialBlock[];
+  liveSocialBlocks: PublicSocialBlock[];
+  allowMetadataSection: boolean;
+}) {
+  return {
+    identity: true,
+    about:
+      Boolean(input.user.bio) ||
+      input.customBlocks.some((block) => isCustomBlockInSection(block, "about")),
+    presence:
+      input.user.links.length > 0 ||
+      input.liveSocialBlocks.length > 0 ||
+      (input.allowMetadataSection &&
+        shouldRenderIntroMetadataFooter(input.composition.metadata.placement)),
+    music: input.preview ? true : shouldRenderProfileMusic(input.music),
+    socials: input.regularSocialBlocks.length > 0,
+    showcase: input.customBlocks.some((block) => isCustomBlockInSection(block, "showcase")),
+    projects: input.customBlocks.some((block) => isCustomBlockInSection(block, "projects")),
+    gallery: input.customBlocks.some((block) => isCustomBlockInSection(block, "gallery")),
+    extras: input.customBlocks.some((block) => isCustomBlockInSection(block, "extras")),
+  } satisfies Partial<Record<ProfileCompositionBlock, boolean>>;
+}
+
+function isCustomBlockInSection(
+  block: ProfileCustomBlock,
+  section: ProfileCompositionBlock,
+) {
+  if (
+    section === "identity" ||
+    section === "presence" ||
+    section === "music" ||
+    section === "socials"
+  ) {
+    return false;
+  }
+
+  if (section === "about") {
+    return block.type === "quote";
+  }
+
+  if (section === "showcase") {
+    return (
+      block.type === "favorite-song" ||
+      block.type === "favorite-game" ||
+      block.type === "favorite-anime" ||
+      block.type === "playlist"
+    );
+  }
+
+  if (section === "projects") {
+    return block.type === "github-repo" || block.type === "current-project";
+  }
+
+  if (section === "gallery") {
+    return block.type === "image-card" || block.type === "setup-desk";
+  }
+
+  return (
+    block.type === "text-strip" ||
+    block.type === "divider" ||
+    block.type === "mood" ||
+    block.type === "status-banner"
+  );
+}
+
 function renderIntroChapterSequence(input: {
   preview: boolean;
   user: PublicProfileRenderUser;
@@ -5013,268 +5100,324 @@ function renderIntroChapterSequence(input: {
   liveSocialBlocks: PublicSocialBlock[];
   linksStyle: ProfileCompositionLinksStyle;
   socialsStyle: ProfileComposition["socialsStyle"];
+  suppressMetadataFooter?: boolean;
 }) {
-  const orderedBlockSet = new Set(input.orderedContentBlocks);
-  const aboutBlocks = input.customBlocks.filter((block) => block.type === "quote");
-  const informationBlocks = input.customBlocks.filter(
-    (block) =>
-      block.type === "text-strip" ||
-      block.type === "mood" ||
-      block.type === "status-banner" ||
-      block.type === "image-card",
-  );
-  const dividerBlocks = input.customBlocks.filter((block) => block.type === "divider");
-  const informationLabelBlock =
-    informationBlocks.length > 0
-      ? dividerBlocks.find((block) => Boolean(block.text?.trim())) ?? null
-      : null;
-  const chapterDividerBlocks = informationLabelBlock
-    ? dividerBlocks.filter((block) => block.id !== informationLabelBlock.id)
-    : dividerBlocks;
-  const showMusicSection =
-    orderedBlockSet.has("music") &&
-    (input.preview || shouldRenderProfileMusic(input.music));
-  const hasConnectionsSection =
-    showMusicSection ||
-    orderedBlockSet.has("links") ||
-    orderedBlockSet.has("socials") ||
-    orderedBlockSet.has("live");
-
-  let revealIndex = 0;
-  let dividerIndex = 0;
   const sections: ReactNode[] = [];
+  let revealIndex = 0;
+  const aboutBlocks = input.customBlocks.filter((block) => block.type === "quote");
+  const showcaseBlocks = input.customBlocks.filter((block) =>
+    isCustomBlockInSection(block, "showcase"),
+  );
+  const projectBlocks = input.customBlocks.filter((block) =>
+    isCustomBlockInSection(block, "projects"),
+  );
+  const galleryBlocks = input.customBlocks.filter((block) =>
+    isCustomBlockInSection(block, "gallery"),
+  );
+  const extraBlocks = input.customBlocks.filter((block) =>
+    isCustomBlockInSection(block, "extras"),
+  );
 
-  const renderDivider = () => {
-    const block = chapterDividerBlocks[dividerIndex];
-
-    if (!block) {
-      return null;
+  for (const block of input.orderedContentBlocks) {
+    if (block === "about" && (input.user.bio || aboutBlocks.length > 0)) {
+      sections.push(
+        renderIntroChapter({
+          key: "about",
+          preview: input.preview,
+          revealIndex: revealIndex++,
+          label: "About",
+          icon: <LuMoonStar size={12} />,
+          className: "chapter-about",
+          note:
+            input.user.bio && aboutBlocks.length > 0
+              ? `${aboutBlocks.length + 1} notes`
+              : input.user.bio
+                ? "Identity note"
+                : `${aboutBlocks.length} quote${aboutBlocks.length === 1 ? "" : "s"}`,
+          children: (
+            <div className="profile-intro-chapter-stack">
+              {input.user.bio ? (
+                <div className="profile-intro-chapter-copy">{input.user.bio}</div>
+              ) : null}
+              {aboutBlocks.map((customBlock) =>
+                renderIntroInlineCustomBlock(customBlock, {
+                  key: `about-${customBlock.id}`,
+                  preview: input.preview,
+                  accentColor: input.themeColor,
+                  contrastColor: input.contrastColor,
+                  softColor: input.softColor,
+                  dnaTuning: input.dnaTuning,
+                }),
+              )}
+            </div>
+          ),
+        }),
+      );
     }
 
-    dividerIndex += 1;
-
-    return (
-      <div
-        key={`divider-${block.id}`}
-        className="profile-intro-divider-row"
-        data-intro-reveal="item"
-        data-revealed={input.preview ? "true" : "false"}
-        style={getIntroRevealStyle(revealIndex++)}
-      >
-        <ProfileCustomBlockCard
-          block={block}
-          accentColor={block.accentColor || input.themeColor}
-          contrastColor={input.contrastColor}
-          softColor={input.softColor}
-          dnaTuning={input.dnaTuning}
-          preview={input.preview}
-          compact
-        />
-      </div>
-    );
-  };
-
-  const pushChapter = (chapter: ReactNode | null) => {
-    if (!chapter) {
-      return;
+    if (
+      block === "presence" &&
+      (input.user.links.length > 0 ||
+        input.liveSocialBlocks.length > 0 ||
+        (!input.suppressMetadataFooter &&
+          shouldRenderIntroMetadataFooter(input.composition.metadata.placement)))
+    ) {
+      sections.push(
+        renderIntroChapter({
+          key: "presence",
+          preview: input.preview,
+          revealIndex: revealIndex++,
+          label: "Presence",
+          icon: <LuArrowUpRight size={12} />,
+          className: "chapter-presence",
+          note:
+            input.user.links.length > 0
+              ? `${input.user.links.length} link${input.user.links.length === 1 ? "" : "s"}`
+              : input.liveSocialBlocks.length > 0
+                ? "Live signals"
+                : "Public pulse",
+          children: (
+            <div className="profile-intro-chapter-stack">
+              {input.user.links.length > 0 ? (
+                <div className="profile-intro-chapter-subsection">
+                  <div className="profile-intro-chapter-subtitle">
+                    <LuArrowUpRight size={12} />
+                    Links
+                  </div>
+                  <div className="links-list">
+                    {renderModernLinks(
+                      input.user.links,
+                      input.themeColor,
+                      input.linksStyle,
+                      input.dnaTuning,
+                    )}
+                  </div>
+                </div>
+              ) : null}
+              {input.liveSocialBlocks.length > 0 ? (
+                <div className="profile-intro-chapter-subsection">
+                  <div className="profile-intro-chapter-subtitle">
+                    <LuSparkles size={12} />
+                    Live
+                  </div>
+                  <ProfileRenderBoundary
+                    label="Live presence"
+                    compact
+                    resetKey={`${input.username}-intro-presence-live`}
+                  >
+                    <SocialPresenceSection
+                      blocks={input.liveSocialBlocks}
+                      themeColor={input.socialThemeColor}
+                      compact
+                      preview={input.preview}
+                      mode="live"
+                      displayStyle={input.socialsStyle}
+                    />
+                  </ProfileRenderBoundary>
+                </div>
+              ) : null}
+              {!input.suppressMetadataFooter &&
+              shouldRenderIntroMetadataFooter(input.composition.metadata.placement) ? (
+                <div className="profile-intro-chapter-subsection">
+                  <div className="profile-intro-chapter-subtitle">
+                    <LuSparkles size={12} />
+                    Public pulse
+                  </div>
+                  {renderIntroMetadataFooter({
+                    preview: input.preview,
+                    revealIndex: revealIndex,
+                    username: input.username,
+                    views: input.views,
+                    likes: input.likes,
+                    dislikes: input.dislikes,
+                    initialCommentCount: input.initialCommentCount,
+                    canComment: input.canComment,
+                    isOwnProfile: input.isOwnProfile,
+                    themeColor: input.themeColor,
+                    initialMyReaction: input.initialMyReaction,
+                    locationText: input.composition.metadata.locationText,
+                  })}
+                </div>
+              ) : null}
+            </div>
+          ),
+        }),
+      );
     }
 
-    if (sections.length > 0) {
-      const divider = renderDivider();
-
-      if (divider) {
-        sections.push(divider);
-      }
+    if (block === "music" && (input.preview || shouldRenderProfileMusic(input.music))) {
+      sections.push(
+        renderIntroChapter({
+          key: "music",
+          preview: input.preview,
+          revealIndex: revealIndex++,
+          label: "Music",
+          icon: <LuMusic4 size={12} />,
+          className: "chapter-music",
+          note: input.music.title ? getProfileMusicProviderLabel(input.music.provider) : undefined,
+          children: (
+            <ProfileRenderBoundary
+              label="Music card"
+              compact
+              resetKey={`${input.username}-intro-music`}
+            >
+              <ProfileMusicCard
+                music={input.music}
+                themeColor={input.themeColor}
+                accentColor={input.accentColor}
+                contrastColor={input.contrastColor}
+                softColor={input.softColor}
+                compact
+                showPlaceholder={input.preview}
+                motionLevel={input.motionLevel}
+              />
+            </ProfileRenderBoundary>
+          ),
+        }),
+      );
     }
 
-    sections.push(chapter);
-  };
+    if (block === "socials" && input.regularSocialBlocks.length > 0) {
+      sections.push(
+        renderIntroChapter({
+          key: "socials",
+          preview: input.preview,
+          revealIndex: revealIndex++,
+          label: "Socials",
+          icon: <LuSparkles size={12} />,
+          className: "chapter-socials",
+          note: `${input.regularSocialBlocks.length} channel${input.regularSocialBlocks.length === 1 ? "" : "s"}`,
+          children: (
+            <ProfileRenderBoundary
+              label="Social presence"
+              compact
+              resetKey={`${input.username}-intro-socials`}
+            >
+              <SocialPresenceSection
+                blocks={input.regularSocialBlocks}
+                themeColor={input.socialThemeColor}
+                compact
+                preview={input.preview}
+                mode="socials"
+                displayStyle={input.socialsStyle}
+              />
+            </ProfileRenderBoundary>
+          ),
+        }),
+      );
+    }
 
-  if (input.user.bio || aboutBlocks.length > 0) {
-    pushChapter(
-      renderIntroChapter({
-        key: "about",
-        preview: input.preview,
-        revealIndex: revealIndex++,
-        label: "About",
-        icon: <LuMoonStar size={12} />,
-        className: "chapter-about",
-        note:
-          input.user.bio && aboutBlocks.length > 0
-            ? `${aboutBlocks.length + 1} notes`
-            : undefined,
-        children: (
-          <div className="profile-intro-chapter-stack">
-            {input.user.bio ? (
-              <div className="profile-intro-chapter-copy">{input.user.bio}</div>
-            ) : null}
-            {aboutBlocks.map((block) =>
-              renderIntroInlineCustomBlock(block, {
-                key: `about-${block.id}`,
-                preview: input.preview,
-                accentColor: input.themeColor,
-                contrastColor: input.contrastColor,
-                softColor: input.softColor,
-                dnaTuning: input.dnaTuning,
-              }),
-            )}
-          </div>
-        ),
-      }),
-    );
-  }
+    if (block === "showcase" && showcaseBlocks.length > 0) {
+      sections.push(
+        renderIntroChapter({
+          key: "showcase",
+          preview: input.preview,
+          revealIndex: revealIndex++,
+          label: "Showcase",
+          icon: <LuSparkles size={12} />,
+          className: "chapter-showcase",
+          note: `${showcaseBlocks.length} highlight${showcaseBlocks.length === 1 ? "" : "s"}`,
+          children: (
+            <div className="profile-intro-info-grid">
+              {showcaseBlocks.map((customBlock) =>
+                renderIntroInformationCard(customBlock, {
+                  key: `showcase-${customBlock.id}`,
+                  preview: input.preview,
+                  accentColor: input.themeColor,
+                  contrastColor: input.contrastColor,
+                  softColor: input.softColor,
+                  dnaTuning: input.dnaTuning,
+                }),
+              )}
+            </div>
+          ),
+        }),
+      );
+    }
 
-  if (informationBlocks.length > 0) {
-    pushChapter(
-      renderIntroChapter({
-        key: "information",
-        preview: input.preview,
-        revealIndex: revealIndex++,
-        label: informationLabelBlock?.text || "Other information",
-        icon: <LuSparkles size={12} />,
-        className: "chapter-information",
-        note: `${informationBlocks.length} card${informationBlocks.length === 1 ? "" : "s"}`,
-        children: (
-          <div className="profile-intro-info-grid">
-            {informationBlocks.map((block) =>
-              renderIntroInformationCard(block, {
-                key: `information-${block.id}`,
-                preview: input.preview,
-                accentColor: input.themeColor,
-                contrastColor: input.contrastColor,
-                softColor: input.softColor,
-                dnaTuning: input.dnaTuning,
-              }),
-            )}
-          </div>
-        ),
-      }),
-    );
-  }
+    if (block === "projects" && projectBlocks.length > 0) {
+      sections.push(
+        renderIntroChapter({
+          key: "projects",
+          preview: input.preview,
+          revealIndex: revealIndex++,
+          label: "Projects",
+          icon: <LuArrowUpRight size={12} />,
+          className: "chapter-projects",
+          note: `${projectBlocks.length} build${projectBlocks.length === 1 ? "" : "s"}`,
+          children: (
+            <div className="profile-intro-info-grid">
+              {projectBlocks.map((customBlock) =>
+                renderIntroInformationCard(customBlock, {
+                  key: `projects-${customBlock.id}`,
+                  preview: input.preview,
+                  accentColor: input.themeColor,
+                  contrastColor: input.contrastColor,
+                  softColor: input.softColor,
+                  dnaTuning: input.dnaTuning,
+                }),
+              )}
+            </div>
+          ),
+        }),
+      );
+    }
 
-  if (hasConnectionsSection) {
-    pushChapter(
-      renderIntroChapter({
-        key: "connections",
-        preview: input.preview,
-        revealIndex: revealIndex++,
-        label: "Connections",
-        icon: <LuArrowUpRight size={12} />,
-        note:
-          orderedBlockSet.has("links") && input.user.links.length > 0
-            ? `${input.user.links.length} link${input.user.links.length === 1 ? "" : "s"}`
-            : orderedBlockSet.has("socials") || orderedBlockSet.has("live")
-              ? "Connected presence"
-              : undefined,
-        children: (
-          <div className="profile-intro-chapter-stack">
-            {showMusicSection ? (
-              <div className="profile-intro-chapter-subsection">
-                <div className="profile-intro-chapter-subtitle">
-                  <LuMusic4 size={12} />
-                  Music
-                </div>
-                <ProfileRenderBoundary
-                  label="Music card"
-                  compact
-                  resetKey={`${input.username}-intro-music`}
-                >
-                  <ProfileMusicCard
-                    music={input.music}
-                    themeColor={input.themeColor}
-                    accentColor={input.accentColor}
-                    contrastColor={input.contrastColor}
-                    softColor={input.softColor}
-                    compact
-                    showPlaceholder={input.preview}
-                    motionLevel={input.motionLevel}
-                  />
-                </ProfileRenderBoundary>
-              </div>
-            ) : null}
-            {orderedBlockSet.has("links") ? (
-              <div className="profile-intro-chapter-subsection">
-                <div className="profile-intro-chapter-subtitle">
-                  <LuArrowUpRight size={12} />
-                  Links
-                </div>
-                <div className="links-list">
-                  {renderModernLinks(
-                    input.user.links,
-                    input.themeColor,
-                    input.linksStyle,
-                    input.dnaTuning,
-                  )}
-                </div>
-              </div>
-            ) : null}
-            {orderedBlockSet.has("socials") ? (
-              <div className="profile-intro-chapter-subsection">
-                <div className="profile-intro-chapter-subtitle">
-                  <LuSparkles size={12} />
-                  Social channels
-                </div>
-                <ProfileRenderBoundary
-                  label="Social presence"
-                  compact
-                  resetKey={`${input.username}-intro-socials`}
-                >
-                  <SocialPresenceSection
-                    blocks={input.regularSocialBlocks}
-                    themeColor={input.socialThemeColor}
-                    compact
-                    preview={input.preview}
-                    mode="socials"
-                    displayStyle={input.socialsStyle}
-                  />
-                </ProfileRenderBoundary>
-              </div>
-            ) : null}
-            {orderedBlockSet.has("live") ? (
-              <div className="profile-intro-chapter-subsection">
-                <div className="profile-intro-chapter-subtitle">
-                  <LuSparkles size={12} />
-                  Live now
-                </div>
-                <ProfileRenderBoundary
-                  label="Live presence"
-                  compact
-                  resetKey={`${input.username}-intro-live`}
-                >
-                  <SocialPresenceSection
-                    blocks={input.liveSocialBlocks}
-                    themeColor={input.socialThemeColor}
-                    compact
-                    preview={input.preview}
-                    mode="live"
-                    displayStyle={input.socialsStyle}
-                  />
-                </ProfileRenderBoundary>
-              </div>
-            ) : null}
-          </div>
-        ),
-      }),
-    );
-  }
+    if (block === "gallery" && galleryBlocks.length > 0) {
+      sections.push(
+        renderIntroChapter({
+          key: "gallery",
+          preview: input.preview,
+          revealIndex: revealIndex++,
+          label: "Gallery",
+          icon: <LuSparkles size={12} />,
+          className: "chapter-gallery",
+          note: `${galleryBlocks.length} scene${galleryBlocks.length === 1 ? "" : "s"}`,
+          children: (
+            <div className="profile-intro-info-grid">
+              {galleryBlocks.map((customBlock) =>
+                renderIntroInformationCard(customBlock, {
+                  key: `gallery-${customBlock.id}`,
+                  preview: input.preview,
+                  accentColor: input.themeColor,
+                  contrastColor: input.contrastColor,
+                  softColor: input.softColor,
+                  dnaTuning: input.dnaTuning,
+                }),
+              )}
+            </div>
+          ),
+        }),
+      );
+    }
 
-  if (shouldRenderIntroMetadataFooter(input.composition.metadata.placement)) {
-    pushChapter(
-      renderIntroMetadataFooter({
-        preview: input.preview,
-        revealIndex: revealIndex++,
-        username: input.username,
-        views: input.views,
-        likes: input.likes,
-        dislikes: input.dislikes,
-        initialCommentCount: input.initialCommentCount,
-        canComment: input.canComment,
-        isOwnProfile: input.isOwnProfile,
-        themeColor: input.themeColor,
-        initialMyReaction: input.initialMyReaction,
-        locationText: input.composition.metadata.locationText,
-      }),
-    );
+    if (block === "extras" && extraBlocks.length > 0) {
+      sections.push(
+        renderIntroChapter({
+          key: "extras",
+          preview: input.preview,
+          revealIndex: revealIndex++,
+          label: "Extras",
+          icon: <LuSparkles size={12} />,
+          className: "chapter-extras",
+          note: `${extraBlocks.length} insert${extraBlocks.length === 1 ? "" : "s"}`,
+          children: (
+            <div className="profile-intro-info-grid">
+              {extraBlocks.map((customBlock) =>
+                renderIntroInformationCard(customBlock, {
+                  key: `extras-${customBlock.id}`,
+                  preview: input.preview,
+                  accentColor: input.themeColor,
+                  contrastColor: input.contrastColor,
+                  softColor: input.softColor,
+                  dnaTuning: input.dnaTuning,
+                }),
+              )}
+            </div>
+          ),
+        }),
+      );
+    }
   }
 
   return sections;
@@ -5463,7 +5606,7 @@ function renderFloatingCustomBlock(
 }
 
 function renderModernCompositionBlock(
-  block: ProfileCompositionBlock,
+  block: string,
   input: {
     preview: boolean;
     music: ProfileMusicData;
@@ -5578,6 +5721,9 @@ function renderFloatingCompositionBlock(
     widgetWidthScale: number;
     dnaTuning: ProfileDnaTuning;
     preview: boolean;
+    user: PublicProfileRenderUser;
+    composition: ProfileComposition;
+    customBlocks: ProfileCustomBlock[];
     music: ProfileMusicData;
     motionLevel: ProfileMotionLevel;
     username: string;
@@ -5591,6 +5737,9 @@ function renderFloatingCompositionBlock(
     likes: number;
     dislikes: number;
     views: number;
+    initialCommentCount: number;
+    canComment: boolean;
+    isOwnProfile: boolean;
     initialMyReaction: PublicProfileReaction;
     regularSocialBlocks: PublicSocialBlock[];
     liveSocialBlocks: PublicSocialBlock[];
@@ -5609,6 +5758,91 @@ function renderFloatingCompositionBlock(
     ),
   );
   const floatingClassName = `floating-module ${block} personality-${input.personality}`;
+  const sectionBlocks = input.customBlocks.filter((customBlock) =>
+    isCustomBlockInSection(customBlock, block),
+  );
+
+  if (block === "about" && (input.user.bio || sectionBlocks.length > 0)) {
+    return (
+      <div
+        key={block}
+        className={floatingClassName}
+        data-intro-reveal="item"
+        data-revealed={input.preview ? "true" : "false"}
+        style={floatingStyle}
+      >
+        <div className="floating-module-head">
+          <div className="floating-module-label">
+            <LuMoonStar size={12} />
+            About
+          </div>
+        </div>
+        <div className="profile-intro-chapter-stack">
+          {input.user.bio ? <div className="profile-intro-chapter-copy">{input.user.bio}</div> : null}
+          {sectionBlocks.map((customBlock) =>
+            renderIntroInlineCustomBlock(customBlock, {
+              key: `floating-about-${customBlock.id}`,
+              preview: input.preview,
+              accentColor: input.themeColor,
+              contrastColor: input.contrastColor,
+              softColor: input.softColor,
+              dnaTuning: input.dnaTuning,
+            }),
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  if (
+    block === "presence" &&
+    (input.links.length > 0 || input.liveSocialBlocks.length > 0)
+  ) {
+    return (
+      <div
+        key={block}
+        className={floatingClassName}
+        data-intro-reveal="item"
+        data-revealed={input.preview ? "true" : "false"}
+        style={floatingStyle}
+      >
+        <div className="floating-module-head">
+          <div className="floating-module-label">
+            <LuArrowUpRight size={12} />
+            Presence
+          </div>
+        </div>
+        <div className="profile-intro-chapter-stack">
+          {input.links.length > 0 ? (
+            <div className="links-list">
+              {renderModernLinks(
+                input.links,
+                input.themeColor,
+                input.linksStyle,
+                input.dnaTuning,
+              )}
+            </div>
+          ) : null}
+          {input.liveSocialBlocks.length > 0 ? (
+            <ProfileRenderBoundary
+              label="Live presence"
+              compact
+              resetKey={`${input.username}-${block}-live`}
+            >
+              <SocialPresenceSection
+                blocks={input.liveSocialBlocks}
+                themeColor={input.socialThemeColor}
+                compact
+                preview={input.preview}
+                mode="live"
+                displayStyle={input.socialsStyle}
+              />
+            </ProfileRenderBoundary>
+          ) : null}
+        </div>
+      </div>
+    );
+  }
 
   if (block === "music") {
     return (
@@ -5670,7 +5904,7 @@ function renderFloatingCompositionBlock(
     );
   }
 
-  if (block === "live") {
+  if (block === "showcase" && sectionBlocks.length > 0) {
     return (
       <div
         key={block}
@@ -5682,24 +5916,57 @@ function renderFloatingCompositionBlock(
         <div className="floating-module-head">
           <div className="floating-module-label">
             <LuSparkles size={12} />
-            Live
+            Showcase
           </div>
         </div>
-        <ProfileRenderBoundary label="Live presence" compact resetKey={`${input.username}-${block}`}>
-          <SocialPresenceSection
-            blocks={input.liveSocialBlocks}
-            themeColor={input.socialThemeColor}
-            compact
-            preview={input.preview}
-            mode="live"
-            displayStyle={input.socialsStyle}
-          />
-        </ProfileRenderBoundary>
+        <div className="profile-intro-info-grid">
+          {sectionBlocks.map((customBlock) =>
+            renderIntroInformationCard(customBlock, {
+              key: `floating-showcase-${customBlock.id}`,
+              preview: input.preview,
+              accentColor: input.themeColor,
+              contrastColor: input.contrastColor,
+              softColor: input.softColor,
+              dnaTuning: input.dnaTuning,
+            }),
+          )}
+        </div>
       </div>
     );
   }
 
-  if (block === "links") {
+  if (block === "projects" && sectionBlocks.length > 0) {
+    return (
+      <div
+        key={block}
+        className={floatingClassName}
+        data-intro-reveal="item"
+        data-revealed={input.preview ? "true" : "false"}
+        style={floatingStyle}
+      >
+        <div className="floating-module-head">
+          <div className="floating-module-label">
+            <LuArrowUpRight size={12} />
+            Projects
+          </div>
+        </div>
+        <div className="profile-intro-info-grid">
+          {sectionBlocks.map((customBlock) =>
+            renderIntroInformationCard(customBlock, {
+              key: `floating-projects-${customBlock.id}`,
+              preview: input.preview,
+              accentColor: input.themeColor,
+              contrastColor: input.contrastColor,
+              softColor: input.softColor,
+              dnaTuning: input.dnaTuning,
+            }),
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  if (block === "gallery" && sectionBlocks.length > 0) {
     return (
       <div
         key={block}
@@ -5711,18 +5978,50 @@ function renderFloatingCompositionBlock(
         <div className="floating-module-head">
           <div className="floating-module-label">
             <LuSparkles size={12} />
-            Links
-          </div>
-          <div className="floating-module-meta">
-            {input.links.length} link{input.links.length === 1 ? "" : "s"}
+            Gallery
           </div>
         </div>
-        <div className="links-list">
-          {renderModernLinks(
-            input.links,
-            input.themeColor,
-            input.linksStyle,
-            input.dnaTuning,
+        <div className="profile-intro-info-grid">
+          {sectionBlocks.map((customBlock) =>
+            renderIntroInformationCard(customBlock, {
+              key: `floating-gallery-${customBlock.id}`,
+              preview: input.preview,
+              accentColor: input.themeColor,
+              contrastColor: input.contrastColor,
+              softColor: input.softColor,
+              dnaTuning: input.dnaTuning,
+            }),
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  if (block === "extras" && sectionBlocks.length > 0) {
+    return (
+      <div
+        key={block}
+        className={floatingClassName}
+        data-intro-reveal="item"
+        data-revealed={input.preview ? "true" : "false"}
+        style={floatingStyle}
+      >
+        <div className="floating-module-head">
+          <div className="floating-module-label">
+            <LuSparkles size={12} />
+            Extras
+          </div>
+        </div>
+        <div className="profile-intro-info-grid">
+          {sectionBlocks.map((customBlock) =>
+            renderIntroInformationCard(customBlock, {
+              key: `floating-extras-${customBlock.id}`,
+              preview: input.preview,
+              accentColor: input.themeColor,
+              contrastColor: input.contrastColor,
+              softColor: input.softColor,
+              dnaTuning: input.dnaTuning,
+            }),
           )}
         </div>
       </div>

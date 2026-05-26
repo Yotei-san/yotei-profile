@@ -5,6 +5,13 @@ export const PROFILE_CUSTOM_BLOCK_TYPES = [
   "mood",
   "image-card",
   "status-banner",
+  "favorite-song",
+  "favorite-game",
+  "github-repo",
+  "current-project",
+  "favorite-anime",
+  "setup-desk",
+  "playlist",
 ] as const;
 
 export const PROFILE_CUSTOM_BLOCK_ALIGNMENTS = [
@@ -67,6 +74,41 @@ export const PROFILE_CUSTOM_BLOCK_TYPE_OPTIONS = [
     value: "status-banner",
     name: "Status banner",
     description: "Slim banner-style message strip.",
+  },
+  {
+    value: "favorite-song",
+    name: "Favorite song",
+    description: "Highlight a defining track or anthem.",
+  },
+  {
+    value: "favorite-game",
+    name: "Favorite game",
+    description: "Show a current all-time game pick.",
+  },
+  {
+    value: "github-repo",
+    name: "GitHub repo",
+    description: "Feature a repository or build artifact.",
+  },
+  {
+    value: "current-project",
+    name: "Current project",
+    description: "Surface the thing you're actively building.",
+  },
+  {
+    value: "favorite-anime",
+    name: "Favorite anime",
+    description: "Add a visual fandom signal with context.",
+  },
+  {
+    value: "setup-desk",
+    name: "Setup / desk",
+    description: "A gear or workspace snapshot block.",
+  },
+  {
+    value: "playlist",
+    name: "Playlist",
+    description: "Point visitors toward a curated listening mood.",
   },
 ] as const satisfies ReadonlyArray<{
   value: ProfileCustomBlockType;
@@ -148,9 +190,22 @@ export function createProfileCustomBlockDraft(
     id,
     type,
     visible: true,
-    alignment: type === "text-strip" || type === "divider" ? "center" : "start",
-    width: type === "divider" || type === "status-banner" ? "normal" : "compact",
-    glow: type === "divider" || type === "status-banner",
+    alignment:
+      type === "text-strip" || type === "divider" || type === "playlist"
+        ? "center"
+        : "start",
+    width:
+      type === "divider" ||
+      type === "status-banner" ||
+      type === "playlist" ||
+      type === "current-project"
+        ? "normal"
+        : "compact",
+    glow:
+      type === "divider" ||
+      type === "status-banner" ||
+      type === "favorite-song" ||
+      type === "playlist",
     transparency: true,
     accentColor: null,
     text: defaultBlockText(type),
@@ -165,17 +220,28 @@ export function blockSupportsSecondaryText(type: ProfileCustomBlockType) {
     type === "text-strip" ||
     type === "mood" ||
     type === "status-banner" ||
-    type === "image-card"
+    type === "image-card" ||
+    type === "favorite-song" ||
+    type === "favorite-game" ||
+    type === "github-repo" ||
+    type === "current-project" ||
+    type === "favorite-anime" ||
+    type === "setup-desk" ||
+    type === "playlist"
   );
 }
 
 export function blockSupportsImage(type: ProfileCustomBlockType) {
   return (
-    type === "text-strip" ||
-    type === "mood" ||
-    type === "status-banner" ||
-    type === "image-card"
+    type === "image-card" ||
+    type === "favorite-game" ||
+    type === "favorite-anime" ||
+    type === "setup-desk"
   );
+}
+
+export function blockSupportsLink(type: ProfileCustomBlockType) {
+  return type !== "divider" && type !== "quote";
 }
 
 function normalizeProfileCustomBlock(
@@ -208,10 +274,9 @@ function normalizeProfileCustomBlock(
     imageUrl: blockSupportsImage(type)
       ? sanitizeHttpUrl(candidate.imageUrl)
       : null,
-    linkUrl:
-      type === "divider" || type === "quote"
-        ? null
-        : sanitizeHttpUrl(candidate.linkUrl ?? candidate.url ?? candidate.href),
+    linkUrl: blockSupportsLink(type)
+      ? sanitizeHttpUrl(candidate.linkUrl ?? candidate.url ?? candidate.href)
+      : null,
   } satisfies ProfileCustomBlock;
 }
 
@@ -232,6 +297,34 @@ function defaultBlockText(type: ProfileCustomBlockType) {
     return "currently in a deep focus window";
   }
 
+  if (type === "favorite-song") {
+    return "After Dark";
+  }
+
+  if (type === "favorite-game") {
+    return "NieR: Automata";
+  }
+
+  if (type === "github-repo") {
+    return "yotei/profile-composer";
+  }
+
+  if (type === "current-project") {
+    return "Profile Composer 2.0";
+  }
+
+  if (type === "favorite-anime") {
+    return "Cowboy Bebop";
+  }
+
+  if (type === "setup-desk") {
+    return "Night setup";
+  }
+
+  if (type === "playlist") {
+    return "Late night rotation";
+  }
+
   return null;
 }
 
@@ -250,6 +343,34 @@ function defaultBlockSecondaryText(type: ProfileCustomBlockType) {
 
   if (type === "image-card") {
     return "caption";
+  }
+
+  if (type === "favorite-song") {
+    return "Artist or why it matters";
+  }
+
+  if (type === "favorite-game") {
+    return "Platform or favorite memory";
+  }
+
+  if (type === "github-repo") {
+    return "What the repo does";
+  }
+
+  if (type === "current-project") {
+    return "What you're shipping right now";
+  }
+
+  if (type === "favorite-anime") {
+    return "Arc, quote, or reason";
+  }
+
+  if (type === "setup-desk") {
+    return "Gear notes or mood";
+  }
+
+  if (type === "playlist") {
+    return "Platform, vibe, or update cadence";
   }
 
   return null;

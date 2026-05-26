@@ -131,10 +131,17 @@ function buildProfileRenderData(
   const themeColor = normalizeThemeColor(user.themeColor);
   const layout = normalizeProfileLayout(user.profileLayout);
   const displayName = user.displayName || user.username;
+  const composition = normalizeProfileComposition(
+    "profileComposition" in user ? user.profileComposition : undefined,
+  );
   const decorationScale = user.selectedDecorationScale ?? 165;
   const decorationOffsetX = user.selectedDecorationOffsetX ?? 0;
   const decorationOffsetY = user.selectedDecorationOffsetY ?? 0;
-  const featuredBadgeShowcase = getFeaturedPublicBadges(user.badges, 4);
+  const featuredBadgeShowcase = getFeaturedPublicBadges(
+    user.badges,
+    4,
+    composition.metadata.favoriteBadgeSlugs,
+  );
   const hasPremiumState = hasPremiumAccess(user);
   const selectedDecoration = resolveEquippedDecoration(user.selectedDecoration, user);
 
@@ -182,9 +189,7 @@ function buildProfileRenderData(
     motionLevel: normalizeProfileMotionLevel(
       "avatarPosition" in user ? user.avatarPosition : undefined,
     ),
-    composition: normalizeProfileComposition(
-      "profileComposition" in user ? user.profileComposition : undefined,
-    ),
+    composition,
     music: normalizeProfileMusic({
       enabled: user.profileMusicEnabled,
       title: user.profileMusicTitle,

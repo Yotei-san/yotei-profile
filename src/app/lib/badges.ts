@@ -376,13 +376,23 @@ export function sortBadgesForPublicProfile<T extends PublicBadgeEntry>(badges: T
 
 export function getFeaturedPublicBadges<T extends PublicBadgeEntry>(
   badges: T[],
-  limit = 4
+  limit = 4,
+  favoriteBadgeSlugs: string[] = [],
 ) {
   const sorted = sortBadgesForPublicProfile(badges);
+  const favoriteSet = new Set(
+    favoriteBadgeSlugs.map((slug) => slug.trim().toLowerCase()).filter(Boolean),
+  );
+  const featured = favoriteSet.size
+    ? [
+        ...sorted.filter((entry) => favoriteSet.has(entry.badge.slug)),
+        ...sorted.filter((entry) => !favoriteSet.has(entry.badge.slug)),
+      ]
+    : sorted;
 
   return {
-    badges: sorted.slice(0, limit),
-    extraCount: Math.max(0, sorted.length - limit),
+    badges: featured.slice(0, limit),
+    extraCount: Math.max(0, featured.length - limit),
   };
 }
 

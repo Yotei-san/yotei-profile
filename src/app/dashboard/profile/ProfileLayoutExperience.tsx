@@ -32,10 +32,15 @@ import type { PublicProfileLayout } from "@/app/[username]/ProfileLayoutVariants
 import type { PublicSocialBlock } from "@/app/[username]/SocialPresenceSection";
 import {
   DEFAULT_PROFILE_COMPOSITION,
+  PROFILE_BADGE_SEASONAL_THEME_OPTIONS,
+  PROFILE_BADGE_SHOWCASE_MODE_OPTIONS,
+  PROFILE_BADGE_STYLE_VARIANT_OPTIONS,
+  PROFILE_COMPOSITION_ALIGNMENT_OPTIONS,
   PROFILE_COMPOSITION_DENSITY_OPTIONS,
   PROFILE_COMPOSITION_LINK_STYLE_OPTIONS,
   PROFILE_COMPOSITION_METADATA_PLACEMENT_OPTIONS,
   PROFILE_COMPOSITION_MODE_OPTIONS,
+  PROFILE_NAME_TYPOGRAPHY_STYLE_OPTIONS,
   PROFILE_COMPOSITION_SOCIAL_STYLE_OPTIONS,
   type ProfileComposition,
   type ProfileCompositionBlock,
@@ -49,6 +54,9 @@ import {
   PROFILE_CUSTOM_BLOCK_ALIGNMENT_OPTIONS,
   PROFILE_CUSTOM_BLOCK_TYPE_OPTIONS,
   PROFILE_CUSTOM_BLOCK_WIDTH_OPTIONS,
+  blockSupportsImage,
+  blockSupportsLink,
+  blockSupportsSecondaryText,
   createProfileCustomBlockDraft,
   getProfileCustomBlockTypeMeta,
   type ProfileCustomBlock,
@@ -160,6 +168,7 @@ type Props = {
   decorationOffsetY: number;
   featuredBadges: PublicProfileBadgeEntry[];
   extraBadgeCount: number;
+  allBadges: PublicProfileBadgeEntry[];
   heroPills: PublicProfileHeroPill[];
   likes: number;
   dislikes: number;
@@ -198,6 +207,7 @@ export default function ProfileLayoutExperience({
   decorationOffsetY,
   featuredBadges,
   extraBadgeCount,
+  allBadges,
   heroPills,
   likes,
   dislikes,
@@ -387,7 +397,7 @@ export default function ProfileLayoutExperience({
     direction: "up" | "down",
   ) {
     setPreviewComposition((current) => {
-      if (block === "hero") {
+      if (block === "identity") {
         return current;
       }
 
@@ -516,6 +526,22 @@ export default function ProfileLayoutExperience({
       return {
         ...current,
         customBlocks: nextBlocks,
+      };
+    });
+  }
+
+  function toggleFavoriteBadge(badgeSlug: string) {
+    setPreviewComposition((current) => {
+      const favoriteBadgeSlugs = current.metadata.favoriteBadgeSlugs.includes(badgeSlug)
+        ? current.metadata.favoriteBadgeSlugs.filter((slug) => slug !== badgeSlug)
+        : [...current.metadata.favoriteBadgeSlugs, badgeSlug].slice(0, 4);
+
+      return {
+        ...current,
+        metadata: {
+          ...current.metadata,
+          favoriteBadgeSlugs,
+        },
       };
     });
   }
@@ -1358,7 +1384,7 @@ export default function ProfileLayoutExperience({
               <DashboardSectionHeading
                 eyebrow="Profile Composition"
                 title="Structure the public experience"
-                description="Control which widgets show up, how they stack, and how links and socials present without heavy drag-and-drop."
+                description="Shape the profile into ordered identity sections with cleaner rhythm, alignment, and premium badge and name presentation."
               />
 
               <div style={compositionControlsGridStyle}>
@@ -1398,11 +1424,11 @@ export default function ProfileLayoutExperience({
 
                 <div style={compositionRowsStyle}>
                     {previewComposition.order.map((block, index) => {
-                      const isHero = block === "hero";
+                      const isIdentity = block === "identity";
                       const visibilityKey = getVisibilityKeyForBlock(block);
-                      const canMoveUp = !isHero && index > 1;
+                      const canMoveUp = !isIdentity && index > 1;
                       const canMoveDown =
-                        !isHero && index < previewComposition.order.length - 1;
+                        !isIdentity && index < previewComposition.order.length - 1;
                       const isVisible =
                         visibilityKey == null
                           ? true
@@ -1414,7 +1440,7 @@ export default function ProfileLayoutExperience({
                           style={compositionRowStyle(
                             isVisible,
                             previewPresence.accent,
-                            isHero,
+                            isIdentity,
                           )}
                         >
                           <div style={compositionRowCopyStyle}>
@@ -1447,11 +1473,11 @@ export default function ProfileLayoutExperience({
                               style={compositionToggleStyle(
                                 isVisible,
                                 previewPresence.accent,
-                                isHero,
+                                isIdentity,
                               )}
                             >
                               <span>
-                                {isHero
+                                {isIdentity
                                   ? "Always on"
                                   : isVisible
                                     ? "Visible"
@@ -1460,7 +1486,7 @@ export default function ProfileLayoutExperience({
                               <input
                                 type="checkbox"
                                 checked={isVisible}
-                                disabled={isHero}
+                                disabled={isIdentity}
                                 onChange={() => toggleCompositionVisibility(block)}
                                 style={musicCheckboxStyle}
                               />
@@ -1488,6 +1514,72 @@ export default function ProfileLayoutExperience({
                                 setPreviewComposition((current) => ({
                                   ...current,
                                   density: option.value,
+                                }))
+                              }
+                              style={livingCardStyle(isSelected, previewPresence.accent)}
+                            >
+                              <div style={livingCardHeaderStyle}>
+                                <span>{option.name}</span>
+                                {isSelected ? <LuCheck size={16} /> : null}
+                              </div>
+                              <div style={layoutCardDescriptionStyle}>{option.description}</div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div style={{ display: "grid", gap: "10px" }}>
+                      <div style={livingSectionTitleStyle}>Section alignment</div>
+                      <div style={compositionChoiceGridStyle}>
+                        {PROFILE_COMPOSITION_ALIGNMENT_OPTIONS.map((option) => {
+                          const isSelected = previewComposition.alignment === option.value;
+
+                          return (
+                            <button
+                              key={option.value}
+                              type="button"
+                              className="living-card"
+                              aria-pressed={isSelected}
+                              onClick={() =>
+                                setPreviewComposition((current) => ({
+                                  ...current,
+                                  alignment: option.value,
+                                }))
+                              }
+                              style={livingCardStyle(isSelected, previewPresence.accent)}
+                            >
+                              <div style={livingCardHeaderStyle}>
+                                <span>{option.name}</span>
+                                {isSelected ? <LuCheck size={16} /> : null}
+                              </div>
+                              <div style={layoutCardDescriptionStyle}>{option.description}</div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div style={{ display: "grid", gap: "10px" }}>
+                      <div style={livingSectionTitleStyle}>Nickname typography</div>
+                      <div style={compositionChoiceGridStyle}>
+                        {PROFILE_NAME_TYPOGRAPHY_STYLE_OPTIONS.map((option) => {
+                          const isSelected =
+                            previewComposition.metadata.nameTypography === option.value;
+
+                          return (
+                            <button
+                              key={option.value}
+                              type="button"
+                              className="living-card"
+                              aria-pressed={isSelected}
+                              onClick={() =>
+                                setPreviewComposition((current) => ({
+                                  ...current,
+                                  metadata: {
+                                    ...current.metadata,
+                                    nameTypography: option.value,
+                                  },
                                 }))
                               }
                               style={livingCardStyle(isSelected, previewPresence.accent)}
@@ -1630,6 +1722,150 @@ export default function ProfileLayoutExperience({
                         />
                       </label>
                     </div>
+
+                    <div style={{ display: "grid", gap: "10px" }}>
+                      <div style={livingSectionTitleStyle}>Badge showcase mode</div>
+                      <div style={compositionChoiceGridStyle}>
+                        {PROFILE_BADGE_SHOWCASE_MODE_OPTIONS.map((option) => {
+                          const isSelected = previewComposition.metadata.badgeMode === option.value;
+
+                          return (
+                            <button
+                              key={option.value}
+                              type="button"
+                              className="living-card"
+                              aria-pressed={isSelected}
+                              onClick={() =>
+                                setPreviewComposition((current) => ({
+                                  ...current,
+                                  metadata: {
+                                    ...current.metadata,
+                                    badgeMode: option.value,
+                                  },
+                                }))
+                              }
+                              style={livingCardStyle(isSelected, previewPresence.accent)}
+                            >
+                              <div style={livingCardHeaderStyle}>
+                                <span>{option.name}</span>
+                                {isSelected ? <LuCheck size={16} /> : null}
+                              </div>
+                              <div style={layoutCardDescriptionStyle}>{option.description}</div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div style={{ display: "grid", gap: "10px" }}>
+                      <div style={livingSectionTitleStyle}>Badge glow</div>
+                      <div style={compositionChoiceGridStyle}>
+                        {PROFILE_BADGE_STYLE_VARIANT_OPTIONS.map((option) => {
+                          const isSelected =
+                            previewComposition.metadata.badgeStyle === option.value;
+
+                          return (
+                            <button
+                              key={option.value}
+                              type="button"
+                              className="living-card"
+                              aria-pressed={isSelected}
+                              onClick={() =>
+                                setPreviewComposition((current) => ({
+                                  ...current,
+                                  metadata: {
+                                    ...current.metadata,
+                                    badgeStyle: option.value,
+                                  },
+                                }))
+                              }
+                              style={livingCardStyle(isSelected, previewPresence.accent)}
+                            >
+                              <div style={livingCardHeaderStyle}>
+                                <span>{option.name}</span>
+                                {isSelected ? <LuCheck size={16} /> : null}
+                              </div>
+                              <div style={layoutCardDescriptionStyle}>{option.description}</div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div style={{ display: "grid", gap: "10px" }}>
+                      <div style={livingSectionTitleStyle}>Seasonal badge hook</div>
+                      <div style={compositionChoiceGridStyle}>
+                        {PROFILE_BADGE_SEASONAL_THEME_OPTIONS.map((option) => {
+                          const isSelected =
+                            previewComposition.metadata.badgeSeason === option.value;
+
+                          return (
+                            <button
+                              key={option.value}
+                              type="button"
+                              className="living-card"
+                              aria-pressed={isSelected}
+                              onClick={() =>
+                                setPreviewComposition((current) => ({
+                                  ...current,
+                                  metadata: {
+                                    ...current.metadata,
+                                    badgeSeason: option.value,
+                                  },
+                                }))
+                              }
+                              style={livingCardStyle(isSelected, previewPresence.accent)}
+                            >
+                              <div style={livingCardHeaderStyle}>
+                                <span>{option.name}</span>
+                                {isSelected ? <LuCheck size={16} /> : null}
+                              </div>
+                              <div style={layoutCardDescriptionStyle}>{option.description}</div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div style={{ display: "grid", gap: "10px" }}>
+                      <div style={livingSectionTitleStyle}>Favorite badges</div>
+                      <div style={compositionChoiceGridStyle}>
+                        {allBadges.length === 0 ? (
+                          <div style={emptyCustomBlocksStyle}>
+                            Earn badges to pin favorites into the public badge showcase.
+                          </div>
+                        ) : (
+                          allBadges.map((badgeEntry) => {
+                            const isSelected =
+                              previewComposition.metadata.favoriteBadgeSlugs.includes(
+                                badgeEntry.badge.slug,
+                              );
+
+                            return (
+                              <button
+                                key={badgeEntry.id}
+                                type="button"
+                                className="living-card"
+                                aria-pressed={isSelected}
+                                onClick={() => toggleFavoriteBadge(badgeEntry.badge.slug)}
+                                style={livingCardStyle(isSelected, badgeEntry.badge.color || previewPresence.accent)}
+                              >
+                                <div style={livingCardHeaderStyle}>
+                                  <span>{badgeEntry.badge.name}</span>
+                                  {isSelected ? <LuCheck size={16} /> : null}
+                                </div>
+                                <div style={layoutCardDescriptionStyle}>
+                                  {badgeEntry.badge.rarity || "common"} badge
+                                </div>
+                              </button>
+                            );
+                          })
+                        )}
+                      </div>
+                      <div style={dashboardMutedTextStyle}>
+                        Up to 4 favorites are prioritized in the public showcase.
+                      </div>
+                    </div>
                 </div>
               </div>
             </div>
@@ -1637,8 +1873,8 @@ export default function ProfileLayoutExperience({
             <div style={compositionSectionStyle}>
               <DashboardSectionHeading
                 eyebrow="Custom Blocks"
-                title="Add artistic inserts"
-                description="Lightweight atmospheric blocks that sit inside the profile composition without turning the page into a full builder."
+                title="Add showcase sections"
+                description="Use focused identity blocks for showcase, projects, gallery, and extras without turning the profile into a heavy page builder."
               />
 
               <div style={{ display: "grid", gap: "12px" }}>
@@ -1678,7 +1914,7 @@ export default function ProfileLayoutExperience({
               <div style={compositionRowsStyle}>
                 {previewComposition.customBlocks.length === 0 ? (
                   <div style={emptyCustomBlocksStyle}>
-                    No custom blocks yet. Add a quote, divider, mood card, or image insert to break up the profile rhythm.
+                    No custom blocks yet. Add an about quote, showcase highlight, project card, gallery scene, or extra insert to shape the identity flow.
                   </div>
                 ) : (
                   previewComposition.customBlocks.map((block, index) => {
@@ -1825,9 +2061,7 @@ export default function ProfileLayoutExperience({
                             />
                           </label>
 
-                          {block.type === "mood" ||
-                          block.type === "status-banner" ||
-                          block.type === "image-card" ? (
+                          {blockSupportsSecondaryText(block.type) ? (
                             <label style={dashboardLabelStyle}>
                               Secondary text
                               <input
@@ -1839,17 +2073,13 @@ export default function ProfileLayoutExperience({
                                     secondaryText: event.target.value,
                                   }))
                                 }
-                                placeholder={
-                                  block.type === "image-card"
-                                    ? "Caption"
-                                    : "Short supporting line"
-                                }
+                                placeholder={block.type === "image-card" ? "Caption" : "Short supporting line"}
                                 style={dashboardInputStyle}
                               />
                             </label>
                           ) : null}
 
-                          {block.type === "image-card" ? (
+                          {blockSupportsImage(block.type) ? (
                             <label style={dashboardLabelStyle}>
                               Image URL
                               <input
@@ -1859,6 +2089,24 @@ export default function ProfileLayoutExperience({
                                   updateCustomBlock(block.id, (current) => ({
                                     ...current,
                                     imageUrl: event.target.value,
+                                  }))
+                                }
+                                placeholder="https://..."
+                                style={dashboardInputStyle}
+                              />
+                            </label>
+                          ) : null}
+
+                          {blockSupportsLink(block.type) ? (
+                            <label style={dashboardLabelStyle}>
+                              Link URL
+                              <input
+                                type="text"
+                                value={block.linkUrl || ""}
+                                onChange={(event) =>
+                                  updateCustomBlock(block.id, (current) => ({
+                                    ...current,
+                                    linkUrl: event.target.value,
                                   }))
                                 }
                                 placeholder="https://..."
@@ -2572,15 +2820,17 @@ function presetPreviewStyle(
   accentColor: string,
 ): CSSProperties {
   const background =
-    value === "cinematic"
+    value === "luxury"
       ? `radial-gradient(circle at 50% 24%, ${withAlpha(accentColor, "48")}, transparent 36%), linear-gradient(180deg, rgba(10,10,16,0.18), rgba(10,10,16,0.9))`
+      : value === "neon"
+        ? `radial-gradient(circle at 24% 34%, ${withAlpha(accentColor, "32")}, transparent 28%), radial-gradient(circle at 76% 62%, rgba(255,255,255,0.12), transparent 22%), linear-gradient(180deg, rgba(11,11,16,0.96), rgba(7,8,12,0.98))`
       : value === "ghost"
         ? "linear-gradient(180deg, rgba(255,255,255,0.06), rgba(11,11,16,0.76))"
         : value === "cyber"
           ? `repeating-linear-gradient(180deg, rgba(34,211,238,0.08) 0 1px, transparent 1px 7px), linear-gradient(135deg, ${withAlpha(accentColor, "22")}, rgba(8,9,14,0.96))`
-          : value === "minimalist"
+          : value === "minimal"
             ? "linear-gradient(180deg, rgba(255,255,255,0.02), rgba(10,10,14,0.92))"
-            : value === "ambient"
+            : value === "orbit"
               ? `radial-gradient(circle at top left, ${withAlpha(accentColor, "30")}, transparent 42%), linear-gradient(180deg, rgba(12,12,20,0.96), rgba(8,8,12,0.96))`
               : value === "void"
                 ? `radial-gradient(circle at 60% 20%, ${withAlpha(accentColor, "18")}, transparent 24%), linear-gradient(180deg, rgba(7,8,14,0.94), rgba(3,4,8,0.98))`
@@ -2588,12 +2838,6 @@ function presetPreviewStyle(
                   ? "linear-gradient(180deg, rgba(255,255,255,0.04), rgba(9,10,14,0.96))"
                   : value === "pulse"
                     ? `radial-gradient(circle at 32% 34%, ${withAlpha(accentColor, "36")}, transparent 26%), linear-gradient(135deg, rgba(12,12,18,0.96), rgba(8,8,12,0.98))`
-              : value === "floating"
-                ? `radial-gradient(circle at 24% 34%, ${withAlpha(accentColor, "32")}, transparent 28%), radial-gradient(circle at 76% 62%, rgba(255,255,255,0.12), transparent 22%), linear-gradient(180deg, rgba(11,11,16,0.96), rgba(7,8,12,0.98))`
-                : value === "devcore"
-                  ? `linear-gradient(135deg, ${withAlpha(accentColor, "16")}, rgba(7,12,18,0.98))`
-                  : value === "afterhours"
-                    ? `radial-gradient(circle at 22% 24%, ${withAlpha(accentColor, "22")}, transparent 34%), linear-gradient(180deg, rgba(8,8,14,0.96), rgba(4,5,9,0.98))`
                     : value === "softglass"
                       ? `linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.02)), linear-gradient(135deg, ${withAlpha(accentColor, "18")}, rgba(9,12,18,0.94))`
                       : `linear-gradient(135deg, ${withAlpha(accentColor, "14")}, rgba(9,10,15,0.96))`;
@@ -2601,7 +2845,7 @@ function presetPreviewStyle(
   return {
     minHeight: "78px",
     borderRadius:
-      value === "minimalist" || value === "devcore" || value === "mono"
+      value === "minimal" || value === "mono"
         ? "12px"
         : "18px",
     border: "1px solid rgba(255,255,255,0.08)",
@@ -3103,8 +3347,16 @@ const previewFooterCopyStyle: CSSProperties = {
 };
 
 function getVisibilityKeyForBlock(block: ProfileCompositionBlock) {
-  if (block === "hero") {
+  if (block === "identity") {
     return null;
+  }
+
+  if (block === "about") {
+    return "about" as const;
+  }
+
+  if (block === "presence") {
+    return "presence" as const;
   }
 
   if (block === "music") {
@@ -3115,16 +3367,32 @@ function getVisibilityKeyForBlock(block: ProfileCompositionBlock) {
     return "socials" as const;
   }
 
-  if (block === "links") {
-    return "links" as const;
+  if (block === "showcase") {
+    return "showcase" as const;
   }
 
-  return "live" as const;
+  if (block === "projects") {
+    return "projects" as const;
+  }
+
+  if (block === "gallery") {
+    return "gallery" as const;
+  }
+
+  return "extras" as const;
 }
 
 function getCompositionBlockLabel(block: ProfileCompositionBlock) {
-  if (block === "hero") {
-    return "Hero";
+  if (block === "identity") {
+    return "Identity";
+  }
+
+  if (block === "about") {
+    return "About";
+  }
+
+  if (block === "presence") {
+    return "Presence";
   }
 
   if (block === "music") {
@@ -3135,20 +3403,32 @@ function getCompositionBlockLabel(block: ProfileCompositionBlock) {
     return "Socials";
   }
 
-  if (block === "live") {
-    return "Live";
+  if (block === "showcase") {
+    return "Showcase";
   }
 
-  if (block === "links") {
-    return "Links";
+  if (block === "projects") {
+    return "Projects";
   }
 
-  return "Live";
+  if (block === "gallery") {
+    return "Gallery";
+  }
+
+  return "Extras";
 }
 
 function getCompositionBlockDescription(block: ProfileCompositionBlock) {
-  if (block === "hero") {
-    return "Avatar, identity, mood, aura, and the first impression area.";
+  if (block === "identity") {
+    return "Avatar, name, badges, and the anchor point of the full public identity scene.";
+  }
+
+  if (block === "about") {
+    return "Bio copy and quote-style personal notes.";
+  }
+
+  if (block === "presence") {
+    return "Public pulse, links, and live presence signals.";
   }
 
   if (block === "music") {
@@ -3159,15 +3439,19 @@ function getCompositionBlockDescription(block: ProfileCompositionBlock) {
     return "Non-live social integrations like Discord, GitHub, Spotify, and creator cards.";
   }
 
-  if (block === "live") {
-    return "Live embed cards stay visually prioritized when they are actually on air.";
+  if (block === "showcase") {
+    return "Collectible taste signals like favorite songs, games, anime, and playlists.";
   }
 
-  if (block === "links") {
-    return "Primary outbound links and calls to action.";
+  if (block === "projects") {
+    return "Current project cards and GitHub repo highlights.";
   }
 
-  return "Live embed cards stay visually prioritized when they are actually on air.";
+  if (block === "gallery") {
+    return "Visual scene inserts like desk shots and image-driven cards.";
+  }
+
+  return "Mood strips, dividers, status banners, and smaller ambient inserts.";
 }
 
 const compositionSectionStyle: CSSProperties = {

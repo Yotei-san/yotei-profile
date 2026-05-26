@@ -3,11 +3,16 @@
 import type { CSSProperties } from "react";
 import {
   LuArrowUpRight,
+  LuGamepad2,
   LuGalleryHorizontal,
+  LuGithub,
   LuMinus,
   LuMessageSquareQuote,
+  LuMonitorSmartphone,
+  LuMusic4,
   LuPanelTop,
   LuSparkles,
+  LuTv,
 } from "react-icons/lu";
 import {
   type ProfileCustomBlock,
@@ -191,7 +196,7 @@ export default function ProfileCustomBlock({
 function getInfoCardMeta(block: ProfileCustomBlock): CardMeta {
   if (block.type === "image-card") {
     return {
-      badge: "Project",
+      badge: "Gallery",
       title: block.text || "Featured project",
       description: block.secondaryText || "Visual card",
       icon: LuGalleryHorizontal,
@@ -213,6 +218,69 @@ function getInfoCardMeta(block: ProfileCustomBlock): CardMeta {
       title: block.text || "Current mood",
       description: block.secondaryText || "Ambient profile detail",
       icon: LuSparkles,
+    };
+  }
+
+  if (block.type === "favorite-song") {
+    return {
+      badge: "Favorite song",
+      title: block.text || "Defining track",
+      description: block.secondaryText || "The song that colors the scene",
+      icon: LuMusic4,
+    };
+  }
+
+  if (block.type === "favorite-game") {
+    return {
+      badge: "Favorite game",
+      title: block.text || "Current all-time favorite",
+      description: block.secondaryText || "A world worth revisiting",
+      icon: LuGamepad2,
+    };
+  }
+
+  if (block.type === "github-repo") {
+    return {
+      badge: "GitHub repo",
+      title: block.text || "Featured repository",
+      description: block.secondaryText || "Build log, source code, or experiment",
+      icon: LuGithub,
+    };
+  }
+
+  if (block.type === "current-project") {
+    return {
+      badge: "Current project",
+      title: block.text || "Shipping now",
+      description: block.secondaryText || "What is actively in motion",
+      icon: LuSparkles,
+    };
+  }
+
+  if (block.type === "favorite-anime") {
+    return {
+      badge: "Favorite anime",
+      title: block.text || "Story world",
+      description: block.secondaryText || "A series that left a mark",
+      icon: LuTv,
+    };
+  }
+
+  if (block.type === "setup-desk") {
+    return {
+      badge: "Setup",
+      title: block.text || "Desk scene",
+      description: block.secondaryText || "Tools, lighting, and atmosphere",
+      icon: LuMonitorSmartphone,
+    };
+  }
+
+  if (block.type === "playlist") {
+    return {
+      badge: "Playlist",
+      title: block.text || "Curated rotation",
+      description: block.secondaryText || "A public listening portal",
+      icon: LuMusic4,
     };
   }
 

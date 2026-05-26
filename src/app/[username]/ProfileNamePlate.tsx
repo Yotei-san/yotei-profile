@@ -10,6 +10,7 @@ type Props = {
   displayName: string;
   username: string;
   effects: ProfileNameEffect[];
+  typographyStyle?: "signature" | "editorial" | "mono" | "luxe";
   headingAs?: ElementType;
   align?: "left" | "center";
   motionLevel?: ProfileMotionLevel;
@@ -23,6 +24,7 @@ export default function ProfileNamePlate({
   displayName,
   username,
   effects,
+  typographyStyle = "signature",
   headingAs: HeadingTag = "h1",
   align,
   motionLevel = "alive",
@@ -117,6 +119,7 @@ export default function ProfileNamePlate({
       className={[
         "profile-name-plate",
         alignmentClass,
+        `typography-${typographyStyle}`,
         `motion-${motionLevel}`,
         hasGlow ? "effect-glow" : "",
         hasRainbow ? "effect-rainbow" : "",
@@ -256,6 +259,51 @@ const namePlateStyles = `
     align-items: flex-end;
     width: fit-content;
     max-width: 100%;
+  }
+
+  .profile-name-plate.typography-editorial .profile-name-plate-heading {
+    letter-spacing: -0.045em;
+    text-transform: none;
+  }
+
+  .profile-name-plate.typography-editorial .profile-name-plate-username {
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .profile-name-plate.typography-mono .profile-name-plate-heading,
+  .profile-name-plate.typography-mono .profile-name-plate-username {
+    font-family:
+      ui-monospace,
+      SFMono-Regular,
+      Menlo,
+      Monaco,
+      Consolas,
+      "Liberation Mono",
+      "Courier New",
+      monospace;
+  }
+
+  .profile-name-plate.typography-mono .profile-name-plate-heading {
+    letter-spacing: -0.04em;
+  }
+
+  .profile-name-plate.typography-mono .profile-name-plate-username {
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .profile-name-plate.typography-luxe .profile-name-plate-heading {
+    font-family: Georgia, "Times New Roman", Times, serif;
+    letter-spacing: -0.05em;
+    text-shadow:
+      0 1px 0 rgba(255,255,255,0.08),
+      0 10px 26px rgba(0,0,0,0.22);
+  }
+
+  .profile-name-plate.typography-luxe .profile-name-plate-username {
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
   }
 
   .profile-name-text-stack {
