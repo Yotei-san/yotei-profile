@@ -432,7 +432,7 @@ export default function ProfileMediaUploader({
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "1fr 1fr",
+          gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
           gap: "16px",
         }}
       >
@@ -511,7 +511,7 @@ export default function ProfileMediaUploader({
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "1fr 1fr",
+              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
               gap: "12px",
             }}
           >
@@ -1318,6 +1318,10 @@ function getStatusMessage(status: number, data: unknown, fallback: string) {
     return "Arquivo inválido. Revise o formato e tente novamente.";
   }
 
+  if (status === 401) {
+    return "Sua sessao expirou. Entre novamente para continuar.";
+  }
+
   if (status === 413) {
     return "Arquivo muito grande. Use vídeo até 30MB ou comprima antes de enviar.";
   }
@@ -1382,6 +1386,10 @@ function getClientUploadErrorMessage(error: unknown, fallback: string) {
 
   if (normalized.includes("400")) {
     return "Arquivo inválido. Revise o formato e tente novamente.";
+  }
+
+  if (normalized.includes("401")) {
+    return "Sua sessao expirou. Entre novamente para continuar.";
   }
 
   if (normalized.includes("500")) {

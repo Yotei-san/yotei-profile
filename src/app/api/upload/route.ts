@@ -1,5 +1,6 @@
 import { put } from "@vercel/blob";
 import { NextResponse } from "next/server";
+import { getCurrentUser } from "@/app/lib/auth";
 import {
   PROFILE_BANNER_IMAGE_MAX_BYTES,
   PROFILE_BANNER_VIDEO_MAX_BYTES,
@@ -16,6 +17,15 @@ type UploadPurpose = ProfileMediaPurpose | "generic";
 
 export async function POST(req: Request) {
   try {
+    const user = await getCurrentUser();
+
+    if (!user) {
+      return NextResponse.json(
+        { error: "Sua sessao expirou. Entre novamente para enviar arquivos." },
+        { status: 401 }
+      );
+    }
+
     const formData = await req.formData();
     const file = formData.get("file");
     const purposeValue = formData.get("purpose");

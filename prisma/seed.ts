@@ -1,8 +1,10 @@
 import "dotenv/config";
 import { prisma } from "../src/app/lib/prisma";
+import { ensureDefaultBadges } from "../src/app/lib/badges";
 
 async function main() {
   console.log("Seed iniciado.");
+  await ensureDefaultBadges();
   console.log("Seed finalizado.");
 }
 

@@ -1,11 +1,13 @@
 import { prisma } from "@/app/lib/prisma";
 import { requireUser } from "@/app/lib/auth";
 import { requireAdminByUserId } from "@/app/lib/admin-auth";
+import { ensureDefaultBadges } from "@/app/lib/badges";
 import BadgeVisual from "@/app/dashboard/components/BadgeVisual";
 
 export default async function AdminBadgesPage() {
   const sessionUser = await requireUser();
   await requireAdminByUserId(sessionUser.id);
+  await ensureDefaultBadges();
 
   const badges = await prisma.badge.findMany({
     orderBy: { createdAt: "desc" },

@@ -1,5 +1,6 @@
 import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 import { NextResponse } from "next/server";
+import { getCurrentUser } from "@/app/lib/auth";
 import {
   getProfileMediaMaxBytes,
   getProfileMediaTypeError,
@@ -19,6 +20,15 @@ export async function POST(request: Request): Promise<NextResponse> {
   }
 
   try {
+    const user = await getCurrentUser();
+
+    if (!user) {
+      return NextResponse.json(
+        { error: "Sua sessao expirou. Entre novamente para enviar arquivos." },
+        { status: 401 }
+      );
+    }
+
     const jsonResponse = await handleUpload({
       body,
       request,
