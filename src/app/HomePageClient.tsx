@@ -2,16 +2,27 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { motion, useReducedMotion, type Variants } from "framer-motion";
-import { type CSSProperties, type FormEvent, type ReactNode, useState } from "react";
+import { AnimatePresence, motion, useReducedMotion, type Variants } from "framer-motion";
+import {
+  type CSSProperties,
+  type FormEvent,
+  type ReactNode,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+} from "react";
 import {
   LuArrowRight,
   LuBadgeCheck,
   LuChartNoAxesCombined,
+  LuLayoutPanelTop,
   LuLayoutTemplate,
+  LuX,
   LuSparkles,
 } from "react-icons/lu";
 import { useAdaptivePerformance } from "@/app/components/PerformanceProvider";
+import { useBodyScrollLock } from "@/app/components/useBodyScrollLock";
 
 const EASE_OUT = [0.16, 1, 0.3, 1] as const;
 
@@ -82,8 +93,51 @@ export default function HomePageClient() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const router = useRouter();
   const { profile } = useAdaptivePerformance();
+  const mobileMenuId = useId();
+  const mobileMenuCloseRef = useRef<HTMLButtonElement>(null);
   const shouldReduceMotion =
     useReducedMotion() || !profile.allowDecorativeMotion;
+  const closeMobileMenu = () => setIsMobileMenuOpen(false);
+
+  useBodyScrollLock(isMobileMenuOpen);
+
+  useEffect(() => {
+    if (!isMobileMenuOpen) {
+      return;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsMobileMenuOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    mobileMenuCloseRef.current?.focus();
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isMobileMenuOpen]);
+
+  useEffect(() => {
+    const desktopMediaQuery = window.matchMedia("(min-width: 921px)");
+    const handleDesktopChange = (event: MediaQueryListEvent) => {
+      if (event.matches) {
+        setIsMobileMenuOpen(false);
+      }
+    };
+
+    if (desktopMediaQuery.matches) {
+      setIsMobileMenuOpen(false);
+    }
+
+    desktopMediaQuery.addEventListener("change", handleDesktopChange);
+
+    return () => {
+      desktopMediaQuery.removeEventListener("change", handleDesktopChange);
+    };
+  }, []);
   const homeExperienceStyle = {
     ...pageStyle,
     "--home-atmosphere-opacity":
@@ -224,13 +278,15 @@ export default function HomePageClient() {
 
         .home-header {
           position: relative;
-          z-index: 10;
+          z-index: 60;
           padding: 24px 0 0;
         }
 
         .nav-shell {
           display: grid;
           gap: 12px;
+          position: relative;
+          z-index: 70;
         }
 
         .home-nav {
@@ -447,7 +503,13 @@ export default function HomePageClient() {
         }
 
         .nav-mobile-panel {
-          display: none;
+          position: absolute;
+          top: calc(100% + 12px);
+          left: 0;
+          right: 0;
+          z-index: 82;
+          display: grid;
+          gap: 14px;
           padding: 14px;
           border-radius: 26px;
           background:
@@ -457,6 +519,48 @@ export default function HomePageClient() {
           box-shadow: 0 24px 48px rgba(0, 0, 0, 0.24);
           backdrop-filter: blur(var(--home-glass-blur, 16px));
           overflow: hidden;
+        }
+
+        .nav-mobile-backdrop {
+          position: fixed;
+          inset: 0;
+          z-index: 80;
+          border: 0;
+          padding: 0;
+          background: rgba(5, 7, 12, 0.68);
+          backdrop-filter: blur(10px);
+          cursor: pointer;
+        }
+
+        .nav-mobile-panel-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+        }
+
+        .nav-mobile-panel-title {
+          display: inline-flex;
+          align-items: center;
+          gap: 10px;
+          color: #f5f7ff;
+          font-size: 13px;
+          font-weight: 800;
+          letter-spacing: 0.04em;
+          text-transform: uppercase;
+        }
+
+        .nav-mobile-close {
+          min-width: 42px;
+          min-height: 42px;
+          border-radius: 14px;
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          background: rgba(255, 255, 255, 0.04);
+          color: #f5f7ff;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
         }
 
         .nav-mobile-links,
@@ -1419,6 +1523,19 @@ export default function HomePageClient() {
             display: none;
           }
         }
+
+        @media (prefers-reduced-motion: reduce) {
+          .nav-mobile-backdrop,
+          .nav-mobile-panel,
+          .nav-mobile-toggle,
+          .nav-mobile-toggle i,
+          .nav-mobile-toggle i::before,
+          .nav-mobile-toggle i::after,
+          .nav-mobile-link,
+          .nav-mobile-close {
+            transition: none !important;
+          }
+        }
       `}</style>
 
       <div className="page-orb-a" />
@@ -1470,55 +1587,91 @@ export default function HomePageClient() {
                 className={`nav-mobile-toggle${isMobileMenuOpen ? " is-open" : ""}`}
                 aria-label={isMobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
                 aria-expanded={isMobileMenuOpen}
+                aria-controls={mobileMenuId}
                 onClick={() => setIsMobileMenuOpen((current) => !current)}
               >
                 <i />
               </button>
             </motion.div>
 
-            {isMobileMenuOpen ? (
-              <motion.div
-                className="nav-mobile-panel"
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{
-                  duration: shouldReduceMotion ? 0 : 0.18,
-                  ease: EASE_OUT,
-                }}
-              >
-                <nav className="nav-mobile-links" aria-label="Mobile navigation">
-                  {navLinks.map((item) => (
-                    <Link
-                      key={item.label}
-                      href={item.href}
-                      className="nav-mobile-link"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      {item.label}
-                      <LuArrowRight size={15} />
-                    </Link>
-                  ))}
-                </nav>
+            <AnimatePresence>
+              {isMobileMenuOpen ? (
+                <>
+                  <motion.button
+                    type="button"
+                    className="nav-mobile-backdrop"
+                    aria-label="Close navigation menu"
+                    onClick={closeMobileMenu}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: shouldReduceMotion ? 0 : 0.18 }}
+                  />
 
-                <div className="nav-mobile-actions">
-                  <Link
-                    href="/login"
-                    className="nav-ghost"
-                    onClick={() => setIsMobileMenuOpen(false)}
+                  <motion.div
+                    id={mobileMenuId}
+                    className="nav-mobile-panel"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label="Mobile navigation menu"
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{
+                      duration: shouldReduceMotion ? 0 : 0.18,
+                      ease: EASE_OUT,
+                    }}
                   >
-                    Login
-                  </Link>
-                  <Link
-                    href="/register"
-                    className="nav-cta"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    Sign Up
-                  </Link>
-                </div>
-              </motion.div>
-            ) : null}
+                    <div className="nav-mobile-panel-header">
+                      <div className="nav-mobile-panel-title">
+                        <LuLayoutPanelTop size={16} />
+                        Menu
+                      </div>
+                      <button
+                        ref={mobileMenuCloseRef}
+                        type="button"
+                        className="nav-mobile-close"
+                        aria-label="Close navigation menu"
+                        onClick={closeMobileMenu}
+                      >
+                        <LuX size={18} />
+                      </button>
+                    </div>
+
+                    <nav className="nav-mobile-links" aria-label="Mobile navigation">
+                      {navLinks.map((item) => (
+                        <Link
+                          key={item.label}
+                          href={item.href}
+                          className="nav-mobile-link"
+                          onClick={closeMobileMenu}
+                        >
+                          {item.label}
+                          <LuArrowRight size={15} />
+                        </Link>
+                      ))}
+                    </nav>
+
+                    <div className="nav-mobile-actions">
+                      <Link
+                        href="/login"
+                        className="nav-ghost"
+                        onClick={closeMobileMenu}
+                      >
+                        Login
+                      </Link>
+                      <Link
+                        href="/register"
+                        className="nav-cta"
+                        onClick={closeMobileMenu}
+                      >
+                        Sign Up
+                      </Link>
+                    </div>
+                  </motion.div>
+                </>
+              ) : null}
+            </AnimatePresence>
           </div>
         </div>
       </header>

@@ -2,11 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { type CSSProperties, useEffect, useId, useRef, useState } from "react";
+import { LuMenu, LuPanelLeftClose, LuX } from "react-icons/lu";
 import {
   dashboardButtonStyle,
   dashboardTagStyle,
 } from "@/app/dashboard/components/DashboardUI";
 import type { DashboardNavItem } from "@/app/lib/dashboard-nav";
+import { useBodyScrollLock } from "@/app/components/useBodyScrollLock";
 
 type SidebarUser = {
   username: string;
@@ -40,8 +43,43 @@ function groupTitle(label: string) {
   );
 }
 
+const panelStyle: CSSProperties = {
+  width: "100%",
+  minWidth: 0,
+  background:
+    "linear-gradient(180deg, rgba(12,12,14,0.98), rgba(8,8,10,0.98))",
+  border: "1px solid rgba(255,255,255,0.06)",
+  borderRadius: "28px",
+  padding: "18px",
+  boxShadow: "0 20px 50px rgba(0,0,0,0.30)",
+  display: "flex",
+  flexDirection: "column",
+  gap: "18px",
+};
+
+const desktopPanelStyle: CSSProperties = {
+  ...panelStyle,
+  maxWidth: "270px",
+  maxHeight: "calc(100vh - 48px)",
+  overflowY: "auto",
+  overscrollBehavior: "contain",
+  position: "sticky",
+  top: "24px",
+  alignSelf: "flex-start",
+};
+
+const mobilePanelStyle: CSSProperties = {
+  ...panelStyle,
+  maxWidth: "none",
+  maxHeight: "none",
+  overflow: "visible",
+};
+
 export default function DashboardSidebar({ user, items, lockedHrefs = [] }: Props) {
   const pathname = usePathname();
+  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
+  const mobileDrawerId = useId();
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
 
   const visibleItems = items.filter(
     (item) => !item.adminOnly || user.role === "admin" || user.role === "owner"
@@ -53,43 +91,331 @@ export default function DashboardSidebar({ user, items, lockedHrefs = [] }: Prop
   );
   const adminItems = visibleItems.filter((item) => item.section === "admin");
   const isPremium = user.isPremium ?? user.plan === "premium";
+  const closeMobileDrawer = () => setIsMobileDrawerOpen(false);
+
+  useBodyScrollLock(isMobileDrawerOpen);
+
+  useEffect(() => {
+    setIsMobileDrawerOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!isMobileDrawerOpen) {
+      return;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsMobileDrawerOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    closeButtonRef.current?.focus();
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isMobileDrawerOpen]);
+
+  useEffect(() => {
+    const desktopMediaQuery = window.matchMedia("(min-width: 981px)");
+    const handleDesktopChange = (event: MediaQueryListEvent) => {
+      if (event.matches) {
+        setIsMobileDrawerOpen(false);
+      }
+    };
+
+    if (desktopMediaQuery.matches) {
+      setIsMobileDrawerOpen(false);
+    }
+
+    desktopMediaQuery.addEventListener("change", handleDesktopChange);
+
+    return () => {
+      desktopMediaQuery.removeEventListener("change", handleDesktopChange);
+    };
+  }, []);
 
   return (
-    <aside
-      className="dashboard-sidebar"
-      style={{
-        width: "100%",
-        maxWidth: "270px",
-        minWidth: 0,
-        maxHeight: "calc(100vh - 48px)",
-        overflowY: "auto",
-        overscrollBehavior: "contain",
-        background:
-          "linear-gradient(180deg, rgba(12,12,14,0.98), rgba(8,8,10,0.98))",
-        border: "1px solid rgba(255,255,255,0.06)",
-        borderRadius: "28px",
-        padding: "18px",
-        boxShadow: "0 20px 50px rgba(0,0,0,0.30)",
-        display: "flex",
-        flexDirection: "column",
-        gap: "18px",
-        position: "sticky",
-        top: "24px",
-        alignSelf: "flex-start",
-      }}
-    >
+    <>
       <style jsx>{`
+        .dashboard-sidebar-mobile-bar {
+          display: none;
+        }
+
+        .dashboard-sidebar-desktop {
+          width: 100%;
+          max-width: 270px;
+          min-width: 0;
+        }
+
+        .dashboard-sidebar-mobile-brand {
+          display: inline-flex;
+          align-items: center;
+          gap: 12px;
+          min-width: 0;
+          color: #ffffff;
+          text-decoration: none;
+        }
+
+        .dashboard-sidebar-mobile-brand-mark {
+          width: 40px;
+          height: 40px;
+          border-radius: 14px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          background:
+            linear-gradient(135deg, rgba(244,114,182,0.26), rgba(168,85,247,0.22));
+          border: 1px solid rgba(244,114,182,0.22);
+          color: #f9a8d4;
+          font-weight: 900;
+          flex-shrink: 0;
+        }
+
+        .dashboard-sidebar-mobile-brand-copy {
+          display: grid;
+          gap: 2px;
+          min-width: 0;
+        }
+
+        .dashboard-sidebar-mobile-brand-copy strong {
+          font-size: 15px;
+          font-weight: 900;
+          letter-spacing: -0.04em;
+        }
+
+        .dashboard-sidebar-mobile-brand-copy span {
+          color: #8f9ab3;
+          font-size: 11px;
+          white-space: nowrap;
+        }
+
+        .dashboard-sidebar-menu-button,
+        .dashboard-sidebar-close-button {
+          min-width: 46px;
+          min-height: 46px;
+          border-radius: 16px;
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          background:
+            linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.03)),
+            rgba(14, 12, 20, 0.92);
+          color: #f5f7ff;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.06),
+            0 16px 30px rgba(0, 0, 0, 0.22);
+        }
+
+        .dashboard-sidebar-backdrop {
+          position: fixed;
+          inset: 0;
+          z-index: 110;
+          border: 0;
+          padding: 0;
+          background: rgba(5, 7, 12, 0.74);
+          backdrop-filter: blur(8px);
+          cursor: pointer;
+        }
+
+        .dashboard-sidebar-drawer {
+          position: fixed;
+          top: 12px;
+          left: 12px;
+          bottom: 12px;
+          z-index: 120;
+          width: min(320px, calc(100vw - 24px));
+          max-width: calc(100vw - 24px);
+          display: grid;
+          gap: 12px;
+          overflow: hidden;
+        }
+
+        .dashboard-sidebar-drawer-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+          padding: 0 4px;
+        }
+
+        .dashboard-sidebar-drawer-title {
+          display: inline-flex;
+          align-items: center;
+          gap: 10px;
+          color: #f5f7ff;
+          font-size: 13px;
+          font-weight: 800;
+          letter-spacing: 0.04em;
+          text-transform: uppercase;
+        }
+
+        .dashboard-sidebar-drawer-panel {
+          min-height: 0;
+          overflow-y: auto;
+          overscroll-behavior: contain;
+        }
+
         @media (max-width: 980px) {
-          .dashboard-sidebar {
-            max-width: none;
-            max-height: none;
-            overflow: visible;
-            height: auto;
-            position: static;
+          .dashboard-sidebar-mobile-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            padding: 14px 16px;
+            border-radius: 24px;
+            background:
+              linear-gradient(180deg, rgba(12,12,14,0.98), rgba(8,8,10,0.98));
+            border: 1px solid rgba(255,255,255,0.06);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.26);
+          }
+
+          .dashboard-sidebar-desktop {
+            display: none;
+          }
+        }
+
+        @media (min-width: 981px) {
+          .dashboard-sidebar-backdrop,
+          .dashboard-sidebar-drawer {
+            display: none;
+          }
+        }
+
+        @media (max-width: 640px) {
+          .dashboard-sidebar-mobile-bar {
+            padding: 12px 14px;
+          }
+
+          .dashboard-sidebar-mobile-brand-copy span {
+            white-space: normal;
+          }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .dashboard-sidebar-menu-button,
+          .dashboard-sidebar-close-button,
+          .dashboard-sidebar-backdrop,
+          .dashboard-sidebar-drawer {
+            transition: none !important;
           }
         }
       `}</style>
 
+      <div className="dashboard-sidebar-mobile-bar">
+        <Link href="/dashboard" className="dashboard-sidebar-mobile-brand">
+          <span className="dashboard-sidebar-mobile-brand-mark">Y</span>
+          <span className="dashboard-sidebar-mobile-brand-copy">
+            <strong>yotei profile</strong>
+            <span>dashboard control</span>
+          </span>
+        </Link>
+
+        <button
+          type="button"
+          className="dashboard-sidebar-menu-button"
+          aria-label={isMobileDrawerOpen ? "Close dashboard navigation" : "Open dashboard navigation"}
+          aria-expanded={isMobileDrawerOpen}
+          aria-controls={mobileDrawerId}
+          onClick={() => setIsMobileDrawerOpen((current) => !current)}
+        >
+          {isMobileDrawerOpen ? <LuX size={20} /> : <LuMenu size={20} />}
+        </button>
+      </div>
+
+      <div className="dashboard-sidebar-desktop">
+        <SidebarPanel
+          user={user}
+          pathname={pathname}
+          mainItems={mainItems}
+          customizationItems={customizationItems}
+          adminItems={adminItems}
+          lockedHrefs={lockedHrefs}
+          isPremium={isPremium}
+          style={desktopPanelStyle}
+        />
+      </div>
+
+      {isMobileDrawerOpen ? (
+        <>
+          <button
+            type="button"
+            className="dashboard-sidebar-backdrop"
+            aria-label="Close dashboard navigation"
+            onClick={closeMobileDrawer}
+          />
+
+          <div
+            id={mobileDrawerId}
+            className="dashboard-sidebar-drawer"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Dashboard navigation"
+          >
+            <div className="dashboard-sidebar-drawer-header">
+              <div className="dashboard-sidebar-drawer-title">
+                <LuPanelLeftClose size={16} />
+                Navigation
+              </div>
+
+              <button
+                ref={closeButtonRef}
+                type="button"
+                className="dashboard-sidebar-close-button"
+                aria-label="Close dashboard navigation"
+                onClick={closeMobileDrawer}
+              >
+                <LuX size={18} />
+              </button>
+            </div>
+
+            <div className="dashboard-sidebar-drawer-panel">
+              <SidebarPanel
+                user={user}
+                pathname={pathname}
+                mainItems={mainItems}
+                customizationItems={customizationItems}
+                adminItems={adminItems}
+                lockedHrefs={lockedHrefs}
+                isPremium={isPremium}
+                style={mobilePanelStyle}
+                onNavigate={closeMobileDrawer}
+              />
+            </div>
+          </div>
+        </>
+      ) : null}
+    </>
+  );
+}
+
+function SidebarPanel({
+  user,
+  pathname,
+  mainItems,
+  customizationItems,
+  adminItems,
+  lockedHrefs,
+  isPremium,
+  style,
+  onNavigate,
+}: {
+  user: SidebarUser;
+  pathname: string;
+  mainItems: DashboardNavItem[];
+  customizationItems: DashboardNavItem[];
+  adminItems: DashboardNavItem[];
+  lockedHrefs: string[];
+  isPremium: boolean;
+  style: CSSProperties;
+  onNavigate?: () => void;
+}) {
+  return (
+    <aside style={style}>
       <div
         style={{
           display: "flex",
@@ -210,6 +536,7 @@ export default function DashboardSidebar({ user, items, lockedHrefs = [] }: Prop
           items={mainItems}
           pathname={pathname}
           lockedHrefs={lockedHrefs}
+          onNavigate={onNavigate}
         />
 
         <SidebarSection
@@ -217,6 +544,7 @@ export default function DashboardSidebar({ user, items, lockedHrefs = [] }: Prop
           items={customizationItems}
           pathname={pathname}
           lockedHrefs={lockedHrefs}
+          onNavigate={onNavigate}
         />
 
         {adminItems.length > 0 ? (
@@ -225,6 +553,7 @@ export default function DashboardSidebar({ user, items, lockedHrefs = [] }: Prop
             items={adminItems}
             pathname={pathname}
             lockedHrefs={lockedHrefs}
+            onNavigate={onNavigate}
           />
         ) : null}
       </div>
@@ -237,10 +566,18 @@ export default function DashboardSidebar({ user, items, lockedHrefs = [] }: Prop
           paddingTop: "4px",
         }}
       >
-        <Link href={`/${user.username}`} style={dashboardButtonStyle("secondary", { fullWidth: true })}>
+        <Link
+          href={`/${user.username}`}
+          style={dashboardButtonStyle("secondary", { fullWidth: true })}
+          onClick={onNavigate}
+        >
           View public profile
         </Link>
-        <Link href="/dashboard/profile" style={dashboardButtonStyle("primary", { fullWidth: true })}>
+        <Link
+          href="/dashboard/profile"
+          style={dashboardButtonStyle("primary", { fullWidth: true })}
+          onClick={onNavigate}
+        >
           Edit profile
         </Link>
       </div>
@@ -253,11 +590,13 @@ function SidebarSection({
   items,
   pathname,
   lockedHrefs,
+  onNavigate,
 }: {
   title: string;
   items: DashboardNavItem[];
   pathname: string;
   lockedHrefs: string[];
+  onNavigate?: () => void;
 }) {
   return (
     <div
@@ -276,6 +615,7 @@ function SidebarSection({
             item={item}
             active={pathname === item.href}
             locked={lockedHrefs.includes(item.href)}
+            onNavigate={onNavigate}
           />
         ))}
       </div>
@@ -287,10 +627,12 @@ function SidebarLink({
   item,
   active,
   locked,
+  onNavigate,
 }: {
   item: DashboardNavItem;
   active: boolean;
   locked: boolean;
+  onNavigate?: () => void;
 }) {
   const content = (
     <>
@@ -361,6 +703,8 @@ function SidebarLink({
   return (
     <Link
       href={item.href}
+      aria-current={active ? "page" : undefined}
+      onClick={onNavigate}
       style={{
         textDecoration: "none",
         color: active ? "#ffffff" : "#c7c9d1",
