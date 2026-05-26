@@ -19,12 +19,16 @@ html, body {
   display: none;
 }
 
+html.yotei-public-route,
+body.yotei-public-route,
 html.yotei-public-profile-route,
 body.yotei-public-profile-route {
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
 
+html.yotei-public-route::-webkit-scrollbar,
+body.yotei-public-route::-webkit-scrollbar,
 html.yotei-public-profile-route::-webkit-scrollbar,
 body.yotei-public-profile-route::-webkit-scrollbar {
   width: 0;

@@ -54,7 +54,7 @@ export default async function LeaderboardPage({
   const entries = await getLeaderboardEntries(activeTab, 50);
 
   return (
-    <main style={pageStyle}>
+    <main className="yotei-scrollbar-hidden" style={pageStyle}>
       <div style={shellStyle}>
         <section style={heroStyle}>
           <div style={{ display: "grid", gap: "14px", minWidth: 0 }}>

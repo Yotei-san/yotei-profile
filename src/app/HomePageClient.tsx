@@ -183,7 +183,7 @@ export default function HomePageClient() {
   }
 
   return (
-    <main style={homeExperienceStyle}>
+    <main className="yotei-scrollbar-hidden" style={homeExperienceStyle}>
       <style>{`
         .home-shell {
           width: min(1180px, calc(100% - 32px));

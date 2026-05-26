@@ -22,6 +22,7 @@ export default async function PricingPage() {
 
   return (
     <main
+      className="yotei-scrollbar-hidden"
       style={{
         minHeight: "100vh",
         background:
