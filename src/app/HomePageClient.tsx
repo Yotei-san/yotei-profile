@@ -51,36 +51,32 @@ const stagger: Variants = {
 
 const featureCards = [
   {
-    title: "Animated profiles",
-    body: "Create motion-rich pages that feel alive without turning into visual noise.",
+    key: "animatedProfiles",
     icon: <LuSparkles size={18} />,
     accent: "#8A7CFF",
   },
   {
-    title: "Video banners",
-    body: "Lead with cinematic headers that give your profile an instant premium mood.",
+    key: "videoBanners",
     icon: <LuLayoutTemplate size={18} />,
     accent: "#FF77B3",
   },
   {
-    title: "Premium links",
-    body: "Turn every destination into part of a polished identity system, not a plain list.",
+    key: "premiumLinks",
     icon: <LuBadgeCheck size={18} />,
     accent: "#8EC5FF",
   },
   {
-    title: "Smart analytics",
-    body: "Understand what people click, what converts and what earns a second look.",
+    key: "smartAnalytics",
     icon: <LuChartNoAxesCombined size={18} />,
     accent: "#B58CFF",
   },
 ] as const;
 
 const identityChips = [
-  { label: "Links", tone: "violet" },
-  { label: "Live", tone: "rose" },
-  { label: "Social", tone: "blue" },
-  { label: "Premium", tone: "soft" },
+  { key: "links", tone: "violet" },
+  { key: "live", tone: "rose" },
+  { key: "social", tone: "blue" },
+  { key: "premium", tone: "soft" },
 ] as const;
 
 export default function HomePageClient() {
@@ -100,6 +96,15 @@ export default function HomePageClient() {
     { label: t("nav.help"), href: "#support" },
     { label: t("nav.pricing"), href: "/pricing" },
   ] as const;
+  const localizedFeatureCards = featureCards.map((card) => ({
+    ...card,
+    title: t(`home.featureCards.${card.key}.title`),
+    body: t(`home.featureCards.${card.key}.body`),
+  }));
+  const localizedIdentityChips = identityChips.map((chip) => ({
+    ...chip,
+    label: t(`home.chips.${chip.key}`),
+  }));
 
   useBodyScrollLock(isMobileMenuOpen);
 
@@ -1567,7 +1572,7 @@ export default function HomePageClient() {
                 </div>
               </Link>
 
-              <nav className="nav-center" aria-label="Main navigation">
+              <nav className="nav-center" aria-label={t("nav.mainNavigation")}>
                 {navLinks.map((item) => (
                   <Link key={item.label} href={item.href} className="nav-link">
                     {item.label}
@@ -1603,7 +1608,7 @@ export default function HomePageClient() {
                   <motion.button
                     type="button"
                     className="nav-mobile-backdrop"
-                    aria-label="Close navigation menu"
+                    aria-label={t("nav.closeMenu")}
                     onClick={closeMobileMenu}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -1616,7 +1621,7 @@ export default function HomePageClient() {
                     className="nav-mobile-panel"
                     role="dialog"
                     aria-modal="true"
-                    aria-label="Mobile navigation menu"
+                    aria-label={t("nav.mobileMenu")}
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
@@ -1643,7 +1648,7 @@ export default function HomePageClient() {
 
                     <LanguageSwitcher />
 
-                    <nav className="nav-mobile-links" aria-label="Mobile navigation">
+                    <nav className="nav-mobile-links" aria-label={t("nav.mobileNavigation")}>
                       {navLinks.map((item) => (
                         <Link
                           key={item.label}
@@ -1716,7 +1721,7 @@ export default function HomePageClient() {
               <label className="claim-field">
                 <span className="claim-prefix">yotei.app/</span>
                 <input
-                  aria-label="Claim username"
+                  aria-label={t("home.claimInputAriaLabel")}
                   className="claim-input"
                   value={username}
                   onChange={(event) => setUsername(event.target.value)}
@@ -1735,10 +1740,10 @@ export default function HomePageClient() {
             <motion.div className="hero-trust" variants={fadeUp}>
               <span>
                 <LuBadgeCheck size={14} />
-                100% free to get started
+                {t("home.trustFree")}
               </span>
               <span className="hero-trust-dot" aria-hidden />
-              <span>No credit card required</span>
+              <span>{t("home.trustNoCard")}</span>
             </motion.div>
 
           </motion.div>
@@ -1766,10 +1771,10 @@ export default function HomePageClient() {
                 <strong>Y</strong>
               </div>
 
-              {identityChips.map((chip) => (
+              {localizedIdentityChips.map((chip) => (
                 <div
                   key={chip.label}
-                  className={`identity-chip chip-${chip.label.toLowerCase()} chip-${chip.tone}`}
+                  className={`identity-chip chip-${chip.key} chip-${chip.tone}`}
                 >
                   {chip.label}
                 </div>
@@ -1777,11 +1782,8 @@ export default function HomePageClient() {
             </div>
 
             <div className="orb-copy">
-              <strong>A digital aura for premium identity, not another generic profile card.</strong>
-              <span>
-                Yotei brings links, live presence and visual signature into one sharper
-                destination with a lighter, more memorable brand feel.
-              </span>
+              <strong>{t("home.orbTitle")}</strong>
+              <span>{t("home.orbBody")}</span>
             </div>
           </motion.div>
         </div>
@@ -1798,13 +1800,10 @@ export default function HomePageClient() {
           >
             <div className="eyebrow">
               <LuSparkles size={14} />
-              Built for standout online presence
+              {t("home.featuresEyebrow")}
             </div>
-            <h2>Everything your profile needs, without the clutter.</h2>
-            <p>
-              Yotei is made for people who want one beautiful destination for their
-              identity, content and community.
-            </p>
+            <h2>{t("home.featuresTitle")}</h2>
+            <p>{t("home.featuresBody")}</p>
           </motion.div>
 
           <motion.div
@@ -1814,7 +1813,7 @@ export default function HomePageClient() {
             whileInView="show"
             viewport={{ once: true, amount: 0.2 }}
           >
-            {featureCards.map((card) => (
+            {localizedFeatureCards.map((card) => (
               <motion.div key={card.title} variants={fadeUp}>
                 <FeatureCard {...card} />
               </motion.div>

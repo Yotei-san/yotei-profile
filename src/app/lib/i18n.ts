@@ -33,12 +33,32 @@ const dictionaries: Record<Locale, Dictionary> = {
   "pt-BR": ptBR,
 };
 
+const warnedMissingTranslations = new Set<string>();
+
 export function isLocale(value: string | null | undefined): value is Locale {
   return value === "en" || value === "pt-BR";
 }
 
+export function resolveLocale(value: string | null | undefined): Locale | null {
+  if (isLocale(value)) {
+    return value;
+  }
+
+  const normalized = (value ?? "").trim().toLowerCase();
+
+  if (normalized === "pt" || normalized === "pt-br" || normalized.startsWith("pt-")) {
+    return "pt-BR";
+  }
+
+  if (normalized === "en" || normalized.startsWith("en-")) {
+    return "en";
+  }
+
+  return null;
+}
+
 export function normalizeLocale(value: string | null | undefined): Locale {
-  return isLocale(value) ? value : defaultLocale;
+  return resolveLocale(value) ?? defaultLocale;
 }
 
 export function detectLocaleFromLanguageTag(
@@ -53,8 +73,12 @@ export async function getRequestLocale(): Promise<Locale> {
   const cookieStore = await cookies();
   const cookieLocale = cookieStore.get(localeCookieName)?.value;
 
-  if (isLocale(cookieLocale)) {
-    return cookieLocale;
+  if (cookieLocale) {
+    const resolvedCookieLocale = resolveLocale(cookieLocale);
+
+    if (resolvedCookieLocale) {
+      return resolvedCookieLocale;
+    }
   }
 
   const headerStore = await headers();
@@ -101,7 +125,26 @@ export function translate(
 ): string {
   const localized = getValueByPath(getDictionary(locale), key);
   const fallback = getValueByPath(getDictionary(defaultLocale), key);
-  const resolved = localized ?? fallback ?? key;
+  const resolved = localized ?? fallback ?? "";
+
+  if (process.env.NODE_ENV !== "production") {
+    if (!localized && fallback) {
+      const warningKey = `${locale}:${key}:fallback`;
+
+      if (!warnedMissingTranslations.has(warningKey)) {
+        warnedMissingTranslations.add(warningKey);
+        console.warn(`[i18n] Missing "${key}" for locale "${locale}", using en fallback.`);
+      }
+    } else if (!localized && !fallback) {
+      const warningKey = `${locale}:${key}:missing`;
+
+      if (!warnedMissingTranslations.has(warningKey)) {
+        warnedMissingTranslations.add(warningKey);
+        console.warn(`[i18n] Missing translation key "${key}" in all dictionaries.`);
+      }
+    }
+  }
+
   return formatMessage(resolved, values);
 }
 

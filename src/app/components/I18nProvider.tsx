@@ -5,16 +5,17 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
 import {
   createTranslator,
   defaultLocale,
-  detectLocaleFromLanguageTag,
-  isLocale,
   localeCookieName,
   localeStorageKey,
+  normalizeLocale,
+  resolveLocale,
   type Locale,
   type TranslationKey,
 } from "@/app/lib/i18n";
@@ -34,29 +35,43 @@ export function I18nProvider({
   initialLocale?: Locale;
   children: ReactNode;
 }) {
-  const [locale, setLocale] = useState<Locale>(initialLocale);
+  const [locale, setLocaleState] = useState<Locale>(normalizeLocale(initialLocale));
+  const hasHydratedPreferencesRef = useRef(false);
 
   useEffect(() => {
-    const storedLocale = window.localStorage.getItem(localeStorageKey);
+    const persistedLocale = readPersistedLocale();
 
-    if (isLocale(storedLocale) && storedLocale !== locale) {
-      setLocale(storedLocale);
+    if (persistedLocale && persistedLocale !== locale) {
+      setLocaleState(persistedLocale);
+      writeLocalePreference(persistedLocale);
+      document.documentElement.lang = persistedLocale;
+      hasHydratedPreferencesRef.current = true;
       return;
     }
 
-    if (!storedLocale) {
-      const detectedLocale = detectLocaleFromLanguageTag(navigator.language);
+    writeLocalePreference(locale);
+    document.documentElement.lang = locale;
+    hasHydratedPreferencesRef.current = true;
+  }, []);
 
-      if (detectedLocale !== locale) {
-        setLocale(detectedLocale);
-        return;
-      }
+  useEffect(() => {
+    if (!hasHydratedPreferencesRef.current) {
+      return;
     }
 
-    window.localStorage.setItem(localeStorageKey, locale);
+    writeLocalePreference(locale);
     document.documentElement.lang = locale;
-    document.cookie = `${localeCookieName}=${locale}; path=/; max-age=31536000; samesite=lax`;
   }, [locale]);
+
+  const setLocale = (nextLocale: Locale) => {
+    const normalizedLocale = normalizeLocale(nextLocale);
+
+    writeLocalePreference(normalizedLocale);
+    document.documentElement.lang = normalizedLocale;
+    setLocaleState((currentLocale) =>
+      currentLocale === normalizedLocale ? currentLocale : normalizedLocale,
+    );
+  };
 
   const value = useMemo<I18nContextValue>(
     () => ({
@@ -68,6 +83,43 @@ export function I18nProvider({
   );
 
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
+}
+
+function readPersistedLocale(): Locale | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  const storedLocale = window.localStorage.getItem(localeStorageKey);
+
+  if (storedLocale) {
+    return resolveLocale(storedLocale);
+  }
+
+  const cookieLocale = readLocaleCookie();
+  return cookieLocale ? resolveLocale(cookieLocale) : null;
+}
+
+function readLocaleCookie() {
+  const cookieEntry = document.cookie
+    .split(";")
+    .map((entry) => entry.trim())
+    .find((entry) => entry.startsWith(`${localeCookieName}=`));
+
+  if (!cookieEntry) {
+    return null;
+  }
+
+  return cookieEntry.slice(localeCookieName.length + 1);
+}
+
+function writeLocalePreference(locale: Locale) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.localStorage.setItem(localeStorageKey, locale);
+  document.cookie = `${localeCookieName}=${locale}; path=/; max-age=31536000; samesite=lax`;
 }
 
 export function useI18n() {

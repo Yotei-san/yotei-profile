@@ -12,6 +12,9 @@ const en = {
     portugueseBrazil: "Portuguese (Brazil)",
   },
   nav: {
+    mainNavigation: "Main navigation",
+    mobileNavigation: "Mobile navigation",
+    mobileMenu: "Mobile navigation menu",
     discord: "Discord",
     leaderboard: "Leaderboard",
     help: "Help",
@@ -32,8 +35,42 @@ const en = {
       "Create a premium profile that brings your links, identity, visuals and social presence into one beautiful page.",
     claimCaption:
       "Reserve your handle first. Shape the page, mood and presence after.",
+    claimInputAriaLabel: "Claim username",
     claimPlaceholder: "username",
     claimButton: "Reserve Username",
+    trustFree: "100% free to get started",
+    trustNoCard: "No credit card required",
+    orbTitle: "A digital aura for premium identity, not another generic profile card.",
+    orbBody:
+      "Yotei brings links, live presence and visual signature into one sharper destination with a lighter, more memorable brand feel.",
+    featuresEyebrow: "Built for standout online presence",
+    featuresTitle: "Everything your profile needs, without the clutter.",
+    featuresBody:
+      "Yotei is made for people who want one beautiful destination for their identity, content and community.",
+    chips: {
+      links: "Links",
+      live: "Live",
+      social: "Social",
+      premium: "Premium",
+    },
+    featureCards: {
+      animatedProfiles: {
+        title: "Animated profiles",
+        body: "Create motion-rich pages that feel alive without turning into visual noise.",
+      },
+      videoBanners: {
+        title: "Video banners",
+        body: "Lead with cinematic headers that give your profile an instant premium mood.",
+      },
+      premiumLinks: {
+        title: "Premium links",
+        body: "Turn every destination into part of a polished identity system, not a plain list.",
+      },
+      smartAnalytics: {
+        title: "Smart analytics",
+        body: "Understand what people click, what converts and what earns a second look.",
+      },
+    },
     supportEyebrow: "Community, help and pricing",
     supportTitle: "Launch fast, learn fast and keep the page feeling premium.",
     supportBody:
