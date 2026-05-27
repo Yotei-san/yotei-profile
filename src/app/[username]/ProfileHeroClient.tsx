@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import type { CSSProperties, ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 import { LuEye, LuMapPin, LuMessageSquare, LuThumbsDown, LuThumbsUp } from "react-icons/lu";
+import LanguageSwitcher from "@/app/components/LanguageSwitcher";
 import { useI18n } from "@/app/components/I18nProvider";
 import { useAdaptivePerformance } from "@/app/components/PerformanceProvider";
 
@@ -26,7 +27,9 @@ type Props = {
   locationText?: string | null;
   align?: "start" | "center";
   preview?: boolean;
-  variant?: "inline" | "corner" | "micro";
+  variant?: "inline" | "corner" | "micro" | "dock";
+  includeLanguageSwitcher?: boolean;
+  dockSide?: "left" | "right";
 };
 
 function getDailyViewStorageKey(username: string) {
@@ -47,6 +50,8 @@ export default function ProfileHeroClient({
   align = "start",
   preview = false,
   variant = "inline",
+  includeLanguageSwitcher = false,
+  dockSide = "right",
 }: Props) {
   const { t } = useI18n();
   const { profile } = useAdaptivePerformance();
@@ -161,6 +166,7 @@ export default function ProfileHeroClient({
   }
 
   const normalizedLocationText = locationText?.trim() || "";
+  const isDock = variant === "dock";
   const allowGlassEffects = profile.allowBlurEffects && variant !== "micro";
   const allowElevatedEffects = profile.allowDecorativeMotion && variant !== "micro";
 
@@ -242,6 +248,75 @@ export default function ProfileHeroClient({
           max-width: min(100%, 20rem);
         }
 
+        .profile-identity-dock {
+          display: grid;
+          grid-template-columns: auto minmax(0, 1fr);
+          align-items: start;
+          gap: 10px;
+          min-width: min(100%, 320px);
+          max-width: min(92vw, 560px);
+          padding: 10px;
+          border-radius: 24px;
+          border: 1px solid rgba(255,255,255,0.08);
+          background:
+            radial-gradient(circle at top left, rgba(255,255,255,0.08) 0%, transparent 36%),
+            radial-gradient(circle at 82% 50%, ${themeColor}12 0%, transparent 32%),
+            linear-gradient(180deg, rgba(16,18,28,0.82), rgba(9,11,18,0.9));
+          box-shadow:
+            0 18px 38px rgba(0,0,0,0.22),
+            inset 0 1px 0 rgba(255,255,255,0.06);
+          backdrop-filter: ${allowGlassEffects ? "blur(16px) saturate(118%)" : "none"};
+          -webkit-backdrop-filter: ${allowGlassEffects ? "blur(16px) saturate(118%)" : "none"};
+        }
+
+        .profile-identity-dock.side-left {
+          justify-self: start;
+        }
+
+        .profile-identity-dock.side-right {
+          justify-self: end;
+        }
+
+        .profile-identity-dock-language {
+          position: relative;
+          padding-right: 10px;
+        }
+
+        .profile-identity-dock-language::after {
+          content: "";
+          position: absolute;
+          top: 6px;
+          right: 0;
+          bottom: 6px;
+          width: 1px;
+          background: linear-gradient(180deg, transparent, rgba(255,255,255,0.12), transparent);
+        }
+
+        .profile-hero-metrics[data-variant="dock"] {
+          gap: 6px;
+          justify-content: flex-start;
+          max-width: 100%;
+        }
+
+        .profile-hero-metrics[data-variant="dock"] .profile-hero-chip,
+        .profile-hero-metrics[data-variant="dock"] .profile-hero-reaction {
+          min-height: 36px;
+          border-radius: 14px;
+          box-shadow:
+            0 10px 18px rgba(0,0,0,0.14),
+            inset 0 1px 0 rgba(255,255,255,0.05);
+        }
+
+        .profile-hero-metrics[data-variant="dock"] .profile-hero-location {
+          max-width: min(100%, 18rem);
+        }
+
+        .profile-hero-inline-language {
+          display: inline-flex;
+          align-items: center;
+          flex-shrink: 0;
+        }
+
         @media (max-width: 640px) {
           .profile-hero-metrics {
             gap: 7px;
@@ -249,6 +324,20 @@ export default function ProfileHeroClient({
 
           .profile-hero-location {
             max-width: 100%;
+          }
+
+          .profile-identity-dock {
+            grid-template-columns: minmax(0, 1fr);
+            gap: 9px;
+            width: min(92vw, 420px);
+          }
+
+          .profile-identity-dock-language {
+            padding-right: 0;
+          }
+
+          .profile-identity-dock-language::after {
+            display: none;
           }
         }
 
@@ -260,141 +349,69 @@ export default function ProfileHeroClient({
         }
       `}</style>
 
-      <div
-        className={`profile-hero-metrics ${align === "center" ? "align-center" : ""}`}
-        data-variant={variant}
-      >
-        <MetricChip
-          label={t("publicProfile.views")}
-          value={views}
-          icon={<LuEye size={14} />}
-          color="#dbe4f5"
-          background={
-            variant === "corner"
-              ? "rgba(7,10,18,0.78)"
-              : variant === "micro"
-                ? "transparent"
-                : "rgba(255,255,255,0.035)"
-          }
-          border={
-            variant === "corner"
-              ? "rgba(255,255,255,0.10)"
-              : variant === "micro"
-                ? "transparent"
-                : "rgba(255,255,255,0.07)"
-          }
-          compact={variant !== "inline"}
-          allowGlassEffects={allowGlassEffects}
-          allowElevatedEffects={allowElevatedEffects}
-        />
+      {isDock ? (
+        <div className={`profile-identity-dock side-${dockSide}`}>
+          {includeLanguageSwitcher ? (
+            <div className="profile-identity-dock-language">
+              <LanguageSwitcher variant="dock" />
+            </div>
+          ) : null}
 
-        <ReactionButton
-          label={t("publicProfile.likes")}
-          value={likes}
-          icon={<LuThumbsUp size={14} />}
-          onClick={() => sendReaction("like")}
-          disabled={isSubmitting || preview}
-          isActive={myReaction === "like"}
-          accentColor={themeColor}
-          background={
-            variant === "corner"
-              ? "rgba(9, 20, 16, 0.8)"
-              : variant === "micro"
-                ? "transparent"
-                : "rgba(69, 212, 131, 0.06)"
-          }
-          border={
-            variant === "corner"
-              ? "rgba(69, 212, 131, 0.18)"
-              : variant === "micro"
-                ? "transparent"
-                : "rgba(69, 212, 131, 0.14)"
-          }
-          compact={variant !== "inline"}
-          allowGlassEffects={allowGlassEffects}
-          allowElevatedEffects={allowElevatedEffects}
-        />
-
-        <ReactionButton
-          label={t("publicProfile.dislikes")}
-          value={dislikes}
-          icon={<LuThumbsDown size={14} />}
-          onClick={() => sendReaction("dislike")}
-          disabled={isSubmitting || preview}
-          isActive={myReaction === "dislike"}
-          accentColor={themeColor}
-          background={
-            variant === "corner"
-              ? "rgba(20, 11, 14, 0.8)"
-              : variant === "micro"
-                ? "transparent"
-                : "rgba(248, 113, 113, 0.06)"
-          }
-          border={
-            variant === "corner"
-              ? "rgba(248, 113, 113, 0.18)"
-              : variant === "micro"
-                ? "transparent"
-                : "rgba(248, 113, 113, 0.14)"
-          }
-          compact={variant !== "inline"}
-          allowGlassEffects={allowGlassEffects}
-          allowElevatedEffects={allowElevatedEffects}
-        />
-
-        <ActionButton
-          label={t("publicProfile.comments")}
-          value={commentCount}
-          icon={<LuMessageSquare size={14} />}
-          onClick={() => setIsCommentsOpen(true)}
-          disabled={preview}
-          accentColor={themeColor}
-          background={
-            variant === "corner"
-              ? "rgba(13, 14, 24, 0.82)"
-              : variant === "micro"
-                ? "transparent"
-                : "rgba(135, 118, 255, 0.06)"
-          }
-          border={
-            variant === "corner"
-              ? "rgba(135, 118, 255, 0.18)"
-              : variant === "micro"
-                ? "transparent"
-                : "rgba(135, 118, 255, 0.12)"
-          }
-          compact={variant !== "inline"}
-          allowGlassEffects={allowGlassEffects}
-          allowElevatedEffects={allowElevatedEffects}
-        />
-
-        {normalizedLocationText ? (
-          <MetricChip
-            label={t("publicProfile.location")}
-            value={normalizedLocationText}
-            icon={<LuMapPin size={14} />}
-            color="#edf4ff"
-            background={
-              variant === "corner"
-                ? "rgba(7,10,18,0.78)"
-                : variant === "micro"
-                  ? "transparent"
-                  : "rgba(255,255,255,0.035)"
-            }
-            border={
-              variant === "corner"
-                ? "rgba(255,255,255,0.10)"
-                : variant === "micro"
-                  ? "transparent"
-                  : "rgba(255,255,255,0.07)"
-            }
-            className="profile-hero-location"
-            compact={variant !== "inline"}
-            allowGlassEffects={allowGlassEffects}
-            allowElevatedEffects={allowElevatedEffects}
-          />
-        ) : null}
-      </div>
+          {renderMetrics({
+            variant,
+            align,
+            views,
+            likes,
+            dislikes,
+            commentCount,
+            myReaction,
+            themeColor,
+            normalizedLocationText,
+            isSubmitting,
+            preview,
+            allowGlassEffects,
+            allowElevatedEffects,
+            onLike: () => sendReaction("like"),
+            onDislike: () => sendReaction("dislike"),
+            onComments: () => setIsCommentsOpen(true),
+            showLanguageSwitcher: false,
+            labels: {
+              views: t("publicProfile.views"),
+              likes: t("publicProfile.likes"),
+              dislikes: t("publicProfile.dislikes"),
+              comments: t("publicProfile.comments"),
+              location: t("publicProfile.location"),
+            },
+          })}
+        </div>
+      ) : (
+        renderMetrics({
+          variant,
+          align,
+          views,
+          likes,
+          dislikes,
+          commentCount,
+          myReaction,
+          themeColor,
+          normalizedLocationText,
+          isSubmitting,
+          preview,
+          allowGlassEffects,
+          allowElevatedEffects,
+          onLike: () => sendReaction("like"),
+          onDislike: () => sendReaction("dislike"),
+          onComments: () => setIsCommentsOpen(true),
+          showLanguageSwitcher: includeLanguageSwitcher,
+          labels: {
+            views: t("publicProfile.views"),
+            likes: t("publicProfile.likes"),
+            dislikes: t("publicProfile.dislikes"),
+            comments: t("publicProfile.comments"),
+            location: t("publicProfile.location"),
+          },
+        })
+      )}
 
       {isCommentsOpen ? (
         <ProfileCommentsModal
@@ -411,6 +428,226 @@ export default function ProfileHeroClient({
   );
 }
 
+function renderMetrics({
+  variant,
+  align,
+  views,
+  likes,
+  dislikes,
+  commentCount,
+  myReaction,
+  themeColor,
+  normalizedLocationText,
+  isSubmitting,
+  preview,
+  allowGlassEffects,
+  allowElevatedEffects,
+  onLike,
+  onDislike,
+  onComments,
+  showLanguageSwitcher,
+  labels,
+}: {
+  variant: Props["variant"];
+  align: Props["align"];
+  views: number;
+  likes: number;
+  dislikes: number;
+  commentCount: number;
+  myReaction: MyReaction;
+  themeColor: string;
+  normalizedLocationText: string;
+  isSubmitting: boolean;
+  preview: boolean;
+  allowGlassEffects: boolean;
+  allowElevatedEffects: boolean;
+  onLike: () => void;
+  onDislike: () => void;
+  onComments: () => void;
+  showLanguageSwitcher: boolean;
+  labels: {
+    views: string;
+    likes: string;
+    dislikes: string;
+    comments: string;
+    location: string;
+  };
+}) {
+  const isCorner = variant === "corner";
+  const isDock = variant === "dock";
+  const isMicro = variant === "micro";
+  const compact = variant !== "inline";
+
+  return (
+    <div
+      className={`profile-hero-metrics ${align === "center" ? "align-center" : ""}`}
+      data-variant={variant}
+    >
+      {showLanguageSwitcher ? (
+        <div className="profile-hero-inline-language">
+          <LanguageSwitcher variant="dock" />
+        </div>
+      ) : null}
+
+      <MetricChip
+        label={labels.views}
+        value={views}
+        icon={<LuEye size={14} />}
+        color="#dbe4f5"
+        background={
+          isCorner
+            ? "rgba(7,10,18,0.78)"
+            : isDock
+              ? "rgba(255,255,255,0.045)"
+              : isMicro
+                ? "transparent"
+                : "rgba(255,255,255,0.035)"
+        }
+        border={
+          isCorner
+            ? "rgba(255,255,255,0.10)"
+            : isDock
+              ? "rgba(255,255,255,0.08)"
+              : isMicro
+                ? "transparent"
+                : "rgba(255,255,255,0.07)"
+        }
+        compact={compact}
+        variant={variant}
+        allowGlassEffects={allowGlassEffects}
+        allowElevatedEffects={allowElevatedEffects}
+      />
+
+      <ReactionButton
+        label={labels.likes}
+        value={likes}
+        icon={<LuThumbsUp size={14} />}
+        onClick={onLike}
+        disabled={isSubmitting || preview}
+        isActive={myReaction === "like"}
+        accentColor={themeColor}
+        background={
+          isCorner
+            ? "rgba(9, 20, 16, 0.8)"
+            : isDock
+              ? "rgba(69, 212, 131, 0.1)"
+              : isMicro
+                ? "transparent"
+                : "rgba(69, 212, 131, 0.06)"
+        }
+        border={
+          isCorner
+            ? "rgba(69, 212, 131, 0.18)"
+            : isDock
+              ? "rgba(69, 212, 131, 0.18)"
+              : isMicro
+                ? "transparent"
+                : "rgba(69, 212, 131, 0.14)"
+        }
+        compact={compact}
+        variant={variant}
+        allowGlassEffects={allowGlassEffects}
+        allowElevatedEffects={allowElevatedEffects}
+      />
+
+      <ReactionButton
+        label={labels.dislikes}
+        value={dislikes}
+        icon={<LuThumbsDown size={14} />}
+        onClick={onDislike}
+        disabled={isSubmitting || preview}
+        isActive={myReaction === "dislike"}
+        accentColor={themeColor}
+        background={
+          isCorner
+            ? "rgba(20, 11, 14, 0.8)"
+            : isDock
+              ? "rgba(248, 113, 113, 0.09)"
+              : isMicro
+                ? "transparent"
+                : "rgba(248, 113, 113, 0.06)"
+        }
+        border={
+          isCorner
+            ? "rgba(248, 113, 113, 0.18)"
+            : isDock
+              ? "rgba(248, 113, 113, 0.16)"
+              : isMicro
+                ? "transparent"
+                : "rgba(248, 113, 113, 0.14)"
+        }
+        compact={compact}
+        variant={variant}
+        allowGlassEffects={allowGlassEffects}
+        allowElevatedEffects={allowElevatedEffects}
+      />
+
+      <ActionButton
+        label={labels.comments}
+        value={commentCount}
+        icon={<LuMessageSquare size={14} />}
+        onClick={onComments}
+        disabled={preview}
+        accentColor={themeColor}
+        background={
+          isCorner
+            ? "rgba(13, 14, 24, 0.82)"
+            : isDock
+              ? "rgba(135, 118, 255, 0.1)"
+              : isMicro
+                ? "transparent"
+                : "rgba(135, 118, 255, 0.06)"
+        }
+        border={
+          isCorner
+            ? "rgba(135, 118, 255, 0.18)"
+            : isDock
+              ? "rgba(135, 118, 255, 0.17)"
+              : isMicro
+                ? "transparent"
+                : "rgba(135, 118, 255, 0.12)"
+        }
+        compact={compact}
+        variant={variant}
+        allowGlassEffects={allowGlassEffects}
+        allowElevatedEffects={allowElevatedEffects}
+      />
+
+      {normalizedLocationText ? (
+        <MetricChip
+          label={labels.location}
+          value={normalizedLocationText}
+          icon={<LuMapPin size={14} />}
+          color="#edf4ff"
+          background={
+            isCorner
+              ? "rgba(7,10,18,0.78)"
+              : isDock
+                ? "rgba(255,255,255,0.045)"
+                : isMicro
+                  ? "transparent"
+                  : "rgba(255,255,255,0.035)"
+          }
+          border={
+            isCorner
+              ? "rgba(255,255,255,0.10)"
+              : isDock
+                ? "rgba(255,255,255,0.08)"
+                : isMicro
+                  ? "transparent"
+                  : "rgba(255,255,255,0.07)"
+          }
+          className="profile-hero-location"
+          compact={compact}
+          variant={variant}
+          allowGlassEffects={allowGlassEffects}
+          allowElevatedEffects={allowElevatedEffects}
+        />
+      ) : null}
+    </div>
+  );
+}
+
 function MetricChip({
   label,
   value,
@@ -420,6 +657,7 @@ function MetricChip({
   border,
   className,
   compact = false,
+  variant,
   allowGlassEffects,
   allowElevatedEffects,
 }: {
@@ -431,6 +669,7 @@ function MetricChip({
   border: string;
   className?: string;
   compact?: boolean;
+  variant: Props["variant"];
   allowGlassEffects: boolean;
   allowElevatedEffects: boolean;
 }) {
@@ -439,7 +678,7 @@ function MetricChip({
       className={`profile-hero-chip ${className ?? ""}`.trim()}
       aria-label={`${label}: ${value}`}
       style={{
-        ...chipBaseStyle(compact, allowElevatedEffects),
+        ...chipBaseStyle(compact, allowElevatedEffects, variant),
         color,
         background,
         border: `1px solid ${border}`,
@@ -466,6 +705,7 @@ function ReactionButton({
   background,
   border,
   compact = false,
+  variant,
   allowGlassEffects,
   allowElevatedEffects,
 }: {
@@ -479,6 +719,7 @@ function ReactionButton({
   background: string;
   border: string;
   compact?: boolean;
+  variant: Props["variant"];
   allowGlassEffects: boolean;
   allowElevatedEffects: boolean;
 }) {
@@ -497,6 +738,7 @@ function ReactionButton({
         disabled,
         isActive,
         compact,
+        variant,
         allowGlassEffects,
         allowElevatedEffects,
       )}
@@ -517,6 +759,7 @@ function ActionButton({
   background,
   border,
   compact = false,
+  variant,
   allowGlassEffects,
   allowElevatedEffects,
 }: {
@@ -529,6 +772,7 @@ function ActionButton({
   background: string;
   border: string;
   compact?: boolean;
+  variant: Props["variant"];
   allowGlassEffects: boolean;
   allowElevatedEffects: boolean;
 }) {
@@ -546,6 +790,7 @@ function ActionButton({
         disabled,
         false,
         compact,
+        variant,
         allowGlassEffects,
         allowElevatedEffects,
       )}
@@ -563,11 +808,12 @@ function reactionButtonStyle(
   disabled: boolean,
   isActive: boolean,
   compact: boolean,
+  variant: Props["variant"],
   allowGlassEffects: boolean,
   allowElevatedEffects: boolean,
 ): CSSProperties {
   return {
-    ...chipBaseStyle(compact, allowElevatedEffects),
+    ...chipBaseStyle(compact, allowElevatedEffects, variant),
     cursor: disabled ? "not-allowed" : "pointer",
     color: "#f7f9ff",
     background,
@@ -588,14 +834,17 @@ function reactionButtonStyle(
 function chipBaseStyle(
   compact: boolean,
   allowElevatedEffects: boolean,
+  variant: Props["variant"],
 ): CSSProperties {
+  const isDock = variant === "dock";
+
   return {
-    minHeight: compact ? "28px" : "32px",
-    padding: compact ? "0 9px" : "0 11px",
-    borderRadius: "999px",
+    minHeight: isDock ? "36px" : compact ? "28px" : "32px",
+    padding: isDock ? "0 11px" : compact ? "0 9px" : "0 11px",
+    borderRadius: isDock ? "14px" : "999px",
     display: "inline-flex",
     alignItems: "center",
-    gap: compact ? "6px" : "7px",
+    gap: isDock ? "7px" : compact ? "6px" : "7px",
     boxShadow: allowElevatedEffects
       ? "inset 0 1px 0 rgba(255,255,255,0.04)"
       : "none",

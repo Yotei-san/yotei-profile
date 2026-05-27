@@ -18,6 +18,9 @@ type Palette = {
   glow: string;
   icon: string;
   accent: string;
+  plate: string;
+  plateShadow: string;
+  halo: string;
 };
 
 type GlyphRenderer = (compact: boolean) => ReactNode;
@@ -244,8 +247,9 @@ export default function BadgeVisual({
 }: Props) {
   const badgeKey = resolveBadgeKey({ slug, icon, name, category });
   const palette = getBadgePalette({ slug: badgeKey, color, rarity, category });
-  const ringInset = compact ? 1.5 : 2.5;
-  const coreInset = compact ? 6.2 : 8.2;
+  const ringInset = compact ? 1.5 : 2.2;
+  const plateInset = compact ? 3.4 : 4.6;
+  const coreInset = compact ? 6.1 : 7.8;
 
   return (
     <div
@@ -259,11 +263,8 @@ export default function BadgeVisual({
       <div
         style={{
           ...glowStyle,
-          background: `radial-gradient(circle, ${palette.glow} 0%, ${alpha(
-            palette.glow,
-            "00",
-          )} 70%)`,
-          transform: compact ? "scale(1.08)" : "scale(1.12)",
+          background: `radial-gradient(circle, ${palette.halo} 0%, ${alpha(palette.halo, "00")} 70%)`,
+          transform: compact ? "scale(1.1)" : "scale(1.16)",
         }}
       />
       <div
@@ -272,7 +273,11 @@ export default function BadgeVisual({
           inset: `${ringInset}px`,
           background: `linear-gradient(145deg, ${palette.outer}, ${palette.inner})`,
           border: `1px solid ${palette.edge}`,
-          boxShadow: `0 14px 28px ${alpha(palette.glow, compact ? "16" : "24")}`,
+          boxShadow: `
+            0 14px 28px ${alpha(palette.glow, compact ? "16" : "24")},
+            inset 0 1px 0 rgba(255,255,255,0.16),
+            inset 0 -10px 16px rgba(0,0,0,0.18)
+          `,
         }}
       >
         <div
@@ -282,6 +287,14 @@ export default function BadgeVisual({
               palette.accent,
               compact ? "18" : "20",
             )}, rgba(255,255,255,0.02))`,
+          }}
+        />
+        <div
+          style={{
+            ...plateStyle,
+            inset: `${plateInset}px`,
+            background: `linear-gradient(180deg, ${palette.plate}, ${palette.plateShadow})`,
+            border: `1px solid ${alpha(palette.edge, compact ? "b6" : "d4")}`,
           }}
         />
         <div
@@ -320,6 +333,7 @@ export default function BadgeVisual({
               width: compact ? "15px" : "21px",
               height: compact ? "15px" : "21px",
               color: palette.icon,
+              filter: `drop-shadow(0 2px 4px ${alpha(palette.glow, compact ? "38" : "46")})`,
               overflow: "visible",
             }}
             fill="none"
@@ -382,6 +396,9 @@ function getBadgePalette(input: {
       glow: "#f5bf5e",
       icon: "#fff4ca",
       accent: "#f6d37d",
+      plate: "rgba(167,126,51,0.84)",
+      plateShadow: "rgba(38,24,10,0.96)",
+      halo: "#f8d784",
     };
   }
 
@@ -393,6 +410,9 @@ function getBadgePalette(input: {
       glow: "#ff9dcc",
       icon: "#fff4d9",
       accent: "#ff96d3",
+      plate: "rgba(132,57,103,0.84)",
+      plateShadow: "rgba(29,12,27,0.96)",
+      halo: "#ff9dcc",
     };
   }
 
@@ -404,6 +424,9 @@ function getBadgePalette(input: {
       glow: "#7dd3fc",
       icon: "#ebfbff",
       accent,
+      plate: "rgba(28,71,95,0.84)",
+      plateShadow: "rgba(8,16,27,0.96)",
+      halo: "#7dd3fc",
     };
   }
 
@@ -415,6 +438,23 @@ function getBadgePalette(input: {
       glow: "#ff9dcb",
       icon: "#fff2d6",
       accent,
+      plate: "rgba(122,54,96,0.84)",
+      plateShadow: "rgba(21,11,25,0.96)",
+      halo: "#ff9dcb",
+    };
+  }
+
+  if (input.rarity === "mythic") {
+    return {
+      outer: "rgba(57,25,70,0.98)",
+      inner: "rgba(10,12,26,0.98)",
+      edge: "#f4b9ff",
+      glow: "#7dd3fc",
+      icon: "#fff7fe",
+      accent: "#f4b9ff",
+      plate: "rgba(105,55,136,0.82)",
+      plateShadow: "rgba(12,15,31,0.98)",
+      halo: "#c0b5ff",
     };
   }
 
@@ -426,6 +466,9 @@ function getBadgePalette(input: {
       glow: "#f5c153",
       icon: "#fff6dd",
       accent,
+      plate: "rgba(145,105,38,0.84)",
+      plateShadow: "rgba(33,20,8,0.96)",
+      halo: "#f5c153",
     };
   }
 
@@ -437,6 +480,9 @@ function getBadgePalette(input: {
       glow: "#d392ff",
       icon: "#fbf2ff",
       accent,
+      plate: "rgba(95,46,130,0.84)",
+      plateShadow: "rgba(19,12,29,0.96)",
+      halo: "#d392ff",
     };
   }
 
@@ -448,6 +494,9 @@ function getBadgePalette(input: {
       glow: "#77c6ff",
       icon: "#ecf7ff",
       accent,
+      plate: "rgba(40,78,125,0.84)",
+      plateShadow: "rgba(8,15,29,0.96)",
+      halo: "#77c6ff",
     };
   }
 
@@ -458,6 +507,9 @@ function getBadgePalette(input: {
     glow: "#c7cedb",
     icon: "#f5f7fb",
     accent,
+    plate: "rgba(71,76,88,0.82)",
+    plateShadow: "rgba(11,13,19,0.98)",
+    halo: "#c7cedb",
   };
 }
 
@@ -501,6 +553,14 @@ const foilStyle: CSSProperties = {
     "polygon(50% 1%, 77% 10%, 92% 29%, 92% 71%, 77% 90%, 50% 99%, 23% 90%, 8% 71%, 8% 29%, 23% 10%)",
   opacity: 0.9,
   pointerEvents: "none",
+};
+
+const plateStyle: CSSProperties = {
+  position: "absolute",
+  clipPath:
+    "polygon(50% 1%, 78% 10%, 92% 30%, 92% 70%, 78% 90%, 50% 99%, 22% 90%, 8% 70%, 8% 30%, 22% 10%)",
+  boxShadow:
+    "inset 0 1px 0 rgba(255,255,255,0.14), inset 0 -8px 12px rgba(0,0,0,0.16)",
 };
 
 const crestStyle: CSSProperties = {

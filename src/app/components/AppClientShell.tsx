@@ -5,20 +5,8 @@ import type { ReactNode } from "react";
 import { useEffect } from "react";
 import CustomCursor from "./CustomCursor";
 import { I18nProvider } from "./I18nProvider";
-import LanguageSwitcher from "./LanguageSwitcher";
 import { PerformanceProvider } from "./PerformanceProvider";
 import type { Locale } from "@/app/lib/i18n";
-
-const RESERVED_PUBLIC_PATHS = new Set([
-  "",
-  "dashboard",
-  "login",
-  "register",
-  "forgot-password",
-  "verify-email",
-  "leaderboard",
-  "pricing",
-]);
 
 export default function AppClientShell({
   children,
@@ -45,27 +33,11 @@ export default function AppClientShell({
     };
   }, [pathname]);
 
-  const segments = pathname.split("/").filter(Boolean);
-  const showFloatingLanguageSwitcher =
-    segments.length === 1 && !RESERVED_PUBLIC_PATHS.has(segments[0] ?? "");
-
   return (
     <I18nProvider initialLocale={initialLocale}>
       <PerformanceProvider>
         <CustomCursor />
         {children}
-        {showFloatingLanguageSwitcher ? (
-          <div
-            style={{
-              position: "fixed",
-              right: "16px",
-              bottom: "16px",
-              zIndex: 85,
-            }}
-          >
-            <LanguageSwitcher variant="floating" />
-          </div>
-        ) : null}
       </PerformanceProvider>
     </I18nProvider>
   );

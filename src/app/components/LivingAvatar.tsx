@@ -83,16 +83,45 @@ export default function LivingAvatar({
 
       {minimal ? null : (
         <div
+          className="living-avatar-halo"
           style={{
             position: "absolute",
             inset: 0,
             borderRadius: "999px",
             background: auraBackground,
-            filter: "blur(14px)",
-            transform: "scale(1.1)",
+            filter: emphasized ? "blur(18px)" : "blur(14px)",
+            transform: emphasized ? "scale(1.14)" : "scale(1.1)",
             opacity: emphasized ? 0.92 : 0.78,
           }}
         />
+      )}
+
+      {minimal || !emphasized ? null : (
+        <>
+          <div
+            className="living-avatar-spotlight"
+            style={{
+              position: "absolute",
+              inset: `${Math.max(2, Math.round(size * 0.01))}px`,
+              borderRadius: "999px",
+              background: `radial-gradient(circle at 34% 24%, rgba(255,255,255,0.2) 0%, transparent 32%), ${auraBackground}`,
+              opacity: 0.72,
+            }}
+          />
+          <div
+            className="living-avatar-premium-ring"
+            style={{
+              position: "absolute",
+              inset: `${Math.max(2, Math.round(size * 0.02))}px`,
+              borderRadius: "999px",
+              border: `1px solid ${withAlpha(ringColor, "96")}`,
+              boxShadow: `
+                0 0 0 1px ${withAlpha(contrastColor, "18")},
+                0 0 20px ${withAlpha(glowColor, "28")}
+              `,
+            }}
+          />
+        </>
       )}
 
       {selectedDecoration ? (
@@ -151,6 +180,7 @@ export default function LivingAvatar({
       ) : null}
 
       <div
+        className="living-avatar-frame"
         style={{
           position: "absolute",
           inset: `${frameInset}px`,
@@ -166,6 +196,21 @@ export default function LivingAvatar({
           zIndex: 3,
         }}
       >
+        {!minimal && emphasized ? (
+          <div
+            className="living-avatar-reflection"
+            style={{
+              position: "absolute",
+              inset: 0,
+              background:
+                "linear-gradient(132deg, rgba(255,255,255,0.26) 0%, rgba(255,255,255,0.08) 20%, transparent 42%, transparent 100%)",
+              mixBlendMode: "screen",
+              pointerEvents: "none",
+              zIndex: 1,
+            }}
+          />
+        ) : null}
+
         {avatarUrl ? (
           <img
             src={avatarUrl}
@@ -576,8 +621,8 @@ const livingAvatarStyles = `
   }
 
   .living-avatar-root.is-emphasized {
-    --living-hover-boost: 1.1;
-    --living-opacity-boost: 1.18;
+    --living-hover-boost: 1.06;
+    --living-opacity-boost: 1.12;
   }
 
   .living-decoration-shell {
@@ -588,6 +633,10 @@ const livingAvatarStyles = `
   }
 
   .living-ring,
+  .living-avatar-halo,
+  .living-avatar-spotlight,
+  .living-avatar-premium-ring,
+  .living-avatar-reflection,
   .living-neon-core,
   .living-galaxy-halo,
   .living-void-shadow,
@@ -616,6 +665,9 @@ const livingAvatarStyles = `
   }
 
   .living-avatar-root.is-interactive:hover .living-ring,
+  .living-avatar-root.is-interactive:hover .living-avatar-halo,
+  .living-avatar-root.is-interactive:hover .living-avatar-spotlight,
+  .living-avatar-root.is-interactive:hover .living-avatar-premium-ring,
   .living-avatar-root.is-interactive:hover .living-neon-core,
   .living-avatar-root.is-interactive:hover .living-galaxy-halo,
   .living-avatar-root.is-interactive:hover .living-void-shadow,
@@ -628,6 +680,18 @@ const livingAvatarStyles = `
   .living-avatar-root.is-interactive:hover .living-ember,
   .living-avatar-root.is-interactive:hover .living-owner-crown {
     transform: scale(var(--living-hover-boost));
+  }
+
+  .living-avatar-root.is-emphasized .living-avatar-spotlight {
+    animation: living-soft-pulse 3.6s ease-in-out infinite;
+  }
+
+  .living-avatar-root.is-emphasized .living-avatar-premium-ring {
+    animation: living-premium-ring 5.8s ease-in-out infinite;
+  }
+
+  .living-avatar-root.is-emphasized .living-avatar-reflection {
+    animation: living-reflection-sweep 6.2s ease-in-out infinite;
   }
 
   .living-neon-rotate {
@@ -880,10 +944,40 @@ const livingAvatarStyles = `
     }
   }
 
+  @keyframes living-premium-ring {
+    0%, 100% {
+      opacity: 0.72;
+      transform: scale(0.996);
+    }
+
+    50% {
+      opacity: 0.96;
+      transform: scale(1.01);
+    }
+  }
+
+  @keyframes living-reflection-sweep {
+    0%, 12% {
+      opacity: 0;
+      transform: translate3d(-22%, -10%, 0);
+    }
+
+    30%, 62% {
+      opacity: 0.72;
+      transform: translate3d(0, 0, 0);
+    }
+
+    100% {
+      opacity: 0;
+      transform: translate3d(20%, 12%, 0);
+    }
+  }
+
   @media (max-width: 640px) {
     .living-sparkle,
     .living-ember,
-    .living-owner-shine::before {
+    .living-owner-shine::before,
+    .living-avatar-reflection {
       opacity: 0.72;
     }
 
@@ -913,7 +1007,10 @@ const livingAvatarStyles = `
     .living-owner-halo,
     .living-owner-shine::before,
     .living-owner-crown,
-    .living-ember {
+    .living-ember,
+    .living-avatar-spotlight,
+    .living-avatar-premium-ring,
+    .living-avatar-reflection {
       animation: none !important;
     }
 

@@ -1254,6 +1254,8 @@ function AvatarVisual({
       decorationOffsetX={decorationOffsetX}
       decorationOffsetY={decorationOffsetY}
       minimal={minimal}
+      interactive={!minimal}
+      emphasized={!minimal}
     />
   );
 }
@@ -1355,8 +1357,10 @@ function renderIdentityMetadataSlot(
         canComment={input.canComment}
         isOwnProfile={input.isOwnProfile}
         locationText={input.composition.metadata.locationText}
+        includeLanguageSwitcher
         preview={input.preview}
-        variant={isScreenCorner ? "corner" : "inline"}
+        dockSide={slot === "screen-bottom-left" ? "left" : "right"}
+        variant={isScreenCorner ? "dock" : "inline"}
       />
     </div>
   );

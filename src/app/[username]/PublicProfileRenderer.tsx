@@ -869,10 +869,11 @@ export default function PublicProfileRenderer({
           position: relative;
           border-radius: var(--profile-panel-radius);
           background: ${panelBackground};
-          border: 1px solid rgba(255, 255, 255, calc(var(--profile-border-alpha) + 0.006));
+          border: 1px solid rgba(255, 255, 255, calc(var(--profile-border-alpha) + 0.002));
           box-shadow:
-            0 ${Math.round(14 * depth.shadowDepth * dnaTuning.shadowScale)}px ${Math.round(34 * depth.shadowDepth * dnaTuning.shadowScale)}px rgba(0, 0, 0, calc(var(--profile-shadow-alpha) - 0.02)),
-            inset 0 1px 0 rgba(255, 255, 255, 0.04);
+            0 ${Math.round(18 * depth.shadowDepth * dnaTuning.shadowScale)}px ${Math.round(42 * depth.shadowDepth * dnaTuning.shadowScale)}px rgba(0, 0, 0, calc(var(--profile-shadow-alpha) - 0.01)),
+            0 0 0 1px rgba(255,255,255,0.016),
+            inset 0 1px 0 rgba(255, 255, 255, 0.05);
           overflow: hidden;
           backdrop-filter: ${resolvedPanelBackdropFilter};
           -webkit-backdrop-filter: ${resolvedPanelBackdropFilter};
@@ -889,10 +890,23 @@ export default function PublicProfileRenderer({
           inset: 0;
           background:
             linear-gradient(120deg, rgba(255, 255, 255, 0.07), transparent 18%),
-            radial-gradient(circle at top right, ${withAlpha(presence.accent, "14")} 0%, transparent 28%),
+            radial-gradient(circle at top right, ${withAlpha(presence.accent, "16")} 0%, transparent 28%),
+            radial-gradient(circle at 14% 32%, rgba(255,255,255,0.05) 0%, transparent 18%),
             ${presence.auraOverlay};
           pointer-events: none;
           opacity: calc(0.54 + var(--profile-scroll-focus) * 0.04);
+        }
+
+        .profile-floating-panel::after {
+          content: "";
+          position: absolute;
+          inset: 1px;
+          border-radius: inherit;
+          background:
+            linear-gradient(180deg, rgba(255,255,255,0.08), transparent 16%),
+            linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.03) 50%, transparent 100%);
+          opacity: 0.62;
+          pointer-events: none;
         }
 
         .profile-floating-grid {
@@ -918,9 +932,10 @@ export default function PublicProfileRenderer({
         }
 
         .profile-links-column {
-          border-left: 1px solid ${withAlpha(presence.accent, "0f")};
+          border-left: 1px solid ${withAlpha(presence.accent, "0b")};
           background:
-            linear-gradient(180deg, rgba(255,255,255,0.01), transparent 18%),
+            linear-gradient(180deg, rgba(255,255,255,0.012), transparent 18%),
+            linear-gradient(90deg, rgba(255,255,255,0.02), transparent 8%),
             ${surfaceBackground};
         }
 
@@ -980,7 +995,7 @@ export default function PublicProfileRenderer({
           display: grid;
           grid-template-columns: auto minmax(0, 1fr);
           gap: ${Math.round(14 * spacingScale)}px;
-          align-items: flex-start;
+          align-items: center;
           min-width: 0;
         }
 
@@ -989,15 +1004,16 @@ export default function PublicProfileRenderer({
           width: ${avatarSize}px;
           height: ${avatarSize}px;
           flex-shrink: 0;
+          filter: drop-shadow(0 22px 34px rgba(0,0,0,0.18));
         }
 
         .avatar-aura {
           position: absolute;
-          inset: 8px;
+          inset: 6px;
           border-radius: 999px;
           background: ${presence.avatarAuraBackground};
-          filter: blur(calc(10px + var(--profile-blur-breath-distance) * 0.8));
-          transform: scale(1.06);
+          filter: blur(calc(14px + var(--profile-blur-breath-distance) * 0.8));
+          transform: scale(1.1);
           animation: ${avatarAuraAnimation};
         }
 
@@ -1091,9 +1107,11 @@ export default function PublicProfileRenderer({
           font-size: ${preview
             ? `clamp(${Math.round(26 * densityTokens.bannerScale)}px, 4.1vw, ${Math.round(42 * densityTokens.bannerScale)}px)`
             : `clamp(${Math.round(31 * densityTokens.bannerScale)}px, 4.4vw, ${Math.round(48 * densityTokens.bannerScale)}px)`};
-          line-height: 0.92;
-          letter-spacing: -0.08em;
-          text-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+          line-height: 0.9;
+          letter-spacing: -0.085em;
+          text-shadow:
+            0 10px 20px rgba(0, 0, 0, 0.22),
+            0 0 28px rgba(255,255,255,0.04);
           transition: transform var(--profile-transition-duration) var(--profile-motion-emphasis);
         }
 
@@ -1146,6 +1164,9 @@ export default function PublicProfileRenderer({
           line-height: ${densityTokens.bioLineHeight};
           white-space: pre-wrap;
           overflow-wrap: anywhere;
+          padding-left: 12px;
+          border-left: 1px solid ${withAlpha(presence.accent, "18")};
+          text-shadow: 0 6px 14px rgba(0,0,0,0.1);
         }
 
         .profile-screen-metadata {
@@ -1200,12 +1221,12 @@ export default function PublicProfileRenderer({
         .widget-shell::before {
           content: "";
           position: absolute;
-          inset: -6px;
+          inset: -8px;
           border-radius: calc(var(--profile-card-radius) + 8px);
           background:
-            radial-gradient(circle at 16% 18%, ${withAlpha(presence.accent, "0e")} 0%, transparent 34%),
-            radial-gradient(circle at 84% 72%, ${withAlpha(presence.soft, "0c")} 0%, transparent 30%);
-          opacity: calc(var(--profile-widget-glow-opacity) * 0.22);
+            radial-gradient(circle at 16% 18%, ${withAlpha(presence.accent, "10")} 0%, transparent 34%),
+            radial-gradient(circle at 84% 72%, ${withAlpha(presence.soft, "0e")} 0%, transparent 30%);
+          opacity: calc(var(--profile-widget-glow-opacity) * 0.18);
           z-index: -1;
         }
 
@@ -1602,6 +1623,8 @@ export default function PublicProfileRenderer({
                         decorationScale={decorationScale}
                         decorationOffsetX={decorationOffsetX}
                         decorationOffsetY={decorationOffsetY}
+                        interactive={!preview}
+                        emphasized
                       />
 
                       <div className="avatar-status" aria-label="Online">
@@ -2463,6 +2486,8 @@ function FloatingProfileScene({
             decorationScale={decorationScale}
             decorationOffsetX={decorationOffsetX}
             decorationOffsetY={decorationOffsetY}
+            interactive={!preview}
+            emphasized
           />
 
           <ProfileNamePlate
@@ -2674,9 +2699,11 @@ function renderIdentityMetadataSlot(
         canComment={input.canComment}
         isOwnProfile={input.isOwnProfile}
         locationText={input.composition.metadata.locationText}
+        includeLanguageSwitcher
         align={input.align}
         preview={input.preview}
-        variant={isScreenCorner ? "micro" : "inline"}
+        dockSide={slot === "screen-bottom-left" ? "left" : "right"}
+        variant={isScreenCorner ? "dock" : "inline"}
       />
     </div>
   );
@@ -4708,6 +4735,8 @@ function IntroProfileStage({
                 decorationScale={decorationScale}
                 decorationOffsetX={decorationOffsetX}
                 decorationOffsetY={decorationOffsetY}
+                interactive={!preview}
+                emphasized
               />
             </div>
 
