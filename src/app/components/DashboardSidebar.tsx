@@ -435,24 +435,7 @@ function SidebarPanel({
           borderBottom: "1px solid rgba(255,255,255,0.06)",
         }}
       >
-        <div
-          style={{
-            width: "42px",
-            height: "42px",
-            borderRadius: "14px",
-            background:
-              "linear-gradient(135deg, rgba(244,114,182,0.28), rgba(168,85,247,0.22))",
-            border: "1px solid rgba(244,114,182,0.22)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontWeight: 900,
-            color: "#f9a8d4",
-            flexShrink: 0,
-          }}
-        >
-          Y
-        </div>
+        <YoteiBrandMark animated={false} intensity="calm" size={42} />
 
         <div>
           <div style={{ fontSize: "16px", fontWeight: 900, color: "#fff" }}>

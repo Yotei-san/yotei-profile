@@ -18,6 +18,7 @@ import {
   LuSparkles,
 } from "react-icons/lu";
 import { useI18n } from "@/app/components/I18nProvider";
+import YoteiBrandMark from "@/app/components/YoteiBrandMark";
 
 type AuthShellProps = {
   badge: string;
@@ -73,7 +74,12 @@ export function AuthShell({
       <section className="auth-shell">
         <aside className="auth-hero">
           <div className="auth-brand">
-            <span className="auth-brand-mark">Y</span>
+            <YoteiBrandMark
+              animated={false}
+              className="auth-brand-mark"
+              intensity="calm"
+              size={44}
+            />
             <div className="auth-brand-copy">
               <strong>Yotei Identity</strong>
               <span>{t("auth.identitySystem")}</span>
@@ -100,7 +106,14 @@ export function AuthShell({
             <div className="auth-orb-ring auth-orb-ring-outer" />
             <div className="auth-orb-ring auth-orb-ring-middle" />
             <div className="auth-orb-ring auth-orb-ring-inner" />
-            <div className="auth-orb-core">Y</div>
+            <div className="auth-orb-core">
+              <YoteiBrandMark
+                animated={false}
+                className="auth-orb-core-mark"
+                intensity="calm"
+                size={104}
+              />
+            </div>
           </div>
 
           <div className="auth-hero-note">
@@ -443,22 +456,7 @@ const authCss = `
   }
 
   .auth-brand-mark {
-    width: 46px;
-    height: 46px;
-    border-radius: 16px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    background:
-      radial-gradient(circle at 28% 24%, rgba(255, 255, 255, 0.34), transparent 22%),
-      linear-gradient(145deg, #8a76ff 0%, #ff6ea8 52%, #5aa9ff 100%);
-    color: #ffffff;
-    font-size: 18px;
-    font-weight: 950;
-    letter-spacing: -0.08em;
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.18),
-      0 18px 34px rgba(110, 93, 255, 0.22);
+    flex-shrink: 0;
   }
 
   .auth-brand-copy {
@@ -580,10 +578,11 @@ const authCss = `
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.18),
       0 18px 36px rgba(6, 8, 18, 0.22);
-    color: #ffffff;
-    font-size: clamp(56px, 8vw, 88px);
-    font-weight: 950;
-    letter-spacing: -0.1em;
+  }
+
+  .auth-orb-core-mark {
+    width: 76% !important;
+    height: auto !important;
   }
 
   .auth-hero-note {

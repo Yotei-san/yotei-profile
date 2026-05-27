@@ -837,6 +837,13 @@ export default function HomePageClient() {
           text-shadow: 0 14px 34px rgba(9, 10, 24, 0.22);
         }
 
+        .orb-core-mark {
+          position: relative;
+          z-index: 1;
+          width: 76% !important;
+          height: auto !important;
+        }
+
         .orb-ring,
         .orb-ring::before {
           position: absolute;
@@ -1371,11 +1378,9 @@ export default function HomePageClient() {
             width: min(100% - 20px, 1180px);
           }
 
-          .brand-mark {
-            width: 38px;
-            height: 38px;
-            border-radius: 12px;
-            font-size: 16px;
+          .brand-mark-svg {
+            width: 38px !important;
+            height: 38px !important;
           }
 
           .brand-copy strong {
@@ -1739,7 +1744,12 @@ export default function HomePageClient() {
               <div className="orb-axis orb-axis-a" />
               <div className="orb-axis orb-axis-b" />
               <div className="orb-core">
-                <strong>Y</strong>
+                <YoteiBrandMark
+                  animated={false}
+                  className="orb-core-mark"
+                  intensity="calm"
+                  size={112}
+                />
               </div>
 
               {localizedIdentityChips.map((chip) => (
