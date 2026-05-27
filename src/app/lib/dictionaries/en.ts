@@ -28,59 +28,208 @@ const en = {
     closeMenu: "Close navigation menu",
   },
   home: {
-    brandSubtitle: "Profile OS for standout identity",
+    brandSubtitle: "Identity OS for profiles with presence",
     mobileMenuTitle: "Menu",
-    heroEyebrow: "Premium profile platform for creators, gamers and devs",
-    heroTitleLineOne: "Your Digital Identity,",
-    heroTitleHighlight: "On Your Terms",
+    heroEyebrow: "Launch-ready profile OS for gamers, streamers, creators and devs",
+    heroTitle: "Build a profile",
+    heroTitleAccent: "that feels alive.",
     heroBody:
-      "Create a premium profile that brings your links, identity, visuals and social presence into one beautiful page.",
+      "Yotei puts links, socials, badges, music, comments, leaderboard presence and profile customization into one identity page that feels cinematic, sharp and easy to read.",
     claimCaption:
-      "Reserve your handle first. Shape the page, mood and presence after.",
-    claimInputAriaLabel: "Claim username",
+      "Reserve your username first. Shape the aura, profile systems and public presence after.",
+    claimInputAriaLabel: "Reserve username",
     claimPlaceholder: "username",
     claimButton: "Reserve Username",
-    trustFree: "100% free to get started",
-    trustNoCard: "No credit card required",
-    orbTitle: "A digital aura for premium identity, not another generic profile card.",
-    orbBody:
-      "Yotei brings links, live presence and visual signature into one sharper destination with a lighter, more memorable brand feel.",
-    featuresEyebrow: "Built for standout online presence",
-    featuresTitle: "Everything your profile needs, without the clutter.",
-    featuresBody:
-      "Yotei is made for people who want one beautiful destination for their identity, content and community.",
-    chips: {
+    heroChips: {
       links: "Links",
-      live: "Live",
-      social: "Social",
-      premium: "Premium",
+      badges: "Badges",
+      music: "Music",
+      comments: "Comments",
+      leaderboard: "Leaderboard",
+      aura: "Aura",
     },
-    featureCards: {
-      animatedProfiles: {
-        title: "Animated profiles",
-        body: "Create motion-rich pages that feel alive without turning into visual noise.",
+    trust: {
+      free: "Free to start",
+      noCard: "No card required",
+      comments: "Comments ready",
+      leaderboard: "Leaderboard ready",
+    },
+    preview: {
+      eyebrow: "Yotei Identity Reactor",
+      live: "Presence live",
+      synced: "Aura synced",
+      handle: "@yourname",
+      role: "Creator / streamer / dev profile with collectible identity fragments.",
+      modulesTitle: "Profile OS panel",
+      modulesBody:
+        "A living surface for links, live presence, badge status and audio taste.",
+      moduleLabels: {
+        links: "Links",
+        presence: "Presence",
+        badges: "Badges",
+        audio: "Audio",
       },
-      videoBanners: {
-        title: "Video banners",
-        body: "Lead with cinematic headers that give your profile an instant premium mood.",
+      moduleValues: {
+        links: "Launch stack",
+        presence: "Discord + live",
+        badges: "Rarity active",
+        audio: "Spotify pulse",
       },
-      premiumLinks: {
-        title: "Premium links",
-        body: "Turn every destination into part of a polished identity system, not a plain list.",
+      artifactTitle: "Identity fragments",
+      artifactA: "Founder badge",
+      artifactB: "Comments open",
+      artifactC: "Profile FX online",
+      footerLeft: "Leaderboard visibility enabled",
+      footerRight: "Ready for public launch",
+      fragmentTitle: "Profile signal",
+      fragmentLabels: {
+        comments: "Comments",
+        leaderboard: "Rank",
+        effects: "FX",
       },
-      smartAnalytics: {
-        title: "Smart analytics",
-        body: "Understand what people click, what converts and what earns a second look.",
+      fragmentValues: {
+        comments: "Thread live",
+        leaderboard: "Climb ready",
+        effects: "Lightweight glow",
       },
     },
-    supportEyebrow: "Community, help and pricing",
-    supportTitle: "Launch fast, learn fast and keep the page feeling premium.",
-    supportBody:
-      "Join the Discord community, study the leaderboard and explore pricing when you are ready.",
-    supportHighlight:
-      "Yotei keeps the path simple from first claim to public profile.",
-    startFree: "Start Free",
-    viewPricing: "View Pricing",
+    identity: {
+      eyebrow: "Identity OS",
+      title: "More than a link page. More like a premium profile operating system.",
+      body:
+        "Yotei organizes the parts of your public identity into one stronger surface so people understand your vibe, status and destinations instantly.",
+      cards: {
+        identityCore: {
+          title: "Orbital identity core",
+          body: "Build around a central brand aura instead of a plain avatar-plus-links layout.",
+        },
+        creatorAura: {
+          title: "Creator aura control",
+          body: "Tune mood, density and profile energy so the page feels personal without becoming noisy.",
+        },
+        profileSystems: {
+          title: "Profile systems that connect",
+          body: "Links, comments, media, badges and stats feel like one ecosystem instead of disconnected widgets.",
+        },
+      },
+      rail: {
+        title: "Everything ships inside one surface",
+        body:
+          "The page architecture is built to feel like a profile OS: readable first, expressive second, memorable all the way through.",
+        items: {
+          links: "Action links that look intentional",
+          socials: "Discord, Spotify and GitHub identity blocks",
+          badges: "Badge rarity and collectible profile fragments",
+          comments: "Community comments tied to your page",
+          leaderboard: "Leaderboard presence and visible status",
+        },
+      },
+    },
+    gamers: {
+      eyebrow: "Built for gamers and streamers",
+      title: "Show the stack behind your identity, not just a bio.",
+      body:
+        "Yotei is shaped for people whose profile needs to carry platforms, status, collectibles, reactions and a stronger visual signature.",
+      cardTag: "Launch module",
+      cards: {
+        discord: {
+          title: "Discord presence",
+          body: "Turn community presence into part of the profile instead of a lonely external icon.",
+        },
+        spotify: {
+          title: "Spotify energy",
+          body: "Show what you are listening to with a cleaner audio layer that supports the page mood.",
+        },
+        github: {
+          title: "GitHub credibility",
+          body: "Developers can surface projects and activity without breaking the creator-facing vibe.",
+        },
+        badges: {
+          title: "Badge identity",
+          body: "Collect status markers that make the page feel earned, not randomly decorated.",
+        },
+        comments: {
+          title: "Comment threads",
+          body: "Let visitors react and leave visible notes that make the profile feel inhabited.",
+        },
+        leaderboard: {
+          title: "Leaderboard visibility",
+          body: "Give competitive profiles a reason to come back, climb and stay visible.",
+        },
+      },
+    },
+    collectible: {
+      eyebrow: "Collectible identity",
+      title: "Make your profile feel collectible, not disposable.",
+      body:
+        "Badges, rarity, profile fragments and visible progression give people reasons to remember the page and return to it.",
+      tiers: {
+        signal: {
+          tag: "Signal tier",
+          title: "Starter identity with clear presence",
+          body: "Keep the silhouette clean while leaving room for future rarity, comments and visual upgrades.",
+        },
+        rare: {
+          tag: "Rare tier",
+          title: "Badge and aura combinations",
+          body: "Layer earned status and mood so the page feels owned and recognizable in screenshots.",
+        },
+        ascendant: {
+          tag: "Ascendant tier",
+          title: "Profile drops worth returning to",
+          body: "Build toward a page that can hold events, launches, leaderboard pushes and collectible moments.",
+        },
+      },
+      fragments: {
+        founder: "Founder ready",
+        mission: "Mission badges",
+        drop: "Drop moments",
+        rarity: "Rarity visible",
+      },
+      footer:
+        "The point is not decoration for decoration's sake. It is identity that feels persistent, visible and worth collecting.",
+    },
+    performance: {
+      eyebrow: "Performance-first visuals",
+      title: "Atmosphere that respects weaker PCs, mobile devices and reduced motion.",
+      body:
+        "Yotei keeps the look premium while adapting effects to the device, motion preference and safe mode so the page stays readable and fast.",
+      items: {
+        adaptive: {
+          title: "Adaptive performance",
+          body: "Atmosphere, blur and motion intensity scale with the current performance profile.",
+        },
+        reducedMotion: {
+          title: "Reduced motion support",
+          body: "The launch page softens or removes decorative movement when the user asks for calmer motion.",
+        },
+        lighterFx: {
+          title: "Lightweight effects",
+          body: "Orbit motion, glow breathing and scanline accents stay on transform and opacity where possible.",
+        },
+        fastSurface: {
+          title: "Fast launch surface",
+          body: "No canvas, no heavy video and no overloaded particles standing between the visitor and the profile.",
+        },
+      },
+      badge:
+        "The homepage respects adaptive performance settings, safe mode and reduced-motion preferences.",
+    },
+    cta: {
+      eyebrow: "Launch CTA",
+      title: "Claim your place on the board before the page even goes live.",
+      body:
+        "Reserve your username now, then come back to shape the visuals, comments, badges and profile systems around it.",
+      proofs: {
+        discord: "Discord-ready",
+        pricing: "Pricing visible",
+        leaderboard: "Leaderboard connected",
+      },
+      primaryButton: "Reserve Username",
+      secondaryButton: "Sign In",
+      pricingButton: "View Pricing",
+      helper: "Keep it simple: claim the name first, refine the identity after.",
+    },
   },
   auth: {
     identitySystem: "Digital identity system for gamers, creators and devs",
