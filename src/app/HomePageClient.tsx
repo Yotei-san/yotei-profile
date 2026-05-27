@@ -15,7 +15,6 @@ import {
   LuArrowRight,
   LuBadgeCheck,
   LuChartNoAxesCombined,
-  LuGamepad2,
   LuGithub,
   LuLayoutPanelTop,
   LuLayoutTemplate,
@@ -37,16 +36,11 @@ const heroChipKeys = [
   { key: "links", tone: "violet" },
   { key: "badges", tone: "pink" },
   { key: "music", tone: "blue" },
-  { key: "comments", tone: "violet" },
-  { key: "leaderboard", tone: "blue" },
-  { key: "aura", tone: "soft" },
 ] as const;
 
 const heroTrustItems = [
   { key: "free", icon: <LuBadgeCheck size={14} /> },
   { key: "noCard", icon: <LuShieldCheck size={14} /> },
-  { key: "comments", icon: <LuMessageSquare size={14} /> },
-  { key: "leaderboard", icon: <LuTrophy size={14} /> },
 ] as const;
 
 const identityCards = [
@@ -129,25 +123,6 @@ export default function HomePageClient() {
     title: t(`home.performance.items.${item.key}.title`),
     body: t(`home.performance.items.${item.key}.body`),
   }));
-  const railItems = [
-    t("home.identity.rail.items.links"),
-    t("home.identity.rail.items.socials"),
-    t("home.identity.rail.items.badges"),
-    t("home.identity.rail.items.comments"),
-    t("home.identity.rail.items.leaderboard"),
-  ];
-  const collectibleFragments = [
-    t("home.collectible.fragments.founder"),
-    t("home.collectible.fragments.mission"),
-    t("home.collectible.fragments.drop"),
-    t("home.collectible.fragments.rarity"),
-  ];
-  const ctaProofs = [
-    t("home.cta.proofs.discord"),
-    t("home.cta.proofs.pricing"),
-    t("home.cta.proofs.leaderboard"),
-  ];
-
   useBodyScrollLock(isMobileMenuOpen);
 
   useEffect(() => {
@@ -654,15 +629,15 @@ export default function HomePageClient() {
 
         .hero-section {
           position: relative;
-          padding: 34px 0 56px;
+          padding: 52px 0 74px;
         }
 
         .hero-grid {
           display: grid;
-          grid-template-columns: minmax(0, 1.02fr) minmax(360px, 0.98fr);
-          gap: 42px;
+          grid-template-columns: minmax(0, 0.9fr) minmax(420px, 1.1fr);
+          gap: 68px;
           align-items: center;
-          min-height: calc(100vh - 144px);
+          min-height: calc(100vh - 168px);
         }
 
         .hero-copy,
@@ -704,14 +679,14 @@ export default function HomePageClient() {
         }
 
         .hero-title {
-          margin: 22px 0 0;
-          max-width: 720px;
-          font-size: clamp(52px, 8vw, 98px);
-          line-height: 0.92;
-          letter-spacing: -0.085em;
+          margin: 28px 0 0;
+          max-width: 640px;
+          font-size: clamp(46px, 7.1vw, 80px);
+          line-height: 0.98;
+          letter-spacing: -0.072em;
           font-weight: 950;
           text-wrap: balance;
-          text-shadow: 0 18px 44px rgba(0, 0, 0, 0.28);
+          text-shadow: 0 16px 38px rgba(0, 0, 0, 0.22);
         }
 
         .hero-accent {
@@ -724,16 +699,16 @@ export default function HomePageClient() {
         }
 
         .hero-body {
-          margin: 22px 0 0;
-          max-width: 640px;
+          margin: 28px 0 0;
+          max-width: 560px;
           color: #c9d2e5;
-          font-size: 18px;
-          line-height: 1.75;
+          font-size: 17px;
+          line-height: 1.82;
           text-wrap: pretty;
         }
 
         .claim-caption {
-          margin-top: 18px;
+          margin-top: 24px;
           color: #93a0b8;
           font-size: 13px;
           font-weight: 700;
@@ -823,13 +798,13 @@ export default function HomePageClient() {
         .hero-trust {
           display: flex;
           flex-wrap: wrap;
-          gap: 10px;
-          margin-top: 18px;
+          gap: 12px;
+          margin-top: 24px;
         }
 
         .signal-pill {
-          min-height: 34px;
-          padding: 0 12px;
+          min-height: 36px;
+          padding: 0 14px;
           border-radius: 999px;
           display: inline-flex;
           align-items: center;
@@ -842,24 +817,23 @@ export default function HomePageClient() {
         }
 
         .hero-visual {
-          display: grid;
-          gap: 16px;
+          display: block;
         }
 
         .reactor-panel {
           position: relative;
           display: grid;
-          gap: 18px;
-          padding: 22px;
-          border-radius: 32px;
+          gap: 24px;
+          padding: 30px;
+          border-radius: 40px;
           background:
-            radial-gradient(circle at top right, rgba(255, 110, 168, 0.12), transparent 28%),
-            radial-gradient(circle at bottom left, rgba(90, 169, 255, 0.12), transparent 26%),
+            radial-gradient(circle at top right, rgba(255, 110, 168, 0.1), transparent 30%),
+            radial-gradient(circle at bottom left, rgba(90, 169, 255, 0.1), transparent 28%),
             linear-gradient(180deg, rgba(15, 13, 23, 0.98), rgba(8, 8, 14, 0.98));
-          border: 1px solid rgba(255, 255, 255, 0.08);
+          border: 1px solid rgba(255, 255, 255, 0.06);
           box-shadow:
-            inset 0 1px 0 rgba(255, 255, 255, 0.05),
-            0 34px 64px rgba(0, 0, 0, 0.28);
+            inset 0 1px 0 rgba(255, 255, 255, 0.04),
+            0 40px 76px rgba(0, 0, 0, 0.28);
           overflow: hidden;
         }
 
@@ -868,8 +842,8 @@ export default function HomePageClient() {
           position: absolute;
           inset: 0;
           background:
-            linear-gradient(135deg, rgba(255, 255, 255, 0.08), transparent 18%),
-            linear-gradient(180deg, transparent 62%, rgba(90, 169, 255, 0.06));
+            linear-gradient(135deg, rgba(255, 255, 255, 0.06), transparent 18%),
+            linear-gradient(180deg, transparent 68%, rgba(90, 169, 255, 0.04));
           pointer-events: none;
         }
 
@@ -878,9 +852,8 @@ export default function HomePageClient() {
           z-index: 1;
           display: flex;
           align-items: center;
-          justify-content: space-between;
+          justify-content: flex-start;
           gap: 12px;
-          flex-wrap: wrap;
         }
 
         .reactor-topline {
@@ -902,26 +875,8 @@ export default function HomePageClient() {
           box-shadow: 0 0 14px rgba(255, 122, 183, 0.44);
         }
 
-        .reactor-status-row {
-          display: flex;
-          gap: 8px;
-          flex-wrap: wrap;
-        }
-
-        .reactor-shell {
-          position: relative;
-          z-index: 1;
-          display: grid;
-          grid-template-columns: minmax(0, 1fr) minmax(240px, 0.82fr);
-          gap: 18px;
-          align-items: stretch;
-        }
-
         .reactor-core-zone,
-        .reactor-side-panel,
-        .reactor-mini-strip,
         .section-surface,
-        .identity-rail,
         .cta-panel {
           position: relative;
           border-radius: 28px;
@@ -933,25 +888,27 @@ export default function HomePageClient() {
         }
 
         .reactor-core-zone {
-          padding: 18px;
-          min-height: 420px;
+          padding: 10px 10px 0;
+          min-height: 520px;
           display: grid;
           align-items: center;
           justify-items: center;
+          background: transparent;
+          border: 0;
         }
 
         .reactor-core-zone::before {
           content: "";
           position: absolute;
-          inset: 10%;
+          inset: 8%;
           border-radius: 999px;
-          border: 1px solid rgba(255, 255, 255, 0.05);
+          border: 1px solid rgba(255, 255, 255, 0.04);
           pointer-events: none;
         }
 
         .reactor-center {
           position: relative;
-          width: min(100%, 360px);
+          width: min(100%, 430px);
           aspect-ratio: 1 / 1;
           display: grid;
           place-items: center;
@@ -976,7 +933,7 @@ export default function HomePageClient() {
         }
 
         .reactor-orbit {
-          border: 1px solid rgba(255, 255, 255, 0.08);
+          border: 1px solid rgba(255, 255, 255, 0.06);
         }
 
         .reactor-orbit::before,
@@ -1007,9 +964,9 @@ export default function HomePageClient() {
         }
 
         .reactor-orbit-two {
-          inset: 12%;
+          inset: 14%;
           transform: rotate(18deg);
-          border-color: rgba(255, 255, 255, 0.07);
+          border-color: rgba(255, 255, 255, 0.05);
         }
 
         .reactor-orbit-two::before {
@@ -1027,14 +984,14 @@ export default function HomePageClient() {
         .reactor-mark {
           position: relative;
           z-index: 1;
-          width: 42% !important;
+          width: 48% !important;
           height: auto !important;
         }
 
         .reactor-chip {
           position: absolute;
-          min-height: 34px;
-          padding: 0 12px;
+          min-height: 36px;
+          padding: 0 14px;
           border-radius: 999px;
           display: inline-flex;
           align-items: center;
@@ -1043,10 +1000,10 @@ export default function HomePageClient() {
           font-weight: 800;
           letter-spacing: 0.06em;
           text-transform: uppercase;
-          border: 1px solid rgba(255, 255, 255, 0.08);
+          border: 1px solid rgba(255, 255, 255, 0.06);
           background:
-            linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03)),
-            rgba(10, 10, 16, 0.72);
+            linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02)),
+            rgba(10, 10, 16, 0.62);
           color: #eef2ff;
           backdrop-filter: blur(var(--home-surface-blur, 10px));
         }
@@ -1065,195 +1022,49 @@ export default function HomePageClient() {
         .chip-blue { color: #9fd5ff; }
         .chip-soft { color: #e4ddff; }
 
-        .reactor-chip-links { top: 7%; left: 3%; }
-        .reactor-chip-badges { top: 15%; right: 1%; }
-        .reactor-chip-music { top: 48%; right: -2%; }
-        .reactor-chip-comments { bottom: 18%; left: -1%; }
-        .reactor-chip-leaderboard { bottom: 8%; right: 8%; }
-        .reactor-chip-aura { bottom: 6%; left: 24%; }
+        .reactor-chip-links { top: 12%; left: 6%; }
+        .reactor-chip-badges { top: 18%; right: 4%; }
+        .reactor-chip-music { bottom: 14%; left: 50%; transform: translateX(-50%); }
 
-        .reactor-side-panel {
+        .reactor-caption {
+          position: relative;
+          z-index: 1;
           display: grid;
-          gap: 16px;
-          padding: 18px;
+          gap: 8px;
+          text-align: center;
+          max-width: 360px;
+          margin: -4px auto 0;
         }
 
-        .reactor-profile-header {
-          display: grid;
-          gap: 6px;
-        }
-
-        .reactor-profile-header strong {
-          font-size: 26px;
+        .reactor-caption strong {
+          font-size: 28px;
           letter-spacing: -0.05em;
         }
 
-        .reactor-profile-header span {
-          color: #9ba7c0;
-          font-size: 13px;
-          line-height: 1.6;
-        }
-
-        .reactor-panel-card {
-          display: grid;
-          gap: 12px;
-          padding: 14px;
-          border-radius: 22px;
-          background: rgba(255, 255, 255, 0.03);
-          border: 1px solid rgba(255, 255, 255, 0.06);
-        }
-
-        .reactor-panel-card h3,
-        .reactor-panel-card strong {
+        .reactor-caption p {
           margin: 0;
-          font-size: 13px;
-          font-weight: 800;
-          letter-spacing: 0.06em;
-          text-transform: uppercase;
-          color: #eef2ff;
-        }
-
-        .reactor-panel-card p {
-          margin: 0;
-          color: #aab4cb;
-          font-size: 13px;
-          line-height: 1.6;
-        }
-
-        .module-grid {
-          display: grid;
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-          gap: 10px;
-        }
-
-        .module-tile {
-          min-height: 62px;
-          padding: 12px;
-          border-radius: 18px;
-          display: grid;
-          gap: 6px;
-          background:
-            linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02)),
-            rgba(255, 255, 255, 0.02);
-          border: 1px solid rgba(255, 255, 255, 0.06);
-        }
-
-        .module-tile span {
-          color: #7f8ba3;
-          font-size: 11px;
-          font-weight: 700;
-          text-transform: uppercase;
-          letter-spacing: 0.06em;
-        }
-
-        .module-tile strong {
+          color: #a5b0c7;
           font-size: 14px;
-          text-transform: none;
-          letter-spacing: -0.02em;
-        }
-
-        .artifact-strip,
-        .proof-row {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 10px;
-        }
-
-        .artifact-pill,
-        .proof-pill {
-          min-height: 34px;
-          padding: 0 12px;
-          border-radius: 999px;
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          color: #dbe5fb;
-          font-size: 12px;
-          font-weight: 700;
-          background: rgba(255, 255, 255, 0.04);
-          border: 1px solid rgba(255, 255, 255, 0.07);
-        }
-
-        .artifact-pill::before,
-        .proof-pill::before {
-          content: "";
-          width: 7px;
-          height: 7px;
-          border-radius: 999px;
-          background: linear-gradient(135deg, #8a76ff, #ff7ab7);
-          box-shadow: 0 0 12px rgba(138, 118, 255, 0.34);
+          line-height: 1.72;
         }
 
         .reactor-footer {
-          display: flex;
-          justify-content: space-between;
-          gap: 12px;
-          flex-wrap: wrap;
-          color: #8f9ab2;
+          color: #8d98af;
           font-size: 12px;
           font-weight: 700;
-        }
-
-        .reactor-mini-strip {
-          padding: 16px;
-          display: grid;
-          gap: 12px;
-        }
-
-        .mini-strip-title {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 12px;
-          color: #ecf2ff;
-          font-size: 12px;
-          font-weight: 800;
-          letter-spacing: 0.08em;
-          text-transform: uppercase;
-        }
-
-        .mini-fragment-grid {
-          display: grid;
-          grid-template-columns: repeat(3, minmax(0, 1fr));
-          gap: 10px;
-        }
-
-        .mini-fragment {
-          min-height: 72px;
-          padding: 12px;
-          border-radius: 18px;
-          background:
-            linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02)),
-            rgba(255, 255, 255, 0.02);
-          border: 1px solid rgba(255, 255, 255, 0.06);
-          display: grid;
-          align-content: space-between;
-          gap: 10px;
-        }
-
-        .mini-fragment span {
-          color: #7f8aa2;
-          font-size: 11px;
-          font-weight: 700;
-          text-transform: uppercase;
-          letter-spacing: 0.06em;
-        }
-
-        .mini-fragment strong {
-          font-size: 15px;
-          letter-spacing: -0.02em;
+          text-align: center;
         }
 
         .section-shell {
           position: relative;
-          padding: 34px 0 24px;
+          padding: 52px 0 20px;
         }
 
         .section-intro {
           display: grid;
-          gap: 14px;
-          max-width: 720px;
-          margin-bottom: 24px;
+          gap: 16px;
+          max-width: 660px;
+          margin-bottom: 34px;
         }
 
         .section-intro h2,
@@ -1273,21 +1084,17 @@ export default function HomePageClient() {
           text-wrap: pretty;
         }
 
-        .identity-layout {
-          display: grid;
-          grid-template-columns: minmax(0, 1.05fr) minmax(280px, 0.95fr);
-          gap: 20px;
-        }
-
         .section-surface {
-          padding: 18px;
+          padding: 8px 0 0;
           display: grid;
-          gap: 14px;
+          gap: 18px;
+          background: transparent;
+          border: 0;
         }
 
         .surface-grid {
           display: grid;
-          gap: 14px;
+          gap: 18px;
         }
 
         .identity-card-grid {
@@ -1296,19 +1103,19 @@ export default function HomePageClient() {
 
         .creator-card-grid,
         .performance-card-grid {
-          grid-template-columns: repeat(3, minmax(0, 1fr));
+          grid-template-columns: repeat(2, minmax(0, 1fr));
         }
 
         .surface-card {
           position: relative;
           display: grid;
-          gap: 12px;
-          padding: 18px;
-          border-radius: 24px;
+          gap: 14px;
+          padding: 24px;
+          border-radius: 28px;
           background:
-            linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02)),
-            rgba(255, 255, 255, 0.02);
-          border: 1px solid rgba(255, 255, 255, 0.07);
+            linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.015)),
+            rgba(255, 255, 255, 0.015);
+          border: 1px solid rgba(255, 255, 255, 0.05);
           min-width: 0;
         }
 
@@ -1360,61 +1167,10 @@ export default function HomePageClient() {
           line-height: 1.68;
         }
 
-        .identity-rail {
-          display: grid;
-          align-content: start;
-          gap: 16px;
-          padding: 20px;
-        }
-
-        .identity-rail h3 {
-          margin: 0;
-          font-size: 20px;
-          letter-spacing: -0.04em;
-        }
-
-        .identity-rail p {
-          margin: 0;
-          color: #aab4cb;
-          font-size: 14px;
-          line-height: 1.68;
-        }
-
-        .rail-list {
-          display: grid;
-          gap: 12px;
-          margin: 0;
-          padding: 0;
-          list-style: none;
-        }
-
-        .rail-list li {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          padding: 12px 14px;
-          border-radius: 18px;
-          background: rgba(255, 255, 255, 0.03);
-          border: 1px solid rgba(255, 255, 255, 0.06);
-          color: #dbe5fb;
-          font-size: 14px;
-          font-weight: 700;
-        }
-
-        .rail-list li::before {
-          content: "";
-          width: 10px;
-          height: 10px;
-          border-radius: 999px;
-          background: linear-gradient(135deg, #8a76ff, #ff7ab7);
-          box-shadow: 0 0 14px rgba(138, 118, 255, 0.34);
-          flex-shrink: 0;
-        }
-
         .creator-grid,
         .performance-grid {
           display: grid;
-          gap: 14px;
+          gap: 18px;
         }
 
         .creator-card-grid {
@@ -1422,25 +1178,10 @@ export default function HomePageClient() {
           gap: 14px;
         }
 
-        .creator-card-top {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 12px;
-        }
-
-        .creator-card-tag {
-          color: #7f8ba2;
-          font-size: 11px;
-          font-weight: 800;
-          text-transform: uppercase;
-          letter-spacing: 0.08em;
-        }
-
         .collectible-grid {
           display: grid;
           grid-template-columns: repeat(3, minmax(0, 1fr));
-          gap: 14px;
+          gap: 18px;
         }
 
         .collectible-card {
@@ -1484,9 +1225,9 @@ export default function HomePageClient() {
         }
 
         .collectible-footer {
-          margin-top: 14px;
+          margin-top: 20px;
           display: grid;
-          gap: 14px;
+          gap: 12px;
           color: #aab4cb;
           font-size: 14px;
           line-height: 1.68;
@@ -1508,20 +1249,20 @@ export default function HomePageClient() {
         }
 
         .cta-section {
-          padding: 34px 0 88px;
+          padding: 60px 0 92px;
         }
 
         .cta-panel {
           display: grid;
           grid-template-columns: minmax(0, 1fr) minmax(320px, 0.92fr);
-          gap: 24px;
-          padding: 26px;
+          gap: 28px;
+          padding: 30px;
           background:
-            radial-gradient(circle at top left, rgba(124, 108, 255, 0.16), transparent 30%),
-            radial-gradient(circle at bottom right, rgba(255, 110, 168, 0.14), transparent 28%),
+            radial-gradient(circle at top left, rgba(124, 108, 255, 0.14), transparent 30%),
+            radial-gradient(circle at bottom right, rgba(255, 110, 168, 0.12), transparent 28%),
             linear-gradient(180deg, rgba(16, 13, 24, 0.98), rgba(8, 8, 14, 0.98));
           box-shadow:
-            inset 0 1px 0 rgba(255, 255, 255, 0.05),
+            inset 0 1px 0 rgba(255, 255, 255, 0.04),
             0 34px 64px rgba(0, 0, 0, 0.28);
         }
 
@@ -1561,8 +1302,7 @@ export default function HomePageClient() {
           animation: home-orbit-reverse calc(var(--home-orbit-duration, 28s) * 1.2) linear infinite;
         }
 
-        .home-live-motion .reactor-panel,
-        .home-live-motion .reactor-mini-strip {
+        .home-live-motion .reactor-panel {
           animation: home-float-panel var(--home-float-duration, 6.6s) ease-in-out infinite;
         }
 
@@ -1625,7 +1365,6 @@ export default function HomePageClient() {
 
         @media (max-width: 1120px) {
           .hero-grid,
-          .identity-layout,
           .cta-panel {
             grid-template-columns: 1fr;
           }
@@ -1638,10 +1377,6 @@ export default function HomePageClient() {
             max-width: 760px;
             width: 100%;
             margin: 0 auto;
-          }
-
-          .reactor-shell {
-            grid-template-columns: 1fr;
           }
 
           .reactor-core-zone {
@@ -1682,8 +1417,7 @@ export default function HomePageClient() {
           }
 
           .claim-form,
-          .hero-trust,
-          .proof-row {
+          .hero-trust {
             margin-left: auto;
             margin-right: auto;
             justify-content: center;
@@ -1713,8 +1447,7 @@ export default function HomePageClient() {
           .identity-card-grid,
           .creator-card-grid,
           .collectible-grid,
-          .performance-card-grid,
-          .mini-fragment-grid {
+          .performance-card-grid {
             grid-template-columns: 1fr;
           }
 
@@ -1728,17 +1461,8 @@ export default function HomePageClient() {
             width: 100%;
           }
 
-          .reactor-chip {
-            position: static;
-            justify-self: stretch;
-          }
-
           .reactor-core-zone {
-            gap: 10px;
-          }
-
-          .reactor-center {
-            width: min(100%, 280px);
+            min-height: 360px;
           }
         }
 
@@ -1782,9 +1506,7 @@ export default function HomePageClient() {
 
           .claim-form,
           .reactor-panel,
-          .reactor-mini-strip,
           .section-surface,
-          .identity-rail,
           .cta-panel {
             padding: 18px;
             border-radius: 24px;
@@ -1798,11 +1520,36 @@ export default function HomePageClient() {
           }
 
           .reactor-core-zone {
-            min-height: 320px;
+            min-height: 340px;
+            padding-bottom: 8px;
           }
 
           .reactor-mark {
-            width: 46% !important;
+            width: 44% !important;
+          }
+
+          .reactor-center {
+            width: min(100%, 300px);
+          }
+
+          .reactor-chip {
+            min-height: 32px;
+            padding: 0 12px;
+            font-size: 10px;
+          }
+
+          .reactor-chip-links {
+            top: 6%;
+            left: 2%;
+          }
+
+          .reactor-chip-badges {
+            top: 14%;
+            right: 1%;
+          }
+
+          .reactor-chip-music {
+            bottom: 8%;
           }
 
           .page-orb-a,
@@ -1845,8 +1592,8 @@ export default function HomePageClient() {
             gap: 24px;
           }
 
-          .reactor-profile-header strong {
-            font-size: 22px;
+          .reactor-caption strong {
+            font-size: 24px;
           }
         }
 
@@ -2077,103 +1824,38 @@ export default function HomePageClient() {
                   <span className="reactor-topline-dot" />
                   {t("home.preview.eyebrow")}
                 </div>
-
-                <div className="reactor-status-row">
-                  <span className="signal-pill">{t("home.preview.live")}</span>
-                  <span className="signal-pill">{t("home.preview.synced")}</span>
-                </div>
               </div>
 
-              <div className="reactor-shell">
-                <div className="reactor-core-zone">
-                  <div className="reactor-center" aria-hidden="true">
-                    <div className="reactor-aura" />
-                    <div className="reactor-orbit reactor-orbit-one" />
-                    <div className="reactor-orbit reactor-orbit-two" />
-                    <YoteiBrandMark
-                      animated={!shouldReduceMotion}
-                      className="reactor-mark"
-                      intensity={profile.tier === "high" ? "hero" : "standard"}
-                      size={148}
-                    />
+              <div className="reactor-core-zone">
+                <div className="reactor-center" aria-hidden="true">
+                  <div className="reactor-aura" />
+                  <div className="reactor-orbit reactor-orbit-one" />
+                  <div className="reactor-orbit reactor-orbit-two" />
+                  <YoteiBrandMark
+                    animated={!shouldReduceMotion}
+                    className="reactor-mark"
+                    intensity={profile.tier === "high" ? "hero" : "standard"}
+                    size={176}
+                  />
 
-                    {localizedHeroChips.map((chip) => (
-                      <div
-                        key={chip.label}
-                        className={`reactor-chip reactor-chip-${chip.key} chip-${chip.tone}`}
-                      >
-                        {chip.label}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="reactor-side-panel">
-                  <div className="reactor-profile-header">
-                    <strong>{t("home.preview.handle")}</strong>
-                    <span>{t("home.preview.role")}</span>
-                  </div>
-
-                  <div className="reactor-panel-card">
-                    <h3>{t("home.preview.modulesTitle")}</h3>
-                    <p>{t("home.preview.modulesBody")}</p>
-
-                    <div className="module-grid">
-                      <PreviewModule
-                        label={t("home.preview.moduleLabels.links")}
-                        value={t("home.preview.moduleValues.links")}
-                      />
-                      <PreviewModule
-                        label={t("home.preview.moduleLabels.presence")}
-                        value={t("home.preview.moduleValues.presence")}
-                      />
-                      <PreviewModule
-                        label={t("home.preview.moduleLabels.badges")}
-                        value={t("home.preview.moduleValues.badges")}
-                      />
-                      <PreviewModule
-                        label={t("home.preview.moduleLabels.audio")}
-                        value={t("home.preview.moduleValues.audio")}
-                      />
+                  {localizedHeroChips.map((chip) => (
+                    <div
+                      key={chip.label}
+                      className={`reactor-chip reactor-chip-${chip.key} chip-${chip.tone}`}
+                    >
+                      {chip.label}
                     </div>
-                  </div>
-
-                  <div className="reactor-panel-card">
-                    <strong>{t("home.preview.artifactTitle")}</strong>
-                    <div className="artifact-strip">
-                      <span className="artifact-pill">{t("home.preview.artifactA")}</span>
-                      <span className="artifact-pill">{t("home.preview.artifactB")}</span>
-                      <span className="artifact-pill">{t("home.preview.artifactC")}</span>
-                    </div>
-                  </div>
-
-                  <div className="reactor-footer">
-                    <span>{t("home.preview.footerLeft")}</span>
-                    <span>{t("home.preview.footerRight")}</span>
-                  </div>
+                  ))}
                 </div>
               </div>
-            </div>
 
-            <div className="reactor-mini-strip">
-              <div className="mini-strip-title">
-                <span>{t("home.preview.fragmentTitle")}</span>
-                <LuGamepad2 size={16} />
+              <div className="reactor-caption">
+                <strong>{t("home.preview.handle")}</strong>
+                <p>{t("home.preview.role")}</p>
               </div>
 
-              <div className="mini-fragment-grid">
-                <MiniFragment
-                  label={t("home.preview.fragmentLabels.comments")}
-                  value={t("home.preview.fragmentValues.comments")}
-                />
-                <MiniFragment
-                  label={t("home.preview.fragmentLabels.leaderboard")}
-                  value={t("home.preview.fragmentValues.leaderboard")}
-                />
-                <MiniFragment
-                  label={t("home.preview.fragmentLabels.effects")}
-                  value={t("home.preview.fragmentValues.effects")}
-                />
+              <div className="reactor-footer">
+                {t("home.preview.footerLeft")} / {t("home.preview.footerRight")}
               </div>
             </div>
           </div>
@@ -2188,29 +1870,16 @@ export default function HomePageClient() {
             title={t("home.identity.title")}
           />
 
-          <div className="identity-layout">
-            <div className="section-surface surface-grid identity-card-grid">
-              {localizedIdentityCards.map((card) => (
-                <SurfaceCard
-                  key={card.title}
-                  accent={card.accent}
-                  body={card.body}
-                  icon={card.icon}
-                  title={card.title}
-                />
-              ))}
-            </div>
-
-            <div className="identity-rail">
-              <h3>{t("home.identity.rail.title")}</h3>
-              <p>{t("home.identity.rail.body")}</p>
-
-              <ul className="rail-list">
-                {railItems.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            </div>
+          <div className="section-surface surface-grid identity-card-grid">
+            {localizedIdentityCards.map((card) => (
+              <SurfaceCard
+                key={card.title}
+                accent={card.accent}
+                body={card.body}
+                icon={card.icon}
+                title={card.title}
+              />
+            ))}
           </div>
         </div>
       </section>
@@ -2227,10 +1896,7 @@ export default function HomePageClient() {
             <div className="creator-card-grid">
               {localizedGamerCards.map((card) => (
                 <div key={card.title} className="surface-card">
-                  <div className="creator-card-top">
-                    <div className={`card-icon accent-${card.accent}`}>{card.icon}</div>
-                    <span className="creator-card-tag">{t("home.gamers.cardTag")}</span>
-                  </div>
+                  <div className={`card-icon accent-${card.accent}`}>{card.icon}</div>
                   <h3>{card.title}</h3>
                   <p>{card.body}</p>
                 </div>
@@ -2259,13 +1925,6 @@ export default function HomePageClient() {
           </div>
 
           <div className="collectible-footer">
-            <div className="artifact-strip">
-              {collectibleFragments.map((fragment) => (
-                <span key={fragment} className="artifact-pill">
-                  {fragment}
-                </span>
-              ))}
-            </div>
             <p>{t("home.collectible.footer")}</p>
           </div>
         </div>
@@ -2311,14 +1970,6 @@ export default function HomePageClient() {
 
               <h2>{t("home.cta.title")}</h2>
               <p>{t("home.cta.body")}</p>
-
-              <div className="proof-row">
-                {ctaProofs.map((proof) => (
-                  <span key={proof} className="proof-pill">
-                    {proof}
-                  </span>
-                ))}
-              </div>
 
               <div className="cta-actions">
                 <Link href="/login" className="cta-secondary">
@@ -2385,24 +2036,6 @@ function ClaimForm({
         <LuArrowRight size={17} />
       </button>
     </form>
-  );
-}
-
-function PreviewModule({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="module-tile">
-      <span>{label}</span>
-      <strong>{value}</strong>
-    </div>
-  );
-}
-
-function MiniFragment({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="mini-fragment">
-      <span>{label}</span>
-      <strong>{value}</strong>
-    </div>
   );
 }
 
