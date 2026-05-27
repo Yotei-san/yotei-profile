@@ -6,6 +6,7 @@ import { type CSSProperties, useEffect, useId, useRef, useState } from "react";
 import { LuMenu, LuPanelLeftClose, LuX } from "react-icons/lu";
 import { useI18n } from "@/app/components/I18nProvider";
 import LanguageSwitcher from "@/app/components/LanguageSwitcher";
+import YoteiBrandMark from "@/app/components/YoteiBrandMark";
 import {
   dashboardButtonStyle,
   dashboardTagStyle,
@@ -163,17 +164,6 @@ export default function DashboardSidebar({ user, items, lockedHrefs = [] }: Prop
         }
 
         .dashboard-sidebar-mobile-brand-mark {
-          width: 40px;
-          height: 40px;
-          border-radius: 14px;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          background:
-            linear-gradient(135deg, rgba(244,114,182,0.26), rgba(168,85,247,0.22));
-          border: 1px solid rgba(244,114,182,0.22);
-          color: #f9a8d4;
-          font-weight: 900;
           flex-shrink: 0;
         }
 
@@ -311,7 +301,12 @@ export default function DashboardSidebar({ user, items, lockedHrefs = [] }: Prop
 
       <div className="dashboard-sidebar-mobile-bar">
         <Link href="/dashboard" className="dashboard-sidebar-mobile-brand">
-          <span className="dashboard-sidebar-mobile-brand-mark">Y</span>
+          <YoteiBrandMark
+            animated={false}
+            className="dashboard-sidebar-mobile-brand-mark"
+            intensity="calm"
+            size={40}
+          />
           <span className="dashboard-sidebar-mobile-brand-copy">
             <strong>yotei profile</strong>
             <span>{t("dashboard.sidebar.control")}</span>

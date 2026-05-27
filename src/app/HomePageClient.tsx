@@ -25,6 +25,7 @@ import { useI18n } from "@/app/components/I18nProvider";
 import LanguageSwitcher from "@/app/components/LanguageSwitcher";
 import { useAdaptivePerformance } from "@/app/components/PerformanceProvider";
 import { useBodyScrollLock } from "@/app/components/useBodyScrollLock";
+import YoteiBrandMark from "@/app/components/YoteiBrandMark";
 
 const EASE_OUT = [0.16, 1, 0.3, 1] as const;
 
@@ -351,40 +352,9 @@ export default function HomePageClient() {
           min-width: 0;
         }
 
-        .brand-mark {
-          position: relative;
-          width: 42px;
-          height: 42px;
-          border-radius: 14px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: #ffffff;
-          isolation: isolate;
-          background:
-            radial-gradient(circle at 28% 24%, rgba(255, 255, 255, 0.38), transparent 24%),
-            linear-gradient(145deg, #8a76ff 0%, #ff6ea8 54%, #5aa9ff 100%);
-          box-shadow:
-            inset 0 1px 0 rgba(255, 255, 255, 0.18),
-            0 18px 36px rgba(110, 93, 255, 0.26);
-        }
-
-        .brand-mark::before {
-          content: "";
-          position: absolute;
-          inset: 3px;
-          border-radius: 11px;
-          border: 1px solid rgba(255, 255, 255, 0.16);
-          opacity: 0.86;
-        }
-
-        .brand-mark strong {
-          position: relative;
-          z-index: 1;
-          font-size: 17px;
-          font-weight: 950;
-          letter-spacing: -0.08em;
-          text-shadow: 0 8px 20px rgba(14, 18, 38, 0.3);
+        .brand-mark-svg {
+          flex-shrink: 0;
+          transition: transform 180ms ease;
         }
 
         .brand-copy {
@@ -1158,10 +1128,8 @@ export default function HomePageClient() {
         }
 
         @media (hover: hover) and (pointer: fine) {
-          .brand-link:hover .brand-mark {
-            box-shadow:
-              inset 0 1px 0 rgba(255, 255, 255, 0.2),
-              0 22px 40px rgba(110, 93, 255, 0.34);
+          .brand-link:hover .brand-mark-svg {
+            transform: translateY(-1px) scale(1.02);
           }
 
           .nav-cta:hover,
@@ -1563,9 +1531,12 @@ export default function HomePageClient() {
               transition={{ duration: 0.45, ease: EASE_OUT }}
             >
               <Link href="/" className="brand-link" onClick={() => setIsMobileMenuOpen(false)}>
-                <div className="brand-mark">
-                  <strong>Y</strong>
-                </div>
+                <YoteiBrandMark
+                  animated={!shouldReduceMotion}
+                  className="brand-mark-svg"
+                  intensity="standard"
+                  size={40}
+                />
                 <div className="brand-copy">
                   <strong>Yotei</strong>
                   <span>{t("home.brandSubtitle")}</span>
