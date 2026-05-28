@@ -7,6 +7,7 @@ import {
   getBadgeMissionCollection,
   parseBadgeFilter,
   type BadgeFilter,
+  type BadgeMissionCardState,
 } from "@/app/lib/badge-missions";
 
 type PageProps = {
@@ -26,38 +27,103 @@ export default async function BadgesPage({ searchParams }: PageProps) {
   const successMessage = getSuccessMessage(params.success);
   const errorMessage = getErrorMessage(params.error);
   const filterItems = buildFilterItems(collection.badges);
+  const featuredRelic = pickFeaturedRelic(filteredBadges);
+  const grouped = buildArmoryGroups(filteredBadges, featuredRelic?.slug ?? null);
 
   return (
     <main style={pageStyle}>
       <style>{`
+        .badge-mission-card {
+          transition:
+            transform 180ms cubic-bezier(0.22, 1, 0.36, 1),
+            box-shadow 180ms ease,
+            border-color 180ms ease,
+            filter 180ms ease;
+        }
+
+        .badge-action-button {
+          transition:
+            transform 180ms cubic-bezier(0.22, 1, 0.36, 1),
+            opacity 180ms ease,
+            border-color 180ms ease,
+            box-shadow 180ms ease;
+        }
+
         @media (hover: hover) and (pointer: fine) {
           .badge-mission-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 28px 50px rgba(0, 0, 0, 0.24);
+            transform: translateY(-4px);
+            filter: saturate(1.04) brightness(1.02);
           }
 
           .badge-mission-card:hover .badge-action-button {
             transform: translateY(-1px);
           }
         }
+
+        @media (max-width: 920px) {
+          .armory-hero {
+            grid-template-columns: 1fr !important;
+            padding: 24px !important;
+          }
+
+          .badge-mission-card.badge-variant-featured .badge-mission-card-shell {
+            grid-template-columns: 1fr !important;
+          }
+
+          .badge-mission-card.badge-variant-featured .badge-mission-card-crest {
+            justify-items: start !important;
+          }
+
+          .badge-mission-card.badge-variant-featured .badge-mission-card-detail-rail {
+            grid-template-columns: 1fr !important;
+          }
+        }
+
+        @media (max-width: 640px) {
+          .armory-hero {
+            gap: 18px !important;
+            padding: 20px !important;
+          }
+
+          .armory-hero-title {
+            font-size: 38px !important;
+            line-height: 0.98 !important;
+          }
+
+          .armory-summary-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+          }
+
+          .armory-rail {
+            grid-template-columns: 1fr !important;
+          }
+
+          .armory-grid-epic,
+          .armory-grid-rare,
+          .armory-grid-common {
+            grid-template-columns: 1fr !important;
+          }
+        }
       `}</style>
 
-      <section style={heroStyle}>
+      <section className="armory-hero" style={heroStyle}>
         <div style={{ display: "grid", gap: "16px", minWidth: 0 }}>
-          <div style={badgeStyle}>Badge Missions</div>
-          <div style={{ display: "grid", gap: "10px", minWidth: 0 }}>
-            <h1 style={heroTitleStyle}>Claim badges and build your Yotei identity.</h1>
+          <div style={eyebrowStyle}>Yotei Armory</div>
+          <div style={{ display: "grid", gap: "12px", minWidth: 0 }}>
+            <h1 className="armory-hero-title" style={heroTitleStyle}>
+              Your profile badges, presented like a real armory.
+            </h1>
             <p style={heroTextStyle}>
-              Track mission progress, understand locked requirements and claim
-              eligible badges directly from your dashboard.
+              See what is equipped, what is unlocked, and what still needs a mission,
+              Premium, or review before it can join your public identity.
             </p>
           </div>
         </div>
 
-        <div style={heroSummaryGridStyle}>
-          <SummaryCard label="Claimed" value={String(collection.claimedCount)} />
-          <SummaryCard label="Ready now" value={String(collection.claimableCount)} />
-          <SummaryCard label="Remaining" value={String(collection.lockedCount)} />
+        <div className="armory-summary-grid" style={heroSummaryGridStyle}>
+          <SummaryCard label="Equipped" value={String(collection.claimedCount)} tone="gold" />
+          <SummaryCard label="Unlocked" value={String(collection.claimableCount)} tone="violet" />
+          <SummaryCard label="Needs action" value={String(collection.lockedCount)} tone="blue" />
         </div>
       </section>
 
@@ -66,42 +132,126 @@ export default async function BadgesPage({ searchParams }: PageProps) {
 
       <section style={toolbarStyle}>
         <div style={{ display: "grid", gap: "10px", minWidth: 0 }}>
-          <div style={sectionEyebrowStyle}>Filters</div>
-          <h2 style={sectionTitleStyle}>Browse badge groups</h2>
+          <div style={sectionEyebrowStyle}>Browse</div>
+          <h2 style={sectionTitleStyle}>Filter your badge collection</h2>
         </div>
 
         <BadgeFilterTabs activeFilter={activeFilter} items={filterItems} />
       </section>
 
-      <section style={gridStyle}>
-        {filteredBadges.length > 0 ? (
-          filteredBadges.map((badge) => (
-            <BadgeMissionCard
-              key={badge.slug}
-              badge={badge}
-              activeFilter={activeFilter}
-            />
-          ))
-        ) : (
-          <div style={emptyStyle}>
-            No badges match the <strong>{labelForFilter(activeFilter)}</strong> filter right
-            now.
+      {featuredRelic ? (
+        <section style={featuredSectionStyle}>
+          <SectionIntro
+            eyebrow="Featured relic"
+            title={featuredRelic.name}
+            body="Your rarest badge gets the spotlight first, while the rest of the collection stays easy to compare below."
+          />
+          <BadgeMissionCard
+            badge={featuredRelic}
+            activeFilter={activeFilter}
+            variant="featured"
+          />
+        </section>
+      ) : null}
+
+      {grouped.legendary.length > 0 ? (
+        <section style={sectionStyle}>
+          <SectionIntro
+            eyebrow="Legendary collection"
+            title="High-status badges with more presence"
+            body="These badges stay larger and calmer, so they feel important without turning the page into a wall of cards."
+          />
+          <div className="armory-rail" style={legendaryRailStyle}>
+            {grouped.legendary.map((badge) => (
+              <BadgeMissionCard
+                key={badge.slug}
+                badge={badge}
+                activeFilter={activeFilter}
+                variant="shelf"
+              />
+            ))}
           </div>
-        )}
-      </section>
+        </section>
+      ) : null}
+
+      {grouped.epic.length > 0 ? (
+        <section style={sectionStyle}>
+          <SectionIntro
+            eyebrow="Epic collection"
+            title="Premium badges with clear mission progress"
+            body="Still collectible, but easier to scan quickly when you want to unlock or equip the next one."
+          />
+          <div className="armory-grid-epic" style={epicGridStyle}>
+            {grouped.epic.map((badge) => (
+              <BadgeMissionCard
+                key={badge.slug}
+                badge={badge}
+                activeFilter={activeFilter}
+                variant="shelf"
+              />
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {grouped.rare.length > 0 ? (
+        <section style={sectionStyle}>
+          <SectionIntro
+            eyebrow="Rare collection"
+            title="Smaller badges that still feel worth earning"
+            body="Rare badges keep the collectible tone, with lighter framing so the page stays readable."
+          />
+          <div className="armory-grid-rare" style={rareGridStyle}>
+            {grouped.rare.map((badge, index) => (
+              <BadgeMissionCard
+                key={badge.slug}
+                badge={badge}
+                activeFilter={activeFilter}
+                variant={index < 2 ? "shelf" : "compact"}
+              />
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {grouped.common.length > 0 ? (
+        <section style={sectionStyle}>
+          <SectionIntro
+            eyebrow="Starter badges"
+            title="The first steps of your collection"
+            body="Starter unlocks stay simple and easy to scan, especially on mobile."
+          />
+          <div className="armory-grid-common" style={commonGridStyle}>
+            {grouped.common.map((badge) => (
+              <BadgeMissionCard
+                key={badge.slug}
+                badge={badge}
+                activeFilter={activeFilter}
+                variant="compact"
+              />
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {!featuredRelic &&
+      grouped.legendary.length === 0 &&
+      grouped.epic.length === 0 &&
+      grouped.rare.length === 0 &&
+      grouped.common.length === 0 ? (
+        <div style={emptyStyle}>
+          No relics match the <strong>{labelForFilter(activeFilter)}</strong> filter right now.
+        </div>
+      ) : null}
     </main>
   );
 }
 
 function buildFilterItems(
-  badges: Awaited<ReturnType<typeof getBadgeMissionCollection>>["badges"]
+  badges: Awaited<ReturnType<typeof getBadgeMissionCollection>>["badges"],
 ): Array<{ key: BadgeFilter; label: string; count: number }> {
   return [
-    {
-      key: "all",
-      label: "All",
-      count: badges.length,
-    },
+    { key: "all", label: "All", count: badges.length },
     {
       key: "official",
       label: "Official",
@@ -119,15 +269,61 @@ function buildFilterItems(
     },
     {
       key: "claimed",
-      label: "Claimed",
+      label: "Equipped",
       count: badges.filter((badge) => badge.isClaimed).length,
     },
     {
       key: "locked",
-      label: "Locked",
+      label: "Needs action",
       count: badges.filter((badge) => !badge.isClaimed && badge.status !== "claimable").length,
     },
   ];
+}
+
+function buildArmoryGroups(badges: BadgeMissionCardState[], featuredSlug: string | null) {
+  const remaining = badges.filter((badge) => badge.slug !== featuredSlug);
+
+  return {
+    legendary: remaining.filter(
+      (badge) => badge.rarity === "owner" || badge.rarity === "legendary",
+    ),
+    epic: remaining.filter((badge) => badge.rarity === "epic"),
+    rare: remaining.filter((badge) => badge.rarity === "rare"),
+    common: remaining.filter((badge) => badge.rarity === "common"),
+  };
+}
+
+function pickFeaturedRelic(badges: BadgeMissionCardState[]) {
+  if (badges.length === 0) {
+    return null;
+  }
+
+  return [...badges].sort((left, right) => getBadgeRank(right) - getBadgeRank(left))[0] ?? null;
+}
+
+function getBadgeRank(badge: BadgeMissionCardState) {
+  const rarityScore =
+    badge.rarity === "owner"
+      ? 500
+      : badge.rarity === "legendary"
+        ? 420
+        : badge.rarity === "epic"
+          ? 320
+          : badge.rarity === "rare"
+            ? 220
+            : 120;
+  const statusScore =
+    badge.status === "claimed"
+      ? 42
+      : badge.status === "claimable"
+        ? 34
+        : badge.status === "manual-review"
+          ? 26
+          : badge.status === "official-only"
+            ? 22
+            : 14;
+
+  return rarityScore + statusScore;
 }
 
 function labelForFilter(filter: BadgeFilter) {
@@ -140,7 +336,7 @@ function labelForFilter(filter: BadgeFilter) {
 
 function getSuccessMessage(code?: string) {
   if (code === "badge-claimed") {
-    return "Badge claimed and applied to your profile.";
+    return "Badge equipped on your public profile.";
   }
 
   return "";
@@ -148,39 +344,74 @@ function getSuccessMessage(code?: string) {
 
 function getErrorMessage(code?: string) {
   if (code === "badge-not-found") {
-    return "This badge could not be found.";
+    return "This badge could not be found in the armory.";
   }
 
   if (code === "already-claimed") {
-    return "You already claimed this badge.";
+    return "This relic is already equipped.";
   }
 
   if (code === "official-only") {
-    return "This badge is official-only and cannot be claimed by regular users.";
+    return "This badge is reserved for official Yotei assignment.";
   }
 
   if (code === "premium-required") {
-    return "Premium access is required before this badge can be claimed.";
+    return "Premium is still required before this badge can be unlocked.";
   }
 
   if (code === "manual-review") {
-    return "Streamer badge requires manual review and cannot be claimed automatically.";
+    return "This badge is still waiting for manual review.";
   }
 
   if (code === "locked") {
-    return "Mission requirement is not complete yet.";
+    return "Complete the mission requirement before equipping this badge.";
   }
 
   if (code === "not-available") {
-    return "This badge is not available for claim in this phase.";
+    return "This badge exists, but it is not claimable yet.";
   }
 
   return "";
 }
 
-function SummaryCard({ label, value }: { label: string; value: string }) {
+function SectionIntro({
+  eyebrow,
+  title,
+  body,
+}: {
+  eyebrow: string;
+  title: string;
+  body: string;
+}) {
   return (
-    <div style={summaryCardStyle}>
+    <div style={{ display: "grid", gap: "10px", minWidth: 0 }}>
+      <div style={sectionEyebrowStyle}>{eyebrow}</div>
+      <h2 style={sectionTitleStyle}>{title}</h2>
+      <p style={sectionBodyStyle}>{body}</p>
+    </div>
+  );
+}
+
+function SummaryCard({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone: "gold" | "violet" | "blue";
+}) {
+  const accent =
+    tone === "gold" ? "#f4c97a" : tone === "violet" ? "#c4b5fd" : "#7dd3fc";
+
+  return (
+    <div
+      style={{
+        ...summaryCardStyle,
+        border: `1px solid ${accent}20`,
+        boxShadow: `0 16px 30px ${accent}12`,
+      }}
+    >
       <div style={summaryValueStyle}>{value}</div>
       <div style={summaryLabelStyle}>{label}</div>
     </div>
@@ -189,97 +420,98 @@ function SummaryCard({ label, value }: { label: string; value: string }) {
 
 const pageStyle: CSSProperties = {
   display: "grid",
-  gap: "22px",
+  gap: "24px",
   color: "#ffffff",
-  fontFamily: "Arial, Helvetica, sans-serif",
+  fontFamily: '"Segoe UI", Arial, Helvetica, sans-serif',
 };
 
 const heroStyle: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "minmax(0, 1fr) auto",
-  gap: "18px",
-  alignItems: "start",
-  padding: "28px",
-  borderRadius: "30px",
-  border: "1px solid rgba(255,255,255,0.08)",
+  gridTemplateColumns: "minmax(0, 1.2fr) minmax(280px, 0.8fr)",
+  gap: "22px",
+  alignItems: "end",
+  padding: "30px",
+  borderRadius: "34px",
+  border: "1px solid rgba(255,255,255,0.06)",
   background:
-    "radial-gradient(circle at top left, rgba(255,110,168,0.14), transparent 26%), radial-gradient(circle at 84% 16%, rgba(135,118,255,0.16), transparent 24%), linear-gradient(135deg, rgba(21,16,29,0.98), rgba(8,8,13,0.98))",
-  boxShadow: "0 28px 64px rgba(0,0,0,0.24)",
+    "radial-gradient(circle at 10% 0%, rgba(244,201,122,0.14), transparent 28%), radial-gradient(circle at 86% 18%, rgba(124,125,255,0.15), transparent 24%), linear-gradient(180deg, rgba(14,16,24,0.98), rgba(6,8,14,0.98))",
+  boxShadow: "0 32px 70px rgba(0,0,0,0.24)",
 };
 
-const badgeStyle: CSSProperties = {
+const eyebrowStyle: CSSProperties = {
   display: "inline-flex",
   width: "fit-content",
   minHeight: "34px",
+  alignItems: "center",
   padding: "0 12px",
   borderRadius: "999px",
-  border: "1px solid rgba(255,110,168,0.20)",
-  backgroundColor: "rgba(255,110,168,0.08)",
-  color: "#ffd7e8",
+  border: "1px solid rgba(244,201,122,0.18)",
+  backgroundColor: "rgba(244,201,122,0.08)",
+  color: "#ffe9b9",
   fontSize: "12px",
   fontWeight: 900,
-  letterSpacing: "0.08em",
+  letterSpacing: "0.09em",
   textTransform: "uppercase",
 };
 
 const heroTitleStyle: CSSProperties = {
   margin: 0,
-  fontSize: "50px",
+  fontSize: "54px",
   lineHeight: 0.94,
-  letterSpacing: "-0.05em",
+  letterSpacing: "-0.06em",
 };
 
 const heroTextStyle: CSSProperties = {
   margin: 0,
   maxWidth: "62ch",
-  color: "#b7c1d8",
+  color: "#b7c2d7",
   fontSize: "15px",
   lineHeight: 1.8,
 };
 
 const heroSummaryGridStyle: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "repeat(3, minmax(120px, 1fr))",
+  gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
   gap: "12px",
 };
 
 const summaryCardStyle: CSSProperties = {
-  minWidth: "120px",
-  padding: "16px",
-  borderRadius: "22px",
-  border: "1px solid rgba(255,255,255,0.08)",
-  backgroundColor: "rgba(255,255,255,0.04)",
   display: "grid",
   gap: "8px",
+  minWidth: 0,
+  padding: "16px",
+  borderRadius: "22px",
+  background:
+    "linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.015))",
 };
 
 const summaryValueStyle: CSSProperties = {
-  fontSize: "32px",
+  fontSize: "34px",
   lineHeight: 1,
   fontWeight: 900,
 };
 
 const summaryLabelStyle: CSSProperties = {
-  color: "#9eabc5",
+  color: "#99a8c4",
   fontSize: "12px",
   fontWeight: 700,
 };
 
 const successBoxStyle: CSSProperties = {
-  borderRadius: "18px",
-  padding: "14px 16px",
+  borderRadius: "20px",
+  padding: "15px 17px",
   backgroundColor: "rgba(34,197,94,0.10)",
   border: "1px solid rgba(34,197,94,0.22)",
-  color: "#86efac",
+  color: "#98f5bf",
   fontWeight: 700,
 };
 
 const errorBoxStyle: CSSProperties = {
-  borderRadius: "18px",
-  padding: "14px 16px",
+  borderRadius: "20px",
+  padding: "15px 17px",
   backgroundColor: "rgba(239,68,68,0.10)",
   border: "1px solid rgba(239,68,68,0.22)",
-  color: "#fca5a5",
+  color: "#f9b3b3",
   fontWeight: 700,
 };
 
@@ -287,29 +519,67 @@ const toolbarStyle: CSSProperties = {
   display: "grid",
   gap: "16px",
   padding: "24px 26px",
-  borderRadius: "26px",
+  borderRadius: "28px",
   border: "1px solid rgba(255,255,255,0.06)",
-  backgroundColor: "rgba(8,8,12,0.9)",
+  background:
+    "linear-gradient(180deg, rgba(12,14,20,0.96), rgba(7,9,14,0.96))",
+};
+
+const featuredSectionStyle: CSSProperties = {
+  display: "grid",
+  gap: "16px",
+};
+
+const sectionStyle: CSSProperties = {
+  display: "grid",
+  gap: "16px",
 };
 
 const sectionEyebrowStyle: CSSProperties = {
-  color: "#8ea0c9",
+  color: "#8ea2ca",
   fontSize: "12px",
   fontWeight: 800,
-  letterSpacing: "0.08em",
+  letterSpacing: "0.1em",
   textTransform: "uppercase",
 };
 
 const sectionTitleStyle: CSSProperties = {
   margin: 0,
   fontSize: "32px",
-  lineHeight: 1.02,
+  lineHeight: 1.04,
+  letterSpacing: "-0.04em",
 };
 
-const gridStyle: CSSProperties = {
+const sectionBodyStyle: CSSProperties = {
+  margin: 0,
+  color: "#aeb9cf",
+  fontSize: "14px",
+  lineHeight: 1.75,
+  maxWidth: "64ch",
+};
+
+const legendaryRailStyle: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+  gap: "16px",
+};
+
+const epicGridStyle: CSSProperties = {
   display: "grid",
   gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-  gap: "18px",
+  gap: "16px",
+};
+
+const rareGridStyle: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+  gap: "14px",
+};
+
+const commonGridStyle: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+  gap: "12px",
 };
 
 const emptyStyle: CSSProperties = {

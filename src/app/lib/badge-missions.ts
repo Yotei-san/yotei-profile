@@ -352,11 +352,11 @@ function buildBadgeMissionCardState(
     return {
       ...baseCardState(definition, isClaimed),
       progressText: isClaimed
-        ? "Granted to this account."
-        : "Visible in the catalog, but reserved for official platform use.",
+        ? "Assigned to this account by the Yotei team."
+        : "Visible in your armory, but reserved for official Yotei assignment.",
       status: isClaimed ? "claimed" : "official-only",
-      statusLabel: isClaimed ? "Claimed" : "Official Only",
-      buttonLabel: isClaimed ? "Claimed" : "Official Only",
+      statusLabel: isClaimed ? "Equipped" : "Official only",
+      buttonLabel: isClaimed ? "Equipped" : "Official only",
       canClaim: false,
     };
   }
@@ -382,10 +382,10 @@ function buildPremiumBadgeState(
   if (isClaimed) {
     return {
       ...baseCardState(definition, true),
-      progressText: "Premium access confirmed.",
+      progressText: "Premium access confirmed on this account.",
       status: "claimed",
-      statusLabel: "Claimed",
-      buttonLabel: "Claimed",
+      statusLabel: "Equipped",
+      buttonLabel: "Equipped",
       canClaim: false,
     };
   }
@@ -394,11 +394,11 @@ function buildPremiumBadgeState(
     return {
       ...baseCardState(definition, false),
       progressText: hasPremium
-        ? "Premium access detected and ready to claim."
-        : "Upgrade to premium to unlock this badge.",
+        ? "Premium is active. This badge is ready to equip."
+        : "Upgrade to Premium to unlock this badge.",
       status: hasPremium ? "claimable" : "premium-required",
-      statusLabel: hasPremium ? "Ready to Claim" : "Premium Required",
-      buttonLabel: hasPremium ? "Claim" : "Upgrade",
+      statusLabel: hasPremium ? "Unlocked" : "Premium required",
+      buttonLabel: hasPremium ? "Equip badge" : "View Premium",
       canClaim: hasPremium,
     };
   }
@@ -406,11 +406,11 @@ function buildPremiumBadgeState(
   return {
     ...baseCardState(definition, false),
     progressText: hasPremium
-      ? "This premium badge is reserved for future campaigns."
-      : "Premium access is required before this badge can unlock.",
+      ? "This premium badge exists, but it has not been released yet."
+      : "Upgrade to Premium before this badge can become available.",
     status: hasPremium ? "not-available" : "premium-required",
-    statusLabel: hasPremium ? "Not Available" : "Premium Required",
-    buttonLabel: hasPremium ? "Not Available" : "Upgrade",
+    statusLabel: hasPremium ? "Coming soon" : "Premium required",
+    buttonLabel: hasPremium ? "Coming soon" : "View Premium",
     canClaim: false,
   };
 }
@@ -428,8 +428,8 @@ function buildAchievementBadgeState(
       ...baseCardState(definition, true),
       progressText: progress.completedText,
       status: "claimed",
-      statusLabel: "Claimed",
-      buttonLabel: "Claimed",
+      statusLabel: "Equipped",
+      buttonLabel: "Equipped",
       canClaim: false,
     };
   }
@@ -438,8 +438,8 @@ function buildAchievementBadgeState(
     ...baseCardState(definition, false),
     progressText: completed ? progress.completedText : progress.progressText,
     status: completed ? "claimable" : "locked",
-    statusLabel: completed ? "Ready to Claim" : "Incomplete",
-    buttonLabel: completed ? "Claim" : "Locked",
+    statusLabel: completed ? "Unlocked" : "Locked",
+    buttonLabel: completed ? "Equip badge" : "Complete mission",
     canClaim: completed,
   };
 }
@@ -452,10 +452,10 @@ function buildManualReviewBadgeState(
   if (isClaimed) {
     return {
       ...baseCardState(definition, true),
-      progressText: "This badge was granted after manual platform review.",
+      progressText: "Granted after manual review and creator proof validation.",
       status: "claimed",
-      statusLabel: "Claimed",
-      buttonLabel: "Claimed",
+      statusLabel: "Equipped",
+      buttonLabel: "Equipped",
       canClaim: false,
     };
   }
@@ -465,11 +465,11 @@ function buildManualReviewBadgeState(
   return {
     ...baseCardState(definition, false),
     progressText: hasStreamingPresence
-      ? "Streaming presence detected, but manual review and audience proof are still required."
-      : "Manual review is required. Connect your creator presence and prepare proof before applications open.",
+      ? "Live presence detected. Manual review and audience proof are still required."
+      : "Connect a supported stream presence first. After that, this badge goes to manual review.",
     status: "manual-review",
-    statusLabel: "Manual Review",
-    buttonLabel: "Manual Review Soon",
+    statusLabel: "Review queue",
+    buttonLabel: "Review queue",
     canClaim: false,
   };
 }
@@ -485,7 +485,7 @@ function getAchievementProgress(slug: string, context: BadgeMissionContext) {
     return {
       current: profileEssentials,
       target: 3,
-      progressText: `${profileEssentials} / 3 profile essentials completed`,
+      progressText: `${profileEssentials} / 3 profile basics complete`,
       completedText: "Avatar, banner and bio are ready.",
     };
   }
@@ -494,7 +494,7 @@ function getAchievementProgress(slug: string, context: BadgeMissionContext) {
     return {
       current: Math.min(context.linkCount, 1),
       target: 1,
-      progressText: `${Math.min(context.linkCount, 1)} / 1 link created`,
+      progressText: `${Math.min(context.linkCount, 1)} / 1 link added`,
       completedText: "Your first link is live.",
     };
   }
@@ -503,8 +503,8 @@ function getAchievementProgress(slug: string, context: BadgeMissionContext) {
     return {
       current: Math.min(context.activeSocialBlockCount, 1),
       target: 1,
-      progressText: `${Math.min(context.activeSocialBlockCount, 1)} / 1 active social block`,
-      completedText: "Your first social block is active.",
+      progressText: `${Math.min(context.activeSocialBlockCount, 1)} / 1 social block enabled`,
+      completedText: "Your first social block is live.",
     };
   }
 
@@ -512,8 +512,8 @@ function getAchievementProgress(slug: string, context: BadgeMissionContext) {
     return {
       current: Math.min(context.activeSocialBlockCount, 3),
       target: 3,
-      progressText: `${Math.min(context.activeSocialBlockCount, 3)} / 3 active social blocks`,
-      completedText: "Three or more social blocks are active.",
+      progressText: `${Math.min(context.activeSocialBlockCount, 3)} / 3 social blocks enabled`,
+      completedText: "Three social blocks are live.",
     };
   }
 
@@ -521,8 +521,8 @@ function getAchievementProgress(slug: string, context: BadgeMissionContext) {
     return {
       current: Math.min(context.templateCount, 1),
       target: 1,
-      progressText: `${Math.min(context.templateCount, 1)} / 1 template created`,
-      completedText: "Your first template has been created.",
+      progressText: `${Math.min(context.templateCount, 1)} / 1 preset created`,
+      completedText: "Your first preset is ready.",
     };
   }
 
@@ -531,7 +531,7 @@ function getAchievementProgress(slug: string, context: BadgeMissionContext) {
       current: Math.min(context.profileViewCount, 100),
       target: 100,
       progressText: `${context.profileViewCount} / 100 profile views`,
-      completedText: "Your profile crossed 100 views.",
+      completedText: "Your profile passed 100 views.",
     };
   }
 
@@ -548,8 +548,8 @@ function getAchievementProgress(slug: string, context: BadgeMissionContext) {
     return {
       current: Math.min(context.githubBlockCount, 1),
       target: 1,
-      progressText: `${Math.min(context.githubBlockCount, 1)} / 1 GitHub block active`,
-      completedText: "A GitHub block is active on your profile.",
+      progressText: `${Math.min(context.githubBlockCount, 1)} / 1 GitHub block enabled`,
+      completedText: "Your GitHub block is live.",
     };
   }
 
@@ -557,16 +557,16 @@ function getAchievementProgress(slug: string, context: BadgeMissionContext) {
     return {
       current: Math.min(context.spotifyBlockCount, 1),
       target: 1,
-      progressText: `${Math.min(context.spotifyBlockCount, 1)} / 1 Spotify block active`,
-      completedText: "A Spotify block is active on your profile.",
+      progressText: `${Math.min(context.spotifyBlockCount, 1)} / 1 Spotify block enabled`,
+      completedText: "Your Spotify block is live.",
     };
   }
 
   return {
     current: Math.min(context.streamerBlockCount, 1),
     target: 1,
-    progressText: `${Math.min(context.streamerBlockCount, 1)} / 1 creator or live block active`,
-    completedText: "A creator or live block is active on your profile.",
+    progressText: `${Math.min(context.streamerBlockCount, 1)} / 1 stream block enabled`,
+    completedText: "Your stream block is live.",
   };
 }
 

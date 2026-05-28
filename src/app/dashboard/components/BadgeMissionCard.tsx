@@ -8,101 +8,139 @@ import type { BadgeFilter, BadgeMissionCardState } from "@/app/lib/badge-mission
 type Props = {
   badge: BadgeMissionCardState;
   activeFilter: BadgeFilter;
+  variant?: "featured" | "shelf" | "compact";
 };
 
-export default function BadgeMissionCard({ badge, activeFilter }: Props) {
-  const cardStyle = getCardStyle(badge);
-  const buttonStyle = getButtonStyle(badge);
+export default function BadgeMissionCard({
+  badge,
+  activeFilter,
+  variant = "shelf",
+}: Props) {
+  const isFeatured = variant === "featured";
+  const isCompact = variant === "compact";
+  const titleText = badge.name;
+  const subtitleText = badge.description;
 
   return (
     <article
-      className={`badge-mission-card badge-card-${badge.status}`}
-      style={cardStyle}
+      className={`badge-mission-card badge-card-${badge.status} badge-variant-${variant}`}
+      style={getCardStyle(badge, variant)}
     >
-      <div style={topRowStyle}>
-        <div
-          style={{
-            ...iconWrapStyle,
-            background: `linear-gradient(135deg, ${badge.color}12, rgba(255,255,255,0.02))`,
-            borderColor: `${badge.color}30`,
-            boxShadow: `0 14px 28px ${badge.color}18`,
-          }}
-        >
-          <BadgeVisual
-            slug={badge.slug}
-            icon={badge.icon}
-            name={badge.name}
-            color={badge.color}
-            rarity={badge.rarity}
-            category={badge.category}
-            size={64}
-          />
-        </div>
-
-        <div style={badge.status === "claimed" ? claimedStatusStyle : statusStyle(badge)}>
-          {badge.statusLabel}
-        </div>
-      </div>
-
-      <div style={{ display: "grid", gap: "10px", minWidth: 0 }}>
-        <div style={titleStyle}>{badge.name}</div>
-        <div style={descriptionStyle}>{badge.description}</div>
-      </div>
-
-      <div style={metaRowStyle}>
-        <div style={metaPillStyle}>{formatCategory(badge.category)}</div>
-        <div style={metaPillStyle}>{formatRarity(badge.rarity)}</div>
-      </div>
-
-      <div style={infoPanelStyle}>
-        <div style={labelStyle}>Requirement</div>
-        <div style={valueStyle}>{badge.requirement}</div>
-      </div>
-
-      <div style={infoPanelStyle}>
-        <div style={labelStyle}>Progress</div>
-        <div style={valueStyle}>{badge.progressText}</div>
-      </div>
-
-      <div style={footerStyle}>
-        <div style={footerHintStyle}>
-          {badge.status === "claimable"
-            ? "Requirement completed and ready to claim."
-            : badge.status === "claimed"
-              ? "Already applied to your public profile."
-              : badge.status === "premium-required"
-                ? "Premium access is required before this badge can unlock."
-                : badge.status === "official-only"
-                  ? "Reserved for official platform assignment."
-                  : badge.status === "manual-review"
-                    ? "This badge requires manual proof review and is not claimable yet."
-                  : badge.status === "not-available"
-                    ? "This badge will unlock in a future campaign."
-                    : "Progress is still incomplete."}
-        </div>
-
-        {badge.canClaim ? (
-          <form action={claimBadge}>
-            <input type="hidden" name="badgeSlug" value={badge.slug} />
-            <input type="hidden" name="filter" value={activeFilter} />
-            <FormActionButton
-              className="badge-action-button"
-              idleLabel={badge.buttonLabel}
-              pendingLabel="Claiming Badge..."
-              style={buttonStyle}
+      <div style={shellGlowStyle(badge)} aria-hidden="true" />
+      <div className="badge-mission-card-shell" style={shellGridStyle(variant)}>
+        <div className="badge-mission-card-crest" style={crestColumnStyle(variant)}>
+          <div style={iconWrapStyle(badge, variant)}>
+            <div style={artifactHaloStyle(badge)} aria-hidden="true" />
+            <BadgeVisual
+              slug={badge.slug}
+              icon={badge.icon}
+              name={badge.name}
+              description={badge.description}
+              color={badge.color}
+              rarity={badge.rarity}
+              category={badge.category}
+              size={isFeatured ? 108 : isCompact ? 56 : 74}
+              compact={!isFeatured}
+              animated={variant !== "compact"}
+              equipped={badge.isClaimed}
             />
-          </form>
-        ) : badge.status === "premium-required" ? (
-          <Link href="/pricing" className="badge-action-button" style={buttonStyle}>
-            {badge.buttonLabel}
-          </Link>
-        ) : (
-          <div className="badge-action-button" style={buttonStyle}>
-            {badge.buttonLabel}
           </div>
-        )}
+
+          <div style={artifactMetaStyle}>
+            <div style={statusStyle(badge, variant)}>{badge.statusLabel}</div>
+            {isCompact ? null : (
+              <div style={tagRowStyle}>
+                <div style={metaTagStyle(badge.color)}>{formatCategory(badge.category)}</div>
+                <div style={metaTagStyle(badge.color)}>{formatRarity(badge.rarity)}</div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="badge-mission-card-content" style={contentColumnStyle(variant)}>
+          <div style={{ display: "grid", gap: isFeatured ? "10px" : "8px", minWidth: 0 }}>
+            <div style={eyebrowStyle}>{getCollectionLabel(badge)}</div>
+            <h3 style={titleStyle(variant)}>{titleText}</h3>
+            <p style={descriptionStyle(variant)}>{subtitleText}</p>
+          </div>
+
+          {isCompact ? (
+            <div style={compactProgressStyle}>{badge.progressText}</div>
+          ) : (
+            <div className="badge-mission-card-detail-rail" style={detailRailStyle(variant)}>
+              <InfoStrip label="How to unlock" value={badge.requirement} color={badge.color} />
+              <InfoStrip label="Progress" value={badge.progressText} color={badge.color} />
+            </div>
+          )}
+
+          <div style={footerStyle(variant)}>
+            <div style={footerHintStyle(variant)}>{getFooterHint(badge)}</div>
+            {renderAction(badge, activeFilter)}
+          </div>
+        </div>
       </div>
     </article>
+  );
+}
+
+function renderAction(badge: BadgeMissionCardState, activeFilter: BadgeFilter) {
+  const buttonStyle = getButtonStyle(badge);
+
+  if (badge.canClaim) {
+    return (
+      <form action={claimBadge}>
+        <input type="hidden" name="badgeSlug" value={badge.slug} />
+        <input type="hidden" name="filter" value={activeFilter} />
+        <FormActionButton
+          className="badge-action-button"
+          idleLabel={badge.buttonLabel}
+          pendingLabel="Equipping badge..."
+          style={buttonStyle}
+        />
+      </form>
+    );
+  }
+
+  if (badge.status === "premium-required") {
+    return (
+      <Link href="/pricing" className="badge-action-button" style={buttonStyle}>
+        {badge.buttonLabel}
+      </Link>
+    );
+  }
+
+  return (
+    <div className="badge-action-button" style={buttonStyle}>
+      {badge.buttonLabel}
+    </div>
+  );
+}
+
+function InfoStrip({
+  label,
+  value,
+  color,
+}: {
+  label: string;
+  value: string;
+  color: string;
+}) {
+  return (
+    <div
+      style={{
+        display: "grid",
+        gap: "7px",
+        minWidth: 0,
+        padding: "14px 15px",
+        borderRadius: "18px",
+        border: `1px solid ${color}18`,
+        background:
+          "linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.015))",
+      }}
+    >
+      <div style={labelStyle}>{label}</div>
+      <div style={valueStyle}>{value}</div>
+    </div>
   );
 }
 
@@ -122,99 +160,329 @@ function formatRarity(value: string) {
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
-function getCardStyle(badge: BadgeMissionCardState): CSSProperties {
+function getCollectionLabel(badge: BadgeMissionCardState) {
+  if (badge.rarity === "owner") {
+    return "Founder relic";
+  }
+
+  if (badge.rarity === "legendary") {
+    return "Legendary relic";
+  }
+
+  if (badge.rarity === "epic") {
+    return "Epic relic";
+  }
+
+  if (badge.rarity === "rare") {
+    return "Rare relic";
+  }
+
+  return "Starter relic";
+}
+
+function getFooterHint(badge: BadgeMissionCardState) {
+  if (badge.status === "claimable") {
+    return "You unlocked this badge. Equip it to show it on your public profile.";
+  }
+
   if (badge.status === "claimed") {
-    return {
-      ...cardStyle,
-      border: "1px solid rgba(52,211,153,0.22)",
-      background:
-        "linear-gradient(180deg, rgba(11,29,22,0.96), rgba(7,15,12,0.96))",
-      boxShadow: "0 22px 44px rgba(16,185,129,0.10)",
-    };
+    return "This badge is already equipped on your public profile.";
   }
 
   if (badge.status === "premium-required") {
-    return {
-      ...cardStyle,
-      border: "1px solid rgba(255,110,168,0.18)",
-      background:
-        "linear-gradient(180deg, rgba(29,15,28,0.96), rgba(15,9,17,0.96))",
-    };
+    return "Premium is required before this badge can be unlocked.";
   }
 
   if (badge.status === "official-only") {
-    return {
-      ...cardStyle,
-      border: "1px solid rgba(125,196,255,0.18)",
-      background:
-        "linear-gradient(180deg, rgba(12,18,28,0.96), rgba(8,11,18,0.96))",
-    };
-  }
-
-  if (badge.status === "not-available") {
-    return {
-      ...cardStyle,
-      border: "1px solid rgba(245,208,110,0.16)",
-      background:
-        "linear-gradient(180deg, rgba(28,22,12,0.96), rgba(16,13,9,0.96))",
-    };
-  }
-
-  if (badge.status === "locked") {
-    return {
-      ...cardStyle,
-      opacity: 0.82,
-    };
+    return "This badge is reserved for official Yotei assignment.";
   }
 
   if (badge.status === "manual-review") {
+    return "Complete the requirement above, then wait for manual review.";
+  }
+
+  if (badge.status === "not-available") {
+    return "This badge exists, but it is not claimable yet.";
+  }
+
+  return "Complete the mission above to unlock this badge.";
+}
+
+function getCardStyle(
+  badge: BadgeMissionCardState,
+  variant: "featured" | "shelf" | "compact",
+): CSSProperties {
+  const basePadding =
+    variant === "featured" ? "24px" : variant === "compact" ? "16px" : "18px";
+
+  const background =
+    badge.rarity === "owner"
+      ? "linear-gradient(180deg, rgba(33,22,9,0.98), rgba(9,8,7,0.98))"
+      : badge.rarity === "legendary"
+        ? "linear-gradient(180deg, rgba(27,20,10,0.98), rgba(10,9,8,0.98))"
+        : badge.rarity === "epic"
+          ? "linear-gradient(180deg, rgba(21,14,28,0.98), rgba(8,8,16,0.98))"
+          : badge.rarity === "rare"
+            ? "linear-gradient(180deg, rgba(12,18,28,0.98), rgba(7,10,18,0.98))"
+            : "linear-gradient(180deg, rgba(16,18,24,0.98), rgba(8,9,14,0.98))";
+
+  return {
+    position: "relative",
+    display: "grid",
+    minWidth: 0,
+    overflow: "hidden",
+    padding: basePadding,
+    borderRadius: variant === "featured" ? "34px" : variant === "compact" ? "24px" : "28px",
+    border: `1px solid ${badge.color}24`,
+    background,
+    boxShadow:
+      variant === "featured"
+        ? `0 34px 74px ${badge.color}18`
+        : `0 20px 44px ${badge.color}12`,
+    isolation: "isolate",
+  };
+}
+
+function shellGlowStyle(badge: BadgeMissionCardState): CSSProperties {
+  return {
+    position: "absolute",
+    inset: 0,
+    background: `
+      radial-gradient(circle at 14% 16%, ${badge.color}18, transparent 26%),
+      radial-gradient(circle at 88% 88%, ${badge.color}10, transparent 28%),
+      linear-gradient(180deg, rgba(255,255,255,0.06), transparent 22%)
+    `,
+    pointerEvents: "none",
+  };
+}
+
+function shellGridStyle(variant: "featured" | "shelf" | "compact"): CSSProperties {
+  if (variant === "featured") {
     return {
-      ...cardStyle,
-      border: "1px solid rgba(251,113,133,0.18)",
-      background:
-        "linear-gradient(180deg, rgba(28,14,21,0.96), rgba(15,9,14,0.96))",
+      position: "relative",
+      zIndex: 1,
+      display: "grid",
+      gridTemplateColumns: "minmax(118px, 148px) minmax(0, 1fr)",
+      gap: "24px",
+      alignItems: "center",
     };
   }
 
-  return cardStyle;
+  if (variant === "compact") {
+    return {
+      position: "relative",
+      zIndex: 1,
+      display: "grid",
+      gridTemplateColumns: "auto minmax(0, 1fr)",
+      gap: "14px",
+      alignItems: "center",
+    };
+  }
+
+  return {
+    position: "relative",
+    zIndex: 1,
+    display: "grid",
+    gap: "18px",
+  };
+}
+
+function crestColumnStyle(variant: "featured" | "shelf" | "compact"): CSSProperties {
+  return {
+    display: "grid",
+    gap: variant === "featured" ? "16px" : "12px",
+    justifyItems: variant === "featured" ? "center" : "start",
+    alignContent: "start",
+    minWidth: 0,
+  };
+}
+
+const artifactMetaStyle: CSSProperties = {
+  display: "grid",
+  gap: "10px",
+  justifyItems: "start",
+  minWidth: 0,
+};
+
+function iconWrapStyle(
+  badge: BadgeMissionCardState,
+  variant: "featured" | "shelf" | "compact",
+): CSSProperties {
+  const size = variant === "featured" ? 148 : variant === "compact" ? 74 : 92;
+
+  return {
+    position: "relative",
+    width: `${size}px`,
+    height: `${size}px`,
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: variant === "featured" ? "38px" : "28px",
+    border: `1px solid ${badge.color}20`,
+    background:
+      "radial-gradient(circle at 50% 12%, rgba(255,255,255,0.08), transparent 34%), linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))",
+    boxShadow: `0 18px 34px ${badge.color}12`,
+    overflow: "hidden",
+  };
+}
+
+function artifactHaloStyle(badge: BadgeMissionCardState): CSSProperties {
+  return {
+    position: "absolute",
+    inset: "12px",
+    borderRadius: "999px",
+    background: `radial-gradient(circle, ${badge.color}18 0%, transparent 70%)`,
+    filter: "blur(8px)",
+    pointerEvents: "none",
+  };
+}
+
+function statusStyle(
+  badge: BadgeMissionCardState,
+  variant: "featured" | "shelf" | "compact",
+): CSSProperties {
+  return {
+    display: "inline-flex",
+    alignItems: "center",
+    width: "fit-content",
+    minHeight: variant === "compact" ? "28px" : "32px",
+    padding: variant === "compact" ? "0 10px" : "0 12px",
+    borderRadius: "999px",
+    border: `1px solid ${badge.color}28`,
+    backgroundColor: `${badge.color}12`,
+    color: "#f7fbff",
+    fontSize: variant === "compact" ? "10px" : "11px",
+    fontWeight: 900,
+    letterSpacing: "0.08em",
+    textTransform: "uppercase",
+    boxShadow: `0 0 0 1px ${badge.color}08`,
+  };
+}
+
+const tagRowStyle: CSSProperties = {
+  display: "flex",
+  gap: "8px",
+  flexWrap: "wrap",
+};
+
+function metaTagStyle(color: string): CSSProperties {
+  return {
+    display: "inline-flex",
+    alignItems: "center",
+    minHeight: "28px",
+    padding: "0 10px",
+    borderRadius: "999px",
+    border: `1px solid ${color}18`,
+    backgroundColor: "rgba(255,255,255,0.04)",
+    color: "#d9e3f3",
+    fontSize: "10px",
+    fontWeight: 800,
+    letterSpacing: "0.08em",
+    textTransform: "uppercase",
+  };
+}
+
+function contentColumnStyle(variant: "featured" | "shelf" | "compact"): CSSProperties {
+  return {
+    display: "grid",
+    gap: variant === "compact" ? "10px" : "16px",
+    minWidth: 0,
+    alignContent: "start",
+  };
+}
+
+const eyebrowStyle: CSSProperties = {
+  color: "#8da3ca",
+  fontSize: "11px",
+  fontWeight: 800,
+  letterSpacing: "0.12em",
+  textTransform: "uppercase",
+};
+
+function titleStyle(variant: "featured" | "shelf" | "compact"): CSSProperties {
+  return {
+    margin: 0,
+    color: "#ffffff",
+    fontSize:
+      variant === "featured" ? "30px" : variant === "compact" ? "18px" : "24px",
+    lineHeight: variant === "featured" ? 1.02 : 1.06,
+    letterSpacing: variant === "featured" ? "-0.05em" : "-0.04em",
+    fontWeight: 900,
+  };
+}
+
+function descriptionStyle(variant: "featured" | "shelf" | "compact"): CSSProperties {
+  return {
+    margin: 0,
+    color: "#b7c3d7",
+    fontSize: variant === "compact" ? "12px" : "14px",
+    lineHeight: variant === "featured" ? 1.75 : 1.68,
+    maxWidth: variant === "featured" ? "58ch" : undefined,
+  };
+}
+
+function detailRailStyle(variant: "featured" | "shelf"): CSSProperties {
+  return {
+    display: "grid",
+    gridTemplateColumns:
+      variant === "featured" ? "repeat(2, minmax(0, 1fr))" : "minmax(0, 1fr)",
+    gap: "12px",
+  };
+}
+
+const compactProgressStyle: CSSProperties = {
+  color: "#c9d4e6",
+  fontSize: "12px",
+  lineHeight: 1.55,
+};
+
+function footerStyle(variant: "featured" | "shelf" | "compact"): CSSProperties {
+  return {
+    display: "flex",
+    alignItems: variant === "compact" ? "center" : "end",
+    justifyContent: "space-between",
+    gap: "12px",
+    flexWrap: "wrap",
+  };
+}
+
+function footerHintStyle(variant: "featured" | "shelf" | "compact"): CSSProperties {
+  return {
+    flex: 1,
+    minWidth: variant === "compact" ? "120px" : "180px",
+    color: "#8f9ab3",
+    fontSize: variant === "compact" ? "11px" : "12px",
+    lineHeight: 1.6,
+  };
 }
 
 function getButtonStyle(badge: BadgeMissionCardState): CSSProperties {
   if (badge.status === "claimable") {
     return {
       ...buttonBaseStyle,
-      border: "1px solid rgba(135,118,255,0.26)",
-      background:
-        "linear-gradient(135deg, rgba(135,118,255,0.94), rgba(255,110,168,0.9))",
-      color: "#ffffff",
+      border: `1px solid ${badge.color}38`,
+      background: `linear-gradient(135deg, ${badge.color}, rgba(255,255,255,0.18))`,
+      color: "#07101d",
       cursor: "pointer",
+      boxShadow: `0 12px 24px ${badge.color}26`,
     };
   }
 
   if (badge.status === "claimed") {
     return {
       ...buttonBaseStyle,
-      border: "1px solid rgba(52,211,153,0.20)",
-      backgroundColor: "rgba(52,211,153,0.12)",
-      color: "#bbf7d0",
+      border: `1px solid ${badge.color}24`,
+      backgroundColor: `${badge.color}10`,
+      color: "#f8fbff",
     };
   }
 
   if (badge.status === "premium-required") {
     return {
       ...buttonBaseStyle,
-      border: "1px solid rgba(255,110,168,0.18)",
-      backgroundColor: "rgba(255,110,168,0.10)",
-      color: "#ffd7e8",
-    };
-  }
-
-  if (badge.status === "manual-review") {
-    return {
-      ...buttonBaseStyle,
-      border: "1px solid rgba(251,113,133,0.18)",
-      backgroundColor: "rgba(251,113,133,0.10)",
-      color: "#ffd3dc",
+      border: `1px solid ${badge.color}24`,
+      backgroundColor: `${badge.color}0e`,
+      color: "#ffe6f3",
     };
   }
 
@@ -225,137 +493,6 @@ function getButtonStyle(badge: BadgeMissionCardState): CSSProperties {
     color: "#c8d2e8",
   };
 }
-
-function statusStyle(badge: BadgeMissionCardState): CSSProperties {
-  return {
-    ...statusBaseStyle,
-    border:
-      badge.status === "claimable"
-        ? "1px solid rgba(135,118,255,0.20)"
-        : badge.status === "premium-required"
-          ? "1px solid rgba(255,110,168,0.18)"
-          : badge.status === "official-only"
-            ? "1px solid rgba(125,196,255,0.18)"
-            : "1px solid rgba(255,255,255,0.08)",
-    backgroundColor:
-      badge.status === "claimable"
-        ? "rgba(135,118,255,0.10)"
-        : badge.status === "premium-required"
-          ? "rgba(255,110,168,0.10)"
-          : badge.status === "manual-review"
-            ? "rgba(251,113,133,0.10)"
-          : badge.status === "official-only"
-            ? "rgba(125,196,255,0.10)"
-            : "rgba(255,255,255,0.04)",
-    color:
-      badge.status === "claimable"
-        ? "#ddd8ff"
-        : badge.status === "premium-required"
-          ? "#ffd7e8"
-          : badge.status === "manual-review"
-            ? "#ffd1da"
-          : badge.status === "official-only"
-            ? "#d8efff"
-            : "#d9e2f4",
-  };
-}
-
-const cardStyle: CSSProperties = {
-  display: "grid",
-  gap: "16px",
-  minWidth: 0,
-  padding: "22px",
-  borderRadius: "28px",
-  border: "1px solid rgba(255,255,255,0.08)",
-  background:
-    "linear-gradient(180deg, rgba(15,15,22,0.98), rgba(8,8,14,0.98))",
-  boxShadow: "0 22px 44px rgba(0,0,0,0.18)",
-  transition:
-    "transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease, opacity 160ms ease",
-};
-
-const topRowStyle: CSSProperties = {
-  display: "flex",
-  alignItems: "start",
-  justifyContent: "space-between",
-  gap: "12px",
-};
-
-const iconWrapStyle: CSSProperties = {
-  width: "84px",
-  height: "84px",
-  borderRadius: "26px",
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  border: "1px solid rgba(255,255,255,0.08)",
-  color: "#ffffff",
-  flexShrink: 0,
-};
-
-const statusBaseStyle: CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  minHeight: "30px",
-  padding: "0 10px",
-  borderRadius: "999px",
-  fontSize: "11px",
-  fontWeight: 900,
-  letterSpacing: "0.08em",
-  textTransform: "uppercase",
-  flexShrink: 0,
-};
-
-const claimedStatusStyle: CSSProperties = {
-  ...statusBaseStyle,
-  border: "1px solid rgba(52,211,153,0.18)",
-  backgroundColor: "rgba(52,211,153,0.10)",
-  color: "#bbf7d0",
-};
-
-const titleStyle: CSSProperties = {
-  color: "#ffffff",
-  fontSize: "24px",
-  lineHeight: 1,
-  fontWeight: 900,
-  letterSpacing: "-0.04em",
-};
-
-const descriptionStyle: CSSProperties = {
-  color: "#b8c4dc",
-  fontSize: "14px",
-  lineHeight: 1.7,
-};
-
-const metaRowStyle: CSSProperties = {
-  display: "flex",
-  gap: "10px",
-  flexWrap: "wrap",
-};
-
-const metaPillStyle: CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  minHeight: "30px",
-  padding: "0 10px",
-  borderRadius: "999px",
-  border: "1px solid rgba(255,255,255,0.08)",
-  backgroundColor: "rgba(255,255,255,0.04)",
-  color: "#dce4f5",
-  fontSize: "11px",
-  fontWeight: 800,
-  letterSpacing: "0.06em",
-  textTransform: "uppercase",
-};
-
-const infoPanelStyle: CSSProperties = {
-  display: "grid",
-  gap: "8px",
-  padding: "14px 16px",
-  borderRadius: "18px",
-  border: "1px solid rgba(255,255,255,0.06)",
-  backgroundColor: "rgba(255,255,255,0.03)",
-};
 
 const labelStyle: CSSProperties = {
   color: "#8f9ab3",
@@ -368,22 +505,6 @@ const labelStyle: CSSProperties = {
 const valueStyle: CSSProperties = {
   color: "#e8eefb",
   fontSize: "13px",
-  lineHeight: 1.65,
-};
-
-const footerStyle: CSSProperties = {
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "space-between",
-  gap: "12px",
-  flexWrap: "wrap",
-};
-
-const footerHintStyle: CSSProperties = {
-  flex: 1,
-  minWidth: "180px",
-  color: "#8f9ab3",
-  fontSize: "12px",
   lineHeight: 1.6,
 };
 
@@ -391,7 +512,7 @@ const buttonBaseStyle: CSSProperties = {
   textDecoration: "none",
   minHeight: "42px",
   padding: "0 16px",
-  borderRadius: "14px",
+  borderRadius: "15px",
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
