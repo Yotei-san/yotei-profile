@@ -60,12 +60,14 @@ export default async function ProfilePage({ params }: Props) {
   }
 
   let initialMyReaction: PublicProfileReaction = null;
-  const [myReaction, commentCount] = await Promise.all([
+  const [myReaction, commentCount, reactionCounts] = await Promise.all([
     currentUser && currentUser.id !== user.id
-      ? prisma.reaction.findFirst({
+      ? prisma.reaction.findUnique({
           where: {
-            fromUserId: currentUser.id,
-            toUserId: user.id,
+            fromUserId_toUserId: {
+              fromUserId: currentUser.id,
+              toUserId: user.id,
+            },
           },
           select: {
             type: true,
@@ -78,6 +80,15 @@ export default async function ProfilePage({ params }: Props) {
         isDeleted: false,
       },
     }),
+    prisma.reaction.groupBy({
+      by: ["type"],
+      where: {
+        toUserId: user.id,
+      },
+      _count: {
+        type: true,
+      },
+    }),
   ]);
 
   if (myReaction?.type === "like" || myReaction?.type === "dislike") {
@@ -88,6 +99,8 @@ export default async function ProfilePage({ params }: Props) {
     initialCommentCount: commentCount,
     canComment: Boolean(currentUser),
     isOwnProfile: currentUser?.id === user.id,
+    likes: reactionCounts.find((item) => item.type === "like")?._count.type ?? 0,
+    dislikes: reactionCounts.find((item) => item.type === "dislike")?._count.type ?? 0,
   });
 
   return (
@@ -126,6 +139,8 @@ function buildProfileRenderData(
     initialCommentCount: number;
     canComment: boolean;
     isOwnProfile: boolean;
+    likes: number;
+    dislikes: number;
   },
 ) {
   const themeColor = normalizeThemeColor(user.themeColor);
@@ -205,14 +220,8 @@ function buildProfileRenderData(
     featuredBadges: featuredBadgeShowcase.badges,
     extraBadgeCount: featuredBadgeShowcase.extraCount,
     heroPills: buildHeroPills(user, hasPremiumState),
-    likes: user.reactionsReceived.reduce(
-      (acc, item) => (item.type === "like" ? acc + 1 : acc),
-      0,
-    ),
-    dislikes: user.reactionsReceived.reduce(
-      (acc, item) => (item.type === "dislike" ? acc + 1 : acc),
-      0,
-    ),
+    likes: interactionState.likes,
+    dislikes: interactionState.dislikes,
     views: user.profileViews.length,
     initialCommentCount: interactionState.initialCommentCount,
     canComment: interactionState.canComment,
@@ -307,11 +316,6 @@ function buildProfileUserSelect(
         url: true,
         metadata: true,
         isEnabled: true,
-      },
-    },
-    reactionsReceived: {
-      select: {
-        type: true,
       },
     },
     profileViews: {

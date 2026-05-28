@@ -323,11 +323,13 @@ model Reaction {
   toUserId   String
   type       ReactionType
   createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @default(now()) @updatedAt
 
   fromUser User @relation("ReactionsGiven", fields: [fromUserId], references: [id], onDelete: Cascade)
   toUser   User @relation("ReactionsReceived", fields: [toUserId], references: [id], onDelete: Cascade)
 
   @@unique([fromUserId, toUserId])
+  @@index([toUserId, type])
   @@index([toUserId, createdAt])
   @@index([fromUserId])
 }

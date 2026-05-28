@@ -1,13 +1,20 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/app/lib/prisma";
-import { getCurrentUser } from "@/app/lib/auth";
 import { Prisma } from "@prisma/client";
+import { getCurrentUser } from "@/app/lib/auth";
+import { prisma } from "@/app/lib/prisma";
 import { logServerError } from "@/app/lib/server-log";
 
 type RouteProps = {
   params: Promise<{
     username: string;
   }>;
+};
+
+type ReactionCountGroup = {
+  type: "like" | "dislike";
+  _count: {
+    type: number;
+  };
 };
 
 async function runReactionTransaction<T>(callback: () => Promise<T>, attempts = 2): Promise<T> {
@@ -25,6 +32,13 @@ async function runReactionTransaction<T>(callback: () => Promise<T>, attempts = 
   }
 }
 
+function buildReactionCounts(grouped: ReactionCountGroup[]) {
+  return {
+    likes: grouped.find((item) => item.type === "like")?._count.type ?? 0,
+    dislikes: grouped.find((item) => item.type === "dislike")?._count.type ?? 0,
+  };
+}
+
 export async function POST(req: Request, { params }: RouteProps) {
   try {
     const sessionUser = await getCurrentUser();
@@ -32,20 +46,19 @@ export async function POST(req: Request, { params }: RouteProps) {
 
     if (!sessionUser) {
       return NextResponse.json(
-        { error: "You need to sign in before reacting." },
-        { status: 401 }
+        { ok: false, error: "LOGIN_REQUIRED" },
+        { status: 401 },
       );
     }
 
     const normalizedUsername = username.trim().toLowerCase();
-
     const body = await req.json().catch(() => null);
     const type = body?.type;
 
     if (type !== "like" && type !== "dislike") {
       return NextResponse.json(
-        { error: "Tipo de reação inválido." },
-        { status: 400 }
+        { ok: false, error: "INVALID_REACTION_TYPE" },
+        { status: 400 },
       );
     }
 
@@ -57,17 +70,17 @@ export async function POST(req: Request, { params }: RouteProps) {
       },
     });
 
-    if (!targetUser || targetUser.status === "banned") {
+    if (!targetUser || targetUser.status !== "active") {
       return NextResponse.json(
-        { error: "Perfil não encontrado." },
-        { status: 404 }
+        { ok: false, error: "PROFILE_NOT_FOUND" },
+        { status: 404 },
       );
     }
 
     if (targetUser.id === sessionUser.id) {
       return NextResponse.json(
-        { error: "Você não pode reagir ao próprio perfil." },
-        { status: 403 }
+        { ok: false, error: "SELF_REACTION_FORBIDDEN" },
+        { status: 403 },
       );
     }
 
@@ -81,13 +94,12 @@ export async function POST(req: Request, { params }: RouteProps) {
             )
           `;
 
-          const existingReactions = await tx.reaction.findMany({
+          const existingReaction = await tx.reaction.findUnique({
             where: {
-              fromUserId: sessionUser.id,
-              toUserId: targetUser.id,
-            },
-            orderBy: {
-              createdAt: "asc",
+              fromUserId_toUserId: {
+                fromUserId: sessionUser.id,
+                toUserId: targetUser.id,
+              },
             },
             select: {
               id: true,
@@ -95,19 +107,7 @@ export async function POST(req: Request, { params }: RouteProps) {
             },
           });
 
-          const existing = existingReactions[0] ?? null;
-
-          if (existingReactions.length > 1) {
-            await tx.reaction.deleteMany({
-              where: {
-                id: {
-                  in: existingReactions.slice(1).map((item) => item.id),
-                },
-              },
-            });
-          }
-
-          if (!existing) {
+          if (!existingReaction) {
             await tx.reaction.create({
               data: {
                 fromUserId: sessionUser.id,
@@ -115,16 +115,16 @@ export async function POST(req: Request, { params }: RouteProps) {
                 type,
               },
             });
-          } else if (existing.type === type) {
+          } else if (existingReaction.type === type) {
             await tx.reaction.delete({
               where: {
-                id: existing.id,
+                id: existingReaction.id,
               },
             });
           } else {
             await tx.reaction.update({
               where: {
-                id: existing.id,
+                id: existingReaction.id,
               },
               data: {
                 type,
@@ -132,61 +132,59 @@ export async function POST(req: Request, { params }: RouteProps) {
             });
           }
 
-          const grouped = await tx.reaction.groupBy({
-            by: ["type"],
-            where: {
-              toUserId: targetUser.id,
-            },
-            _count: {
-              type: true,
-            },
-          });
+          const [grouped, currentReactionRow] = await Promise.all([
+            tx.reaction.groupBy({
+              by: ["type"],
+              where: {
+                toUserId: targetUser.id,
+              },
+              _count: {
+                type: true,
+              },
+            }),
+            tx.reaction.findUnique({
+              where: {
+                fromUserId_toUserId: {
+                  fromUserId: sessionUser.id,
+                  toUserId: targetUser.id,
+                },
+              },
+              select: {
+                type: true,
+              },
+            }),
+          ]);
 
-          const likes =
-            grouped.find((item) => item.type === "like")?._count.type ?? 0;
-
-          const dislikes =
-            grouped.find((item) => item.type === "dislike")?._count.type ?? 0;
-
-          const myReactionRow = await tx.reaction.findFirst({
-            where: {
-              fromUserId: sessionUser.id,
-              toUserId: targetUser.id,
-            },
-            select: {
-              type: true,
-            },
-          });
-
-          const myReaction =
-            myReactionRow?.type === "like" || myReactionRow?.type === "dislike"
-              ? myReactionRow.type
+          const currentReaction =
+            currentReactionRow?.type === "like" || currentReactionRow?.type === "dislike"
+              ? currentReactionRow.type
               : null;
+          const { likes, dislikes } = buildReactionCounts(grouped);
 
           return {
+            currentReaction,
             likes,
             dislikes,
-            myReaction,
           };
         },
         {
           isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
-        }
-      )
+        },
+      ),
     );
 
     return NextResponse.json({
       ok: true,
+      currentReaction: result.currentReaction,
       likes: result.likes,
       dislikes: result.dislikes,
-      myReaction: result.myReaction,
     });
   } catch (error) {
     logServerError("profile.reaction-route", error);
 
     return NextResponse.json(
-      { error: "Erro ao reagir." },
-      { status: 500 }
+      { ok: false, error: "REACTION_FAILED" },
+      { status: 500 },
     );
   }
 }

@@ -13,6 +13,14 @@ const ProfileCommentsModal = dynamic(() => import("./ProfileCommentsModal"), {
 });
 
 type MyReaction = "like" | "dislike" | null;
+type ReactionAction = Exclude<MyReaction, null>;
+type ReactionMutationResult = {
+  ok?: boolean;
+  currentReaction?: MyReaction;
+  likes?: number;
+  dislikes?: number;
+  error?: string;
+} | null;
 
 type Props = {
   username: string;
@@ -62,6 +70,7 @@ export default function ProfileHeroClient({
   const [myReaction, setMyReaction] = useState<MyReaction>(initialMyReaction);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
+  const [reactionMessage, setReactionMessage] = useState<string | null>(null);
 
   const hasTrackedView = useRef(false);
   const isSubmittingRef = useRef(false);
@@ -73,6 +82,10 @@ export default function ProfileHeroClient({
     setCommentCount(initialCommentCount);
     setMyReaction(initialMyReaction);
   }, [initialViews, initialLikes, initialDislikes, initialCommentCount, initialMyReaction]);
+
+  useEffect(() => {
+    setReactionMessage(null);
+  }, [username]);
 
   useEffect(() => {
     if (preview) {
@@ -119,8 +132,12 @@ export default function ProfileHeroClient({
     };
   }, [preview, username]);
 
-  async function sendReaction(type: "like" | "dislike") {
+  async function sendReaction(type: ReactionAction) {
     if (preview) {
+      return;
+    }
+
+    if (isOwnProfile) {
       return;
     }
 
@@ -128,8 +145,25 @@ export default function ProfileHeroClient({
       return;
     }
 
+    const previousState = {
+      likes,
+      dislikes,
+      myReaction,
+    };
+    const nextReaction = getNextReactionState(myReaction, type);
+    const optimisticCounts = getOptimisticReactionCounts({
+      likes,
+      dislikes,
+      currentReaction: myReaction,
+      nextReaction,
+    });
+
     isSubmittingRef.current = true;
     setIsSubmitting(true);
+    setReactionMessage(null);
+    setLikes(optimisticCounts.likes);
+    setDislikes(optimisticCounts.dislikes);
+    setMyReaction(nextReaction);
 
     try {
       const res = await fetch(`/api/profile-reaction/${username}`, {
@@ -140,25 +174,39 @@ export default function ProfileHeroClient({
         body: JSON.stringify({ type }),
       });
 
-      const data = await res.json().catch(() => null);
+      const data = (await res.json().catch(() => null)) as ReactionMutationResult;
 
-      if (res.ok && data) {
-        if (typeof data.likes === "number") {
-          setLikes(data.likes);
+      if (!res.ok || !data?.ok) {
+        setLikes(previousState.likes);
+        setDislikes(previousState.dislikes);
+        setMyReaction(previousState.myReaction);
+
+        if (res.status === 401 || data?.error === "LOGIN_REQUIRED") {
+          setReactionMessage("Entre para reagir a este perfil.");
+        } else {
+          setReactionMessage("Nao foi possivel registrar sua reacao.");
         }
 
-        if (typeof data.dislikes === "number") {
-          setDislikes(data.dislikes);
-        }
-
-        if (
-          data.myReaction === "like" ||
-          data.myReaction === "dislike" ||
-          data.myReaction === null
-        ) {
-          setMyReaction(data.myReaction);
-        }
+        return;
       }
+
+      if (typeof data.likes === "number") {
+        setLikes(data.likes);
+      }
+
+      if (typeof data.dislikes === "number") {
+        setDislikes(data.dislikes);
+      }
+
+      if (isReactionState(data.currentReaction)) {
+        setMyReaction(data.currentReaction);
+      }
+      setReactionMessage(null);
+    } catch {
+      setLikes(previousState.likes);
+      setDislikes(previousState.dislikes);
+      setMyReaction(previousState.myReaction);
+      setReactionMessage("Nao foi possivel registrar sua reacao.");
     } finally {
       isSubmittingRef.current = false;
       setIsSubmitting(false);
@@ -413,6 +461,21 @@ export default function ProfileHeroClient({
         })
       )}
 
+      {reactionMessage ? (
+        <p
+          aria-live="polite"
+          role="status"
+          style={{
+            margin: "10px 0 0",
+            color: "#f7d49b",
+            fontSize: "0.92rem",
+            lineHeight: 1.5,
+          }}
+        >
+          {reactionMessage}
+        </p>
+      ) : null}
+
       {isCommentsOpen ? (
         <ProfileCommentsModal
           username={username}
@@ -426,6 +489,53 @@ export default function ProfileHeroClient({
       ) : null}
     </div>
   );
+}
+
+function isReactionState(value: unknown): value is MyReaction {
+  return value === "like" || value === "dislike" || value === null;
+}
+
+function getNextReactionState(
+  currentReaction: MyReaction,
+  nextReaction: ReactionAction,
+): MyReaction {
+  return currentReaction === nextReaction ? null : nextReaction;
+}
+
+function getOptimisticReactionCounts({
+  likes,
+  dislikes,
+  currentReaction,
+  nextReaction,
+}: {
+  likes: number;
+  dislikes: number;
+  currentReaction: MyReaction;
+  nextReaction: MyReaction;
+}) {
+  return {
+    likes: clampMetricCount(
+      likes + reactionCountDelta(currentReaction, nextReaction, "like"),
+    ),
+    dislikes: clampMetricCount(
+      dislikes + reactionCountDelta(currentReaction, nextReaction, "dislike"),
+    ),
+  };
+}
+
+function reactionCountDelta(
+  currentReaction: MyReaction,
+  nextReaction: MyReaction,
+  targetReaction: ReactionAction,
+) {
+  const adds = nextReaction === targetReaction ? 1 : 0;
+  const removes = currentReaction === targetReaction ? 1 : 0;
+
+  return adds - removes;
+}
+
+function clampMetricCount(value: number) {
+  return value < 0 ? 0 : value;
 }
 
 function renderMetrics({
@@ -525,7 +635,7 @@ function renderMetrics({
         onClick={onLike}
         disabled={isSubmitting || preview}
         isActive={myReaction === "like"}
-        accentColor={themeColor}
+        accentColor="#45d483"
         background={
           isCorner
             ? "rgba(9, 20, 16, 0.8)"
@@ -557,7 +667,7 @@ function renderMetrics({
         onClick={onDislike}
         disabled={isSubmitting || preview}
         isActive={myReaction === "dislike"}
-        accentColor={themeColor}
+        accentColor="#f87171"
         background={
           isCorner
             ? "rgba(20, 11, 14, 0.8)"
