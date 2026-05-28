@@ -127,6 +127,7 @@ export default async function DashboardPage() {
               href={`/${resolvedUser.username}`}
               style={dashboardButtonStyle("primary")}
               target="_blank"
+              rel="noreferrer"
             >
               {t("dashboard.overview.openProfile")}
             </Link>
@@ -291,7 +292,7 @@ function StatCard({
 
 const heroStatsGridStyle: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
+  gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 150px), 1fr))",
   gap: "12px",
 };
 
@@ -326,11 +327,10 @@ const listStyle: CSSProperties = {
 };
 
 const rowStyle: CSSProperties = {
-  display: "flex",
+  display: "grid",
+  gridTemplateColumns: "minmax(0, 1fr) auto",
   alignItems: "center",
-  justifyContent: "space-between",
   gap: "12px",
-  flexWrap: "wrap",
   minWidth: 0,
   padding: "16px",
   borderRadius: "20px",

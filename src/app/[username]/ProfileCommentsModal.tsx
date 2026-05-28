@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { LuLoaderCircle, LuMessageSquare, LuTrash2, LuX } from "react-icons/lu";
+import { useBodyScrollLock } from "@/app/components/useBodyScrollLock";
 import { useI18n } from "@/app/components/I18nProvider";
 import { toIntlLocale } from "@/app/lib/i18n";
 
@@ -44,14 +45,14 @@ export default function ProfileCommentsModal({
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [hasLoaded, setHasLoaded] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  useBodyScrollLock(open);
 
   useEffect(() => {
     if (!open) {
       return;
     }
-
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
 
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -62,10 +63,17 @@ export default function ProfileCommentsModal({
     window.addEventListener("keydown", handleEscape);
 
     return () => {
-      document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", handleEscape);
     };
   }, [onClose, open]);
+
+  useEffect(() => {
+    if (!open || !canComment) {
+      return;
+    }
+
+    textareaRef.current?.focus();
+  }, [canComment, open]);
 
   useEffect(() => {
     if (!open) {
@@ -129,9 +137,22 @@ export default function ProfileCommentsModal({
         return;
       }
 
+      const nextComment =
+        payload.comment && typeof payload.comment.id === "string"
+          ? (payload.comment as ProfileCommentItem)
+          : null;
+
       setDraft("");
       onCountChange(typeof payload.count === "number" ? payload.count : commentCount + 1);
-      await loadComments(sort);
+
+      if (nextComment) {
+        setComments((current) =>
+          sort === "oldest" ? [...current, nextComment] : [nextComment, ...current],
+        );
+        setHasLoaded(true);
+      } else {
+        await loadComments(sort);
+      }
     } catch {
       setError(t("publicProfile.postCommentError"));
     } finally {
@@ -162,7 +183,8 @@ export default function ProfileCommentsModal({
       }
 
       onCountChange(typeof payload.count === "number" ? payload.count : Math.max(0, commentCount - 1));
-      await loadComments(sort);
+      setComments((current) => current.filter((comment) => comment.id !== commentId));
+      setHasLoaded(true);
     } catch {
       setError(t("publicProfile.deleteCommentError"));
     } finally {
@@ -173,6 +195,8 @@ export default function ProfileCommentsModal({
   if (!open) {
     return null;
   }
+
+  const canSubmitComment = draft.trim().length > 0 && !submitting;
 
   return (
     <div
@@ -225,11 +249,18 @@ export default function ProfileCommentsModal({
             border-radius: 24px;
           }
         }
+
+        @media (prefers-reduced-motion: reduce) {
+          .profile-comments-shell {
+            animation: none !important;
+          }
+        }
       `}</style>
 
       <div
         className="profile-comments-shell"
         style={panelStyle}
+        aria-busy={loading || submitting || Boolean(deletingId)}
         onClick={(event) => event.stopPropagation()}
       >
         <div style={headerStyle}>
@@ -284,6 +315,7 @@ export default function ProfileCommentsModal({
         {canComment ? (
           <form onSubmit={handleSubmit} style={composerStyle}>
             <textarea
+              ref={textareaRef}
               value={draft}
               onChange={(event) => setDraft(event.target.value)}
               maxLength={300}
@@ -297,7 +329,11 @@ export default function ProfileCommentsModal({
             />
             <div style={composerFooterStyle}>
               <div style={charCountStyle}>{draft.length}/300</div>
-              <button type="submit" disabled={submitting} style={submitButtonStyle(submitting)}>
+              <button
+                type="submit"
+                disabled={!canSubmitComment}
+                style={submitButtonStyle(submitting || !canSubmitComment)}
+              >
                 {submitting
                   ? t("publicProfile.postingComment")
                   : isOwnProfile
@@ -415,8 +451,8 @@ const overlayStyle = {
   placeItems: "center",
   padding: "20px",
   background: "rgba(2, 4, 10, 0.76)",
-  backdropFilter: "blur(20px) saturate(118%)",
-  WebkitBackdropFilter: "blur(20px) saturate(118%)",
+  backdropFilter: "blur(14px) saturate(116%)",
+  WebkitBackdropFilter: "blur(14px) saturate(116%)",
 } as const;
 
 const panelStyle = {

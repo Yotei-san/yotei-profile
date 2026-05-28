@@ -67,18 +67,26 @@ export default function LanguageSwitcher({ variant = "inline" }: Props) {
   return (
     <div ref={shellRef} style={shellStyle(variant)}>
       <style>{`
-        .language-switcher-trigger:hover,
-        .language-switcher-trigger:focus-visible {
+        .language-switcher-trigger:focus-visible,
+        .language-switcher-option:focus-visible {
           border-color: rgba(255,255,255,0.16);
           background: rgba(255,255,255,0.1) !important;
           box-shadow: 0 12px 26px rgba(0,0,0,0.22);
         }
 
-        .language-switcher-option:hover,
-        .language-switcher-option:focus-visible {
-          transform: translateY(-1px);
-          border-color: rgba(255,255,255,0.14);
-          background: rgba(255,255,255,0.08) !important;
+        @media (hover: hover) and (pointer: fine) {
+          .language-switcher-trigger:hover {
+            border-color: rgba(255,255,255,0.16);
+            background: rgba(255,255,255,0.1) !important;
+            box-shadow: 0 12px 26px rgba(0,0,0,0.22);
+          }
+
+          .language-switcher-option:hover,
+          .language-switcher-option:focus-visible {
+            transform: translateY(-1px);
+            border-color: rgba(255,255,255,0.14);
+            background: rgba(255,255,255,0.08) !important;
+          }
         }
       `}</style>
       <span id={labelId} style={labelStyle(variant)}>

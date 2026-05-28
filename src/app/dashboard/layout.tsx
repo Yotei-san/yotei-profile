@@ -63,9 +63,10 @@ export default async function DashboardLayout({
         overflowX: "clip",
         background:
           "radial-gradient(circle at top, rgba(236,72,153,0.08), transparent 28%), radial-gradient(circle at 80% 10%, rgba(168,85,247,0.06), transparent 22%), #070707",
-        padding: "24px",
+        padding: "clamp(14px, 2.4vw, 24px)",
         color: "#ffffff",
-        fontFamily: "Arial, Helvetica, sans-serif",
+        fontFamily:
+          '"Manrope", "Segoe UI", "Helvetica Neue", Arial, sans-serif',
       }}
     >
       <style>{`
@@ -76,7 +77,7 @@ export default async function DashboardLayout({
 
         .dashboard-layout-shell {
           display: flex;
-          gap: 22px;
+          gap: 20px;
           align-items: flex-start;
           max-width: 1700px;
           margin: 0 auto;
@@ -92,12 +93,7 @@ export default async function DashboardLayout({
         @media (max-width: 980px) {
           .dashboard-layout-shell {
             flex-direction: column;
-          }
-        }
-
-        @media (max-width: 640px) {
-          .dashboard-layout-root {
-            padding: 14px !important;
+            gap: 16px;
           }
         }
       `}</style>

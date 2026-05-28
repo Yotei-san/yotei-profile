@@ -61,13 +61,136 @@ export default async function LeaderboardPage({
   const entries = await getLeaderboardEntries(activeTab, 50);
 
   return (
-    <main className="yotei-scrollbar-hidden" style={pageStyle}>
-      <div style={shellStyle}>
-        <section style={heroStyle}>
+    <main className="yotei-scrollbar-hidden leaderboard-page" style={pageStyle}>
+      <style>{`
+        .leaderboard-shell {
+          display: grid;
+          gap: 18px;
+        }
+
+        .leaderboard-hero,
+        .leaderboard-board,
+        .leaderboard-row,
+        .leaderboard-tab,
+        .leaderboard-open-profile {
+          min-width: 0;
+        }
+
+        .leaderboard-tab {
+          transition:
+            transform 180ms ease,
+            border-color 180ms ease,
+            background 180ms ease,
+            box-shadow 180ms ease;
+        }
+
+        .leaderboard-open-profile {
+          transition:
+            transform 180ms ease,
+            box-shadow 180ms ease,
+            border-color 180ms ease;
+        }
+
+        @media (hover: hover) and (pointer: fine) {
+          .leaderboard-tab:hover,
+          .leaderboard-open-profile:hover {
+            transform: translateY(-1px);
+          }
+        }
+
+        @media (max-width: 920px) {
+          .leaderboard-hero,
+          .leaderboard-board {
+            padding: 20px !important;
+            border-radius: 24px !important;
+          }
+
+          .leaderboard-title {
+            font-size: clamp(38px, 9vw, 48px) !important;
+          }
+
+          .leaderboard-tabs {
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+          }
+
+          .leaderboard-row {
+            padding: 16px !important;
+          }
+
+          .leaderboard-right-cluster {
+            width: 100%;
+            display: grid !important;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            justify-content: stretch !important;
+          }
+
+          .leaderboard-right-cluster > * {
+            min-width: 0 !important;
+          }
+
+          .leaderboard-open-profile {
+            grid-column: 1 / -1;
+            width: 100%;
+          }
+        }
+
+        @media (max-width: 640px) {
+          .leaderboard-page {
+            padding: 18px 12px 30px !important;
+          }
+
+          .leaderboard-shell {
+            gap: 14px;
+          }
+
+          .leaderboard-hero {
+            gap: 14px !important;
+          }
+
+          .leaderboard-tabs {
+            grid-template-columns: 1fr !important;
+          }
+
+          .leaderboard-row {
+            gap: 12px !important;
+          }
+
+          .leaderboard-left-cluster {
+            gap: 12px !important;
+            flex-basis: 100% !important;
+          }
+
+          .leaderboard-rank {
+            min-width: 42px !important;
+            font-size: 20px !important;
+          }
+
+          .leaderboard-avatar,
+          .leaderboard-avatar-fallback {
+            width: 48px !important;
+            height: 48px !important;
+            border-radius: 16px !important;
+          }
+
+          .leaderboard-display-name {
+            font-size: 16px !important;
+          }
+
+          .leaderboard-right-cluster {
+            grid-template-columns: 1fr !important;
+          }
+
+          .leaderboard-metric {
+            min-width: 0 !important;
+          }
+        }
+      `}</style>
+      <div className="leaderboard-shell" style={shellStyle}>
+        <section className="leaderboard-hero" style={heroStyle}>
           <div style={{ display: "grid", gap: "14px", minWidth: 0 }}>
             <div style={eyebrowStyle}>{activeTabMeta.eyebrow}</div>
             <div style={{ display: "grid", gap: "10px", minWidth: 0 }}>
-              <h1 style={titleStyle}>{t("leaderboard.title")}</h1>
+              <h1 className="leaderboard-title" style={titleStyle}>{t("leaderboard.title")}</h1>
               <p style={descriptionStyle}>
                 {t("leaderboard.heroDescription", {
                   description: activeTabMeta.description,
@@ -83,9 +206,10 @@ export default async function LeaderboardPage({
           </div>
         </section>
 
-        <section style={tabsShellStyle}>
+        <section className="leaderboard-tabs" style={tabsShellStyle}>
           {tabItems.map((item) => (
             <Link
+              className="leaderboard-tab"
               key={item.key}
               href={`/leaderboard?tab=${item.key}`}
               style={tabStyle(activeTab === item.key)}
@@ -96,7 +220,7 @@ export default async function LeaderboardPage({
           ))}
         </section>
 
-        <section style={boardStyle}>
+        <section className="leaderboard-board" style={boardStyle}>
           <div style={boardHeadStyle}>
             <div>
               <div style={sectionEyebrowStyle}>{activeTabMeta.eyebrow}</div>
@@ -110,16 +234,16 @@ export default async function LeaderboardPage({
               <div style={emptyStyle}>{t("leaderboard.noData")}</div>
             ) : (
               entries.map((entry) => (
-                <article key={`${activeTab}-${entry.id}`} style={rowStyle(entry.rank)}>
-                  <div style={leftClusterStyle}>
-                    <div style={rankStyle(entry.rank)}>#{entry.rank}</div>
+                <article className="leaderboard-row" key={`${activeTab}-${entry.id}`} style={rowStyle(entry.rank)}>
+                  <div className="leaderboard-left-cluster" style={leftClusterStyle}>
+                    <div className="leaderboard-rank" style={rankStyle(entry.rank)}>#{entry.rank}</div>
                     <AvatarBadge
                       avatarUrl={entry.avatarUrl}
                       fallback={getInitials(entry.displayName)}
                     />
                     <div style={{ display: "grid", gap: "8px", minWidth: 0 }}>
                       <div style={identityRowStyle}>
-                        <div style={displayNameStyle}>{entry.displayName}</div>
+                        <div className="leaderboard-display-name" style={displayNameStyle}>{entry.displayName}</div>
                         {entry.role === "owner" ? (
                           <IndicatorPill label="Owner" tone="gold" />
                         ) : entry.role === "admin" ? (
@@ -133,7 +257,7 @@ export default async function LeaderboardPage({
                     </div>
                   </div>
 
-                  <div style={rightClusterStyle}>
+                  <div className="leaderboard-right-cluster" style={rightClusterStyle}>
                     <MetricPill
                       label={t("leaderboard.metrics.views")}
                       value={entry.views}
@@ -155,7 +279,13 @@ export default async function LeaderboardPage({
                       highlight={activeTab === "newest"}
                       compact
                     />
-                    <Link href={`/${entry.username}`} style={primaryButtonStyle} target="_blank">
+                    <Link
+                      className="leaderboard-open-profile"
+                      href={`/${entry.username}`}
+                      style={primaryButtonStyle}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
                       {t("leaderboard.openProfile")}
                     </Link>
                   </div>
@@ -178,9 +308,9 @@ function AvatarBadge({
 }) {
   return avatarUrl ? (
     // eslint-disable-next-line @next/next/no-img-element
-    <img src={avatarUrl} alt="" style={avatarStyle} />
+    <img className="leaderboard-avatar" src={avatarUrl} alt="" style={avatarStyle} />
   ) : (
-    <div style={avatarFallbackStyle}>{fallback}</div>
+    <div className="leaderboard-avatar-fallback" style={avatarFallbackStyle}>{fallback}</div>
   );
 }
 
@@ -233,6 +363,7 @@ function MetricPill({
 }) {
   return (
     <div
+      className="leaderboard-metric"
       style={{
         display: "grid",
         gap: "4px",
@@ -312,8 +443,8 @@ const eyebrowStyle: CSSProperties = {
 
 const titleStyle: CSSProperties = {
   margin: 0,
-  fontSize: "54px",
-  lineHeight: 0.94,
+  fontSize: "clamp(40px, 7vw, 54px)",
+  lineHeight: 0.96,
   letterSpacing: "-0.06em",
 };
 
@@ -322,7 +453,7 @@ const descriptionStyle: CSSProperties = {
   maxWidth: "60ch",
   color: "#a7b4cc",
   fontSize: "15px",
-  lineHeight: 1.8,
+  lineHeight: 1.72,
 };
 
 const heroActionsStyle: CSSProperties = {

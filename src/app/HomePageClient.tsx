@@ -447,16 +447,6 @@ export default function HomePageClient() {
             color 180ms ease;
         }
 
-        .brand-link:hover,
-        .nav-link:hover,
-        .nav-mobile-link:hover,
-        .nav-cta:hover,
-        .nav-ghost:hover,
-        .nav-mobile-toggle:hover,
-        .surface-card:hover {
-          transform: translateY(-2px);
-        }
-
         .brand-link {
           display: inline-flex;
           align-items: center;
@@ -523,13 +513,6 @@ export default function HomePageClient() {
         .nav-mobile-link,
         .nav-ghost {
           color: #d7def0;
-        }
-
-        .nav-link:hover,
-        .nav-mobile-link:hover,
-        .nav-ghost:hover {
-          background: rgba(255, 255, 255, 0.04);
-          border-color: rgba(255, 255, 255, 0.08);
         }
 
         .nav-cta,
@@ -1404,6 +1387,23 @@ export default function HomePageClient() {
         }
 
         @media (hover: hover) and (pointer: fine) {
+          .brand-link:hover,
+          .nav-link:hover,
+          .nav-mobile-link:hover,
+          .nav-cta:hover,
+          .nav-ghost:hover,
+          .nav-mobile-toggle:hover,
+          .surface-card:hover {
+            transform: translateY(-2px);
+          }
+
+          .nav-link:hover,
+          .nav-mobile-link:hover,
+          .nav-ghost:hover {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(255, 255, 255, 0.08);
+          }
+
           .brand-link:hover .brand-mark-svg {
             transform: translateY(-1px) scale(1.02);
           }

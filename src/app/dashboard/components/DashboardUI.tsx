@@ -186,9 +186,10 @@ export function dashboardAutoGridStyle(minWidth = 300): CSSProperties {
 
 export const dashboardPageStyle: CSSProperties = {
   display: "grid",
-  gap: "22px",
+  gap: "20px",
   color: "#ffffff",
-  fontFamily: "Arial, Helvetica, sans-serif",
+  fontFamily:
+    '"Manrope", "Segoe UI", "Helvetica Neue", Arial, sans-serif',
   minWidth: 0,
 };
 
@@ -197,7 +198,7 @@ export const dashboardHeroStyle: CSSProperties = {
   gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))",
   gap: "18px",
   alignItems: "start",
-  padding: "28px",
+  padding: "clamp(22px, 3vw, 28px)",
   borderRadius: "30px",
   border: "1px solid rgba(255,255,255,0.08)",
   background:
@@ -232,7 +233,7 @@ export const dashboardHeroTextStyle: CSSProperties = {
   maxWidth: "60ch",
   color: "#b7c1d8",
   fontSize: "15px",
-  lineHeight: 1.75,
+  lineHeight: 1.72,
 };
 
 export const dashboardActionRowStyle: CSSProperties = {
@@ -245,7 +246,7 @@ export const dashboardSurfaceStyle: CSSProperties = {
   display: "grid",
   gap: "18px",
   minWidth: 0,
-  padding: "24px",
+  padding: "clamp(18px, 2.8vw, 24px)",
   borderRadius: "28px",
   border: "1px solid rgba(255,255,255,0.08)",
   backgroundColor: "rgba(9,9,12,0.92)",
@@ -286,7 +287,7 @@ export const dashboardSectionTextStyle: CSSProperties = {
   margin: 0,
   color: "#a3acc2",
   fontSize: "14px",
-  lineHeight: 1.7,
+  lineHeight: 1.68,
   maxWidth: "58ch",
 };
 

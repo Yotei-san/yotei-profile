@@ -364,7 +364,7 @@ const mainStyle: CSSProperties = {
     "linear-gradient(180deg, #06070b 0%, #05060a 100%)",
   color: "#f8faff",
   fontFamily:
-    'Inter, Arial, Helvetica, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+    '"Manrope", "Segoe UI", "Helvetica Neue", Arial, sans-serif',
 };
 
 const authCss = `
@@ -658,8 +658,8 @@ const authCss = `
     font-weight: 800;
   }
 
-  .auth-back-link:hover,
-  .auth-text-link:hover {
+  .auth-back-link:focus-visible,
+  .auth-text-link:focus-visible {
     color: #ffffff;
     transform: translateY(-1px);
   }
@@ -785,12 +785,6 @@ const authCss = `
       transform 180ms ease;
   }
 
-  .auth-password-toggle:hover {
-    border-color: rgba(255, 255, 255, 0.08);
-    background: rgba(255, 255, 255, 0.08);
-    color: #ffffff;
-  }
-
   .auth-remember {
     display: inline-flex;
     align-items: center;
@@ -857,13 +851,6 @@ const authCss = `
       transform 180ms ease,
       box-shadow 180ms ease,
       opacity 180ms ease;
-  }
-
-  .auth-submit:hover:not(:disabled) {
-    transform: translateY(-1px);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.2),
-      0 22px 40px rgba(109, 91, 255, 0.24);
   }
 
   .auth-submit:disabled {
@@ -985,6 +972,27 @@ const authCss = `
 
     .auth-orb {
       width: min(210px, 76%);
+    }
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .auth-back-link:hover,
+    .auth-text-link:hover {
+      color: #ffffff;
+      transform: translateY(-1px);
+    }
+
+    .auth-password-toggle:hover {
+      border-color: rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.08);
+      color: #ffffff;
+    }
+
+    .auth-submit:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.2),
+        0 22px 40px rgba(109, 91, 255, 0.24);
     }
   }
 `;

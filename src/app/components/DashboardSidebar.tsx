@@ -148,6 +148,13 @@ export default function DashboardSidebar({ user, items, lockedHrefs = [] }: Prop
           display: none;
         }
 
+        .dashboard-sidebar-mobile-actions {
+          display: inline-flex;
+          align-items: center;
+          gap: 10px;
+          flex-shrink: 0;
+        }
+
         .dashboard-sidebar-desktop {
           width: 100%;
           max-width: 270px;
@@ -282,10 +289,25 @@ export default function DashboardSidebar({ user, items, lockedHrefs = [] }: Prop
         @media (max-width: 640px) {
           .dashboard-sidebar-mobile-bar {
             padding: 12px 14px;
+            gap: 10px;
+          }
+
+          .dashboard-sidebar-mobile-brand {
+            gap: 10px;
+          }
+
+          .dashboard-sidebar-mobile-actions {
+            gap: 8px;
           }
 
           .dashboard-sidebar-mobile-brand-copy span {
             white-space: normal;
+          }
+        }
+
+        @media (max-width: 430px) {
+          .dashboard-sidebar-mobile-brand-copy span {
+            display: none;
           }
         }
 
@@ -308,27 +330,29 @@ export default function DashboardSidebar({ user, items, lockedHrefs = [] }: Prop
             size={40}
           />
           <span className="dashboard-sidebar-mobile-brand-copy">
-            <strong>yotei profile</strong>
+            <strong>Yotei Profile</strong>
             <span>{t("dashboard.sidebar.control")}</span>
           </span>
         </Link>
 
-        <LanguageSwitcher variant="compact" />
+        <div className="dashboard-sidebar-mobile-actions">
+          <LanguageSwitcher variant="compact" />
 
-        <button
-          type="button"
-          className="dashboard-sidebar-menu-button"
-          aria-label={
-            isMobileDrawerOpen
-              ? t("dashboard.sidebar.closeNavigation")
-              : t("dashboard.sidebar.openNavigation")
-          }
-          aria-expanded={isMobileDrawerOpen}
-          aria-controls={mobileDrawerId}
-          onClick={() => setIsMobileDrawerOpen((current) => !current)}
-        >
-          {isMobileDrawerOpen ? <LuX size={20} /> : <LuMenu size={20} />}
-        </button>
+          <button
+            type="button"
+            className="dashboard-sidebar-menu-button"
+            aria-label={
+              isMobileDrawerOpen
+                ? t("dashboard.sidebar.closeNavigation")
+                : t("dashboard.sidebar.openNavigation")
+            }
+            aria-expanded={isMobileDrawerOpen}
+            aria-controls={mobileDrawerId}
+            onClick={() => setIsMobileDrawerOpen((current) => !current)}
+          >
+            {isMobileDrawerOpen ? <LuX size={20} /> : <LuMenu size={20} />}
+          </button>
+        </div>
       </div>
 
       <div className="dashboard-sidebar-desktop">
@@ -359,7 +383,7 @@ export default function DashboardSidebar({ user, items, lockedHrefs = [] }: Prop
             className="dashboard-sidebar-drawer"
             role="dialog"
             aria-modal="true"
-            aria-label="Dashboard navigation"
+            aria-label={t("dashboard.sidebar.navigation")}
           >
             <div className="dashboard-sidebar-drawer-header">
               <div className="dashboard-sidebar-drawer-title">
@@ -439,7 +463,7 @@ function SidebarPanel({
 
         <div>
           <div style={{ fontSize: "16px", fontWeight: 900, color: "#fff" }}>
-            yotei profile
+            Yotei Profile
           </div>
           <div style={{ fontSize: "12px", color: "#6b7280" }}>
             {t("dashboard.sidebar.control")}
@@ -466,19 +490,17 @@ function SidebarPanel({
             minWidth: 0,
           }}
         >
-          <img
-            src={user.avatarUrl || "https://placehold.co/100x100?text=Y"}
-            alt={user.displayName || user.username}
-            style={{
-              width: "52px",
-              height: "52px",
-              borderRadius: "999px",
-              objectFit: "cover",
-              border: "2px solid rgba(244,114,182,0.25)",
-              backgroundColor: "#111",
-              flexShrink: 0,
-            }}
-          />
+          {user.avatarUrl ? (
+            <img
+              src={user.avatarUrl}
+              alt={user.displayName || user.username}
+              style={avatarStyle}
+            />
+          ) : (
+            <div aria-hidden="true" style={avatarFallbackStyle}>
+              {getInitials(user.displayName || user.username)}
+            </div>
+          )}
 
           <div style={{ minWidth: 0, display: "grid", gap: "4px" }}>
             <div
@@ -588,6 +610,38 @@ function SidebarPanel({
     </aside>
   );
 }
+
+function getInitials(value: string) {
+  return (
+    value
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase() ?? "")
+      .join("") || "Y"
+  );
+}
+
+const avatarStyle: CSSProperties = {
+  width: "52px",
+  height: "52px",
+  borderRadius: "999px",
+  objectFit: "cover",
+  border: "2px solid rgba(244,114,182,0.25)",
+  backgroundColor: "#111",
+  flexShrink: 0,
+};
+
+const avatarFallbackStyle: CSSProperties = {
+  ...avatarStyle,
+  display: "grid",
+  placeItems: "center",
+  color: "#ffffff",
+  fontSize: "16px",
+  fontWeight: 900,
+  background:
+    "linear-gradient(135deg, rgba(135,118,255,0.42), rgba(255,110,168,0.34))",
+};
 
 function SidebarSection({
   title,

@@ -420,19 +420,16 @@ export default function ProfileIdentityBadges({
             0 0 22px var(--profile-badge-glow);
         }
 
-        .profile-identity-badge:hover,
         .profile-identity-badge:focus-visible {
           transform: translateY(calc(var(--profile-badge-lift) * -1)) scale(var(--profile-badge-scale));
           filter: saturate(1.08) brightness(1.04);
         }
 
-        .profile-identity-badge:hover::after,
         .profile-identity-badge:focus-visible::after {
           opacity: 1;
           transform: translate(-50%, 0);
         }
 
-        .profile-identity-badge:hover .profile-identity-badge-shape::after,
         .profile-identity-badge:focus-visible .profile-identity-badge-shape::after {
           opacity: 0.42;
         }
@@ -463,6 +460,22 @@ export default function ProfileIdentityBadges({
         .profile-identity-badges.motion-off .profile-identity-badge-core {
           animation: none !important;
           transition-duration: 120ms !important;
+        }
+
+        @media (hover: hover) and (pointer: fine) {
+          .profile-identity-badge:hover {
+            transform: translateY(calc(var(--profile-badge-lift) * -1)) scale(var(--profile-badge-scale));
+            filter: saturate(1.08) brightness(1.04);
+          }
+
+          .profile-identity-badge:hover::after {
+            opacity: 1;
+            transform: translate(-50%, 0);
+          }
+
+          .profile-identity-badge:hover .profile-identity-badge-shape::after {
+            opacity: 0.42;
+          }
         }
 
         @media (max-width: 640px) {
