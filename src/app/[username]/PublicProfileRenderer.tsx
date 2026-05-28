@@ -78,6 +78,7 @@ import { useAdaptivePerformance } from "@/app/components/PerformanceProvider";
 import {
   adaptProfileBackgroundIntensity,
   adaptProfileMotionLevel,
+  getAdaptiveMotionDebugSummary,
 } from "@/app/lib/performance";
 import LivingProfileBackground from "./LivingProfileBackground";
 import ProfileBannerMedia from "./ProfileBannerMedia";
@@ -216,6 +217,7 @@ export default function PublicProfileRenderer({
 }: Props) {
   const { t } = useI18n();
   const { profile: adaptivePerformance } = useAdaptivePerformance();
+  const motionDebugSignatureRef = useRef<string | null>(null);
   const safeLayout = normalizeProfileLayout(layout);
   const safeScene = normalizeProfileScene(scene);
   const safeMotionLevel = normalizeProfileMotionLevel(motionLevel);
@@ -465,6 +467,46 @@ export default function PublicProfileRenderer({
     380,
   );
   usePublicProfileScrollbarMode(!preview);
+
+  useEffect(() => {
+    if (process.env.NODE_ENV === "production") {
+      return;
+    }
+
+    const motionDebug = getAdaptiveMotionDebugSummary(adaptivePerformance);
+    const debugPayload = {
+      preview,
+      tier: adaptivePerformance.tier,
+      safeMode: adaptivePerformance.safeMode,
+      reducedMotion: adaptivePerformance.reducedMotion,
+      saveData: adaptivePerformance.saveData,
+      allowDecorativeMotion: adaptivePerformance.allowDecorativeMotion,
+      allowAmbientMotion: adaptivePerformance.allowAmbientMotion,
+      allowBlurEffects: adaptivePerformance.allowBlurEffects,
+      inputMotionLevel: safeMotionLevel,
+      adaptiveMotionLevel,
+      nameEffectsAnimated: adaptiveMotionLevel !== "off",
+      badgeEffectsAnimated: badgeMotionProfile.animated,
+      blockedBy: motionDebug.blockedBy,
+    };
+    const nextSignature = JSON.stringify(debugPayload);
+
+    if (motionDebugSignatureRef.current === nextSignature) {
+      return;
+    }
+
+    motionDebugSignatureRef.current = nextSignature;
+
+    console.groupCollapsed(`Yotei public profile motion (${motionDebug.motionPolicy})`);
+    console.table(debugPayload);
+    console.groupEnd();
+  }, [
+    adaptiveMotionLevel,
+    adaptivePerformance,
+    badgeMotionProfile.animated,
+    preview,
+    safeMotionLevel,
+  ]);
 
   if (safeIntroMode !== "off") {
     return (

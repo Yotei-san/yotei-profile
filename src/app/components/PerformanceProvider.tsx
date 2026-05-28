@@ -6,12 +6,14 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
 import {
   DEFAULT_BROWSER_PERFORMANCE_SIGNALS,
   YOTEI_PERFORMANCE_STORAGE_KEY,
+  getAdaptiveMotionDebugSummary,
   normalizePerformanceMode,
   readBrowserPerformanceSignals,
   resolveAdaptivePerformanceProfile,
@@ -39,6 +41,8 @@ export function PerformanceProvider({ children }: { children: ReactNode }) {
   const [signals, setSignals] = useState<BrowserPerformanceSignals>(
     DEFAULT_BROWSER_PERFORMANCE_SIGNALS,
   );
+  const [hasDetectedBrowserSignals, setHasDetectedBrowserSignals] = useState(false);
+  const debugSignatureRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -55,6 +59,7 @@ export function PerformanceProvider({ children }: { children: ReactNode }) {
 
     const updateSignals = () => {
       setSignals(readBrowserPerformanceSignals());
+      setHasDetectedBrowserSignals(true);
     };
 
     const reducedMotionQuery = window.matchMedia(
@@ -106,6 +111,52 @@ export function PerformanceProvider({ children }: { children: ReactNode }) {
       delete document.documentElement.dataset.yoteiSafeMode;
     };
   }, [mode, profile.safeMode, profile.tier]);
+
+  useEffect(() => {
+    if (process.env.NODE_ENV === "production" || !hasDetectedBrowserSignals) {
+      return;
+    }
+
+    const motionDebug = getAdaptiveMotionDebugSummary(profile);
+    const debugPayload = {
+      mode,
+      tier: profile.tier,
+      safeMode: profile.safeMode,
+      reducedMotion: profile.reducedMotion,
+      saveData: profile.saveData,
+      lowPowerDevice: profile.lowPowerDevice,
+      finePointer: profile.finePointer,
+      coarsePointer: profile.coarsePointer,
+      allowDecorativeMotion: profile.allowDecorativeMotion,
+      allowAmbientMotion: profile.allowAmbientMotion,
+      allowBlurEffects: profile.allowBlurEffects,
+      deviceMemory: signals.deviceMemory ?? "unknown",
+      hardwareConcurrency: signals.hardwareConcurrency ?? "unknown",
+      slowUpdate: signals.slowUpdate,
+      blockedBy: motionDebug.blockedBy,
+      motionPolicy: motionDebug.motionPolicy,
+      tierPolicy: motionDebug.tierPolicy,
+    };
+    const nextSignature = JSON.stringify(debugPayload);
+
+    if (debugSignatureRef.current === nextSignature) {
+      return;
+    }
+
+    debugSignatureRef.current = nextSignature;
+    const eventLabel = `Yotei performance detection (${motionDebug.motionPolicy})`;
+
+    console.groupCollapsed(eventLabel);
+    console.table(debugPayload);
+    console.groupEnd();
+  }, [
+    hasDetectedBrowserSignals,
+    mode,
+    profile,
+    signals.deviceMemory,
+    signals.hardwareConcurrency,
+    signals.slowUpdate,
+  ]);
 
   const setMode = useCallback((nextMode: PerformanceMode) => {
     setModeState(nextMode);

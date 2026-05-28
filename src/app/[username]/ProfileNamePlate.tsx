@@ -137,6 +137,7 @@ export default function ProfileNamePlate({
           "--profile-typewriter-characters": Math.max(displayName.length, 1),
         } as CSSProperties
       }
+      data-motion-level={motionLevel}
     >
       <style>{namePlateStyles}</style>
 

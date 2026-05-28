@@ -31,6 +31,10 @@ import LanguageSwitcher from "@/app/components/LanguageSwitcher";
 import { useAdaptivePerformance } from "@/app/components/PerformanceProvider";
 import { useBodyScrollLock } from "@/app/components/useBodyScrollLock";
 import YoteiBrandMark from "@/app/components/YoteiBrandMark";
+import {
+  getAdaptiveMotionDebugSummary,
+  shouldDisableAdaptiveMotion,
+} from "@/app/lib/performance";
 
 const heroChipKeys = [
   { key: "links", tone: "violet" },
@@ -78,14 +82,14 @@ function joinClassNames(...values: Array<string | false | null | undefined>) {
 export default function HomePageClient() {
   const [username, setUsername] = useState("");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const router = useRouter();
   const { t } = useI18n();
   const { profile } = useAdaptivePerformance();
   const mobileMenuId = useId();
   const mobileMenuCloseRef = useRef<HTMLButtonElement>(null);
-  const shouldReduceMotion =
-    prefersReducedMotion || !profile.allowDecorativeMotion;
+  const motionDebugSignatureRef = useRef<string | null>(null);
+  const reducedHomeMotion = shouldDisableAdaptiveMotion(profile);
+  const motionDebug = getAdaptiveMotionDebugSummary(profile);
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
   const navLinks = [
     { label: t("nav.discord"), href: "#community" },
@@ -125,17 +129,20 @@ export default function HomePageClient() {
   }));
   useBodyScrollLock(isMobileMenuOpen);
 
-  useEffect(() => {
-    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const updatePreference = () => setPrefersReducedMotion(mediaQuery.matches);
-
-    updatePreference();
-    mediaQuery.addEventListener("change", updatePreference);
-
-    return () => {
-      mediaQuery.removeEventListener("change", updatePreference);
-    };
-  }, []);
+  const homeOrbitDuration = reducedHomeMotion
+    ? "0s"
+    : profile.tier === "high"
+      ? "28s"
+      : profile.tier === "medium"
+        ? "38s"
+        : "46s";
+  const homeFloatDuration = reducedHomeMotion
+    ? "0s"
+    : profile.tier === "high"
+      ? "6.6s"
+      : profile.tier === "medium"
+        ? "7.2s"
+        : "8.1s";
 
   useEffect(() => {
     if (!isMobileMenuOpen) {
@@ -194,12 +201,14 @@ export default function HomePageClient() {
   const homeExperienceStyle = {
     ...pageStyle,
     "--home-atmosphere-opacity":
-      profile.tier === "high" ? "1" : profile.tier === "medium" ? "0.76" : "0.48",
+      profile.tier === "high" ? "1" : profile.tier === "medium" ? "0.76" : "0.58",
     "--home-glow-opacity":
-      profile.allowDecorativeMotion && !prefersReducedMotion
+      !reducedHomeMotion
         ? profile.tier === "high"
           ? "1"
-          : "0.78"
+          : profile.tier === "medium"
+            ? "0.78"
+            : "0.64"
         : "0.42",
     "--home-blur-scale": profile.allowBlurEffects ? profile.blurScale.toFixed(2) : "0",
     "--home-nav-blur": profile.allowBlurEffects
@@ -217,17 +226,62 @@ export default function HomePageClient() {
       : profile.tier === "high"
         ? "0.048"
         : "0.026",
-    "--home-orbit-duration": shouldReduceMotion ? "0s" : profile.tier === "high" ? "28s" : "38s",
-    "--home-float-duration": shouldReduceMotion ? "0s" : "6.6s",
+    "--home-orbit-duration": homeOrbitDuration,
+    "--home-float-duration": homeFloatDuration,
   } as CSSProperties;
 
   const rootClassName = joinClassNames(
     "yotei-scrollbar-hidden",
     "home-page",
-    !shouldReduceMotion && "home-live-motion",
-    shouldReduceMotion && "home-reduced-motion",
+    !reducedHomeMotion && "home-live-motion",
+    reducedHomeMotion && "home-reduced-motion",
     profile.safeMode && "home-safe-mode"
   );
+
+  useEffect(() => {
+    if (process.env.NODE_ENV === "production") {
+      return;
+    }
+
+    const debugPayload = {
+      tier: profile.tier,
+      safeMode: profile.safeMode,
+      reducedMotion: profile.reducedMotion,
+      saveData: profile.saveData,
+      allowDecorativeMotion: profile.allowDecorativeMotion,
+      allowAmbientMotion: profile.allowAmbientMotion,
+      allowBlurEffects: profile.allowBlurEffects,
+      reducedHomeMotion,
+      ybmAnimated: !reducedHomeMotion,
+      blockedBy: motionDebug.blockedBy,
+      orbitDuration: homeOrbitDuration,
+      floatDuration: homeFloatDuration,
+    };
+    const nextSignature = JSON.stringify(debugPayload);
+
+    if (motionDebugSignatureRef.current === nextSignature) {
+      return;
+    }
+
+    motionDebugSignatureRef.current = nextSignature;
+
+    console.groupCollapsed(`Yotei home motion (${motionDebug.motionPolicy})`);
+    console.table(debugPayload);
+    console.groupEnd();
+  }, [
+    homeFloatDuration,
+    homeOrbitDuration,
+    motionDebug.blockedBy,
+    motionDebug.motionPolicy,
+    profile.allowAmbientMotion,
+    profile.allowBlurEffects,
+    profile.allowDecorativeMotion,
+    profile.reducedMotion,
+    profile.safeMode,
+    profile.saveData,
+    profile.tier,
+    reducedHomeMotion,
+  ]);
 
   return (
     <main className={rootClassName} style={homeExperienceStyle}>
@@ -1663,7 +1717,7 @@ export default function HomePageClient() {
       <div className="page-beam" />
       <div className="page-grid" />
       {!profile.safeMode ? <div className="page-noise" /> : null}
-      {!shouldReduceMotion && profile.tier === "high" ? <div className="page-scanline" /> : null}
+      {!reducedHomeMotion && profile.tier === "high" ? <div className="page-scanline" /> : null}
       <div className="page-vignette" />
 
       <header className="home-header">
@@ -1672,8 +1726,9 @@ export default function HomePageClient() {
             <div className="home-nav">
               <Link href="/" className="brand-link" onClick={closeMobileMenu}>
                 <YoteiBrandMark
-                  animated={!shouldReduceMotion}
+                  animated={!reducedHomeMotion}
                   className="brand-mark-svg"
+                  debugLabel="home-nav"
                   intensity="standard"
                   size={40}
                 />
@@ -1832,8 +1887,9 @@ export default function HomePageClient() {
                   <div className="reactor-orbit reactor-orbit-one" />
                   <div className="reactor-orbit reactor-orbit-two" />
                   <YoteiBrandMark
-                    animated={!shouldReduceMotion}
+                    animated={!reducedHomeMotion}
                     className="reactor-mark"
+                    debugLabel="home-hero"
                     intensity={profile.tier === "high" ? "hero" : "standard"}
                     size={176}
                   />

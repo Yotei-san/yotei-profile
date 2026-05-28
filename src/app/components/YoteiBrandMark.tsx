@@ -1,4 +1,4 @@
-import { useId, type CSSProperties } from "react";
+import { useEffect, useId, useRef, type CSSProperties } from "react";
 
 type YoteiBrandMarkProps = {
   size?: number;
@@ -6,6 +6,7 @@ type YoteiBrandMarkProps = {
   intensity?: "calm" | "standard" | "hero";
   showWordmark?: boolean;
   className?: string;
+  debugLabel?: string;
 };
 
 const INTENSITY_MAP = {
@@ -54,8 +55,10 @@ export default function YoteiBrandMark({
   intensity = "standard",
   showWordmark = false,
   className,
+  debugLabel,
 }: YoteiBrandMarkProps) {
   const uniqueId = useId().replace(/:/g, "");
+  const previousAnimatedRef = useRef<boolean | null>(null);
   const config = INTENSITY_MAP[intensity];
   const width = showWordmark ? Math.round(size * 1.84) : size;
   const svgClassName = joinClassNames(
@@ -89,10 +92,31 @@ export default function YoteiBrandMark({
   const shimmerId = `${uniqueId}-shimmer`;
   const wordmarkGradientId = `${uniqueId}-wordmark`;
 
+  useEffect(() => {
+    if (process.env.NODE_ENV === "production") {
+      return;
+    }
+
+    if (previousAnimatedRef.current === animated) {
+      return;
+    }
+
+    previousAnimatedRef.current = animated;
+
+    console.info("Yotei brand mark motion", {
+      label: debugLabel ?? className ?? "brand-mark",
+      animated,
+      intensity,
+      showWordmark,
+    });
+  }, [animated, className, debugLabel, intensity, showWordmark]);
+
   return (
     <svg
       aria-hidden="true"
       className={svgClassName}
+      data-yotei-animated={animated ? "true" : "false"}
+      data-yotei-brand-mark={debugLabel ?? className ?? "brand-mark"}
       focusable="false"
       preserveAspectRatio="xMidYMid meet"
       style={style}

@@ -41,6 +41,12 @@ export type AdaptivePerformanceProfile = {
   animationDurationScale: number;
 };
 
+export type AdaptiveMotionDebugSummary = {
+  motionPolicy: "off" | "subtle" | "full";
+  blockedBy: string;
+  tierPolicy: string;
+};
+
 export const YOTEI_PERFORMANCE_STORAGE_KEY = "yotei:performance-mode";
 
 export const DEFAULT_BROWSER_PERFORMANCE_SIGNALS: BrowserPerformanceSignals = {
@@ -84,7 +90,7 @@ export function resolveAdaptivePerformanceProfile(input: {
     signals.slowUpdate || lowDeviceMemory || lowHardwareConcurrency || constrainedDevice;
   const shouldConserveEffects =
     signals.reducedMotion || signals.saveData || lowPowerDevice;
-  const safeMode = shouldConserveEffects || tier === "low";
+  const safeMode = shouldConserveEffects;
 
   return {
     mode,
@@ -96,9 +102,9 @@ export function resolveAdaptivePerformanceProfile(input: {
     finePointer: signals.finePointer,
     coarsePointer: signals.coarsePointer,
     allowMotion: !signals.reducedMotion,
-    allowAmbientMotion: !shouldConserveEffects && tier !== "low",
-    allowDecorativeMotion: !shouldConserveEffects && tier !== "low",
-    allowBlurEffects: !signals.reducedMotion && !signals.saveData && tier !== "low",
+    allowAmbientMotion: !shouldConserveEffects,
+    allowDecorativeMotion: !shouldConserveEffects,
+    allowBlurEffects: !signals.reducedMotion && !signals.saveData && !lowPowerDevice && tier !== "low",
     allowCursorEffects:
       !signals.reducedMotion &&
       !signals.saveData &&
@@ -107,9 +113,9 @@ export function resolveAdaptivePerformanceProfile(input: {
       tier === "high",
     allowDeferredVisuals: !shouldConserveEffects && tier !== "low",
     blurScale: tier === "low" ? 0.52 : tier === "medium" ? 0.8 : 1,
-    particleDensity: tier === "low" ? 0.35 : tier === "medium" ? 0.72 : 1,
-    sceneIntensityScale: tier === "low" ? 0.64 : tier === "medium" ? 0.84 : 1,
-    animationDurationScale: tier === "low" ? 0.82 : tier === "medium" ? 0.92 : 1,
+    particleDensity: tier === "low" ? 0.42 : tier === "medium" ? 0.72 : 1,
+    sceneIntensityScale: tier === "low" ? 0.68 : tier === "medium" ? 0.84 : 1,
+    animationDurationScale: tier === "low" ? 1.14 : tier === "medium" ? 1.04 : 1,
   };
 }
 
@@ -150,15 +156,19 @@ export function adaptProfileMotionLevel(
 ) {
   const normalizedMotionLevel = normalizeProfileMotionLevel(motionLevel);
 
+  if (normalizedMotionLevel === "off") {
+    return "off" as const;
+  }
+
   if (!performance.allowMotion) {
     return "off" as const;
   }
 
-  if (!performance.allowDecorativeMotion) {
-    return normalizedMotionLevel === "off" ? "off" : ("subtle" as const);
+  if (shouldDisableAdaptiveMotion(performance)) {
+    return "off" as const;
   }
 
-  if (performance.tier === "medium" && normalizedMotionLevel === "alive") {
+  if (performance.tier !== "high") {
     return "subtle" as const;
   }
 
@@ -175,11 +185,66 @@ export function adaptProfileBackgroundIntensity(
     return "low" as const;
   }
 
+  if (performance.tier === "low") {
+    return normalizedIntensity === "high" ? "medium" : normalizedIntensity;
+  }
+
   if (performance.tier === "medium" && normalizedIntensity === "high") {
     return "medium" as const;
   }
 
   return normalizedIntensity;
+}
+
+export function shouldDisableAdaptiveMotion(
+  profile: Pick<AdaptivePerformanceProfile, "reducedMotion" | "saveData" | "safeMode">,
+) {
+  return profile.reducedMotion || profile.saveData || profile.safeMode;
+}
+
+export function getAdaptiveMotionDebugSummary(
+  profile: Pick<
+    AdaptivePerformanceProfile,
+    "tier" | "safeMode" | "reducedMotion" | "saveData"
+  >,
+): AdaptiveMotionDebugSummary {
+  if (profile.reducedMotion) {
+    return {
+      motionPolicy: "off",
+      blockedBy: "prefers-reduced-motion",
+      tierPolicy: `${profile.tier}: reduced motion wins`,
+    };
+  }
+
+  if (profile.saveData) {
+    return {
+      motionPolicy: "off",
+      blockedBy: "save-data",
+      tierPolicy: `${profile.tier}: save-data wins`,
+    };
+  }
+
+  if (profile.safeMode) {
+    return {
+      motionPolicy: "off",
+      blockedBy: "safe-mode",
+      tierPolicy: `${profile.tier}: safe mode wins`,
+    };
+  }
+
+  if (profile.tier === "high") {
+    return {
+      motionPolicy: "full",
+      blockedBy: "none",
+      tierPolicy: "high: full motion",
+    };
+  }
+
+  return {
+    motionPolicy: "subtle",
+    blockedBy: "none",
+    tierPolicy: `${profile.tier}: degrade to subtle`,
+  };
 }
 
 function resolveAutoPerformanceTier(
