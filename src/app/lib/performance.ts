@@ -72,10 +72,16 @@ export function resolveAdaptivePerformanceProfile(input: {
   const mode = input.mode ?? "auto";
   const signals = input.signals ?? DEFAULT_BROWSER_PERFORMANCE_SIGNALS;
   const tier = mode === "auto" ? resolveAutoPerformanceTier(signals) : mode;
+  const lowDeviceMemory = signals.deviceMemory != null && signals.deviceMemory <= 2;
+  const lowHardwareConcurrency =
+    signals.hardwareConcurrency != null && signals.hardwareConcurrency <= 2;
+  const constrainedDevice =
+    signals.deviceMemory != null &&
+    signals.hardwareConcurrency != null &&
+    signals.deviceMemory <= 4 &&
+    signals.hardwareConcurrency <= 4;
   const lowPowerDevice =
-    signals.slowUpdate ||
-    (signals.deviceMemory != null && signals.deviceMemory <= 4) ||
-    (signals.hardwareConcurrency != null && signals.hardwareConcurrency <= 4);
+    signals.slowUpdate || lowDeviceMemory || lowHardwareConcurrency || constrainedDevice;
   const shouldConserveEffects =
     signals.reducedMotion || signals.saveData || lowPowerDevice;
   const safeMode = shouldConserveEffects || tier === "low";
@@ -144,8 +150,12 @@ export function adaptProfileMotionLevel(
 ) {
   const normalizedMotionLevel = normalizeProfileMotionLevel(motionLevel);
 
-  if (!performance.allowMotion || !performance.allowAmbientMotion) {
+  if (!performance.allowMotion) {
     return "off" as const;
+  }
+
+  if (!performance.allowDecorativeMotion) {
+    return normalizedMotionLevel === "off" ? "off" : ("subtle" as const);
   }
 
   if (performance.tier === "medium" && normalizedMotionLevel === "alive") {
@@ -195,7 +205,7 @@ function resolveAutoPerformanceTier(
 
   if (signals.deviceMemory != null) {
     score +=
-      signals.deviceMemory >= 8 ? 2 : signals.deviceMemory >= 6 ? 1 : -1;
+      signals.deviceMemory >= 8 ? 2 : signals.deviceMemory >= 6 ? 1 : signals.deviceMemory >= 4 ? 0 : -1;
   }
 
   if (signals.hardwareConcurrency != null) {
@@ -204,7 +214,9 @@ function resolveAutoPerformanceTier(
         ? 2
         : signals.hardwareConcurrency >= 6
           ? 1
-          : -1;
+          : signals.hardwareConcurrency >= 4
+            ? 0
+            : -1;
   }
 
   if (score >= 4) {
