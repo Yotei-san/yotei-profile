@@ -176,6 +176,7 @@ function DefaultLayout(props: Props) {
   const cardStyleTokens = getProfileCardStyleTokens(props.cardStyle);
   const cornerTokens = getProfileCornerTokens(props.cornerStyle);
   const motionTokens = getProfileMotionTokens(props.motionLevel);
+  const badgeMotionProfile = createBadgeMotionProfile(motionTokens, props.preview);
   const socialGroups = partitionSocialBlocks(props.socialBlocks);
   const orderedBlocks = getRenderableCompositionOrder(props.composition, {
     identity: true,
@@ -291,6 +292,11 @@ function DefaultLayout(props: Props) {
                   badges={props.featuredBadges}
                   extraBadgeCount={props.extraBadgeCount}
                   themeColor={sceneAppearance.linkThemeColor}
+                  mode={props.composition.metadata.badgeMode}
+                  styleVariant={props.composition.metadata.badgeStyle}
+                  seasonalTheme={props.composition.metadata.badgeSeason}
+                  favoriteSlugs={props.composition.metadata.favoriteBadgeSlugs}
+                  motionProfile={badgeMotionProfile}
                 />
               ) : null}
               {renderIdentityMetadataSlot("under-username", {
@@ -430,6 +436,10 @@ function SimplisticLayout(props: Props) {
   ) * presetRenderTuning.moduleGapScale * dnaTuning.spacingScale * dnaTuning.separationScale;
   const cardStyleTokens = getProfileCardStyleTokens(props.cardStyle);
   const cornerTokens = getProfileCornerTokens(props.cornerStyle);
+  const badgeMotionProfile = createBadgeMotionProfile(
+    getProfileMotionTokens(props.motionLevel),
+    props.preview,
+  );
   const resolvedBackdrop =
     scaleBlurInFilter(
       props.cardStyle === "glass" ? glassTokens.backdropFilter : cardStyleTokens.backdropFilter,
@@ -514,6 +524,11 @@ function SimplisticLayout(props: Props) {
                 badges={props.featuredBadges}
                 extraBadgeCount={props.extraBadgeCount}
                 themeColor={sceneAppearance.linkThemeColor}
+                mode={props.composition.metadata.badgeMode}
+                styleVariant={props.composition.metadata.badgeStyle}
+                seasonalTheme={props.composition.metadata.badgeSeason}
+                favoriteSlugs={props.composition.metadata.favoriteBadgeSlugs}
+                motionProfile={badgeMotionProfile}
               />
             ) : null}
             {renderIdentityMetadataSlot("under-username", {
@@ -668,6 +683,7 @@ function PortfolioLayout(props: Props) {
   const cardStyleTokens = getProfileCardStyleTokens(props.cardStyle);
   const cornerTokens = getProfileCornerTokens(props.cornerStyle);
   const motionTokens = getProfileMotionTokens(props.motionLevel);
+  const badgeMotionProfile = createBadgeMotionProfile(motionTokens, props.preview);
   const resolvedBackdrop =
     scaleBlurInFilter(
       props.cardStyle === "glass" ? glassTokens.backdropFilter : cardStyleTokens.backdropFilter,
@@ -789,6 +805,11 @@ function PortfolioLayout(props: Props) {
                 badges={props.featuredBadges}
                 extraBadgeCount={props.extraBadgeCount}
                 themeColor={sceneAppearance.linkThemeColor}
+                mode={props.composition.metadata.badgeMode}
+                styleVariant={props.composition.metadata.badgeStyle}
+                seasonalTheme={props.composition.metadata.badgeSeason}
+                favoriteSlugs={props.composition.metadata.favoriteBadgeSlugs}
+                motionProfile={badgeMotionProfile}
               />
             ) : null}
             {renderIdentityMetadataSlot("under-username", {
@@ -1571,6 +1592,20 @@ function LinksSection({
 
 function withAlpha(hex: string, alpha: string) {
   return `${hex}${alpha}`;
+}
+
+function createBadgeMotionProfile(
+  motionTokens: ReturnType<typeof getProfileMotionTokens>,
+  preview = false,
+) {
+  return {
+    animated: motionTokens.allowDecorativeMotion && !preview,
+    glowBoost: motionTokens.badgeGlowBoost,
+    hoverLiftPx: motionTokens.badgeHoverLiftPx,
+    hoverScale: motionTokens.badgeHoverScale,
+    orbitDriftPx: motionTokens.badgeOrbitDriftPx,
+    sheenDurationS: motionTokens.badgeSheenDurationS,
+  };
 }
 
 function scaleBlurInFilter(filter: string, scale: number) {

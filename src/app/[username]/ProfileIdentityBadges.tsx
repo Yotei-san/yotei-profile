@@ -1,5 +1,7 @@
 import type { CSSProperties } from "react";
-import BadgeVisual from "@/app/dashboard/components/BadgeVisual";
+import BadgeVisual, {
+  getBadgeArtifactProfile,
+} from "@/app/dashboard/components/BadgeVisual";
 
 type IdentityBadge = {
   id: string;
@@ -7,28 +9,55 @@ type IdentityBadge = {
     slug: string;
     name: string;
     icon: string;
+    description: string | null;
     color: string | null;
     category: string | null;
     rarity: string | null;
   };
 };
 
+type BadgeMotionProfile = {
+  animated: boolean;
+  glowBoost: number;
+  hoverLiftPx: number;
+  hoverScale: number;
+  orbitDriftPx: number;
+  sheenDurationS: number;
+};
+
 type BadgeRailTheme = {
   accent: string;
-  secondary: string;
+  aura: string;
+  base: string;
+  dockGlow: string;
+  edge: string;
+  orbital: string;
+  segment: string;
+  sheen: string;
+  spotlight: string;
+  tooltip: string;
+  tooltipEdge: string;
+};
+
+type BadgeSlotTheme = {
+  accent: string;
   edge: string;
   glow: string;
-  aura: string;
+  orbital: string;
+  shadow: string;
   sheen: string;
-  pulse: string;
-  rim: string;
-  plateTop: string;
-  plateBottom: string;
-  halo: string;
-  fillTop: string;
-  fillBottom: string;
+  surface: string;
   tooltip: string;
-  tooltipAccent: string;
+  tooltipEdge: string;
+};
+
+const DEFAULT_MOTION_PROFILE: BadgeMotionProfile = {
+  animated: true,
+  glowBoost: 1,
+  hoverLiftPx: 2,
+  hoverScale: 1.02,
+  orbitDriftPx: 1,
+  sheenDurationS: 6.6,
 };
 
 export default function ProfileIdentityBadges({
@@ -40,6 +69,7 @@ export default function ProfileIdentityBadges({
   styleVariant = "default",
   seasonalTheme = "none",
   favoriteSlugs = [],
+  motionProfile = DEFAULT_MOTION_PROFILE,
 }: {
   badges: IdentityBadge[];
   extraBadgeCount?: number;
@@ -49,20 +79,76 @@ export default function ProfileIdentityBadges({
   styleVariant?: "default" | "holographic";
   seasonalTheme?: "none" | "solstice" | "lunar";
   favoriteSlugs?: string[];
+  motionProfile?: BadgeMotionProfile;
 }) {
   if (badges.length === 0 && extraBadgeCount <= 0) {
     return null;
   }
 
+  const favoriteSet = new Set(
+    favoriteSlugs.map((slug) => slug.trim().toLowerCase()).filter(Boolean),
+  );
+  const resolvedMotion = {
+    ...DEFAULT_MOTION_PROFILE,
+    ...motionProfile,
+  };
+  const artifactEntries = badges.map((item) => {
+    const artifact = getBadgeArtifactProfile({
+      slug: item.badge.slug,
+      icon: item.badge.icon,
+      name: item.badge.name,
+      description: item.badge.description,
+      color: item.badge.color,
+      rarity: item.badge.rarity,
+      category: item.badge.category,
+    });
+    const equipped = favoriteSet.has(item.badge.slug.trim().toLowerCase());
+
+    return {
+      item,
+      artifact,
+      equipped,
+      slotTheme: getBadgeSlotTheme(artifact, equipped, styleVariant, seasonalTheme),
+      tooltip: formatTooltip(item.badge.name, item.badge.rarity, item.badge.description ?? artifact.lore),
+    };
+  });
+  const railTheme = getBadgeRailTheme(
+    artifactEntries,
+    themeColor,
+    styleVariant,
+    seasonalTheme,
+  );
+
   return (
     <div
-      className={`profile-identity-badges align-${align} mode-${mode} variant-${styleVariant} season-${seasonalTheme}`}
+      className={[
+        "profile-identity-badges",
+        `align-${align}`,
+        `mode-${mode}`,
+        `variant-${styleVariant}`,
+        `season-${seasonalTheme}`,
+        resolvedMotion.animated ? "motion-live" : "motion-off",
+      ].join(" ")}
       role="list"
       aria-label="Profile badges"
       style={
         {
-          "--profile-badge-rail-tint": withAlpha(themeColor, "3a"),
-          "--profile-badge-rail-soft": withAlpha(themeColor, "18"),
+          "--profile-badge-rail-accent": railTheme.accent,
+          "--profile-badge-rail-aura": railTheme.aura,
+          "--profile-badge-rail-base": railTheme.base,
+          "--profile-badge-rail-edge": railTheme.edge,
+          "--profile-badge-rail-glow": railTheme.dockGlow,
+          "--profile-badge-rail-orbital": railTheme.orbital,
+          "--profile-badge-rail-segment": railTheme.segment,
+          "--profile-badge-rail-sheen": railTheme.sheen,
+          "--profile-badge-rail-spotlight": railTheme.spotlight,
+          "--profile-badge-tooltip": railTheme.tooltip,
+          "--profile-badge-tooltip-edge": railTheme.tooltipEdge,
+          "--profile-badge-lift": `${resolvedMotion.hoverLiftPx}px`,
+          "--profile-badge-scale": `${resolvedMotion.hoverScale}`,
+          "--profile-badge-drift": `${resolvedMotion.orbitDriftPx}px`,
+          "--profile-badge-sheen-duration": `${resolvedMotion.sheenDurationS}s`,
+          "--profile-badge-glow-boost": `${resolvedMotion.glowBoost}`,
         } as CSSProperties
       }
     >
@@ -71,39 +157,59 @@ export default function ProfileIdentityBadges({
           position: relative;
           display: inline-flex;
           align-items: center;
-          gap: 8px;
           flex-wrap: wrap;
-          min-width: 0;
+          gap: 10px;
           width: fit-content;
           max-width: 100%;
-          padding: 9px 11px;
-          border-radius: 24px;
-          border: 1px solid rgba(255,255,255,0.07);
+          min-width: 0;
+          padding: 14px 16px;
+          border-radius: 28px;
+          border: 1px solid var(--profile-badge-rail-edge);
           background:
-            linear-gradient(140deg, rgba(255,255,255,0.08), transparent 24%),
-            radial-gradient(circle at 14% 0%, rgba(255,255,255,0.12), transparent 34%),
-            radial-gradient(circle at 88% 100%, var(--profile-badge-rail-soft), transparent 42%),
-            linear-gradient(180deg, rgba(18,20,30,0.88), rgba(8,10,16,0.84));
+            linear-gradient(180deg, rgba(255,255,255,0.06), transparent 24%),
+            radial-gradient(circle at 16% -6%, var(--profile-badge-rail-spotlight), transparent 34%),
+            radial-gradient(circle at 82% 114%, var(--profile-badge-rail-glow), transparent 40%),
+            linear-gradient(160deg, rgba(255,255,255,0.03), transparent 32%),
+            linear-gradient(180deg, rgba(7,10,18,0.96), var(--profile-badge-rail-base));
           box-shadow:
-            0 16px 34px rgba(0,0,0,0.18),
+            0 22px 44px rgba(0,0,0,0.24),
             0 0 0 1px rgba(255,255,255,0.025),
-            0 0 24px var(--profile-badge-rail-soft),
+            0 0 26px var(--profile-badge-rail-glow),
             inset 0 1px 0 rgba(255,255,255,0.08);
-          backdrop-filter: blur(14px) saturate(118%);
-          -webkit-backdrop-filter: blur(14px) saturate(118%);
+          isolation: isolate;
+          overflow: hidden;
+        }
+
+        .profile-identity-badges::before,
+        .profile-identity-badges::after {
+          content: "";
+          position: absolute;
+          inset: 0;
+          pointer-events: none;
         }
 
         .profile-identity-badges::before {
-          content: "";
-          position: absolute;
           inset: 1px;
           border-radius: inherit;
           background:
-            linear-gradient(180deg, rgba(255,255,255,0.16), transparent 24%),
-            radial-gradient(circle at 18% -8%, var(--profile-badge-rail-tint), transparent 38%),
-            linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.05) 48%, transparent 100%);
-          pointer-events: none;
-          opacity: 0.86;
+            linear-gradient(180deg, rgba(255,255,255,0.14), transparent 24%),
+            radial-gradient(circle at 50% 128%, var(--profile-badge-rail-aura), transparent 44%);
+          opacity: 0.82;
+        }
+
+        .profile-identity-badges::after {
+          inset: 9px 14px;
+          border-radius: 20px;
+          background:
+            repeating-linear-gradient(
+              90deg,
+              transparent 0 18px,
+              rgba(255,255,255,0.02) 18px 19px,
+              transparent 19px 40px
+            ),
+            linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.04) 50%, transparent 100%);
+          opacity: 0.52;
+          mask: linear-gradient(180deg, rgba(0,0,0,0.92), transparent 92%);
         }
 
         .profile-identity-badges.align-center {
@@ -112,224 +218,151 @@ export default function ProfileIdentityBadges({
         }
 
         .profile-identity-badges.mode-showcase {
-          gap: 10px;
-          padding: 12px 14px;
-          border-radius: 28px;
-          background:
-            linear-gradient(140deg, rgba(255,255,255,0.09), transparent 24%),
-            radial-gradient(circle at 18% 0%, rgba(255,255,255,0.16), transparent 38%),
-            linear-gradient(180deg, rgba(16,18,28,0.92), rgba(8,10,16,0.9));
+          gap: 12px;
+          padding: 16px 18px;
+          border-radius: 32px;
         }
 
         .profile-identity-badge {
           --profile-badge-accent: #f8fafc;
-          --profile-badge-secondary: #a5b4fc;
-          --profile-badge-edge: rgba(255,255,255,0.14);
+          --profile-badge-edge: rgba(255,255,255,0.12);
           --profile-badge-glow: rgba(255,255,255,0.18);
-          --profile-badge-aura: rgba(255,255,255,0.14);
-          --profile-badge-sheen: rgba(255,255,255,0.26);
-          --profile-badge-pulse: 0.08;
-          --profile-badge-rim: rgba(255,255,255,0.14);
-          --profile-badge-plate-top: rgba(255,255,255,0.22);
-          --profile-badge-plate-bottom: rgba(9,12,22,0.96);
-          --profile-badge-halo: rgba(255,255,255,0.12);
-          --profile-badge-fill-top: rgba(255,255,255,0.12);
-          --profile-badge-fill-bottom: rgba(8,10,16,0.88);
-          --profile-badge-tooltip: rgba(8,10,16,0.96);
-          --profile-badge-tooltip-accent: rgba(255,255,255,0.08);
+          --profile-badge-orbital: rgba(255,255,255,0.18);
+          --profile-badge-shadow: rgba(0,0,0,0.34);
+          --profile-badge-sheen: rgba(255,255,255,0.24);
+          --profile-badge-surface: rgba(255,255,255,0.06);
+          --profile-badge-tooltip-local: var(--profile-badge-tooltip);
+          --profile-badge-tooltip-local-edge: var(--profile-badge-tooltip-edge);
           position: relative;
           z-index: 1;
-          width: 44px;
-          height: 44px;
-          padding: 0;
-          border: 1px solid var(--profile-badge-edge);
-          border-radius: 16px;
-          overflow: hidden;
-          isolation: isolate;
+          width: 58px;
+          height: 58px;
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          background:
-            radial-gradient(circle at 50% 118%, var(--profile-badge-halo) 0%, transparent 54%),
-            radial-gradient(circle at 28% 14%, rgba(255,255,255,0.18), transparent 36%),
-            linear-gradient(180deg, var(--profile-badge-fill-top), rgba(255,255,255,0.03) 38%, var(--profile-badge-fill-bottom));
-          box-shadow:
-            0 12px 22px rgba(0,0,0,0.18),
-            0 0 0 1px rgba(255,255,255,0.03),
-            0 0 18px var(--profile-badge-glow),
-            inset 0 1px 0 rgba(255,255,255,0.08);
+          flex-shrink: 0;
+          border: 0;
+          padding: 0;
+          background: transparent;
           color: #f8fbff;
           outline: none;
           transition:
             transform 180ms cubic-bezier(0.22, 1, 0.36, 1),
-            border-color 180ms ease,
-            box-shadow 180ms ease,
             filter 180ms ease;
         }
 
         .profile-identity-badges.mode-showcase .profile-identity-badge {
-          width: 50px;
-          height: 50px;
-          border-radius: 18px;
-        }
-
-        .profile-identity-badges.variant-holographic .profile-identity-badge-shell::after {
-          opacity: 0.44;
-          background:
-            linear-gradient(
-              118deg,
-              transparent 0%,
-              rgba(255,255,255,0.02) 24%,
-              rgba(255,255,255,0.22) 40%,
-              rgba(96,165,250,0.16) 50%,
-              rgba(244,114,182,0.18) 58%,
-              transparent 74%,
-              transparent 100%
-            );
-        }
-
-        .profile-identity-badges.season-solstice .profile-identity-badge {
-          box-shadow:
-            0 12px 22px rgba(0,0,0,0.18),
-            0 0 0 1px rgba(255,255,255,0.03),
-            0 0 20px rgba(244,201,122,0.24),
-            inset 0 1px 0 rgba(255,255,255,0.08);
-        }
-
-        .profile-identity-badges.season-lunar .profile-identity-badge {
-          box-shadow:
-            0 12px 22px rgba(0,0,0,0.18),
-            0 0 0 1px rgba(255,255,255,0.03),
-            0 0 20px rgba(125,196,255,0.22),
-            inset 0 1px 0 rgba(255,255,255,0.08);
+          width: 66px;
+          height: 66px;
         }
 
         .profile-identity-badge::before,
         .profile-identity-badge::after {
+          content: "";
           position: absolute;
-          left: 50%;
           pointer-events: none;
-          opacity: 0;
           transition:
-            opacity 160ms ease,
-            transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
+            opacity 180ms ease,
+            transform 180ms cubic-bezier(0.22, 1, 0.36, 1);
         }
 
         .profile-identity-badge::before {
-          content: "";
-          bottom: calc(100% + 5px);
-          transform: translate(-50%, 4px);
-          border-width: 6px 6px 0 6px;
-          border-style: solid;
-          border-color: var(--profile-badge-tooltip) transparent transparent transparent;
+          inset: 8px;
+          border-radius: 20px;
+          border: 1px solid var(--profile-badge-edge);
+          background:
+            radial-gradient(circle at 50% 112%, var(--profile-badge-glow), transparent 58%),
+            radial-gradient(circle at 28% 18%, rgba(255,255,255,0.12), transparent 34%),
+            linear-gradient(180deg, rgba(255,255,255,0.04), var(--profile-badge-surface));
+          box-shadow:
+            inset 0 1px 0 rgba(255,255,255,0.08),
+            0 12px 22px var(--profile-badge-shadow);
+          opacity: 0.92;
         }
 
         .profile-identity-badge::after {
-          content: attr(data-tooltip);
+          left: 50%;
           bottom: calc(100% + 12px);
-          transform: translate(-50%, 7px);
-          padding: 8px 11px;
-          border-radius: 12px;
+          transform: translate(-50%, 8px);
+          max-width: min(240px, 72vw);
+          padding: 9px 11px;
+          border-radius: 14px;
           background:
             linear-gradient(180deg, rgba(255,255,255,0.08), transparent),
-            linear-gradient(135deg, var(--profile-badge-tooltip-accent), var(--profile-badge-tooltip));
-          border: 1px solid var(--profile-badge-edge);
+            linear-gradient(145deg, var(--profile-badge-tooltip-local-edge), var(--profile-badge-tooltip-local));
+          border: 1px solid rgba(255,255,255,0.08);
           box-shadow:
-            0 16px 34px rgba(0,0,0,0.32),
-            0 0 18px var(--profile-badge-glow);
+            0 18px 30px rgba(0,0,0,0.34),
+            0 0 20px var(--profile-badge-glow);
           color: #f8fbff;
           font-size: 11px;
-          font-weight: 800;
-          line-height: 1;
-          white-space: nowrap;
-          letter-spacing: 0.02em;
+          font-weight: 700;
+          line-height: 1.35;
+          text-align: center;
+          letter-spacing: 0.01em;
+          white-space: normal;
+          content: attr(data-tooltip);
+          opacity: 0;
           z-index: 4;
         }
 
-        .profile-identity-badge:hover::before,
-        .profile-identity-badge:hover::after,
-        .profile-identity-badge:focus-visible::before,
-        .profile-identity-badge:focus-visible::after {
-          opacity: 1;
-        }
-
-        .profile-identity-badge:hover::before,
-        .profile-identity-badge:focus-visible::before,
-        .profile-identity-badge:hover::after,
-        .profile-identity-badge:focus-visible::after {
-          transform: translate(-50%, 0);
-        }
-
-        .profile-identity-badge:hover,
-        .profile-identity-badge:focus-visible {
-          transform: translateY(-3px) scale(1.08);
-          border-color: var(--profile-badge-accent);
-          box-shadow:
-            0 16px 24px rgba(0,0,0,0.2),
-            0 0 0 1px rgba(255,255,255,0.06),
-            0 0 24px var(--profile-badge-glow),
-            inset 0 1px 0 rgba(255,255,255,0.12);
-          filter: saturate(1.08) brightness(1.03);
-        }
-
-        .profile-identity-badge.favorite {
-          transform: translateY(-1px) scale(1.04);
-        }
-
-        .profile-identity-badges.mode-showcase .profile-identity-badge:hover,
-        .profile-identity-badges.mode-showcase .profile-identity-badge:focus-visible,
-        .profile-identity-badges.mode-showcase .profile-identity-badge.favorite {
-          transform: translateY(-3px) scale(1.1);
-        }
-
-        .profile-identity-badge-shell {
-          position: relative;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          width: 100%;
-          height: 100%;
-        }
-
-        .profile-identity-badge-shell::before {
-          content: "";
+        .profile-identity-badge-shape {
           position: absolute;
-          inset: 5px;
-          clip-path: polygon(50% 0%, 79% 10%, 93% 29%, 93% 71%, 79% 90%, 50% 100%, 21% 90%, 7% 71%, 7% 29%, 21% 10%);
-          background:
-            radial-gradient(circle at 50% 8%, rgba(255,255,255,0.18), transparent 34%),
-            linear-gradient(180deg, var(--profile-badge-plate-top), rgba(255,255,255,0.04) 34%, var(--profile-badge-plate-bottom));
-          box-shadow:
-            inset 0 1px 0 rgba(255,255,255,0.16),
-            inset 0 -8px 14px rgba(0,0,0,0.22);
+          inset: 10px;
+          opacity: 0.78;
           pointer-events: none;
         }
 
-        .profile-identity-badge-shell::after {
+        .profile-identity-badge-shape::before,
+        .profile-identity-badge-shape::after {
           content: "";
           position: absolute;
-          inset: -10px;
+          inset: 0;
+          border-radius: 20px;
+        }
+
+        .profile-identity-badge-shape::before {
+          background:
+            linear-gradient(180deg, rgba(255,255,255,0.08), transparent 44%),
+            radial-gradient(circle at 50% 120%, var(--profile-badge-orbital), transparent 52%);
+          opacity: 0.88;
+        }
+
+        .profile-identity-badge-shape::after {
           background:
             linear-gradient(
               118deg,
               transparent 0%,
-              transparent 32%,
-              var(--profile-badge-sheen) 46%,
-              rgba(255,255,255,0.06) 54%,
-              transparent 68%,
+              transparent 34%,
+              var(--profile-badge-sheen) 48%,
+              transparent 62%,
               transparent 100%
             );
           background-size: 220% 100%;
-          background-position: -180% 50%;
-          opacity: 0.26;
+          background-position: -160% 50%;
+          opacity: 0.2;
           mix-blend-mode: screen;
-          pointer-events: none;
-          animation: profile-badge-sheen 6.8s cubic-bezier(0.22, 1, 0.36, 1) infinite;
         }
 
-        .profile-identity-badge-shell > * {
-          position: relative;
-          z-index: 1;
+        .profile-identity-badge.frame-plate .profile-identity-badge-shape,
+        .profile-identity-badge.frame-core .profile-identity-badge-shape {
+          clip-path: polygon(50% 0%, 80% 12%, 96% 34%, 86% 84%, 50% 100%, 14% 84%, 4% 34%, 20% 12%);
+        }
+
+        .profile-identity-badge.frame-seal .profile-identity-badge-shape {
+          clip-path: polygon(24% 0%, 76% 0%, 100% 24%, 100% 76%, 76% 100%, 24% 100%, 0% 76%, 0% 24%);
+        }
+
+        .profile-identity-badge.frame-shard .profile-identity-badge-shape {
+          clip-path: polygon(24% 2%, 78% 0%, 100% 30%, 84% 100%, 18% 94%, 0% 58%);
+        }
+
+        .profile-identity-badge.frame-ring .profile-identity-badge-shape {
+          clip-path: ellipse(48% 42% at 50% 50%);
+        }
+
+        .profile-identity-badge.frame-sigil .profile-identity-badge-shape {
+          clip-path: circle(48% at 50% 50%);
         }
 
         .profile-identity-badge-core {
@@ -340,60 +373,120 @@ export default function ProfileIdentityBadges({
           justify-content: center;
           width: 100%;
           height: 100%;
-          filter: drop-shadow(0 4px 8px rgba(0,0,0,0.18));
         }
 
-        .profile-identity-badge.rarity-common {
-          --profile-badge-pulse: 0.04;
+        .profile-identity-badge.frame-ring .profile-identity-badge-core,
+        .profile-identity-badge.frame-sigil .profile-identity-badge-core {
+          transform: translateY(-1px);
         }
 
-        .profile-identity-badge.rarity-rare {
-          --profile-badge-pulse: 0.08;
-        }
-
-        .profile-identity-badge.rarity-epic {
-          --profile-badge-pulse: 0.12;
-        }
-
-        .profile-identity-badge.rarity-legendary .profile-identity-badge-shell::after,
-        .profile-identity-badge.rarity-owner .profile-identity-badge-shell::after {
-          opacity: 0.34;
-          animation-duration: 5.6s;
-        }
-
-        .profile-identity-badge.rarity-mythic {
+        .profile-identity-badge.equipped::before {
+          border-color: color-mix(in srgb, var(--profile-badge-accent) 62%, white 12%);
           box-shadow:
-            0 14px 24px rgba(0,0,0,0.2),
-            0 0 0 1px rgba(255,255,255,0.03),
-            0 0 26px var(--profile-badge-glow),
-            inset 0 1px 0 rgba(255,255,255,0.1);
+            inset 0 1px 0 rgba(255,255,255,0.1),
+            0 12px 22px var(--profile-badge-shadow),
+            0 0 calc(20px * var(--profile-badge-glow-boost)) var(--profile-badge-glow);
         }
 
-        .profile-identity-badge.rarity-mythic .profile-identity-badge-shell::after {
-          opacity: 0.4;
-          animation-duration: 5s;
+        .profile-identity-badge.equipped .profile-identity-badge-shape::before {
+          opacity: 1;
         }
 
-        .profile-identity-badge-more {
-          position: relative;
-          z-index: 1;
-          font-size: 10px;
-          font-weight: 900;
+        .profile-identity-badge.rarity-common::before {
+          opacity: 0.78;
+        }
+
+        .profile-identity-badge.rarity-rare::before {
+          box-shadow:
+            inset 0 1px 0 rgba(255,255,255,0.08),
+            0 12px 22px var(--profile-badge-shadow),
+            0 0 12px var(--profile-badge-glow);
+        }
+
+        .profile-identity-badge.rarity-epic::before,
+        .profile-identity-badge.rarity-legendary::before,
+        .profile-identity-badge.rarity-owner::before,
+        .profile-identity-badge.rarity-mythic::before {
+          box-shadow:
+            inset 0 1px 0 rgba(255,255,255,0.1),
+            0 12px 22px var(--profile-badge-shadow),
+            0 0 16px var(--profile-badge-glow);
+        }
+
+        .profile-identity-badge.rarity-mythic::before {
+          box-shadow:
+            inset 0 1px 0 rgba(255,255,255,0.12),
+            0 12px 22px var(--profile-badge-shadow),
+            0 0 22px var(--profile-badge-glow);
+        }
+
+        .profile-identity-badge:hover,
+        .profile-identity-badge:focus-visible {
+          transform: translateY(calc(var(--profile-badge-lift) * -1)) scale(var(--profile-badge-scale));
+          filter: saturate(1.08) brightness(1.04);
+        }
+
+        .profile-identity-badge:hover::after,
+        .profile-identity-badge:focus-visible::after {
+          opacity: 1;
+          transform: translate(-50%, 0);
+        }
+
+        .profile-identity-badge:hover .profile-identity-badge-shape::after,
+        .profile-identity-badge:focus-visible .profile-identity-badge-shape::after {
+          opacity: 0.42;
+        }
+
+        .profile-identity-badge.motion-breathe::before {
+          animation: profile-badge-breathe calc(var(--profile-badge-sheen-duration) * 1.08) ease-in-out infinite;
+        }
+
+        .profile-identity-badge.motion-breathe .profile-identity-badge-shape::after {
+          animation: profile-badge-sheen var(--profile-badge-sheen-duration) cubic-bezier(0.22, 1, 0.36, 1) infinite;
+        }
+
+        .profile-identity-badge.motion-orbit .profile-identity-badge-core {
+          animation: profile-badge-orbit calc(var(--profile-badge-sheen-duration) * 1.16) ease-in-out infinite;
+        }
+
+        .profile-identity-badge-more .profile-identity-badge-core {
+          font-size: 12px;
+          font-weight: 800;
           letter-spacing: 0.08em;
           color: #f8fbff;
+        }
+
+        .profile-identity-badges.motion-off .profile-identity-badge,
+        .profile-identity-badges.motion-off .profile-identity-badge::before,
+        .profile-identity-badges.motion-off .profile-identity-badge::after,
+        .profile-identity-badges.motion-off .profile-identity-badge-shape::after,
+        .profile-identity-badges.motion-off .profile-identity-badge-core {
+          animation: none !important;
+          transition-duration: 120ms !important;
         }
 
         @media (max-width: 640px) {
           .profile-identity-badges {
             width: 100%;
             justify-content: flex-start;
-            border-radius: 22px;
+            padding: 12px 13px;
+            gap: 8px;
+          }
+
+          .profile-identity-badge {
+            width: 52px;
+            height: 52px;
+          }
+
+          .profile-identity-badges.mode-showcase .profile-identity-badge {
+            width: 58px;
+            height: 58px;
           }
 
           .profile-identity-badge::after {
-            max-width: min(74vw, 220px);
-            white-space: normal;
-            text-align: center;
+            max-width: min(76vw, 210px);
+            font-size: 10px;
+            padding: 8px 10px;
           }
         }
 
@@ -401,22 +494,34 @@ export default function ProfileIdentityBadges({
           .profile-identity-badge,
           .profile-identity-badge::before,
           .profile-identity-badge::after,
-          .profile-identity-badge-shell::after {
-            transition: none !important;
+          .profile-identity-badge-shape::after,
+          .profile-identity-badge-core {
             animation: none !important;
+            transition: none !important;
+          }
+        }
+
+        @keyframes profile-badge-breathe {
+          0%,
+          100% {
+            opacity: 0.84;
+          }
+
+          50% {
+            opacity: 1;
           }
         }
 
         @keyframes profile-badge-sheen {
           0%,
-          18% {
-            background-position: -180% 50%;
+          24% {
+            background-position: -170% 50%;
             opacity: 0;
           }
 
-          30%,
+          40%,
           74% {
-            opacity: calc(0.16 + var(--profile-badge-pulse));
+            opacity: 0.32;
           }
 
           100% {
@@ -424,19 +529,42 @@ export default function ProfileIdentityBadges({
             opacity: 0;
           }
         }
+
+        @keyframes profile-badge-orbit {
+          0%,
+          100% {
+            transform: translate3d(0, 0, 0);
+          }
+
+          50% {
+            transform: translate3d(var(--profile-badge-drift), -1px, 0);
+          }
+        }
       `}</style>
 
-      {badges.map((item) => {
-        const badgeTheme = getBadgeRailTheme(item.badge, themeColor);
-        const isFavorite = favoriteSlugs.includes(item.badge.slug);
-        const tooltip = item.badge.rarity
-          ? `${item.badge.name} - ${item.badge.rarity}`
-          : item.badge.name;
+      {artifactEntries.map(({ item, artifact, equipped, slotTheme, tooltip }, index) => {
+        const shouldBreathe = resolvedMotion.animated && artifact.rarity !== "common";
+        const shouldOrbit =
+          resolvedMotion.animated &&
+          (artifact.frame === "ring" ||
+            artifact.frame === "core" ||
+            artifact.rarity === "legendary" ||
+            artifact.rarity === "mythic" ||
+            equipped);
 
         return (
           <span
             key={item.id}
-            className={`profile-identity-badge rarity-${item.badge.rarity || "common"} ${isFavorite ? "favorite" : ""}`}
+            className={[
+              "profile-identity-badge",
+              `rarity-${artifact.rarity}`,
+              `frame-${artifact.frame}`,
+              equipped ? "equipped" : "",
+              shouldBreathe ? "motion-breathe" : "",
+              shouldOrbit ? "motion-orbit" : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
             data-tooltip={tooltip}
             tabIndex={0}
             aria-label={tooltip}
@@ -444,37 +572,34 @@ export default function ProfileIdentityBadges({
             role="listitem"
             style={
               {
-                "--profile-badge-accent": badgeTheme.accent,
-                "--profile-badge-secondary": badgeTheme.secondary,
-                "--profile-badge-edge": badgeTheme.edge,
-                "--profile-badge-glow": badgeTheme.glow,
-                "--profile-badge-aura": badgeTheme.aura,
-                "--profile-badge-sheen": badgeTheme.sheen,
-                "--profile-badge-pulse": badgeTheme.pulse,
-                "--profile-badge-rim": badgeTheme.rim,
-                "--profile-badge-plate-top": badgeTheme.plateTop,
-                "--profile-badge-plate-bottom": badgeTheme.plateBottom,
-                "--profile-badge-halo": badgeTheme.halo,
-                "--profile-badge-fill-top": badgeTheme.fillTop,
-                "--profile-badge-fill-bottom": badgeTheme.fillBottom,
-                "--profile-badge-tooltip": badgeTheme.tooltip,
-                "--profile-badge-tooltip-accent": badgeTheme.tooltipAccent,
+                "--profile-badge-accent": slotTheme.accent,
+                "--profile-badge-edge": slotTheme.edge,
+                "--profile-badge-glow": slotTheme.glow,
+                "--profile-badge-orbital": slotTheme.orbital,
+                "--profile-badge-shadow": slotTheme.shadow,
+                "--profile-badge-sheen": slotTheme.sheen,
+                "--profile-badge-surface": slotTheme.surface,
+                "--profile-badge-tooltip-local": slotTheme.tooltip,
+                "--profile-badge-tooltip-local-edge": slotTheme.tooltipEdge,
+                animationDelay: `${index * 120}ms`,
               } as CSSProperties
             }
           >
-            <span className="profile-identity-badge-shell" aria-hidden="true">
-              <span className="profile-identity-badge-core">
-                <BadgeVisual
-                  slug={item.badge.slug}
-                  icon={item.badge.icon}
-                  name={item.badge.name}
-                  color={badgeTheme.accent}
-                  rarity={item.badge.rarity}
-                  category={item.badge.category}
-                  size={24}
-                  compact
-                />
-              </span>
+            <span className="profile-identity-badge-shape" aria-hidden="true" />
+            <span className="profile-identity-badge-core" aria-hidden="true">
+              <BadgeVisual
+                slug={item.badge.slug}
+                icon={item.badge.icon}
+                name={item.badge.name}
+                description={item.badge.description}
+                color={slotTheme.accent}
+                rarity={item.badge.rarity}
+                category={item.badge.category}
+                size={mode === "showcase" ? 48 : 40}
+                compact={mode !== "showcase"}
+                equipped={equipped}
+                animated={resolvedMotion.animated}
+              />
             </span>
           </span>
         );
@@ -482,35 +607,28 @@ export default function ProfileIdentityBadges({
 
       {extraBadgeCount > 0 ? (
         <span
-          className="profile-identity-badge"
-          data-tooltip={`${extraBadgeCount} more badge${extraBadgeCount === 1 ? "" : "s"}`}
+          className="profile-identity-badge profile-identity-badge-more frame-seal"
+          data-tooltip={`${extraBadgeCount} more relic${extraBadgeCount === 1 ? "" : "s"}`}
           tabIndex={0}
           aria-label={`${extraBadgeCount} more badges`}
-          title={`${extraBadgeCount} more badge${extraBadgeCount === 1 ? "" : "s"}`}
+          title={`${extraBadgeCount} more badges`}
           role="listitem"
           style={
             {
-              "--profile-badge-accent": "#eef2ff",
-              "--profile-badge-secondary": themeColor,
-              "--profile-badge-edge": "rgba(255,255,255,0.16)",
-              "--profile-badge-glow": withAlpha(themeColor, "30"),
-              "--profile-badge-aura": withAlpha(themeColor, "18"),
-              "--profile-badge-sheen": "rgba(255,255,255,0.26)",
-              "--profile-badge-pulse": "0.06",
-              "--profile-badge-rim": "rgba(255,255,255,0.16)",
-              "--profile-badge-plate-top": "rgba(255,255,255,0.2)",
-              "--profile-badge-plate-bottom": "rgba(8,10,16,0.88)",
-              "--profile-badge-halo": withAlpha(themeColor, "16"),
-              "--profile-badge-fill-top": "rgba(255,255,255,0.12)",
-              "--profile-badge-fill-bottom": "rgba(8,10,16,0.84)",
-              "--profile-badge-tooltip": "rgba(8,10,16,0.96)",
-              "--profile-badge-tooltip-accent": withAlpha(themeColor, "16"),
+              "--profile-badge-accent": railTheme.accent,
+              "--profile-badge-edge": withAlpha(railTheme.accent, "70"),
+              "--profile-badge-glow": railTheme.dockGlow,
+              "--profile-badge-orbital": railTheme.orbital,
+              "--profile-badge-shadow": "rgba(0,0,0,0.34)",
+              "--profile-badge-sheen": withAlpha(railTheme.aura, "56"),
+              "--profile-badge-surface": "rgba(255,255,255,0.08)",
+              "--profile-badge-tooltip-local": railTheme.tooltip,
+              "--profile-badge-tooltip-local-edge": railTheme.tooltipEdge,
             } as CSSProperties
           }
         >
-          <span className="profile-identity-badge-shell" aria-hidden="true">
-            <span className="profile-identity-badge-more">+{extraBadgeCount}</span>
-          </span>
+          <span className="profile-identity-badge-shape" aria-hidden="true" />
+          <span className="profile-identity-badge-core">+{extraBadgeCount}</span>
         </span>
       ) : null}
     </div>
@@ -518,87 +636,149 @@ export default function ProfileIdentityBadges({
 }
 
 function getBadgeRailTheme(
-  badge: IdentityBadge["badge"],
+  entries: Array<{
+    artifact: ReturnType<typeof getBadgeArtifactProfile>;
+    equipped: boolean;
+  }>,
   fallbackColor: string,
+  styleVariant: "default" | "holographic",
+  seasonalTheme: "none" | "solstice" | "lunar",
 ): BadgeRailTheme {
-  const accent = badge.color || fallbackColor;
+  const topArtifact = entries.find((entry) => entry.equipped) ?? entries[0];
+  const accent = normalizeHex(topArtifact?.artifact.accent ?? fallbackColor) ?? "#a78bfa";
+  const mythicCount = entries.filter((entry) => entry.artifact.rarity === "mythic").length;
+  const legendaryCount = entries.filter(
+    (entry) =>
+      entry.artifact.rarity === "legendary" || entry.artifact.rarity === "owner",
+  ).length;
+  const equippedCount = entries.filter((entry) => entry.equipped).length;
+  const auraBase =
+    mythicCount > 0
+      ? "#c3f0ff"
+      : legendaryCount > 0
+        ? "#ffe6a8"
+        : styleVariant === "holographic"
+          ? "#cdb6ff"
+          : accent;
+  const seasonalAura =
+    seasonalTheme === "solstice"
+      ? "#ffd39f"
+      : seasonalTheme === "lunar"
+        ? "#afdbff"
+        : auraBase;
 
-  if (badge.slug === "premium") {
-    return createRailTheme("#ff82c6", "#b388ff", "#170d1c", "#2b1230");
-  }
-
-  if (badge.slug === "builder") {
-    return createRailTheme("#74d9ff", "#4db9ff", "#091725", "#0d2132");
-  }
-
-  if (badge.slug === "owner") {
-    return createRailTheme("#f6d37d", "#ffefb0", "#2a1a08", "#3b2309");
-  }
-
-  if (badge.slug === "social-starter") {
-    return createRailTheme("#72b7ff", "#3f8cff", "#0c1830", "#11203f");
-  }
-
-  if (badge.slug === "first-profile") {
-    return createRailTheme("#b892ff", "#8f7cff", "#15112a", "#1d1437");
-  }
-
-  if (badge.category === "official") {
-    return createRailTheme(accent, "#8be0ff", "#091822", "#102232");
-  }
-
-  if (badge.category === "premium") {
-    return createRailTheme(accent, "#f0a8ff", "#1a0f1f", "#25132a");
-  }
-
-  if (badge.rarity === "mythic") {
-    return createRailTheme("#f5b8ff", "#7dd3fc", "#251231", "#100d20");
-  }
-
-  if (badge.rarity === "legendary" || badge.rarity === "owner") {
-    return createRailTheme(accent, "#ffe49a", "#231707", "#33210a");
-  }
-
-  if (badge.rarity === "epic") {
-    return createRailTheme(accent, "#c5a3ff", "#18112b", "#22163a");
-  }
-
-  if (badge.rarity === "rare") {
-    return createRailTheme(accent, "#8fd7ff", "#0c1730", "#102144");
-  }
-
-  return createRailTheme(accent, "#d4d8ff", "#111522", "#161c2a");
-}
-
-function createRailTheme(
-  accent: string,
-  secondary: string,
-  fillTopBase: string,
-  fillBottomBase: string,
-): BadgeRailTheme {
   return {
     accent,
-    secondary,
-    edge: withAlpha(accent, "72"),
-    glow: withAlpha(accent, "38"),
-    aura: withAlpha(secondary, "24"),
-    sheen: withAlpha(secondary, "3c"),
-    pulse: "0.08",
-    rim: withAlpha(secondary, "48"),
-    plateTop: withAlpha(secondary, "1f"),
-    plateBottom: fillBottomBase,
-    halo: withAlpha(accent, "16"),
-    fillTop: fillTopBase,
-    fillBottom: fillBottomBase,
-    tooltip: "rgba(8,10,16,0.96)",
-    tooltipAccent: withAlpha(secondary, "18"),
+    aura: withAlpha(seasonalAura, mythicCount > 0 ? "3c" : equippedCount > 1 ? "2d" : "24"),
+    base:
+      styleVariant === "holographic"
+        ? "rgba(9,11,22,0.96)"
+        : mythicCount > 0
+          ? "rgba(8,10,20,0.96)"
+          : "rgba(9,11,18,0.96)",
+    dockGlow: withAlpha(accent, mythicCount > 0 ? "3e" : legendaryCount > 0 ? "32" : "26"),
+    edge: withAlpha(accent, "40"),
+    orbital:
+      styleVariant === "holographic"
+        ? withAlpha(seasonalAura, "34")
+        : withAlpha(accent, "20"),
+    segment: withAlpha(seasonalAura, "16"),
+    sheen:
+      seasonalTheme === "solstice"
+        ? "rgba(255,223,179,0.24)"
+        : seasonalTheme === "lunar"
+          ? "rgba(190,226,255,0.22)"
+          : "rgba(255,255,255,0.18)",
+    spotlight: withAlpha(seasonalAura, styleVariant === "holographic" ? "24" : "18"),
+    tooltip: "rgba(8,10,16,0.97)",
+    tooltipEdge: withAlpha(seasonalAura, "18"),
   };
 }
 
-function withAlpha(hex: string, alpha: string) {
-  if (/^#[0-9a-fA-F]{6}$/.test(hex)) {
-    return `${hex}${alpha}`;
+function getBadgeSlotTheme(
+  artifact: ReturnType<typeof getBadgeArtifactProfile>,
+  equipped: boolean,
+  styleVariant: "default" | "holographic",
+  seasonalTheme: "none" | "solstice" | "lunar",
+): BadgeSlotTheme {
+  const accent = normalizeHex(artifact.accent) ?? "#a78bfa";
+  const seasonalGlow =
+    seasonalTheme === "solstice"
+      ? "#ffd4a3"
+      : seasonalTheme === "lunar"
+        ? "#aeddff"
+        : artifact.auraColor;
+  const rarityGlowAlpha =
+    artifact.rarity === "mythic"
+      ? "66"
+      : artifact.rarity === "legendary" || artifact.rarity === "owner"
+        ? "56"
+        : artifact.rarity === "epic"
+          ? "48"
+          : artifact.rarity === "rare"
+            ? "3e"
+            : "2c";
+
+  return {
+    accent,
+    edge: withAlpha(accent, equipped ? "9a" : artifact.rarity === "common" ? "54" : "72"),
+    glow: withAlpha(seasonalGlow, equipped ? "58" : rarityGlowAlpha),
+    orbital: withAlpha(seasonalGlow, styleVariant === "holographic" ? "3e" : "2f"),
+    shadow:
+      artifact.rarity === "mythic"
+        ? "rgba(3,6,18,0.48)"
+        : artifact.rarity === "legendary" || artifact.rarity === "owner"
+          ? "rgba(11,8,3,0.38)"
+          : "rgba(0,0,0,0.32)",
+    sheen:
+      styleVariant === "holographic"
+        ? "rgba(255,255,255,0.34)"
+        : artifact.rarity === "mythic"
+          ? withAlpha(artifact.auraColor, "70")
+          : withAlpha(accent, "42"),
+    surface:
+      artifact.rarity === "common"
+        ? "rgba(255,255,255,0.04)"
+        : artifact.rarity === "mythic"
+          ? "rgba(255,255,255,0.08)"
+          : "rgba(255,255,255,0.06)",
+    tooltip: "rgba(8,10,16,0.97)",
+    tooltipEdge: withAlpha(accent, "1c"),
+  };
+}
+
+function formatTooltip(name: string, rarity: string | null, lore: string) {
+  const parts = [name];
+
+  if (rarity) {
+    parts.push(capitalizeToken(rarity));
   }
 
-  return hex;
+  if (lore) {
+    parts.push(lore);
+  }
+
+  return parts.join(" | ");
+}
+
+function capitalizeToken(value: string) {
+  return value.length ? `${value.charAt(0).toUpperCase()}${value.slice(1)}` : value;
+}
+
+function normalizeHex(value: string | null | undefined) {
+  const trimmed = value?.trim() ?? "";
+  const shortHex = /^#([0-9a-fA-F]{3})$/.exec(trimmed);
+
+  if (shortHex) {
+    return `#${shortHex[1]
+      .split("")
+      .map((character) => `${character}${character}`)
+      .join("")}`;
+  }
+
+  return /^#[0-9a-fA-F]{6}$/.test(trimmed) ? trimmed : null;
+}
+
+function withAlpha(hex: string, alpha: string) {
+  return /^#[0-9a-fA-F]{6}$/.test(hex) ? `${hex}${alpha}` : hex;
 }

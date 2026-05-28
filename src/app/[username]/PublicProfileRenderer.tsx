@@ -265,6 +265,19 @@ export default function PublicProfileRenderer({
   const cardStyleTokens = getProfileCardStyleTokens(safeCardStyle);
   const cornerTokens = getProfileCornerTokens(safeCornerStyle);
   const motionTokens = getProfileMotionTokens(adaptiveMotionLevel);
+  const badgeMotionProfile = {
+    animated: motionTokens.allowDecorativeMotion && !preview,
+    glowBoost: motionTokens.badgeGlowBoost,
+    hoverLiftPx: motionTokens.badgeHoverLiftPx,
+    hoverScale: motionTokens.badgeHoverScale,
+    orbitDriftPx: motionTokens.badgeOrbitDriftPx,
+    sheenDurationS: Number(
+      (
+        motionTokens.badgeSheenDurationS *
+        adaptivePerformance.animationDurationScale
+      ).toFixed(2),
+    ),
+  };
   const motionPersonalityTokens = getProfileMotionPersonalityTokens({
     personality:
       presetRenderTuning.motionPersonality ?? dnaTuning.motionPersonality,
@@ -482,6 +495,7 @@ export default function PublicProfileRenderer({
         decorationOffsetY={decorationOffsetY}
         featuredBadges={safeFeaturedBadges}
         extraBadgeCount={safeExtraBadgeCount}
+        badgeMotionProfile={badgeMotionProfile}
         heroPills={safeHeroPills}
         likes={likes}
         dislikes={dislikes}
@@ -527,6 +541,7 @@ export default function PublicProfileRenderer({
         decorationOffsetY={decorationOffsetY}
         featuredBadges={safeFeaturedBadges}
         extraBadgeCount={safeExtraBadgeCount}
+        badgeMotionProfile={badgeMotionProfile}
         heroPills={safeHeroPills}
         likes={likes}
         dislikes={dislikes}
@@ -1653,6 +1668,7 @@ export default function PublicProfileRenderer({
                           seasonalTheme={safeComposition.metadata.badgeSeason}
                           favoriteSlugs={safeComposition.metadata.favoriteBadgeSlugs}
                           align={safeComposition.alignment === "center" ? "center" : "start"}
+                          motionProfile={badgeMotionProfile}
                         />
                       ) : null}
                       {renderIdentityMetadataSlot("under-username", {
@@ -1813,6 +1829,7 @@ function FloatingProfileScene({
   decorationOffsetY,
   featuredBadges,
   extraBadgeCount,
+  badgeMotionProfile,
   heroPills,
   likes,
   dislikes,
@@ -1851,6 +1868,14 @@ function FloatingProfileScene({
   decorationOffsetY: number;
   featuredBadges: PublicProfileBadgeEntry[];
   extraBadgeCount: number;
+  badgeMotionProfile: {
+    animated: boolean;
+    glowBoost: number;
+    hoverLiftPx: number;
+    hoverScale: number;
+    orbitDriftPx: number;
+    sheenDurationS: number;
+  };
   heroPills: PublicProfileHeroPill[];
   likes: number;
   dislikes: number;
@@ -2510,6 +2535,7 @@ function FloatingProfileScene({
               styleVariant={composition.metadata.badgeStyle}
               seasonalTheme={composition.metadata.badgeSeason}
               favoriteSlugs={composition.metadata.favoriteBadgeSlugs}
+              motionProfile={badgeMotionProfile}
             />
           ) : null}
           {renderIdentityMetadataSlot("under-username", {
@@ -2912,6 +2938,7 @@ function IntroProfileStage({
   decorationOffsetY,
   featuredBadges,
   extraBadgeCount,
+  badgeMotionProfile,
   heroPills,
   likes,
   dislikes,
@@ -2953,6 +2980,14 @@ function IntroProfileStage({
   decorationOffsetY: number;
   featuredBadges: PublicProfileBadgeEntry[];
   extraBadgeCount: number;
+  badgeMotionProfile: {
+    animated: boolean;
+    glowBoost: number;
+    hoverLiftPx: number;
+    hoverScale: number;
+    orbitDriftPx: number;
+    sheenDurationS: number;
+  };
   heroPills: PublicProfileHeroPill[];
   likes: number;
   dislikes: number;
@@ -4762,6 +4797,7 @@ function IntroProfileStage({
                     styleVariant={composition.metadata.badgeStyle}
                     seasonalTheme={composition.metadata.badgeSeason}
                     favoriteSlugs={composition.metadata.favoriteBadgeSlugs}
+                    motionProfile={badgeMotionProfile}
                   />
                 </div>
               ) : null}

@@ -91,7 +91,7 @@ const PROFILE_PRESET_DEFINITIONS: Record<ProfilePresetId, ProfilePresetDefinitio
   neon: {
     value: "neon",
     name: "Neon",
-    description: "High-energy glow, nightlife contrast, and scene-first spacing.",
+    description: "High-energy glow, nightlife contrast, and badge-forward launch spacing.",
     accent: "#f472b6",
     dna: "pulse",
     mood: "night",
@@ -153,7 +153,7 @@ const PROFILE_PRESET_DEFINITIONS: Record<ProfilePresetId, ProfilePresetDefinitio
   ghost: {
     value: "ghost",
     name: "Ghost",
-    description: "Low-pressure identity, airy spacing, and pale floating traces in the scene.",
+    description: "Low-pressure identity, airy spacing, and pale collectible traces in the scene.",
     accent: "#c084fc",
     dna: "ghost",
     mood: "afk",
@@ -197,7 +197,7 @@ const PROFILE_PRESET_DEFINITIONS: Record<ProfilePresetId, ProfilePresetDefinitio
       ],
       metadata: {
         badgeMode: "rail",
-        badgeStyle: "default",
+        badgeStyle: "holographic",
         badgeSeason: "lunar",
         nameTypography: "signature",
       },
@@ -215,7 +215,7 @@ const PROFILE_PRESET_DEFINITIONS: Record<ProfilePresetId, ProfilePresetDefinitio
   luxury: {
     value: "luxury",
     name: "Luxury",
-    description: "Broader breathing room, richer surfaces, and polished cinematic hierarchy.",
+    description: "Broader breathing room, richer surfaces, and polished collectible hierarchy.",
     accent: "#f4c97a",
     dna: "cinematic",
     mood: "locked-in",
@@ -259,7 +259,7 @@ const PROFILE_PRESET_DEFINITIONS: Record<ProfilePresetId, ProfilePresetDefinitio
       ],
       metadata: {
         badgeMode: "showcase",
-        badgeStyle: "default",
+        badgeStyle: "holographic",
         badgeSeason: "solstice",
         nameTypography: "luxe",
       },
@@ -339,7 +339,7 @@ const PROFILE_PRESET_DEFINITIONS: Record<ProfilePresetId, ProfilePresetDefinitio
   orbit: {
     value: "orbit",
     name: "Orbit",
-    description: "Balanced scene modules with calmer motion and cleaner orbital spacing.",
+    description: "Balanced scene modules with calmer motion and a cleaner collector-dock orbit.",
     accent: "#a78bfa",
     dna: "ambient",
     mood: "chilling",
@@ -382,7 +382,7 @@ const PROFILE_PRESET_DEFINITIONS: Record<ProfilePresetId, ProfilePresetDefinitio
         "extras",
       ],
       metadata: {
-        badgeMode: "rail",
+        badgeMode: "showcase",
         badgeStyle: "holographic",
         badgeSeason: "none",
         nameTypography: "signature",
