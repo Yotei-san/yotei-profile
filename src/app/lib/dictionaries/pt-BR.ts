@@ -325,6 +325,7 @@ const ptBR = {
       freeReady: "Workspace pronta para upgrade",
       viewPublicProfile: "Ver perfil público",
       editProfile: "Editar perfil",
+      logout: "Sair",
       verify: "Verificar",
       verifyTooltip: "Verifique seu email para desbloquear esta área.",
     },

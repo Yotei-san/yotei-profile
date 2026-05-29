@@ -1,6 +1,7 @@
 "use client";
 
 import type { ComponentProps, CSSProperties } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   DashboardNotice,
@@ -33,6 +34,7 @@ import type {
 import type { ProfileMusicData } from "@/app/lib/profile-music";
 import type { ProfileAura, ProfileMood } from "@/app/lib/profile-presence";
 import type { ProfileScene } from "@/app/lib/profile-scenes";
+import { getMediaKind } from "@/app/lib/profile-media";
 import {
   getProfileLayoutName,
 } from "./profileEditorI18n";
@@ -97,7 +99,29 @@ export default function ProfileSettingsClient({
   ...layoutProps
 }: Props) {
   const { t } = useI18n();
+  const [previewUser, setPreviewUser] = useState(layoutProps.previewUser);
+  const [bannerKind, setBannerKind] = useState(layoutProps.bannerKind);
   const layoutLabel = getProfileLayoutName(t, savedLayout, savedLayout);
+
+  useEffect(() => {
+    setPreviewUser(layoutProps.previewUser);
+  }, [layoutProps.previewUser]);
+
+  useEffect(() => {
+    setBannerKind(layoutProps.bannerKind);
+  }, [layoutProps.bannerKind]);
+
+  function handleMediaSaved(type: "avatar" | "banner", url: string | null) {
+    setPreviewUser((current) => ({
+      ...current,
+      avatarUrl: type === "avatar" ? url : current.avatarUrl,
+      bannerUrl: type === "banner" ? url : current.bannerUrl,
+    }));
+
+    if (type === "banner") {
+      setBannerKind(getMediaKind(url || ""));
+    }
+  }
 
   return (
     <>
@@ -149,18 +173,25 @@ export default function ProfileSettingsClient({
       <section style={dashboardAutoGridStyle(320)}>
         <ProfileMediaUploader
           type="avatar"
-          currentUrl={layoutProps.previewUser.avatarUrl}
+          currentUrl={previewUser.avatarUrl}
           themeColor={themeColor}
+          onSavedUrlChange={(url) => handleMediaSaved("avatar", url)}
         />
 
         <ProfileMediaUploader
           type="banner"
-          currentUrl={layoutProps.previewUser.bannerUrl}
+          currentUrl={previewUser.bannerUrl}
           themeColor={themeColor}
+          onSavedUrlChange={(url) => handleMediaSaved("banner", url)}
         />
       </section>
 
-      <ProfileLayoutExperience savedLayout={savedLayout} {...layoutProps} />
+      <ProfileLayoutExperience
+        savedLayout={savedLayout}
+        {...layoutProps}
+        previewUser={previewUser}
+        bannerKind={bannerKind}
+      />
     </>
   );
 }

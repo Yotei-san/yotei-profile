@@ -22,6 +22,7 @@ type Props = {
   type: "avatar" | "banner";
   currentUrl?: string | null;
   themeColor?: string | null;
+  onSavedUrlChange?: (url: string | null) => void;
 };
 
 type CropState = {
@@ -36,6 +37,8 @@ const AVATAR_SIZE = 512;
 const AVATAR_PREVIEW_SIZE = 190;
 const BANNER_WIDTH = 1600;
 const BANNER_HEIGHT = 500;
+const BANNER_PREVIEW_WIDTH = 640;
+const BANNER_PREVIEW_HEIGHT = 200;
 
 type Translator = (
   key: TranslationKey,
@@ -46,6 +49,7 @@ export default function ProfileMediaUploader({
   type,
   currentUrl,
   themeColor,
+  onSavedUrlChange,
 }: Props) {
   const { t } = useI18n();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -54,8 +58,11 @@ export default function ProfileMediaUploader({
     startY: number;
     baseX: number;
     baseY: number;
+    scaleX: number;
+    scaleY: number;
   } | null>(null);
 
+  const [savedUrl, setSavedUrl] = useState<string | null>(currentUrl?.trim() || null);
   const [sourceUrl, setSourceUrl] = useState<string | null>(null);
   const [sourceMime, setSourceMime] = useState<string | null>(null);
   const [sourceFile, setSourceFile] = useState<File | null>(null);
@@ -74,8 +81,8 @@ export default function ProfileMediaUploader({
 
   const accent = themeColor || "#f472b6";
   const isAvatar = type === "avatar";
-  const activePreview = sourceUrl || currentUrl || "";
-  const currentKind = getMediaKind(currentUrl || "");
+  const activePreview = sourceUrl || savedUrl || "";
+  const currentKind = getMediaKind(savedUrl || "");
   const sourceKind = sourceMime
     ? sourceMime.startsWith("video/")
       ? "video"
@@ -86,6 +93,11 @@ export default function ProfileMediaUploader({
   const activePreviewKind = sourceUrl ? sourceKind : currentKind;
   const isVideoBannerPreview = !isAvatar && activePreviewKind === "video";
   const isBusy = isUploading || isSaving;
+
+  useEffect(() => {
+    setSavedUrl(currentUrl?.trim() || null);
+  }, [currentUrl]);
+
   useEffect(() => {
     return () => {
       if (sourceUrl?.startsWith("blob:")) {
@@ -99,6 +111,20 @@ export default function ProfileMediaUploader({
     fileInputRef.current?.click();
   }
 
+  function clearSelectedSource() {
+    if (sourceUrl?.startsWith("blob:")) {
+      URL.revokeObjectURL(sourceUrl);
+    }
+
+    setSourceUrl(null);
+    setSourceMime(null);
+    setSourceFile(null);
+    setUploadProgress(0);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  }
+
   function resetEditor() {
     setCrop({
       zoom: 1,
@@ -110,20 +136,13 @@ export default function ProfileMediaUploader({
   }
 
   function resetAll() {
-    if (sourceUrl?.startsWith("blob:")) {
-      URL.revokeObjectURL(sourceUrl);
-    }
-
-    setSourceUrl(null);
-    setSourceMime(null);
-    setSourceFile(null);
+    clearSelectedSource();
     setCrop({
       zoom: 1,
       offsetX: 0,
       offsetY: 0,
     });
     setAvatarFitMode("cover");
-    setUploadProgress(0);
     setError(null);
   }
 
@@ -186,6 +205,12 @@ export default function ProfileMediaUploader({
       startY: e.clientY,
       baseX: crop.offsetX,
       baseY: crop.offsetY,
+      scaleX: isAvatar
+        ? 1
+        : BANNER_PREVIEW_WIDTH / Math.max(e.currentTarget.getBoundingClientRect().width, 1),
+      scaleY: isAvatar
+        ? 1
+        : BANNER_PREVIEW_HEIGHT / Math.max(e.currentTarget.getBoundingClientRect().height, 1),
     };
     e.currentTarget.setPointerCapture(e.pointerId);
   }
@@ -198,8 +223,8 @@ export default function ProfileMediaUploader({
 
     setCrop((prev) => ({
       ...prev,
-      offsetX: Math.round(dragRef.current!.baseX + dx),
-      offsetY: Math.round(dragRef.current!.baseY + dy),
+      offsetX: Math.round(dragRef.current!.baseX + dx * dragRef.current!.scaleX),
+      offsetY: Math.round(dragRef.current!.baseY + dy * dragRef.current!.scaleY),
     }));
   }
 
@@ -215,8 +240,9 @@ export default function ProfileMediaUploader({
 
     try {
       await saveProfileMedia(isAvatar ? { avatarUrl: "" } : { bannerUrl: "" }, t);
-
-      window.location.reload();
+      setSavedUrl(null);
+      onSavedUrlChange?.(null);
+      resetAll();
     } catch (err) {
       setError(getClientUploadErrorMessage(err, t("dashboard.profile.media.removeFailed"), t));
     } finally {
@@ -279,8 +305,10 @@ export default function ProfileMediaUploader({
         t,
       );
 
-      setUploadProgress(100);
-      window.location.reload();
+      setSavedUrl(uploadResult.url);
+      onSavedUrlChange?.(uploadResult.url);
+      clearSelectedSource();
+      resetEditor();
     } catch (err) {
       setError(getClientUploadErrorMessage(err, t("dashboard.profile.media.uploadFailed"), t));
       setUploadProgress(0);
@@ -458,9 +486,9 @@ export default function ProfileMediaUploader({
       >
         <CompareCard title={t("dashboard.profile.media.common.before")}>
           {isAvatar ? (
-            <AvatarStaticPreview imageUrl={currentUrl || ""} accent={accent} t={t} />
+            <AvatarStaticPreview imageUrl={savedUrl || ""} accent={accent} t={t} />
           ) : (
-            <BannerStaticPreview mediaUrl={currentUrl || ""} accent={accent} t={t} />
+            <BannerStaticPreview mediaUrl={savedUrl || ""} accent={accent} t={t} />
           )}
         </CompareCard>
 
@@ -953,6 +981,19 @@ function BannerEditorPreview({
       ? "video"
       : "image"
     : getMediaKind(mediaUrl);
+  const dimensions = useImageDimensions(mediaKind === "image" ? mediaUrl : "");
+  const layout = dimensions
+    ? getImageLayout(
+        dimensions.width,
+        dimensions.height,
+        BANNER_PREVIEW_WIDTH,
+        BANNER_PREVIEW_HEIGHT,
+        crop.zoom,
+        crop.offsetX,
+        crop.offsetY,
+        "cover"
+      )
+    : null;
 
   return (
     <div
@@ -977,8 +1018,8 @@ function BannerEditorPreview({
             onPointerUp={onPointerUp}
             style={{
               width: "100%",
-              maxWidth: "620px",
-              height: "200px",
+              maxWidth: `${BANNER_PREVIEW_WIDTH}px`,
+              aspectRatio: `${BANNER_PREVIEW_WIDTH} / ${BANNER_PREVIEW_HEIGHT}`,
               borderRadius: "20px",
               overflow: "hidden",
               background: `linear-gradient(135deg, ${accent}, rgba(17,24,39,0.72), rgba(0,0,0,0.35))`,
@@ -989,17 +1030,32 @@ function BannerEditorPreview({
             }}
           >
             {mediaUrl ? (
-              <img
-                src={mediaUrl}
-                alt={t("dashboard.profile.media.banner.previewAlt")}
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "cover",
-                  transform: `translate(${crop.offsetX}px, ${crop.offsetY}px) scale(${crop.zoom})`,
-                  transformOrigin: "center center",
-                }}
-              />
+              layout ? (
+                <img
+                  src={mediaUrl}
+                  alt={t("dashboard.profile.media.banner.previewAlt")}
+                  style={{
+                    position: "absolute",
+                    left: `${(layout.x / BANNER_PREVIEW_WIDTH) * 100}%`,
+                    top: `${(layout.y / BANNER_PREVIEW_HEIGHT) * 100}%`,
+                    width: `${(layout.width / BANNER_PREVIEW_WIDTH) * 100}%`,
+                    height: `${(layout.height / BANNER_PREVIEW_HEIGHT) * 100}%`,
+                  }}
+                />
+              ) : (
+                <div
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    display: "grid",
+                    placeItems: "center",
+                    color: "#a3a3a3",
+                    fontSize: "12px",
+                  }}
+                >
+                  {t("dashboard.profile.media.common.loadingPreview")}
+                </div>
+              )
             ) : (
               <EmptyPlaceholder text={t("dashboard.profile.media.common.chooseImage")} />
             )}
@@ -1033,8 +1089,8 @@ function BannerFrame({
     <div
       style={{
         width: "100%",
-        maxWidth: "620px",
-        height: "200px",
+        maxWidth: `${BANNER_PREVIEW_WIDTH}px`,
+        aspectRatio: `${BANNER_PREVIEW_WIDTH} / ${BANNER_PREVIEW_HEIGHT}`,
         borderRadius: "20px",
         overflow: "hidden",
         background: `linear-gradient(135deg, ${accent}, rgba(17,24,39,0.72), rgba(0,0,0,0.35))`,
@@ -1133,14 +1189,19 @@ async function renderCroppedBlob(
     ctx.fillStyle = "#000000";
     ctx.fillRect(0, 0, outWidth, outHeight);
 
-    const scale = crop.zoom;
-    const drawWidth = image.width * scale;
-    const drawHeight = image.height * scale;
+    const bannerOffsetScale = outWidth / BANNER_PREVIEW_WIDTH;
+    const layout = getImageLayout(
+      image.width,
+      image.height,
+      outWidth,
+      outHeight,
+      crop.zoom,
+      crop.offsetX * bannerOffsetScale,
+      crop.offsetY * bannerOffsetScale,
+      "cover"
+    );
 
-    const x = (outWidth - drawWidth) / 2 + crop.offsetX;
-    const y = (outHeight - drawHeight) / 2 + crop.offsetY;
-
-    ctx.drawImage(image, x, y, drawWidth, drawHeight);
+    ctx.drawImage(image, layout.x, layout.y, layout.width, layout.height);
   }
 
   const blob = await new Promise<Blob | null>((resolve) => {

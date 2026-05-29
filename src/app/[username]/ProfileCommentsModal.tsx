@@ -209,6 +209,7 @@ export default function ProfileCommentsModal({
       <style>{`
         .profile-comments-shell {
           animation: profile-comments-rise 180ms ease;
+          box-sizing: border-box;
         }
 
         .profile-comments-shell textarea::placeholder {
@@ -222,6 +223,43 @@ export default function ProfileCommentsModal({
 
         .profile-comments-shell .spin {
           animation: profile-comments-spin 0.9s linear infinite;
+        }
+
+        .profile-comments-toolbar,
+        .profile-comments-composer,
+        .profile-comments-signin,
+        .profile-comments-card,
+        .profile-comments-empty {
+          min-width: 0;
+        }
+
+        .profile-comments-toolbar {
+          padding: 12px 14px;
+          border-radius: 22px;
+          border: 1px solid rgba(255,255,255,0.06);
+          background:
+            linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+        }
+
+        .profile-comments-list {
+          min-height: 0;
+          overflow-y: auto;
+          overflow-x: hidden;
+          padding-right: 4px;
+          margin-right: -4px;
+        }
+
+        .profile-comments-card {
+          box-shadow:
+            inset 0 1px 0 rgba(255,255,255,0.03),
+            0 18px 32px rgba(0,0,0,0.16);
+        }
+
+        .profile-comments-shell textarea:focus,
+        .profile-comments-shell button:focus-visible,
+        .profile-comments-shell a:focus-visible {
+          outline: 2px solid rgba(255,110,168,0.62);
+          outline-offset: 2px;
         }
 
         @keyframes profile-comments-rise {
@@ -242,10 +280,34 @@ export default function ProfileCommentsModal({
           }
         }
 
+        @media (max-width: 700px) {
+          .profile-comments-toolbar {
+            gap: 14px;
+          }
+
+          .profile-comments-toolbar,
+          .profile-comments-composer-footer,
+          .profile-comments-signin {
+            align-items: stretch;
+          }
+
+          .profile-comments-toolbar,
+          .profile-comments-composer-footer,
+          .profile-comments-signin,
+          .profile-comments-header {
+            flex-direction: column;
+          }
+
+          .profile-comments-composer-submit,
+          .profile-comments-signin-link {
+            width: 100%;
+          }
+        }
+
         @media (max-width: 640px) {
           .profile-comments-shell {
             width: min(100vw - 18px, 100%);
-            max-height: calc(100vh - 18px);
+            max-height: calc(100vh - 16px);
             border-radius: 24px;
           }
         }
@@ -263,7 +325,7 @@ export default function ProfileCommentsModal({
         aria-busy={loading || submitting || Boolean(deletingId)}
         onClick={(event) => event.stopPropagation()}
       >
-        <div style={headerStyle}>
+        <div className="profile-comments-header" style={headerStyle}>
           <div style={{ display: "grid", gap: "8px" }}>
             <div style={eyebrowStyle}>
               <LuMessageSquare size={13} />
@@ -293,7 +355,7 @@ export default function ProfileCommentsModal({
           </button>
         </div>
 
-        <div style={toolbarStyle}>
+        <div className="profile-comments-toolbar" style={toolbarStyle}>
           <div style={sortGroupStyle}>
             <SortButton
               label={t("publicProfile.newest")}
@@ -313,7 +375,11 @@ export default function ProfileCommentsModal({
         </div>
 
         {canComment ? (
-          <form onSubmit={handleSubmit} style={composerStyle}>
+          <form
+            className="profile-comments-composer"
+            onSubmit={handleSubmit}
+            style={composerStyle}
+          >
             <textarea
               ref={textareaRef}
               value={draft}
@@ -327,9 +393,13 @@ export default function ProfileCommentsModal({
               }
               style={textareaStyle}
             />
-            <div style={composerFooterStyle}>
+            <div
+              className="profile-comments-composer-footer"
+              style={composerFooterStyle}
+            >
               <div style={charCountStyle}>{draft.length}/300</div>
               <button
+                className="profile-comments-composer-submit"
                 type="submit"
                 disabled={!canSubmitComment}
                 style={submitButtonStyle(submitting || !canSubmitComment)}
@@ -343,14 +413,19 @@ export default function ProfileCommentsModal({
             </div>
           </form>
         ) : (
-          <div style={signinPanelStyle}>
+          <div className="profile-comments-signin" style={signinPanelStyle}>
             <div style={{ display: "grid", gap: "6px" }}>
               <strong style={{ color: "#ffffff" }}>{t("publicProfile.signInConversation")}</strong>
               <span style={{ color: "#9aa8c2", fontSize: "13px", lineHeight: 1.7 }}>
                 {t("publicProfile.signInConversationBody")}
               </span>
             </div>
-            <Link href="/login" style={signinButtonStyle} onClick={onClose}>
+            <Link
+              href="/login"
+              className="profile-comments-signin-link"
+              style={signinButtonStyle}
+              onClick={onClose}
+            >
               {t("publicProfile.signIn")}
             </Link>
           </div>
@@ -358,22 +433,31 @@ export default function ProfileCommentsModal({
 
         {error ? <div style={errorStyle}>{error}</div> : null}
 
-        <div style={listShellStyle}>
+        <div className="profile-comments-list" style={listShellStyle}>
           {loading && !hasLoaded ? (
             <div style={loadingStateStyle}>
               <LuLoaderCircle size={18} className="spin" />
               {t("publicProfile.loadingComments")}
             </div>
           ) : comments.length === 0 ? (
-            <div style={emptyStateStyle}>
-              {t("publicProfile.noCommentsYet")}{" "}
-              {canComment
-                ? t("publicProfile.startFirstThread")
-                : t("publicProfile.beFirstAfterSignIn")}
+            <div className="profile-comments-empty" style={emptyStateStyle}>
+              <div style={emptyStateIconStyle}>
+                <LuMessageSquare size={18} />
+              </div>
+              <strong style={emptyStateTitleStyle}>{t("publicProfile.noCommentsYet")}</strong>
+              <div style={emptyStateBodyStyle}>
+                {canComment
+                  ? t("publicProfile.startFirstThread")
+                  : t("publicProfile.beFirstAfterSignIn")}
+              </div>
             </div>
           ) : (
             comments.map((comment) => (
-              <article key={comment.id} style={commentCardStyle}>
+              <article
+                key={comment.id}
+                className="profile-comments-card"
+                style={commentCardStyle}
+              >
                 <div style={commentHeaderStyle}>
                   <div style={{ display: "grid", gap: "4px" }}>
                     <strong style={{ color: "#ffffff", fontSize: "14px" }}>{comment.authorName}</strong>
@@ -446,27 +530,29 @@ function formatCommentDate(
 const overlayStyle = {
   position: "fixed",
   inset: 0,
-  zIndex: 90,
+  zIndex: 180,
   display: "grid",
   placeItems: "center",
-  padding: "20px",
+  padding: "clamp(8px, 2vw, 20px)",
   background: "rgba(2, 4, 10, 0.76)",
   backdropFilter: "blur(14px) saturate(116%)",
   WebkitBackdropFilter: "blur(14px) saturate(116%)",
 } as const;
 
 const panelStyle = {
-  width: "min(720px, calc(100vw - 24px))",
-  maxHeight: "min(82vh, 860px)",
-  overflow: "auto",
-  padding: "22px",
+  width: "min(760px, calc(100vw - 24px))",
+  maxHeight: "min(86vh, 900px)",
+  minHeight: "min(620px, calc(100vh - 24px))",
+  overflow: "hidden",
+  padding: "clamp(16px, 2.6vw, 24px)",
   borderRadius: "28px",
   border: "1px solid rgba(255,255,255,0.08)",
   background:
     "radial-gradient(circle at top, rgba(135,118,255,0.16), transparent 22%), linear-gradient(180deg, rgba(16,18,28,0.98), rgba(8,10,17,0.98))",
   boxShadow: "0 32px 80px rgba(0,0,0,0.34)",
-  display: "grid",
-  gap: "16px",
+  display: "flex",
+  flexDirection: "column" as const,
+  gap: "18px",
 } as const;
 
 const headerStyle = {
@@ -474,6 +560,7 @@ const headerStyle = {
   alignItems: "start",
   justifyContent: "space-between",
   gap: "14px",
+  minWidth: 0,
 } as const;
 
 const eyebrowStyle = {
@@ -489,8 +576,8 @@ const eyebrowStyle = {
 
 const titleStyle = {
   color: "#ffffff",
-  fontSize: "32px",
-  lineHeight: 1,
+  fontSize: "clamp(26px, 5vw, 32px)",
+  lineHeight: 1.02,
   fontWeight: 900,
   letterSpacing: "-0.05em",
 } as const;
@@ -533,20 +620,26 @@ const ownerNoteStyle = {
   color: "#8f9ab4",
   fontSize: "12px",
   lineHeight: 1.6,
+  padding: "8px 12px",
+  borderRadius: "999px",
+  border: "1px solid rgba(255,255,255,0.08)",
+  background: "rgba(255,255,255,0.03)",
 } as const;
 
 const composerStyle = {
   display: "grid",
   gap: "12px",
-  padding: "16px",
+  padding: "18px",
   borderRadius: "22px",
   border: "1px solid rgba(255,255,255,0.07)",
-  background: "rgba(255,255,255,0.03)",
+  background:
+    "linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.025))",
 } as const;
 
 const textareaStyle = {
   width: "100%",
   minHeight: "112px",
+  maxHeight: "34vh",
   padding: "14px 16px",
   borderRadius: "18px",
   border: "1px solid rgba(255,255,255,0.08)",
@@ -555,6 +648,8 @@ const textareaStyle = {
   resize: "vertical" as const,
   outline: "none",
   lineHeight: 1.7,
+  boxSizing: "border-box" as const,
+  overflowY: "auto" as const,
 } as const;
 
 const composerFooterStyle = {
@@ -576,10 +671,11 @@ const signinPanelStyle = {
   justifyContent: "space-between",
   gap: "14px",
   flexWrap: "wrap",
-  padding: "16px",
+  padding: "18px",
   borderRadius: "22px",
   border: "1px solid rgba(255,255,255,0.07)",
-  background: "rgba(255,255,255,0.03)",
+  background:
+    "linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.025))",
 } as const;
 
 const signinButtonStyle = {
@@ -609,6 +705,9 @@ const errorStyle = {
 const listShellStyle = {
   display: "grid",
   gap: "12px",
+  flex: "1 1 auto",
+  minHeight: 0,
+  alignContent: "start" as const,
 } as const;
 
 const loadingStateStyle = {
@@ -616,25 +715,56 @@ const loadingStateStyle = {
   alignItems: "center",
   gap: "10px",
   color: "#dce5f6",
-  padding: "20px 4px",
+  padding: "28px 6px",
 } as const;
 
 const emptyStateStyle = {
-  padding: "22px",
-  borderRadius: "20px",
-  border: "1px dashed rgba(255,255,255,0.12)",
+  display: "grid",
+  justifyItems: "center",
+  gap: "10px",
+  padding: "28px 22px",
+  borderRadius: "24px",
+  border: "1px dashed rgba(255,255,255,0.14)",
+  background:
+    "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015))",
   color: "#96a3bc",
   textAlign: "center" as const,
+  lineHeight: 1.7,
+} as const;
+
+const emptyStateIconStyle = {
+  width: "46px",
+  height: "46px",
+  borderRadius: "16px",
+  display: "grid",
+  placeItems: "center",
+  color: "#f3d0ff",
+  background: "rgba(255,255,255,0.05)",
+  border: "1px solid rgba(255,255,255,0.08)",
+} as const;
+
+const emptyStateTitleStyle = {
+  color: "#ffffff",
+  fontSize: "15px",
+  fontWeight: 800,
+} as const;
+
+const emptyStateBodyStyle = {
+  maxWidth: "34ch",
+  color: "#96a3bc",
+  fontSize: "13px",
   lineHeight: 1.7,
 } as const;
 
 const commentCardStyle = {
   display: "grid",
   gap: "12px",
-  padding: "16px",
-  borderRadius: "20px",
+  padding: "18px",
+  borderRadius: "22px",
   border: "1px solid rgba(255,255,255,0.07)",
-  background: "rgba(255,255,255,0.025)",
+  background:
+    "linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.02))",
+  overflow: "hidden" as const,
 } as const;
 
 const commentHeaderStyle = {
@@ -651,6 +781,7 @@ const commentBodyStyle = {
   lineHeight: 1.8,
   whiteSpace: "pre-wrap" as const,
   overflowWrap: "anywhere" as const,
+  wordBreak: "break-word" as const,
 } as const;
 
 function sortButtonStyle(active: boolean) {

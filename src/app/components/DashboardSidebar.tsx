@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { type CSSProperties, useEffect, useId, useRef, useState } from "react";
+import { useFormStatus } from "react-dom";
 import { LuMenu, LuPanelLeftClose, LuX } from "react-icons/lu";
 import { useI18n } from "@/app/components/I18nProvider";
 import LanguageSwitcher from "@/app/components/LanguageSwitcher";
@@ -11,6 +12,7 @@ import {
   dashboardButtonStyle,
   dashboardTagStyle,
 } from "@/app/dashboard/components/DashboardUI";
+import { logoutAction } from "@/app/dashboard/actions";
 import type { DashboardNavItem } from "@/app/lib/dashboard-nav";
 import { useBodyScrollLock } from "@/app/components/useBodyScrollLock";
 
@@ -542,6 +544,8 @@ function SidebarPanel({
               : t("dashboard.sidebar.freeReady")}
           </div>
         </div>
+
+        <SidebarLogoutButton t={t} />
       </div>
 
       <div
@@ -795,5 +799,38 @@ function SidebarLink({
     >
       {content}
     </Link>
+  );
+}
+
+function SidebarLogoutButton({
+  t,
+}: {
+  t: ReturnType<typeof useI18n>["t"];
+}) {
+  return (
+    <form action={logoutAction} style={{ width: "100%" }}>
+      <SidebarLogoutSubmitButton label={t("dashboard.sidebar.logout")} />
+    </form>
+  );
+}
+
+function SidebarLogoutSubmitButton({ label }: { label: string }) {
+  const { pending } = useFormStatus();
+
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      aria-busy={pending}
+      style={{
+        ...dashboardButtonStyle("secondary", { fullWidth: true }),
+        minHeight: "44px",
+        justifyContent: "center",
+        opacity: pending ? 0.72 : 1,
+        cursor: pending ? "not-allowed" : "pointer",
+      }}
+    >
+      {pending ? `${label}...` : label}
+    </button>
   );
 }

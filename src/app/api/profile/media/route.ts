@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/app/lib/auth";
 import { prisma } from "@/app/lib/prisma";
@@ -39,6 +40,10 @@ export async function POST(req: Request) {
         ...(bannerUrl !== undefined ? { bannerUrl: bannerUrl || null } : {}),
       },
     });
+
+    revalidatePath("/dashboard");
+    revalidatePath("/dashboard/profile");
+    revalidatePath(`/${user.username}`);
 
     return NextResponse.json({ ok: true });
   } catch (error) {

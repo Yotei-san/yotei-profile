@@ -325,6 +325,7 @@ const en = {
       freeReady: "Upgrade-ready workspace",
       viewPublicProfile: "View public profile",
       editProfile: "Edit profile",
+      logout: "Logout",
       verify: "Verify",
       verifyTooltip: "Verify your email to unlock this area.",
     },
