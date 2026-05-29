@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { FaCircle, FaCrown, FaShieldHalved } from "react-icons/fa6";
 import { LuSparkles } from "react-icons/lu";
 import { getCurrentUser } from "@/app/lib/auth";
+import { getAuraRank } from "@/app/lib/aura";
 import { getFeaturedPublicBadges } from "@/app/lib/badges";
 import { resolveEquippedDecoration } from "@/app/lib/decorations";
 import { readLiveEmbedMetadata } from "@/app/lib/live-embed";
@@ -219,6 +220,8 @@ function buildProfileRenderData(
     decorationOffsetY,
     featuredBadges: featuredBadgeShowcase.badges,
     extraBadgeCount: featuredBadgeShowcase.extraCount,
+    auraScore: user.auraScore,
+    auraRank: user.auraRank || getAuraRank(user.auraScore),
     heroPills: buildHeroPills(user, hasPremiumState),
     likes: interactionState.likes,
     dislikes: interactionState.dislikes,
@@ -265,6 +268,8 @@ function buildProfileUserSelect(
     profileMusicUrl: true,
     profileMusicProvider: true,
     profileMusicEnabled: true,
+    auraScore: true,
+    auraRank: true,
     status: true,
     role: true,
     plan: true,

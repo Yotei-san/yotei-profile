@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { syncUserAura } from "@/app/lib/aura-server";
 import { getCurrentUser } from "@/app/lib/auth";
 import { canDeleteProfileComment } from "@/app/lib/profile-comments";
 import { prisma } from "@/app/lib/prisma";
@@ -70,12 +71,15 @@ export async function DELETE(_req: Request, { params }: RouteProps) {
       },
     });
 
-    const count = await prisma.profileComment.count({
-      where: {
-        profileUserId: profileUser.id,
-        isDeleted: false,
-      },
-    });
+    const [count] = await Promise.all([
+      prisma.profileComment.count({
+        where: {
+          profileUserId: profileUser.id,
+          isDeleted: false,
+        },
+      }),
+      syncUserAura(profileUser.id),
+    ]);
 
     return NextResponse.json({
       ok: true,

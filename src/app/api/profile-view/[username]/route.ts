@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { syncUserAura } from "@/app/lib/aura-server";
 import { getCurrentUser } from "@/app/lib/auth";
 import { prisma } from "@/app/lib/prisma";
 import { logServerError } from "@/app/lib/server-log";
@@ -72,6 +73,7 @@ export async function POST(_req: Request, { params }: RouteProps) {
         userId: user.id,
       },
     });
+    await syncUserAura(user.id);
 
     const trackedResponse = NextResponse.json({
       ok: true,

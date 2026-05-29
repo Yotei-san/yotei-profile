@@ -357,6 +357,15 @@ const en = {
       linkTraffic: "Traffic across your links",
       socialBlocks: "Social blocks",
       identityBlocks: "Identity blocks configured",
+      auraEyebrow: "Aura system",
+      auraTitle: "Your Aura",
+      auraDescription:
+        "A persisted progression snapshot built from profile views, reactions, comments, links, and badge rarity.",
+      auraProgress: "Progress to next rank",
+      auraScore: "Aura Score",
+      auraRank: "Aura Rank",
+      auraPointsToNext: "{count} points to rank {rank}",
+      auraMaxRank: "You are already at max rank.",
       leaderboardEyebrow: "Leaderboard",
       rankingTitle: "Your ranking",
       rankingDescription:
@@ -541,6 +550,8 @@ const en = {
   },
   publicProfile: {
     scrollForMore: "Scroll down for more",
+    auraScore: "Aura Score",
+    auraRank: "Aura Rank",
     views: "Views",
     likes: "Likes",
     dislikes: "Dislikes",

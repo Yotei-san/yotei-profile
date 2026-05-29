@@ -75,6 +75,8 @@ type Props = {
   featuredBadges: PropsFromLayout["featuredBadges"];
   extraBadgeCount: number;
   allBadges: PropsFromLayout["allBadges"];
+  initialAuraScore: PropsFromLayout["initialAuraScore"];
+  initialAuraRank: PropsFromLayout["initialAuraRank"];
   heroPills: PublicProfileHeroPill[];
   likes: number;
   dislikes: number;

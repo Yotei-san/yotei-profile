@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { syncUserAura } from "@/app/lib/aura-server";
 import { requireUser } from "@/app/lib/auth";
 import { prisma } from "@/app/lib/prisma";
 
@@ -46,6 +47,7 @@ export async function createLink(formData: FormData) {
       position: nextPosition,
     },
   });
+  await syncUserAura(sessionUser.id);
 
   revalidatePath("/dashboard/links");
   revalidatePath("/dashboard");
@@ -129,6 +131,7 @@ export async function deleteLink(formData: FormData) {
       data: { position: index },
     });
   }
+  await syncUserAura(sessionUser.id);
 
   revalidatePath("/dashboard/links");
   revalidatePath("/dashboard");

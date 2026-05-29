@@ -1,3 +1,4 @@
+import { syncUserAura } from "@/app/lib/aura-server";
 import { prisma } from "@/app/lib/prisma";
 
 export type BadgeCategory = "official" | "premium" | "achievement";
@@ -297,6 +298,7 @@ export async function giveBadgeToUser(userId: string, badgeSlug: string) {
       badgeId: badge.id,
     },
   });
+  await syncUserAura(userId);
 }
 
 export async function awardBadgeByKey(userId: string, badgeSlug: string) {
@@ -319,6 +321,7 @@ export async function removeBadgeFromUser(userId: string, badgeSlug: string) {
       badgeId: badge.id,
     },
   });
+  await syncUserAura(userId);
 }
 
 export function isAdminOrOwnerRole(role: string | null | undefined) {

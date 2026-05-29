@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
+import { syncUserAura } from "@/app/lib/aura-server";
 import { getCurrentUser } from "@/app/lib/auth";
 import { prisma } from "@/app/lib/prisma";
 import { logServerError } from "@/app/lib/server-log";
@@ -232,6 +233,9 @@ export async function POST(req: Request, { params }: RouteProps) {
             },
           });
         }
+
+        transactionStep = "transaction:sync-aura";
+        await syncUserAura(targetUser.id, tx);
 
         transactionStep = "transaction:load-final-counts";
         const grouped = await tx.reaction.groupBy({

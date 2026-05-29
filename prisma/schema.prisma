@@ -111,6 +111,8 @@ model User {
   premiumBadge              Boolean  @default(false)
   premiumSince              DateTime?
   premiumUntil              DateTime?
+  auraScore                 Int      @default(0)
+  auraRank                  String   @default("E")
 
   blocksOrder               String?
 

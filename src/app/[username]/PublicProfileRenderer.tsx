@@ -142,6 +142,8 @@ type Props = {
   layout: PublicProfileLayout;
   user: PublicProfileRenderUser;
   displayName: string;
+  auraScore: number;
+  auraRank: string;
   themeColor: string;
   mood: ProfileMood;
   aura: ProfileAura;
@@ -181,6 +183,8 @@ export default function PublicProfileRenderer({
   layout,
   user,
   displayName,
+  auraScore,
+  auraRank,
   themeColor,
   mood,
   aura,
@@ -516,6 +520,8 @@ export default function PublicProfileRenderer({
         preview={preview}
         previewMessage={previewMessage}
         displayName={safeDisplayName}
+        auraScore={auraScore}
+        auraRank={auraRank}
         user={safeUser}
         themeColor={safeThemeColor}
         mood={mood}
@@ -561,6 +567,8 @@ export default function PublicProfileRenderer({
       <FloatingProfileScene
         preview={preview}
         displayName={safeDisplayName}
+        auraScore={auraScore}
+        auraRank={auraRank}
         user={safeUser}
         themeColor={safeThemeColor}
         mood={mood}
@@ -1700,6 +1708,14 @@ export default function PublicProfileRenderer({
                         nameClassName="profile-name"
                         usernameClassName="profile-username"
                       />
+                      <AuraIdentityStrip
+                        score={auraScore}
+                        rank={auraRank}
+                        align={safeComposition.alignment === "center" ? "center" : "start"}
+                        accentColor={sceneAppearance.linkThemeColor}
+                        scoreLabel={t("publicProfile.auraScore")}
+                        rankLabel={t("publicProfile.auraRank")}
+                      />
                       {safeComposition.metadata.showBadges ? (
                         <ProfileIdentityBadges
                           badges={safeFeaturedBadges}
@@ -1849,6 +1865,8 @@ export default function PublicProfileRenderer({
 function FloatingProfileScene({
   preview,
   displayName,
+  auraScore,
+  auraRank,
   user,
   themeColor,
   mood,
@@ -1888,6 +1906,8 @@ function FloatingProfileScene({
 }: {
   preview: boolean;
   displayName: string;
+  auraScore: number;
+  auraRank: string;
   user: PublicProfileRenderUser;
   themeColor: string;
   mood: ProfileMood;
@@ -1932,6 +1952,7 @@ function FloatingProfileScene({
   orderedContentBlocks: ProfileCompositionBlock[];
   customBlocks: ProfileCustomBlock[];
 }) {
+  const { t } = useI18n();
   const { presence, depth, socialThemeColor, linkThemeColor } = sceneAppearance;
   const scrollAtmosphereProgress = useScrollAtmosphere(!preview, 320);
   const resolvedBannerUrl = sanitizeRenderableUrl(user.bannerUrl);
@@ -2567,6 +2588,15 @@ function FloatingProfileScene({
             nameClassName="floating-name"
             usernameClassName="floating-username"
           />
+          <AuraIdentityStrip
+            score={auraScore}
+            rank={auraRank}
+            align="center"
+            accentColor={linkThemeColor}
+            scoreLabel={t("publicProfile.auraScore")}
+            rankLabel={t("publicProfile.auraRank")}
+            compact
+          />
           {composition.metadata.showBadges ? (
             <ProfileIdentityBadges
               badges={featuredBadges}
@@ -2777,6 +2807,110 @@ function renderIdentityMetadataSlot(
   );
 }
 
+function AuraIdentityStrip({
+  score,
+  rank,
+  align = "start",
+  accentColor,
+  scoreLabel,
+  rankLabel,
+  compact = false,
+}: {
+  score: number;
+  rank: string;
+  align?: "start" | "center";
+  accentColor: string;
+  scoreLabel: string;
+  rankLabel: string;
+  compact?: boolean;
+}) {
+  const safeScore = Math.max(0, Math.floor(score));
+  const rowStyle: CSSProperties = {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: compact ? "8px" : "10px",
+    justifyContent: align === "center" ? "center" : "flex-start",
+    marginTop: compact ? "10px" : "12px",
+  };
+  const chipStyle: CSSProperties = {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: compact ? "8px" : "9px",
+    minHeight: compact ? "34px" : "38px",
+    padding: compact ? "0 12px" : "0 14px",
+    borderRadius: "999px",
+    border: `1px solid ${withAlpha(accentColor, compact ? "24" : "2b")}`,
+    background: `linear-gradient(135deg, ${withAlpha(accentColor, compact ? "12" : "16")}, rgba(255,255,255,0.03))`,
+    boxShadow: `0 ${compact ? 12 : 16}px ${compact ? 28 : 34}px ${withAlpha(
+      accentColor,
+      compact ? "10" : "14",
+    )}`,
+    color: "#f7fbff",
+    backdropFilter: "blur(14px) saturate(116%)",
+    WebkitBackdropFilter: "blur(14px) saturate(116%)",
+  };
+
+  return (
+    <div style={rowStyle}>
+      <div style={chipStyle}>
+        <LuSparkles size={compact ? 13 : 14} color={accentColor} />
+        <span
+          style={{
+            fontSize: "11px",
+            fontWeight: 700,
+            letterSpacing: "0.1em",
+            textTransform: "uppercase",
+            color: "#9fb0c9",
+          }}
+        >
+          {scoreLabel}
+        </span>
+        <strong
+          style={{
+            fontSize: compact ? "13px" : "14px",
+            fontWeight: 800,
+            letterSpacing: "-0.01em",
+          }}
+        >
+          {safeScore.toLocaleString()}
+        </strong>
+      </div>
+
+      <div style={chipStyle}>
+        <span
+          style={{
+            fontSize: "11px",
+            fontWeight: 700,
+            letterSpacing: "0.1em",
+            textTransform: "uppercase",
+            color: "#9fb0c9",
+          }}
+        >
+          {rankLabel}
+        </span>
+        <strong
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            minWidth: compact ? "24px" : "28px",
+            minHeight: compact ? "24px" : "28px",
+            padding: "0 8px",
+            borderRadius: "999px",
+            background: withAlpha(accentColor, compact ? "1f" : "26"),
+            color: "#ffffff",
+            fontSize: compact ? "13px" : "14px",
+            fontWeight: 900,
+            letterSpacing: "0.08em",
+          }}
+        >
+          {rank}
+        </strong>
+      </div>
+    </div>
+  );
+}
+
 function useScrollAtmosphere(enabled: boolean, distance: number) {
   const [progress, setProgress] = useState(0);
 
@@ -2959,6 +3093,8 @@ function IntroProfileStage({
   preview,
   previewMessage,
   displayName,
+  auraScore,
+  auraRank,
   user,
   themeColor,
   mood,
@@ -3001,6 +3137,8 @@ function IntroProfileStage({
   preview: boolean;
   previewMessage: string;
   displayName: string;
+  auraScore: number;
+  auraRank: string;
   user: PublicProfileRenderUser;
   themeColor: string;
   mood: ProfileMood;
@@ -4827,6 +4965,15 @@ function IntroProfileStage({
                 align={composition.alignment === "center" ? "center" : "left"}
                 nameClassName="profile-intro-name"
                 usernameClassName="profile-intro-username"
+              />
+              <AuraIdentityStrip
+                score={auraScore}
+                rank={auraRank}
+                align={composition.alignment === "center" ? "center" : "start"}
+                accentColor={themeColor}
+                scoreLabel={t("publicProfile.auraScore")}
+                rankLabel={t("publicProfile.auraRank")}
+                compact
               />
               {composition.metadata.showBadges ? (
                 <div className="profile-intro-badge-row">

@@ -4,6 +4,7 @@ import {
   dashboardPageStyle,
 } from "@/app/dashboard/components/DashboardUI";
 import { redirectWithClearedSession, requireUser } from "@/app/lib/auth";
+import { getAuraRank } from "@/app/lib/aura";
 import { getFeaturedPublicBadges } from "@/app/lib/badges";
 import { resolveEquippedDecoration } from "@/app/lib/decorations";
 import { readLiveEmbedMetadata } from "@/app/lib/live-embed";
@@ -97,6 +98,8 @@ export default async function ProfileSettingsPage({ searchParams }: PageProps) {
         featuredBadges={profileData.featuredBadges}
         extraBadgeCount={profileData.extraBadgeCount}
         allBadges={profileData.allBadges}
+        initialAuraScore={profileData.auraScore}
+        initialAuraRank={profileData.auraRank}
         heroPills={profileData.heroPills}
         likes={profileData.likes}
         dislikes={profileData.dislikes}
@@ -209,6 +212,8 @@ function buildProfileRenderData(user: ProfileUserRecord) {
     featuredBadges: featuredBadgeShowcase.badges,
     extraBadgeCount: featuredBadgeShowcase.extraCount,
     allBadges: user.badges,
+    auraScore: user.auraScore,
+    auraRank: user.auraRank || getAuraRank(user.auraScore),
     heroPills: buildHeroPills(user, hasPremiumState),
     likes: user.reactionsReceived.reduce(
       (acc, item) => (item.type === "like" ? acc + 1 : acc),
@@ -261,6 +266,8 @@ function buildDashboardProfileUserSelect(
     profileMusicUrl: true,
     profileMusicProvider: true,
     profileMusicEnabled: true,
+    auraScore: true,
+    auraRank: true,
     status: true,
     role: true,
     plan: true,

@@ -1,5 +1,6 @@
 "use server";
 
+import { giveBadgeToUser, removeBadgeFromUser } from "@/app/lib/badges";
 import { requireUser } from "@/app/lib/auth";
 import { prisma } from "@/app/lib/prisma";
 import { requireAdminByUserId, createAdminAuditLog } from "@/app/lib/admin-auth";
@@ -25,19 +26,7 @@ export async function giveBadge(formData: FormData) {
     redirect("/dashboard/admin/badges?error=not-found");
   }
 
-  await prisma.userBadge.upsert({
-    where: {
-      userId_badgeId: {
-        userId: user.id,
-        badgeId: badge.id,
-      },
-    },
-    update: {},
-    create: {
-      userId: user.id,
-      badgeId: badge.id,
-    },
-  });
+  await giveBadgeToUser(user.id, badgeKey);
 
   await createAdminAuditLog({
     actorUserId: admin.id,
@@ -69,12 +58,7 @@ export async function removeBadge(formData: FormData) {
     redirect("/dashboard/admin/badges?error=not-found");
   }
 
-  await prisma.userBadge.deleteMany({
-    where: {
-      userId: user.id,
-      badgeId: badge.id,
-    },
-  });
+  await removeBadgeFromUser(user.id, badgeKey);
 
   await createAdminAuditLog({
     actorUserId: admin.id,

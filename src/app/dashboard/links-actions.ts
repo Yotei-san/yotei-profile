@@ -1,5 +1,6 @@
 "use server";
 
+import { syncUserAura } from "@/app/lib/aura-server";
 import { prisma } from "@/app/lib/prisma";
 import { requireUser } from "@/app/lib/auth";
 
@@ -63,6 +64,7 @@ export async function createLink(formData: FormData) {
       position: nextPosition,
     },
   });
+  await syncUserAura(user.id);
 }
 
 export async function deleteLink(formData: FormData) {
@@ -88,6 +90,7 @@ export async function deleteLink(formData: FormData) {
   await prisma.link.delete({
     where: { id: existingLink.id },
   });
+  await syncUserAura(user.id);
 }
 
 export async function moveLinkUp(formData: FormData) {

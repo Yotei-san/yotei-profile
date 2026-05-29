@@ -195,6 +195,8 @@ type Props = {
   featuredBadges: PublicProfileBadgeEntry[];
   extraBadgeCount: number;
   allBadges: PublicProfileBadgeEntry[];
+  initialAuraScore: number;
+  initialAuraRank: string;
   heroPills: PublicProfileHeroPill[];
   likes: number;
   dislikes: number;
@@ -234,6 +236,8 @@ export default function ProfileLayoutExperience({
   featuredBadges,
   extraBadgeCount,
   allBadges,
+  initialAuraScore,
+  initialAuraRank,
   heroPills,
   likes,
   dislikes,
@@ -3009,6 +3013,8 @@ export default function ProfileLayoutExperience({
                     layout={deferredPreviewLayout}
                     user={livePreviewUser}
                     displayName={resolvedDisplayName}
+                    auraScore={initialAuraScore}
+                    auraRank={initialAuraRank}
                     themeColor={safeThemeColor}
                     mood={deferredPreviewMood}
                     aura={deferredPreviewAura}

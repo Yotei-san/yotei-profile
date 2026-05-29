@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { syncUserAura } from "@/app/lib/aura-server";
 import { getCurrentUser } from "@/app/lib/auth";
 import {
   PROFILE_COMMENT_RATE_LIMIT_MS,
@@ -149,12 +150,15 @@ export async function POST(req: Request, { params }: RouteProps) {
       select: COMMENT_SELECT,
     });
 
-    const count = await prisma.profileComment.count({
-      where: {
-        profileUserId: profileUser.id,
-        isDeleted: false,
-      },
-    });
+    const [count] = await Promise.all([
+      prisma.profileComment.count({
+        where: {
+          profileUserId: profileUser.id,
+          isDeleted: false,
+        },
+      }),
+      syncUserAura(profileUser.id),
+    ]);
 
     return NextResponse.json({
       ok: true,

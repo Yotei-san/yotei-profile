@@ -2,6 +2,17 @@ import { prisma } from "@/app/lib/prisma";
 import { hasPremiumAccess } from "@/app/lib/premium";
 
 export type LeaderboardTab = "views" | "likes" | "dislikes" | "newest";
+export type AuraLeaderboardEntry = {
+  id: string;
+  rank: number;
+  username: string;
+  displayName: string;
+  avatarUrl: string | null;
+  role: string;
+  isPremium: boolean;
+  auraScore: number;
+  auraRank: string;
+};
 
 export type LeaderboardEntry = {
   id: string;
@@ -12,6 +23,8 @@ export type LeaderboardEntry = {
   role: string;
   isPremium: boolean;
   createdAt: Date;
+  auraScore: number;
+  auraRank: string;
   views: number;
   likes: number;
   dislikes: number;
@@ -34,6 +47,8 @@ type LeaderboardUserRow = {
   premiumUntil: Date | null;
   subscriptionStatus: string | null;
   createdAt: Date;
+  auraScore: number;
+  auraRank: string;
 };
 
 export function normalizeLeaderboardTab(
@@ -88,6 +103,53 @@ export async function getDashboardRankingSummary(
   };
 }
 
+export async function getAuraLeaderboardEntries(
+  limit = 50,
+): Promise<AuraLeaderboardEntry[]> {
+  const activeUsers = await prisma.user.findMany({
+    where: {
+      status: "active",
+    },
+    orderBy: [
+      {
+        auraScore: "desc",
+      },
+      {
+        createdAt: "asc",
+      },
+      {
+        username: "asc",
+      },
+    ],
+    take: limit,
+    select: {
+      id: true,
+      username: true,
+      displayName: true,
+      avatarUrl: true,
+      role: true,
+      plan: true,
+      premiumBadge: true,
+      premiumUntil: true,
+      subscriptionStatus: true,
+      auraScore: true,
+      auraRank: true,
+    },
+  });
+
+  return activeUsers.map((user, index) => ({
+    id: user.id,
+    rank: index + 1,
+    username: user.username,
+    displayName: user.displayName?.trim() || user.username,
+    avatarUrl: user.avatarUrl,
+    role: user.role,
+    isPremium: hasPremiumAccess(user),
+    auraScore: user.auraScore,
+    auraRank: user.auraRank,
+  }));
+}
+
 async function buildLeaderboardEntries(): Promise<LeaderboardEntry[]> {
   const [activeUsers, viewGroups, likeGroups, dislikeGroups] = await Promise.all([
     prisma.user.findMany({
@@ -105,6 +167,8 @@ async function buildLeaderboardEntries(): Promise<LeaderboardEntry[]> {
         premiumUntil: true,
         subscriptionStatus: true,
         createdAt: true,
+        auraScore: true,
+        auraRank: true,
       },
     }),
     prisma.profileView.groupBy({
@@ -174,6 +238,8 @@ function mapLeaderboardEntry(
     role: user.role,
     isPremium: hasPremiumAccess(user),
     createdAt: user.createdAt,
+    auraScore: user.auraScore,
+    auraRank: user.auraRank,
     views: metrics.views,
     likes: metrics.likes,
     dislikes: metrics.dislikes,

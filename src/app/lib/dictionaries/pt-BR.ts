@@ -357,6 +357,15 @@ const ptBR = {
       linkTraffic: "Tráfego nos seus links",
       socialBlocks: "Blocos sociais",
       identityBlocks: "Blocos de identidade configurados",
+      auraEyebrow: "Sistema Aura",
+      auraTitle: "Sua Aura",
+      auraDescription:
+        "Um retrato persistido de progressao montado a partir de views, reacoes, comentarios, links e raridade de badges.",
+      auraProgress: "Progresso ate o proximo rank",
+      auraScore: "Aura Score",
+      auraRank: "Aura Rank",
+      auraPointsToNext: "{count} pontos para o rank {rank}",
+      auraMaxRank: "Voce ja esta no rank maximo.",
       leaderboardEyebrow: "Ranking",
       rankingTitle: "Seu ranking",
       rankingDescription:
@@ -541,6 +550,8 @@ const ptBR = {
   },
   publicProfile: {
     scrollForMore: "Role para ver mais",
+    auraScore: "Aura Score",
+    auraRank: "Aura Rank",
     views: "Views",
     likes: "Likes",
     dislikes: "Dislikes",

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { syncUserAura } from "@/app/lib/aura-server";
 import { prisma } from "@/app/lib/prisma";
 import { requireUser, destroyUserSession } from "@/app/lib/auth";
 
@@ -265,6 +266,7 @@ await prisma.link.create({
     position: nextPosition,
   },
 });
+  await syncUserAura(user.id);
 
   revalidatePath("/dashboard");
   revalidatePath(`/${dbUser.username}`);
@@ -279,6 +281,7 @@ export async function deleteLink(formData: FormData) {
   await prisma.link.deleteMany({
     where: { id: linkId, userId: user.id },
   });
+  await syncUserAura(user.id);
 
   revalidatePath("/dashboard");
 }

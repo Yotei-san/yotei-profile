@@ -14,6 +14,7 @@ import {
   dashboardTagStyle,
 } from "@/app/dashboard/components/DashboardUI";
 import { redirectWithClearedSession, requireUser } from "@/app/lib/auth";
+import { getAuraProgress, getAuraRank } from "@/app/lib/aura";
 import { buildDashboardOnboardingState } from "@/app/lib/dashboard-onboarding";
 import { createTranslator, getRequestLocale } from "@/app/lib/i18n";
 import { getDashboardRankingSummary } from "@/app/lib/leaderboard";
@@ -31,6 +32,8 @@ type DashboardLink = {
 type DashboardUser = {
   username: string;
   displayName: string | null;
+  auraScore: number;
+  auraRank: string;
   emailVerified: Date | null;
   avatarUrl: string | null;
   bannerUrl: string | null;
@@ -53,6 +56,8 @@ export default async function DashboardPage() {
       select: {
         username: true,
         displayName: true,
+        auraScore: true,
+        auraRank: true,
         emailVerified: true,
         avatarUrl: true,
         bannerUrl: true,
@@ -100,6 +105,8 @@ export default async function DashboardPage() {
     (sum, link) => sum + link._count.clicks,
     0
   );
+  const resolvedAuraRank = resolvedUser.auraRank || getAuraRank(resolvedUser.auraScore);
+  const auraProgress = getAuraProgress(resolvedUser.auraScore);
   const topLinks = [...resolvedUser.links]
     .sort((a, b) => b._count.clicks - a._count.clicks)
     .slice(0, 5);
@@ -158,6 +165,31 @@ export default async function DashboardPage() {
       />
 
       <DashboardOnboardingChecklist onboarding={onboarding} locale={locale} />
+
+      <section style={dashboardSurfaceStyle}>
+        <DashboardSectionHeading
+          eyebrow={t("dashboard.overview.auraEyebrow")}
+          title={t("dashboard.overview.auraTitle")}
+          description={t("dashboard.overview.auraDescription")}
+        />
+
+        <AuraProgressCard
+          score={resolvedUser.auraScore}
+          rank={resolvedAuraRank}
+          progressPercent={auraProgress.progressPercent}
+          progressLabel={t("dashboard.overview.auraProgress")}
+          scoreLabel={t("dashboard.overview.auraScore")}
+          rankLabel={t("dashboard.overview.auraRank")}
+          nextLabel={
+            auraProgress.nextRank
+              ? t("dashboard.overview.auraPointsToNext", {
+                  count: auraProgress.pointsToNextRank,
+                  rank: auraProgress.nextRank,
+                })
+              : t("dashboard.overview.auraMaxRank")
+          }
+        />
+      </section>
 
       {rankingSummary ? (
         <section style={dashboardSurfaceStyle}>
@@ -290,6 +322,52 @@ function StatCard({
   );
 }
 
+function AuraProgressCard({
+  score,
+  rank,
+  progressPercent,
+  progressLabel,
+  scoreLabel,
+  rankLabel,
+  nextLabel,
+}: {
+  score: number;
+  rank: string;
+  progressPercent: number;
+  progressLabel: string;
+  scoreLabel: string;
+  rankLabel: string;
+  nextLabel: string;
+}) {
+  return (
+    <article style={auraCardStyle}>
+      <div style={auraHeaderRowStyle}>
+        <div style={{ display: "grid", gap: "10px", minWidth: 0 }}>
+          <div style={auraScoreLabelStyle}>{scoreLabel}</div>
+          <div style={auraScoreValueStyle}>{score.toLocaleString()}</div>
+        </div>
+        <div style={auraRankChipStyle}>
+          <span style={auraRankLabelStyle}>{rankLabel}</span>
+          <strong style={auraRankValueStyle}>{rank}</strong>
+        </div>
+      </div>
+
+      <div style={{ display: "grid", gap: "10px" }}>
+        <div style={auraProgressLabelStyle}>{progressLabel}</div>
+        <div style={auraProgressTrackStyle}>
+          <div
+            style={{
+              ...auraProgressFillStyle,
+              width: `${Math.max(0, Math.min(100, progressPercent))}%`,
+            }}
+          />
+        </div>
+        <div style={statHintStyle}>{nextLabel}</div>
+      </div>
+    </article>
+  );
+}
+
 const heroStatsGridStyle: CSSProperties = {
   display: "grid",
   gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 150px), 1fr))",
@@ -319,6 +397,91 @@ const statHintStyle: CSSProperties = {
   color: "#7f8aa3",
   fontSize: "12px",
   lineHeight: 1.6,
+};
+
+const auraCardStyle: CSSProperties = {
+  display: "grid",
+  gap: "18px",
+  padding: "22px",
+  borderRadius: "24px",
+  border: "1px solid rgba(255,255,255,0.08)",
+  background:
+    "radial-gradient(circle at top right, rgba(255,110,168,0.12), transparent 28%), linear-gradient(180deg, rgba(20,23,34,0.98), rgba(10,12,19,0.98))",
+};
+
+const auraHeaderRowStyle: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  gap: "16px",
+  flexWrap: "wrap",
+};
+
+const auraScoreLabelStyle: CSSProperties = {
+  color: "#f2bfd7",
+  fontSize: "12px",
+  fontWeight: 800,
+  letterSpacing: "0.12em",
+  textTransform: "uppercase",
+};
+
+const auraScoreValueStyle: CSSProperties = {
+  color: "#ffffff",
+  fontSize: "clamp(34px, 6vw, 44px)",
+  lineHeight: 1,
+  fontWeight: 900,
+  letterSpacing: "-0.05em",
+};
+
+const auraRankChipStyle: CSSProperties = {
+  display: "grid",
+  justifyItems: "center",
+  gap: "6px",
+  minWidth: "108px",
+  padding: "14px 16px",
+  borderRadius: "20px",
+  border: "1px solid rgba(255,110,168,0.18)",
+  background: "rgba(255,110,168,0.08)",
+};
+
+const auraRankLabelStyle: CSSProperties = {
+  color: "#efb7cf",
+  fontSize: "11px",
+  fontWeight: 800,
+  letterSpacing: "0.12em",
+  textTransform: "uppercase",
+};
+
+const auraRankValueStyle: CSSProperties = {
+  color: "#ffffff",
+  fontSize: "28px",
+  lineHeight: 1,
+  fontWeight: 900,
+};
+
+const auraProgressLabelStyle: CSSProperties = {
+  color: "#b9c5da",
+  fontSize: "12px",
+  fontWeight: 800,
+  letterSpacing: "0.08em",
+  textTransform: "uppercase",
+};
+
+const auraProgressTrackStyle: CSSProperties = {
+  position: "relative",
+  overflow: "hidden",
+  height: "12px",
+  borderRadius: "999px",
+  background: "rgba(255,255,255,0.06)",
+  border: "1px solid rgba(255,255,255,0.06)",
+};
+
+const auraProgressFillStyle: CSSProperties = {
+  height: "100%",
+  borderRadius: "999px",
+  background:
+    "linear-gradient(90deg, rgba(125,196,255,0.94), rgba(255,110,168,0.94))",
+  boxShadow: "0 0 24px rgba(255,110,168,0.18)",
 };
 
 const listStyle: CSSProperties = {
