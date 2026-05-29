@@ -16,6 +16,7 @@ import {
 } from "@/app/dashboard/components/DashboardUI";
 import { redirectWithClearedSession, requireUser } from "@/app/lib/auth";
 import { getAuraProgress, getAuraRank } from "@/app/lib/aura";
+import { getUserAuraQuestProgressSummary } from "@/app/lib/aura-quests-server";
 import { buildDashboardOnboardingState } from "@/app/lib/dashboard-onboarding";
 import { createTranslator, getRequestLocale } from "@/app/lib/i18n";
 import { getDashboardRankingSummary } from "@/app/lib/leaderboard";
@@ -51,7 +52,7 @@ export default async function DashboardPage() {
   const t = createTranslator(locale);
   const sessionUser = await requireUser();
 
-  const [user, rankingSummary] = await Promise.all([
+  const [user, rankingSummary, questProgress] = await Promise.all([
     prisma.user.findUnique({
       where: { id: sessionUser.id },
       select: {
@@ -99,6 +100,7 @@ export default async function DashboardPage() {
       } as any,
     }) as Promise<DashboardUser | null>,
     getDashboardRankingSummary(sessionUser.id),
+    getUserAuraQuestProgressSummary(sessionUser.id),
   ]);
 
   const resolvedUser = user ?? (await redirectWithClearedSession());
@@ -191,6 +193,45 @@ export default async function DashboardPage() {
           description={auraLevelCopy.name}
           motivationalCopy={auraLevelCopy.description}
           progress={auraProgress}
+        />
+      </section>
+
+      <section style={dashboardSurfaceStyle}>
+        <DashboardSectionHeading
+          eyebrow={t("common.profileProgress")}
+          title={t("common.questCompletion")}
+          description={t("dashboard.overview.questProgressDescription")}
+        />
+
+        <QuestProgressCard
+          completionPercent={questProgress.completionPercent}
+          completedCount={questProgress.completedCount}
+          remainingCount={questProgress.remainingCount}
+          totalCount={questProgress.totalCount}
+          currentObjective={
+            questProgress.currentQuestProgress
+              ? getQuestTitle(t, questProgress.currentQuestProgress.quest.id)
+              : null
+          }
+          currentProgress={
+            questProgress.currentQuestProgress
+              ? `${questProgress.currentQuestProgress.current.toLocaleString()} / ${questProgress.currentQuestProgress.target.toLocaleString()}`
+              : null
+          }
+          nextReward={
+            questProgress.currentQuestProgress
+              ? `+${questProgress.currentQuestProgress.nextAuraReward.toLocaleString()} ${t("common.aura")}`
+              : null
+          }
+          completionLabel={t("common.questCompletion")}
+          completedLabel={t("common.completed")}
+          remainingLabel={t("common.remaining")}
+          rewardLabel={t("common.reward")}
+          milestoneLabel={t("common.milestone")}
+          progressLabel={t("common.progress")}
+          completeStateLabel={t("dashboard.overview.allAuraQuestsComplete")}
+          maxStateLabel={t("dashboard.overview.maxProgress")}
+          allRewardsClaimedLabel={t("dashboard.overview.allRewardsClaimed")}
         />
       </section>
 
@@ -325,6 +366,95 @@ function StatCard({
   );
 }
 
+function QuestProgressCard({
+  completionPercent,
+  completedCount,
+  remainingCount,
+  totalCount,
+  currentObjective,
+  currentProgress,
+  nextReward,
+  completionLabel,
+  completedLabel,
+  remainingLabel,
+  rewardLabel,
+  milestoneLabel,
+  progressLabel,
+  completeStateLabel,
+  maxStateLabel,
+  allRewardsClaimedLabel,
+}: {
+  completionPercent: number;
+  completedCount: number;
+  remainingCount: number;
+  totalCount: number;
+  currentObjective: string | null;
+  currentProgress: string | null;
+  nextReward: string | null;
+  completionLabel: string;
+  completedLabel: string;
+  remainingLabel: string;
+  rewardLabel: string;
+  milestoneLabel: string;
+  progressLabel: string;
+  completeStateLabel: string;
+  maxStateLabel: string;
+  allRewardsClaimedLabel: string;
+}) {
+  return (
+    <article style={questCardStyle}>
+      <div style={questHeaderStyle}>
+        <div style={{ display: "grid", gap: "6px", minWidth: 0 }}>
+          <div style={questKickerStyle}>{completionLabel}</div>
+          <div style={questCompletionValueStyle}>
+            {completedCount} / {totalCount}
+          </div>
+        </div>
+        <div style={questPercentChipStyle}>{completionPercent}%</div>
+      </div>
+
+      <div style={questProgressTrackStyle}>
+        <div
+          style={{
+            ...questProgressFillStyle,
+            width: `${Math.max(0, Math.min(100, completionPercent))}%`,
+          }}
+        />
+      </div>
+
+      <div style={heroStatsGridStyle}>
+        <StatCard
+          title={completedLabel}
+          value={completedCount.toLocaleString()}
+          hint={progressLabel}
+        />
+        <StatCard
+          title={remainingLabel}
+          value={remainingCount.toLocaleString()}
+          hint={milestoneLabel}
+        />
+      </div>
+
+      <div style={questMetaGridStyle}>
+        <div style={questMetaItemStyle}>
+          <div style={questMetaLabelStyle}>{milestoneLabel}</div>
+          <div style={questMetaValueStyle}>
+            {currentObjective ?? completeStateLabel}
+          </div>
+        </div>
+        <div style={questMetaItemStyle}>
+          <div style={questMetaLabelStyle}>{progressLabel}</div>
+          <div style={questMetaValueStyle}>{currentProgress ?? maxStateLabel}</div>
+        </div>
+        <div style={questMetaItemStyle}>
+          <div style={questMetaLabelStyle}>{rewardLabel}</div>
+          <div style={questMetaValueStyle}>{nextReward ?? allRewardsClaimedLabel}</div>
+        </div>
+      </div>
+    </article>
+  );
+}
+
 const heroStatsGridStyle: CSSProperties = {
   display: "grid",
   gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 150px), 1fr))",
@@ -379,6 +509,102 @@ const rowTitleStyle: CSSProperties = {
   overflowWrap: "anywhere",
 };
 
+const questCardStyle: CSSProperties = {
+  display: "grid",
+  gap: "18px",
+  padding: "22px",
+  borderRadius: "24px",
+  border: "1px solid rgba(255,255,255,0.08)",
+  background:
+    "radial-gradient(circle at top right, rgba(125,211,252,0.12), transparent 28%), linear-gradient(180deg, rgba(14,18,28,0.98), rgba(8,10,17,0.98))",
+};
+
+const questHeaderStyle: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  gap: "16px",
+  flexWrap: "wrap",
+};
+
+const questKickerStyle: CSSProperties = {
+  color: "#9fdcff",
+  fontSize: "12px",
+  fontWeight: 800,
+  letterSpacing: "0.12em",
+  textTransform: "uppercase",
+};
+
+const questCompletionValueStyle: CSSProperties = {
+  color: "#ffffff",
+  fontSize: "clamp(30px, 5vw, 42px)",
+  lineHeight: 1,
+  fontWeight: 900,
+  letterSpacing: "-0.05em",
+};
+
+const questPercentChipStyle: CSSProperties = {
+  minWidth: "78px",
+  minHeight: "42px",
+  padding: "0 14px",
+  borderRadius: "999px",
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  border: "1px solid rgba(125,211,252,0.18)",
+  background: "rgba(125,211,252,0.09)",
+  color: "#eef8ff",
+  fontSize: "16px",
+  fontWeight: 900,
+};
+
+const questProgressTrackStyle: CSSProperties = {
+  position: "relative",
+  overflow: "hidden",
+  height: "12px",
+  borderRadius: "999px",
+  background: "rgba(255,255,255,0.06)",
+  border: "1px solid rgba(255,255,255,0.06)",
+};
+
+const questProgressFillStyle: CSSProperties = {
+  height: "100%",
+  borderRadius: "999px",
+  background:
+    "linear-gradient(90deg, rgba(125,211,252,0.98), rgba(244,114,182,0.92))",
+  boxShadow: "0 0 24px rgba(125,211,252,0.24)",
+};
+
+const questMetaGridStyle: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 180px), 1fr))",
+  gap: "12px",
+};
+
+const questMetaItemStyle: CSSProperties = {
+  display: "grid",
+  gap: "6px",
+  padding: "14px 16px",
+  borderRadius: "18px",
+  background: "rgba(255,255,255,0.03)",
+  border: "1px solid rgba(255,255,255,0.06)",
+};
+
+const questMetaLabelStyle: CSSProperties = {
+  color: "#90a0bb",
+  fontSize: "11px",
+  fontWeight: 800,
+  letterSpacing: "0.1em",
+  textTransform: "uppercase",
+};
+
+const questMetaValueStyle: CSSProperties = {
+  color: "#ffffff",
+  fontSize: "14px",
+  fontWeight: 800,
+  lineHeight: 1.5,
+};
+
 function getAuraLevelCopy(
   t: ReturnType<typeof createTranslator>,
   rank: string,
@@ -414,5 +640,45 @@ function getAuraLevelCopy(
         name: t("auraLevels.E.name"),
         description: t("auraLevels.E.description"),
       };
+  }
+}
+
+function getQuestTitle(
+  t: ReturnType<typeof createTranslator>,
+  questId: string,
+) {
+  switch (questId) {
+    case "addAvatar":
+      return t("quests.items.addAvatar.title");
+    case "addBanner":
+      return t("quests.items.addBanner.title");
+    case "writeBio":
+      return t("quests.items.writeBio.title");
+    case "addFirstLink":
+      return t("quests.items.addFirstLink.title");
+    case "addSpotify":
+      return t("quests.items.addSpotify.title");
+    case "addDiscord":
+      return t("quests.items.addDiscord.title");
+    case "firstLike":
+      return t("quests.items.firstLike.title");
+    case "tenLikes":
+      return t("quests.items.tenLikes.title");
+    case "firstComment":
+      return t("quests.items.firstComment.title");
+    case "fiveComments":
+      return t("quests.items.fiveComments.title");
+    case "oneHundredViews":
+      return t("quests.items.oneHundredViews.title");
+    case "oneThousandViews":
+      return t("quests.items.oneThousandViews.title");
+    case "firstBadge":
+      return t("quests.items.firstBadge.title");
+    case "rareBadge":
+      return t("quests.items.rareBadge.title");
+    case "legendaryBadge":
+      return t("quests.items.legendaryBadge.title");
+    default:
+      return questId;
   }
 }

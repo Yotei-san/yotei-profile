@@ -608,6 +608,7 @@ export async function updateProfile(formData: FormData) {
       showReactions,
     },
   });
+  await syncUserAura(user.id);
 
   revalidatePath("/dashboard");
   revalidatePath("/pricing");

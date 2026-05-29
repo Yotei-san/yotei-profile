@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { redirectWithClearedSession, requireUser } from "@/app/lib/auth";
+import { syncUserAura } from "@/app/lib/aura-server";
 import {
   isMissingProfileCompositionColumnError,
   parseProfileCompositionInput,
@@ -199,6 +200,8 @@ export async function saveProfileSettings(formData: FormData) {
     });
     redirect("/dashboard/profile?error=save-failed");
   }
+
+  await syncUserAura(resolvedUser.id);
 
   revalidatePath("/dashboard/profile");
   revalidatePath("/dashboard");

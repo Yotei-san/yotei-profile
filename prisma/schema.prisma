@@ -135,6 +135,7 @@ model User {
   reactionsGiven     Reaction[] @relation("ReactionsGiven")
   reactionsReceived  Reaction[] @relation("ReactionsReceived")
   badges             UserBadge[]
+  questCompletions   UserQuestCompletion[]
   adminLogs          AdminAuditLog[] @relation("AdminActorLogs")
   adminTargetLogs    AdminAuditLog[] @relation("AdminTargetLogs")
   reportsCreated     Report[] @relation("ReportsCreated")
@@ -368,6 +369,18 @@ model UserBadge {
   @@unique([userId, badgeId])
   @@index([userId, createdAt])
   @@index([badgeId])
+}
+
+model UserQuestCompletion {
+  id          String   @id @default(cuid())
+  userId      String
+  questId     String
+  completedAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, questId])
+  @@index([userId, completedAt])
 }
 
 model AdminAuditLog {

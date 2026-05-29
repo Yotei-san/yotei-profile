@@ -63,6 +63,7 @@ export type AuraCalculationInput = {
   configuredLinks: number;
   rareBadges: number;
   legendaryBadges: number;
+  questAura: number;
 };
 
 export type AuraStaticMetrics = Pick<
@@ -115,6 +116,7 @@ export function calculateAura(
     configuredLinks: normalizeAuraMetric(user.configuredLinks),
     rareBadges: normalizeAuraMetric(user.rareBadges),
     legendaryBadges: normalizeAuraMetric(user.legendaryBadges),
+    questAura: normalizeAuraMetric(user.questAura),
   };
 
   const rawScore =
@@ -124,7 +126,8 @@ export function calculateAura(
     metrics.comments * AURA_POINTS.comment +
     metrics.configuredLinks * AURA_POINTS.configuredLink +
     metrics.rareBadges * AURA_POINTS.rareBadge +
-    metrics.legendaryBadges * AURA_POINTS.legendaryBadge;
+    metrics.legendaryBadges * AURA_POINTS.legendaryBadge +
+    metrics.questAura;
   const score = Math.max(0, rawScore);
 
   return {

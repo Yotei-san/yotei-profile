@@ -4,8 +4,10 @@ import { FaCircle, FaCrown, FaShieldHalved } from "react-icons/fa6";
 import { LuSparkles } from "react-icons/lu";
 import { getCurrentUser } from "@/app/lib/auth";
 import { getAuraRank } from "@/app/lib/aura";
+import { getAuraQuestCompletionSummary } from "@/app/lib/aura-quests";
 import { getFeaturedPublicBadges } from "@/app/lib/badges";
 import { resolveEquippedDecoration } from "@/app/lib/decorations";
+import { createTranslator, getRequestLocale } from "@/app/lib/i18n";
 import { readLiveEmbedMetadata } from "@/app/lib/live-embed";
 import {
   isMissingProfileCompositionColumnError,
@@ -53,6 +55,8 @@ type ProfileUserRecord = NonNullable<
 
 export default async function ProfilePage({ params }: Props) {
   const { username } = await params;
+  const locale = await getRequestLocale();
+  const t = createTranslator(locale);
   const currentUser = await getCurrentUser();
   const user = await getProfileUser(username);
 
@@ -96,13 +100,17 @@ export default async function ProfilePage({ params }: Props) {
     initialMyReaction = myReaction.type;
   }
 
-  const profileData = buildProfileRenderData(user, {
+  const profileData = buildProfileRenderData(
+    user,
+    {
     initialCommentCount: commentCount,
     canComment: Boolean(currentUser),
     isOwnProfile: currentUser?.id === user.id,
     likes: reactionCounts.find((item) => item.type === "like")?._count.type ?? 0,
     dislikes: reactionCounts.find((item) => item.type === "dislike")?._count.type ?? 0,
-  });
+    },
+    t,
+  );
 
   return (
     <PublicProfileRenderer
@@ -143,6 +151,7 @@ function buildProfileRenderData(
     likes: number;
     dislikes: number;
   },
+  t: ReturnType<typeof createTranslator>,
 ) {
   const themeColor = normalizeThemeColor(user.themeColor);
   const layout = normalizeProfileLayout(user.profileLayout);
@@ -160,6 +169,9 @@ function buildProfileRenderData(
   );
   const hasPremiumState = hasPremiumAccess(user);
   const selectedDecoration = resolveEquippedDecoration(user.selectedDecoration, user);
+  const questSummary = getAuraQuestCompletionSummary(
+    user.questCompletions.map((completion) => completion.questId),
+  );
 
   return {
     layout,
@@ -222,7 +234,11 @@ function buildProfileRenderData(
     extraBadgeCount: featuredBadgeShowcase.extraCount,
     auraScore: user.auraScore,
     auraRank: user.auraRank || getAuraRank(user.auraScore),
-    heroPills: buildHeroPills(user, hasPremiumState),
+    heroPills: buildHeroPills(
+      user,
+      hasPremiumState,
+      `${t("common.questCompletion")} ${questSummary.completedCount} / ${questSummary.totalCount}`,
+    ),
     likes: interactionState.likes,
     dislikes: interactionState.dislikes,
     views: user.profileViews.length,
@@ -328,6 +344,11 @@ function buildProfileUserSelect(
         id: true,
       },
     },
+    questCompletions: {
+      select: {
+        questId: true,
+      },
+    },
   };
 }
 
@@ -337,6 +358,7 @@ function buildHeroPills(
     "role" | "status"
   >,
   hasPremiumState: boolean,
+  questSummaryText: string,
 ): PublicProfileHeroPill[] {
   const statusLabel = getStatusLabel(user.status);
 
@@ -371,6 +393,12 @@ function buildHeroPills(
           },
         ]
       : []),
+    {
+      key: "quest-completion",
+      text: questSummaryText,
+      icon: <LuSparkles size={12} />,
+      color: "#8ce6ff",
+    },
     {
       key: "status",
       text: statusLabel,

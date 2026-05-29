@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { Prisma } from "@prisma/client";
+import { syncUserAura } from "@/app/lib/aura-server";
 import { requireUser } from "@/app/lib/auth";
 import {
   buildLiveEmbedMetadata,
@@ -71,6 +72,7 @@ export async function upsertDiscordBlock(formData: FormData) {
       sortOrder: 0,
     },
   });
+  await syncUserAura(sessionUser.id);
 
   revalidatePath("/dashboard/socials");
   revalidatePath(`/${sessionUser.username}`);
@@ -125,6 +127,7 @@ export async function upsertGitHubBlock(formData: FormData) {
       sortOrder: 1,
     },
   });
+  await syncUserAura(sessionUser.id);
 
   revalidatePath("/dashboard/socials");
   revalidatePath(`/${sessionUser.username}`);
@@ -182,6 +185,7 @@ export async function upsertSpotifyBlock(formData: FormData) {
       sortOrder: 2,
     },
   });
+  await syncUserAura(sessionUser.id);
 
   revalidatePath("/dashboard/socials");
   revalidatePath(`/${sessionUser.username}`);
@@ -251,6 +255,7 @@ export async function upsertCreatorVideoBlock(formData: FormData) {
       sortOrder: platformType === TWITCH_PLATFORM ? 4 : 3,
     },
   });
+  await syncUserAura(sessionUser.id);
 
   revalidatePath("/dashboard/socials");
   revalidatePath(`/${sessionUser.username}`);
@@ -338,6 +343,7 @@ export async function upsertLiveEmbedBlock(formData: FormData) {
       sortOrder: getLiveBlockSortOrder(platformType),
     },
   });
+  await syncUserAura(sessionUser.id);
 
   revalidatePath("/dashboard/socials");
   revalidatePath(`/${sessionUser.username}`);
@@ -371,6 +377,7 @@ export async function toggleSocialBlock(blockId: string) {
       isEnabled: !block.isEnabled,
     },
   });
+  await syncUserAura(sessionUser.id);
 
   revalidatePath("/dashboard/socials");
   revalidatePath(`/${sessionUser.username}`);
@@ -400,6 +407,7 @@ export async function deleteSocialBlock(blockId: string) {
       id: block.id,
     },
   });
+  await syncUserAura(sessionUser.id);
 
   revalidatePath("/dashboard/socials");
   revalidatePath(`/${sessionUser.username}`);

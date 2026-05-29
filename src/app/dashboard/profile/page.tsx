@@ -5,8 +5,10 @@ import {
 } from "@/app/dashboard/components/DashboardUI";
 import { redirectWithClearedSession, requireUser } from "@/app/lib/auth";
 import { getAuraRank } from "@/app/lib/aura";
+import { getAuraQuestCompletionSummary } from "@/app/lib/aura-quests";
 import { getFeaturedPublicBadges } from "@/app/lib/badges";
 import { resolveEquippedDecoration } from "@/app/lib/decorations";
+import { createTranslator, getRequestLocale } from "@/app/lib/i18n";
 import { readLiveEmbedMetadata } from "@/app/lib/live-embed";
 import {
   isMissingProfileCompositionColumnError,
@@ -56,11 +58,13 @@ type ProfileUserRecord = NonNullable<
 >;
 
 export default async function ProfileSettingsPage({ searchParams }: PageProps) {
+  const locale = await getRequestLocale();
+  const t = createTranslator(locale);
   const sessionUser = await requireUser();
   const params = (await searchParams) ?? {};
   const user = await getDashboardProfileUser(sessionUser.id);
   const resolvedUser = user ?? (await redirectWithClearedSession());
-  const profileData = buildProfileRenderData(resolvedUser);
+  const profileData = buildProfileRenderData(resolvedUser, t);
 
   return (
     <main style={dashboardPageStyle}>
@@ -136,7 +140,10 @@ async function getDashboardProfileUser(userId: string) {
   }
 }
 
-function buildProfileRenderData(user: ProfileUserRecord) {
+function buildProfileRenderData(
+  user: ProfileUserRecord,
+  t: ReturnType<typeof createTranslator>,
+) {
   const themeColor = normalizeThemeColor(user.themeColor);
   const layout = normalizeProfileLayout(user.profileLayout);
   const displayName = user.displayName || user.username;
@@ -153,6 +160,9 @@ function buildProfileRenderData(user: ProfileUserRecord) {
   );
   const hasPremiumState = hasPremiumAccess(user);
   const selectedDecoration = resolveEquippedDecoration(user.selectedDecoration, user);
+  const questSummary = getAuraQuestCompletionSummary(
+    user.questCompletions.map((completion) => completion.questId),
+  );
 
   return {
     layout,
@@ -214,7 +224,11 @@ function buildProfileRenderData(user: ProfileUserRecord) {
     allBadges: user.badges,
     auraScore: user.auraScore,
     auraRank: user.auraRank || getAuraRank(user.auraScore),
-    heroPills: buildHeroPills(user, hasPremiumState),
+    heroPills: buildHeroPills(
+      user,
+      hasPremiumState,
+      `${t("common.questCompletion")} ${questSummary.completedCount} / ${questSummary.totalCount}`,
+    ),
     likes: user.reactionsReceived.reduce(
       (acc, item) => (item.type === "like" ? acc + 1 : acc),
       0,
@@ -339,6 +353,11 @@ function buildDashboardProfileUserSelect(
         id: true,
       },
     },
+    questCompletions: {
+      select: {
+        questId: true,
+      },
+    },
   };
 }
 
@@ -346,6 +365,7 @@ function buildDashboardProfileUserSelect(
 function buildHeroPills(
   user: Pick<ProfileUserRecord, "role" | "status">,
   hasPremiumState: boolean,
+  questSummaryText: string,
 ): PublicProfileHeroPill[] {
   const statusLabel = getStatusLabel(user.status);
 
@@ -380,6 +400,12 @@ function buildHeroPills(
           },
         ]
       : []),
+    {
+      key: "quest-completion",
+      text: questSummaryText,
+      icon: <LuSparkles size={12} />,
+      color: "#8ce6ff",
+    },
     {
       key: "status",
       text: statusLabel,

@@ -1,6 +1,7 @@
 "use server";
 
 import { requireUser } from "@/app/lib/auth";
+import { syncUserAura } from "@/app/lib/aura-server";
 import { prisma } from "@/app/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -232,6 +233,7 @@ export async function updateProfile(formData: FormData): Promise<void> {
     where: { id: dbUser.id },
     data,
   });
+  await syncUserAura(dbUser.id);
 
   revalidatePath("/dashboard");
   revalidatePath(`/${dbUser.username}`);
