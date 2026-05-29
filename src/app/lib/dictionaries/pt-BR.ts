@@ -574,6 +574,11 @@ const ptBR = {
   },
   leaderboard: {
     tabs: {
+      aura: {
+        eyebrow: "Prestigio",
+        label: "Top Aura",
+        description: "Os perfis mais fortes em aura, identidade e presenca.",
+      },
       views: {
         eyebrow: "Alcance",
         label: "Mais vistos",
@@ -583,6 +588,16 @@ const ptBR = {
         eyebrow: "Afinidade",
         label: "Mais curtidos",
         description: "Perfis recebendo as reações mais positivas.",
+      },
+      comments: {
+        eyebrow: "Conversa",
+        label: "Mais comentados",
+        description: "Perfis gerando as conversas publicas mais vivas.",
+      },
+      collectors: {
+        eyebrow: "Reliquias",
+        label: "Top colecionadores",
+        description: "Perfis com as colecoes de badges mais fortes e mais aura.",
       },
       dislikes: {
         eyebrow: "Calor",
@@ -601,11 +616,18 @@ const ptBR = {
     backToDashboard: "Voltar para dashboard",
     boardMeta: "Top 50 perfis públicos ativos",
     noData: "Ainda não há dados disponíveis no ranking.",
+    rank: "Rank",
+    auraRank: "Aura Rank",
     openProfile: "Abrir perfil",
     metrics: {
+      auraScore: "Aura Score",
+      auraRank: "Aura Rank",
       views: "Views",
       likes: "Likes",
-      dislikes: "Dislikes",
+      comments: "Comentarios",
+      badges: "Badges",
+      rare: "Raras",
+      legendary: "Lendarias",
       joined: "Entrou",
     },
   },

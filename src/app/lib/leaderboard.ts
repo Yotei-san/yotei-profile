@@ -1,17 +1,23 @@
-import { prisma } from "@/app/lib/prisma";
+import { getFeaturedPublicBadges } from "@/app/lib/badges";
 import { hasPremiumAccess } from "@/app/lib/premium";
+import { normalizeProfileComposition } from "@/app/lib/profile-composition";
+import { prisma } from "@/app/lib/prisma";
 
-export type LeaderboardTab = "views" | "likes" | "dislikes" | "newest";
-export type AuraLeaderboardEntry = {
+export type LeaderboardTab =
+  | "aura"
+  | "views"
+  | "likes"
+  | "comments"
+  | "collectors"
+  | "newest";
+
+export type LeaderboardFeaturedBadge = {
   id: string;
-  rank: number;
-  username: string;
-  displayName: string;
-  avatarUrl: string | null;
-  role: string;
-  isPremium: boolean;
-  auraScore: number;
-  auraRank: string;
+  slug: string;
+  name: string;
+  icon: string;
+  color: string | null;
+  rarity: string | null;
 };
 
 export type LeaderboardEntry = {
@@ -27,14 +33,26 @@ export type LeaderboardEntry = {
   auraRank: string;
   views: number;
   likes: number;
-  dislikes: number;
+  comments: number;
+  badgeCount: number;
+  rareBadgeCount: number;
+  legendaryBadgeCount: number;
+  featuredBadges: LeaderboardFeaturedBadge[];
+  extraBadgeCount: number;
 };
+
+export type AuraLeaderboardEntry = LeaderboardEntry;
 
 export type DashboardRankingSummary = {
   viewsRank: number;
   likesRank: number;
   commentCount: number;
 };
+
+type LeaderboardBaseEntry = Omit<
+  LeaderboardEntry,
+  "rareBadgeCount" | "legendaryBadgeCount" | "featuredBadges" | "extraBadgeCount"
+>;
 
 type LeaderboardUserRow = {
   id: string;
@@ -51,42 +69,59 @@ type LeaderboardUserRow = {
   auraRank: string;
 };
 
+type LeaderboardUserDetailRow = {
+  id: string;
+  profileComposition: unknown;
+  badges: Array<{
+    id: string;
+    badge: {
+      slug: string;
+      name: string;
+      icon: string;
+      color: string | null;
+      rarity: string | null;
+      description: string | null;
+      category: string | null;
+    };
+  }>;
+};
+
 export function normalizeLeaderboardTab(
   value: string | null | undefined,
 ): LeaderboardTab {
-  if (value === "views" || value === "likes" || value === "dislikes" || value === "newest") {
+  if (
+    value === "aura" ||
+    value === "views" ||
+    value === "likes" ||
+    value === "comments" ||
+    value === "collectors" ||
+    value === "newest"
+  ) {
     return value;
   }
 
-  return "views";
+  return "aura";
 }
 
 export async function getLeaderboardEntries(
   tab: LeaderboardTab,
   limit = 50,
 ): Promise<LeaderboardEntry[]> {
-  const entries = await buildLeaderboardEntries();
-  const sorted = sortLeaderboardEntries(entries, tab);
+  const entries = await buildLeaderboardBaseEntries();
+  const rankedEntries = sortLeaderboardEntries(entries, tab)
+    .slice(0, limit)
+    .map((entry, index) => ({
+      ...entry,
+      rank: index + 1,
+    }));
 
-  return sorted.slice(0, limit).map((entry, index) => ({
-    ...entry,
-    rank: index + 1,
-  }));
+  return hydrateLeaderboardEntries(rankedEntries);
 }
 
 export async function getDashboardRankingSummary(
   userId: string,
 ): Promise<DashboardRankingSummary | null> {
-  const [entries, commentCount] = await Promise.all([
-    buildLeaderboardEntries(),
-    prisma.profileComment.count({
-      where: {
-        profileUserId: userId,
-        isDeleted: false,
-      },
-    }),
-  ]);
-
+  const entries = await buildLeaderboardBaseEntries();
   const currentEntry = entries.find((entry) => entry.id === userId);
 
   if (!currentEntry) {
@@ -99,103 +134,69 @@ export async function getDashboardRankingSummary(
   return {
     viewsRank: byViews.findIndex((entry) => entry.id === userId) + 1,
     likesRank: byLikes.findIndex((entry) => entry.id === userId) + 1,
-    commentCount,
+    commentCount: currentEntry.comments,
   };
 }
 
 export async function getAuraLeaderboardEntries(
   limit = 50,
 ): Promise<AuraLeaderboardEntry[]> {
-  const activeUsers = await prisma.user.findMany({
-    where: {
-      status: "active",
-    },
-    orderBy: [
-      {
-        auraScore: "desc",
-      },
-      {
-        createdAt: "asc",
-      },
-      {
-        username: "asc",
-      },
-    ],
-    take: limit,
-    select: {
-      id: true,
-      username: true,
-      displayName: true,
-      avatarUrl: true,
-      role: true,
-      plan: true,
-      premiumBadge: true,
-      premiumUntil: true,
-      subscriptionStatus: true,
-      auraScore: true,
-      auraRank: true,
-    },
-  });
-
-  return activeUsers.map((user, index) => ({
-    id: user.id,
-    rank: index + 1,
-    username: user.username,
-    displayName: user.displayName?.trim() || user.username,
-    avatarUrl: user.avatarUrl,
-    role: user.role,
-    isPremium: hasPremiumAccess(user),
-    auraScore: user.auraScore,
-    auraRank: user.auraRank,
-  }));
+  return getLeaderboardEntries("aura", limit);
 }
 
-async function buildLeaderboardEntries(): Promise<LeaderboardEntry[]> {
-  const [activeUsers, viewGroups, likeGroups, dislikeGroups] = await Promise.all([
-    prisma.user.findMany({
-      where: {
-        status: "active",
-      },
-      select: {
-        id: true,
-        username: true,
-        displayName: true,
-        avatarUrl: true,
-        role: true,
-        plan: true,
-        premiumBadge: true,
-        premiumUntil: true,
-        subscriptionStatus: true,
-        createdAt: true,
-        auraScore: true,
-        auraRank: true,
-      },
-    }),
-    prisma.profileView.groupBy({
-      by: ["userId"],
-      _count: {
-        userId: true,
-      },
-    }),
-    prisma.reaction.groupBy({
-      by: ["toUserId"],
-      where: {
-        type: "like",
-      },
-      _count: {
-        toUserId: true,
-      },
-    }),
-    prisma.reaction.groupBy({
-      by: ["toUserId"],
-      where: {
-        type: "dislike",
-      },
-      _count: {
-        toUserId: true,
-      },
-    }),
-  ]);
+async function buildLeaderboardBaseEntries(): Promise<LeaderboardBaseEntry[]> {
+  const [activeUsers, viewGroups, likeGroups, commentGroups, badgeGroups] =
+    await Promise.all([
+      prisma.user.findMany({
+        where: {
+          status: "active",
+        },
+        select: {
+          id: true,
+          username: true,
+          displayName: true,
+          avatarUrl: true,
+          role: true,
+          plan: true,
+          premiumBadge: true,
+          premiumUntil: true,
+          subscriptionStatus: true,
+          createdAt: true,
+          auraScore: true,
+          auraRank: true,
+        },
+      }),
+      prisma.profileView.groupBy({
+        by: ["userId"],
+        _count: {
+          userId: true,
+        },
+      }),
+      prisma.reaction.groupBy({
+        by: ["toUserId"],
+        where: {
+          type: "like",
+        },
+        _count: {
+          toUserId: true,
+        },
+      }),
+      prisma.profileComment.groupBy({
+        by: ["profileUserId"],
+        where: {
+          isDeleted: false,
+        },
+        _count: {
+          profileUserId: true,
+        },
+      }),
+      prisma.userBadge.groupBy({
+        by: ["userId"],
+        _count: {
+          userId: true,
+        },
+      }),
+    ]);
 
   const activeUserIds = new Set(activeUsers.map((user) => user.id));
   const viewsByUserId = new Map(
@@ -208,17 +209,107 @@ async function buildLeaderboardEntries(): Promise<LeaderboardEntry[]> {
       .filter((group) => activeUserIds.has(group.toUserId))
       .map((group) => [group.toUserId, group._count.toUserId]),
   );
-  const dislikesByUserId = new Map(
-    dislikeGroups
-      .filter((group) => activeUserIds.has(group.toUserId))
-      .map((group) => [group.toUserId, group._count.toUserId]),
+  const commentsByUserId = new Map(
+    commentGroups
+      .filter((group) => activeUserIds.has(group.profileUserId))
+      .map((group) => [group.profileUserId, group._count.profileUserId]),
+  );
+  const badgesByUserId = new Map(
+    badgeGroups
+      .filter((group) => activeUserIds.has(group.userId))
+      .map((group) => [group.userId, group._count.userId]),
   );
 
-  return activeUsers.map((user) => mapLeaderboardEntry(user, {
-    views: viewsByUserId.get(user.id) ?? 0,
-    likes: likesByUserId.get(user.id) ?? 0,
-    dislikes: dislikesByUserId.get(user.id) ?? 0,
-  }));
+  return activeUsers.map((user) =>
+    mapLeaderboardEntry(user, {
+      views: viewsByUserId.get(user.id) ?? 0,
+      likes: likesByUserId.get(user.id) ?? 0,
+      comments: commentsByUserId.get(user.id) ?? 0,
+      badgeCount: badgesByUserId.get(user.id) ?? 0,
+    }),
+  );
+}
+
+async function hydrateLeaderboardEntries(
+  entries: LeaderboardBaseEntry[],
+): Promise<LeaderboardEntry[]> {
+  if (entries.length === 0) {
+    return [];
+  }
+
+  const userIds = entries.map((entry) => entry.id);
+  const detailRows = await prisma.user.findMany({
+    where: {
+      id: {
+        in: userIds,
+      },
+    },
+    select: {
+      id: true,
+      profileComposition: true,
+      badges: {
+        orderBy: {
+          createdAt: "desc",
+        },
+        select: {
+          id: true,
+          badge: {
+            select: {
+              slug: true,
+              name: true,
+              icon: true,
+              color: true,
+              rarity: true,
+              description: true,
+              category: true,
+            },
+          },
+        },
+      },
+    },
+  });
+  const detailsByUserId = new Map(
+    detailRows.map((detail) => [
+      detail.id,
+      detail as LeaderboardUserDetailRow,
+    ]),
+  );
+
+  return entries.map((entry) => {
+    const detail = detailsByUserId.get(entry.id);
+    const composition = normalizeProfileComposition(detail?.profileComposition);
+    const featuredBadgeShowcase = detail
+      ? getFeaturedPublicBadges(
+          detail.badges,
+          3,
+          composition.metadata.favoriteBadgeSlugs,
+        )
+      : { badges: [], extraCount: 0 };
+    const rareBadgeCount =
+      detail?.badges.filter((badgeEntry) => badgeEntry.badge.rarity === "rare")
+        .length ?? 0;
+    const legendaryBadgeCount =
+      detail?.badges.filter(
+        (badgeEntry) =>
+          badgeEntry.badge.rarity === "legendary" ||
+          badgeEntry.badge.rarity === "owner",
+      ).length ?? 0;
+
+    return {
+      ...entry,
+      rareBadgeCount,
+      legendaryBadgeCount,
+      featuredBadges: featuredBadgeShowcase.badges.map((badgeEntry) => ({
+        id: badgeEntry.id,
+        slug: badgeEntry.badge.slug,
+        name: badgeEntry.badge.name,
+        icon: badgeEntry.badge.icon,
+        color: badgeEntry.badge.color,
+        rarity: badgeEntry.badge.rarity,
+      })),
+      extraBadgeCount: featuredBadgeShowcase.extraCount,
+    };
+  });
 }
 
 function mapLeaderboardEntry(
@@ -226,9 +317,10 @@ function mapLeaderboardEntry(
   metrics: {
     views: number;
     likes: number;
-    dislikes: number;
+    comments: number;
+    badgeCount: number;
   },
-): LeaderboardEntry {
+): LeaderboardBaseEntry {
   return {
     id: user.id,
     rank: 0,
@@ -242,75 +334,83 @@ function mapLeaderboardEntry(
     auraRank: user.auraRank,
     views: metrics.views,
     likes: metrics.likes,
-    dislikes: metrics.dislikes,
+    comments: metrics.comments,
+    badgeCount: metrics.badgeCount,
   };
 }
 
-function sortLeaderboardEntries(entries: LeaderboardEntry[], tab: LeaderboardTab) {
+function sortLeaderboardEntries(
+  entries: LeaderboardBaseEntry[],
+  tab: LeaderboardTab,
+) {
   return [...entries].sort((left, right) => {
     if (tab === "newest") {
-      return compareNumbers(
-        right.createdAt.getTime(),
-        left.createdAt.getTime(),
-        right.views,
-        left.views,
+      return compareDescending(
+        [left.createdAt.getTime(), left.auraScore, left.views],
+        [right.createdAt.getTime(), right.auraScore, right.views],
         left.username,
         right.username,
       );
     }
 
     if (tab === "likes") {
-      return compareNumbers(
-        right.likes,
-        left.likes,
-        right.views,
-        left.views,
+      return compareDescending(
+        [left.likes, left.views, left.auraScore],
+        [right.likes, right.views, right.auraScore],
         left.username,
         right.username,
       );
     }
 
-    if (tab === "dislikes") {
-      return compareNumbers(
-        right.dislikes,
-        left.dislikes,
-        right.views,
-        left.views,
+    if (tab === "comments") {
+      return compareDescending(
+        [left.comments, left.likes, left.auraScore],
+        [right.comments, right.likes, right.auraScore],
         left.username,
         right.username,
       );
     }
 
-    return compareNumbers(
-      right.views,
-      left.views,
-      right.likes,
-      left.likes,
+    if (tab === "collectors") {
+      return compareDescending(
+        [left.badgeCount, left.auraScore, left.likes],
+        [right.badgeCount, right.auraScore, right.likes],
+        left.username,
+        right.username,
+      );
+    }
+
+    if (tab === "aura") {
+      return compareDescending(
+        [left.auraScore, left.likes, left.views],
+        [right.auraScore, right.likes, right.views],
+        left.username,
+        right.username,
+      );
+    }
+
+    return compareDescending(
+      [left.views, left.likes, left.auraScore],
+      [right.views, right.likes, right.auraScore],
       left.username,
       right.username,
     );
   });
 }
 
-function compareNumbers(
-  primaryLeft: number,
-  primaryRight: number,
-  secondaryLeft: number,
-  secondaryRight: number,
-  tertiaryLeft: string,
-  tertiaryRight: string,
+function compareDescending(
+  leftMetrics: number[],
+  rightMetrics: number[],
+  leftName: string,
+  rightName: string,
 ) {
-  const primaryDifference = primaryLeft - primaryRight;
+  for (let index = 0; index < Math.min(leftMetrics.length, rightMetrics.length); index += 1) {
+    const difference = rightMetrics[index] - leftMetrics[index];
 
-  if (primaryDifference !== 0) {
-    return primaryDifference;
+    if (difference !== 0) {
+      return difference;
+    }
   }
 
-  const secondaryDifference = secondaryLeft - secondaryRight;
-
-  if (secondaryDifference !== 0) {
-    return secondaryDifference;
-  }
-
-  return tertiaryLeft.localeCompare(tertiaryRight);
+  return leftName.localeCompare(rightName);
 }

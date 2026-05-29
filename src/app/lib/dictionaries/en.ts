@@ -574,6 +574,11 @@ const en = {
   },
   leaderboard: {
     tabs: {
+      aura: {
+        eyebrow: "Prestige",
+        label: "Top Aura",
+        description: "The strongest profiles by aura score, identity, and momentum.",
+      },
       views: {
         eyebrow: "Reach",
         label: "Most viewed",
@@ -583,6 +588,16 @@ const en = {
         eyebrow: "Affection",
         label: "Most liked",
         description: "Profiles earning the strongest positive reactions.",
+      },
+      comments: {
+        eyebrow: "Conversation",
+        label: "Most commented",
+        description: "Profiles pulling the liveliest public discussion.",
+      },
+      collectors: {
+        eyebrow: "Relics",
+        label: "Top collectors",
+        description: "Profiles building the deepest badge collections and aura presence.",
       },
       dislikes: {
         eyebrow: "Heat",
@@ -601,11 +616,18 @@ const en = {
     backToDashboard: "Back to dashboard",
     boardMeta: "Top 50 active public profiles",
     noData: "No leaderboard data is available yet.",
+    rank: "Rank",
+    auraRank: "Aura Rank",
     openProfile: "Open profile",
     metrics: {
+      auraScore: "Aura Score",
+      auraRank: "Aura Rank",
       views: "Views",
       likes: "Likes",
-      dislikes: "Dislikes",
+      comments: "Comments",
+      badges: "Badges",
+      rare: "Rare",
+      legendary: "Legendary",
       joined: "Joined",
     },
   },
