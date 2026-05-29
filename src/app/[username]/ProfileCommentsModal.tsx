@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { createPortal } from "react-dom";
 import { useEffect, useRef, useState } from "react";
 import { LuLoaderCircle, LuMessageSquare, LuTrash2, LuX } from "react-icons/lu";
 import { useBodyScrollLock } from "@/app/components/useBodyScrollLock";
@@ -37,6 +38,7 @@ export default function ProfileCommentsModal({
   onCountChange,
 }: Props) {
   const { locale, t } = useI18n();
+  const [isMounted, setIsMounted] = useState(false);
   const [comments, setComments] = useState<ProfileCommentItem[]>([]);
   const [sort, setSort] = useState<CommentSort>("newest");
   const [draft, setDraft] = useState("");
@@ -47,7 +49,15 @@ export default function ProfileCommentsModal({
   const [hasLoaded, setHasLoaded] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
-  useBodyScrollLock(open);
+  useBodyScrollLock(open && isMounted);
+
+  useEffect(() => {
+    setIsMounted(true);
+
+    return () => {
+      setIsMounted(false);
+    };
+  }, []);
 
   useEffect(() => {
     if (!open) {
@@ -192,21 +202,23 @@ export default function ProfileCommentsModal({
     }
   }
 
-  if (!open) {
+  if (!open || !isMounted) {
     return null;
   }
 
   const canSubmitComment = draft.trim().length > 0 && !submitting;
 
-  return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="profile-comments-title"
-      style={overlayStyle}
-      onClick={onClose}
-    >
-      <style>{`
+  return createPortal(
+    <>
+      <button
+        type="button"
+        aria-label={t("publicProfile.closeComments")}
+        style={backdropStyle}
+        onClick={onClose}
+      />
+
+      <div style={viewportStyle}>
+        <style>{`
         .profile-comments-shell {
           animation: profile-comments-rise 180ms ease;
           box-sizing: border-box;
@@ -319,175 +331,180 @@ export default function ProfileCommentsModal({
         }
       `}</style>
 
-      <div
-        className="profile-comments-shell"
-        style={panelStyle}
-        aria-busy={loading || submitting || Boolean(deletingId)}
-        onClick={(event) => event.stopPropagation()}
-      >
-        <div className="profile-comments-header" style={headerStyle}>
-          <div style={{ display: "grid", gap: "8px" }}>
-            <div style={eyebrowStyle}>
-              <LuMessageSquare size={13} />
-              {t("publicProfile.commentModalEyebrow")}
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="profile-comments-title"
+          className="profile-comments-shell"
+          style={panelStyle}
+          aria-busy={loading || submitting || Boolean(deletingId)}
+          onClick={(event) => event.stopPropagation()}
+        >
+          <div className="profile-comments-header" style={headerStyle}>
+            <div style={{ display: "grid", gap: "8px" }}>
+              <div style={eyebrowStyle}>
+                <LuMessageSquare size={13} />
+                {t("publicProfile.commentModalEyebrow")}
+              </div>
+              <div id="profile-comments-title" style={titleStyle}>
+                {t("publicProfile.commentModalTitle")}
+              </div>
+              <div style={subtitleStyle}>
+                {commentCount === 1
+                  ? t("publicProfile.commentCountOne", {
+                      count: commentCount.toLocaleString(toIntlLocale(locale)),
+                    })
+                  : t("publicProfile.commentCountOther", {
+                      count: commentCount.toLocaleString(toIntlLocale(locale)),
+                    })}
+              </div>
             </div>
-            <div id="profile-comments-title" style={titleStyle}>
-              {t("publicProfile.commentModalTitle")}
-            </div>
-            <div style={subtitleStyle}>
-              {commentCount === 1
-                ? t("publicProfile.commentCountOne", {
-                    count: commentCount.toLocaleString(toIntlLocale(locale)),
-                  })
-                : t("publicProfile.commentCountOther", {
-                    count: commentCount.toLocaleString(toIntlLocale(locale)),
-                  })}
-            </div>
-          </div>
 
-          <button
-            type="button"
-            onClick={onClose}
-            style={closeButtonStyle}
-            aria-label={t("publicProfile.closeComments")}
-          >
-            <LuX size={18} />
-          </button>
-        </div>
-
-        <div className="profile-comments-toolbar" style={toolbarStyle}>
-          <div style={sortGroupStyle}>
-            <SortButton
-              label={t("publicProfile.newest")}
-              active={sort === "newest"}
-              onClick={() => setSort("newest")}
-            />
-            <SortButton
-              label={t("publicProfile.oldest")}
-              active={sort === "oldest"}
-              onClick={() => setSort("oldest")}
-            />
-          </div>
-
-          {isOwnProfile ? (
-            <div style={ownerNoteStyle}>{t("publicProfile.ownProfileNote")}</div>
-          ) : null}
-        </div>
-
-        {canComment ? (
-          <form
-            className="profile-comments-composer"
-            onSubmit={handleSubmit}
-            style={composerStyle}
-          >
-            <textarea
-              ref={textareaRef}
-              value={draft}
-              onChange={(event) => setDraft(event.target.value)}
-              maxLength={300}
-              rows={4}
-              placeholder={
-                isOwnProfile
-                  ? t("publicProfile.ownProfilePlaceholder")
-                  : t("publicProfile.visitorPlaceholder", { username })
-              }
-              style={textareaStyle}
-            />
-            <div
-              className="profile-comments-composer-footer"
-              style={composerFooterStyle}
-            >
-              <div style={charCountStyle}>{draft.length}/300</div>
-              <button
-                className="profile-comments-composer-submit"
-                type="submit"
-                disabled={!canSubmitComment}
-                style={submitButtonStyle(submitting || !canSubmitComment)}
-              >
-                {submitting
-                  ? t("publicProfile.postingComment")
-                  : isOwnProfile
-                    ? t("publicProfile.writeCommentOwnProfile")
-                    : t("publicProfile.postComment")}
-              </button>
-            </div>
-          </form>
-        ) : (
-          <div className="profile-comments-signin" style={signinPanelStyle}>
-            <div style={{ display: "grid", gap: "6px" }}>
-              <strong style={{ color: "#ffffff" }}>{t("publicProfile.signInConversation")}</strong>
-              <span style={{ color: "#9aa8c2", fontSize: "13px", lineHeight: 1.7 }}>
-                {t("publicProfile.signInConversationBody")}
-              </span>
-            </div>
-            <Link
-              href="/login"
-              className="profile-comments-signin-link"
-              style={signinButtonStyle}
+            <button
+              type="button"
               onClick={onClose}
+              style={closeButtonStyle}
+              aria-label={t("publicProfile.closeComments")}
             >
-              {t("publicProfile.signIn")}
-            </Link>
+              <LuX size={18} />
+            </button>
           </div>
-        )}
 
-        {error ? <div style={errorStyle}>{error}</div> : null}
+          <div className="profile-comments-toolbar" style={toolbarStyle}>
+            <div style={sortGroupStyle}>
+              <SortButton
+                label={t("publicProfile.newest")}
+                active={sort === "newest"}
+                onClick={() => setSort("newest")}
+              />
+              <SortButton
+                label={t("publicProfile.oldest")}
+                active={sort === "oldest"}
+                onClick={() => setSort("oldest")}
+              />
+            </div>
 
-        <div className="profile-comments-list" style={listShellStyle}>
-          {loading && !hasLoaded ? (
-            <div style={loadingStateStyle}>
-              <LuLoaderCircle size={18} className="spin" />
-              {t("publicProfile.loadingComments")}
-            </div>
-          ) : comments.length === 0 ? (
-            <div className="profile-comments-empty" style={emptyStateStyle}>
-              <div style={emptyStateIconStyle}>
-                <LuMessageSquare size={18} />
-              </div>
-              <strong style={emptyStateTitleStyle}>{t("publicProfile.noCommentsYet")}</strong>
-              <div style={emptyStateBodyStyle}>
-                {canComment
-                  ? t("publicProfile.startFirstThread")
-                  : t("publicProfile.beFirstAfterSignIn")}
-              </div>
-            </div>
-          ) : (
-            comments.map((comment) => (
-              <article
-                key={comment.id}
-                className="profile-comments-card"
-                style={commentCardStyle}
+            {isOwnProfile ? (
+              <div style={ownerNoteStyle}>{t("publicProfile.ownProfileNote")}</div>
+            ) : null}
+          </div>
+
+          {canComment ? (
+            <form
+              className="profile-comments-composer"
+              onSubmit={handleSubmit}
+              style={composerStyle}
+            >
+              <textarea
+                ref={textareaRef}
+                value={draft}
+                onChange={(event) => setDraft(event.target.value)}
+                maxLength={300}
+                rows={4}
+                placeholder={
+                  isOwnProfile
+                    ? t("publicProfile.ownProfilePlaceholder")
+                    : t("publicProfile.visitorPlaceholder", { username })
+                }
+                style={textareaStyle}
+              />
+              <div
+                className="profile-comments-composer-footer"
+                style={composerFooterStyle}
               >
-                <div style={commentHeaderStyle}>
-                  <div style={{ display: "grid", gap: "4px" }}>
-                    <strong style={{ color: "#ffffff", fontSize: "14px" }}>{comment.authorName}</strong>
-                    <span style={{ color: "#7f8ba3", fontSize: "12px" }}>
-                      {formatCommentDate(comment.createdAt, locale, t)}
-                    </span>
+                <div style={charCountStyle}>{draft.length}/300</div>
+                <button
+                  className="profile-comments-composer-submit"
+                  type="submit"
+                  disabled={!canSubmitComment}
+                  style={submitButtonStyle(submitting || !canSubmitComment)}
+                >
+                  {submitting
+                    ? t("publicProfile.postingComment")
+                    : isOwnProfile
+                      ? t("publicProfile.writeCommentOwnProfile")
+                      : t("publicProfile.postComment")}
+                </button>
+              </div>
+            </form>
+          ) : (
+            <div className="profile-comments-signin" style={signinPanelStyle}>
+              <div style={{ display: "grid", gap: "6px" }}>
+                <strong style={{ color: "#ffffff" }}>{t("publicProfile.signInConversation")}</strong>
+                <span style={{ color: "#9aa8c2", fontSize: "13px", lineHeight: 1.7 }}>
+                  {t("publicProfile.signInConversationBody")}
+                </span>
+              </div>
+              <Link
+                href="/login"
+                className="profile-comments-signin-link"
+                style={signinButtonStyle}
+                onClick={onClose}
+              >
+                {t("publicProfile.signIn")}
+              </Link>
+            </div>
+          )}
+
+          {error ? <div style={errorStyle}>{error}</div> : null}
+
+          <div className="profile-comments-list" style={listShellStyle}>
+            {loading && !hasLoaded ? (
+              <div style={loadingStateStyle}>
+                <LuLoaderCircle size={18} className="spin" />
+                {t("publicProfile.loadingComments")}
+              </div>
+            ) : comments.length === 0 ? (
+              <div className="profile-comments-empty" style={emptyStateStyle}>
+                <div style={emptyStateIconStyle}>
+                  <LuMessageSquare size={18} />
+                </div>
+                <strong style={emptyStateTitleStyle}>{t("publicProfile.noCommentsYet")}</strong>
+                <div style={emptyStateBodyStyle}>
+                  {canComment
+                    ? t("publicProfile.startFirstThread")
+                    : t("publicProfile.beFirstAfterSignIn")}
+                </div>
+              </div>
+            ) : (
+              comments.map((comment) => (
+                <article
+                  key={comment.id}
+                  className="profile-comments-card"
+                  style={commentCardStyle}
+                >
+                  <div style={commentHeaderStyle}>
+                    <div style={{ display: "grid", gap: "4px" }}>
+                      <strong style={{ color: "#ffffff", fontSize: "14px" }}>{comment.authorName}</strong>
+                      <span style={{ color: "#7f8ba3", fontSize: "12px" }}>
+                        {formatCommentDate(comment.createdAt, locale, t)}
+                      </span>
+                    </div>
+
+                    {comment.canDelete ? (
+                      <button
+                        type="button"
+                        onClick={() => void handleDelete(comment.id)}
+                        disabled={deletingId === comment.id}
+                        style={deleteButtonStyle(deletingId === comment.id)}
+                      >
+                        <LuTrash2 size={13} />
+                        {deletingId === comment.id
+                          ? t("publicProfile.deleting")
+                          : t("publicProfile.delete")}
+                      </button>
+                    ) : null}
                   </div>
 
-                  {comment.canDelete ? (
-                    <button
-                      type="button"
-                      onClick={() => void handleDelete(comment.id)}
-                      disabled={deletingId === comment.id}
-                      style={deleteButtonStyle(deletingId === comment.id)}
-                    >
-                      <LuTrash2 size={13} />
-                      {deletingId === comment.id
-                        ? t("publicProfile.deleting")
-                        : t("publicProfile.delete")}
-                    </button>
-                  ) : null}
-                </div>
-
-                <div style={commentBodyStyle}>{comment.body}</div>
-              </article>
-            ))
-          )}
+                  <div style={commentBodyStyle}>{comment.body}</div>
+                </article>
+              ))
+            )}
+          </div>
+          </div>
         </div>
-      </div>
-    </div>
+    </>,
+    document.body
   );
 }
 
@@ -527,19 +544,34 @@ function formatCommentDate(
   }).format(parsed);
 }
 
-const overlayStyle = {
+const backdropStyle = {
   position: "fixed",
   inset: 0,
-  zIndex: 180,
-  display: "grid",
-  placeItems: "center",
-  padding: "clamp(8px, 2vw, 20px)",
+  zIndex: 9998,
+  border: 0,
+  margin: 0,
+  padding: 0,
+  width: "100vw",
+  height: "100vh",
   background: "rgba(2, 4, 10, 0.76)",
   backdropFilter: "blur(14px) saturate(116%)",
   WebkitBackdropFilter: "blur(14px) saturate(116%)",
+  cursor: "pointer",
+} as const;
+
+const viewportStyle = {
+  position: "fixed",
+  inset: 0,
+  zIndex: 9999,
+  display: "grid",
+  placeItems: "center",
+  padding: "clamp(8px, 2vw, 20px)",
+  pointerEvents: "none" as const,
 } as const;
 
 const panelStyle = {
+  position: "relative" as const,
+  zIndex: 9999,
   width: "min(760px, calc(100vw - 24px))",
   maxHeight: "min(86vh, 900px)",
   minHeight: "min(620px, calc(100vh - 24px))",
@@ -553,6 +585,7 @@ const panelStyle = {
   display: "flex",
   flexDirection: "column" as const,
   gap: "18px",
+  pointerEvents: "auto" as const,
 } as const;
 
 const headerStyle = {
