@@ -4,8 +4,38 @@ const ptBR = {
   common: {
     appName: "Yotei",
     language: "Idioma",
+    aura: "Aura",
+    rank: "Rank",
+    nextRank: "Próximo rank",
+    untilRank: "até o Rank {rank}",
     close: "Fechar",
     loading: "Carregando...",
+  },
+  auraLevels: {
+    E: {
+      name: "Dormente",
+      description: "Uma presença calma, com apenas um leve traço de aura.",
+    },
+    D: {
+      name: "Despertando",
+      description: "Um sinal leve começa a se formar ao redor da sua identidade.",
+    },
+    C: {
+      name: "Carregado",
+      description: "Seu perfil começa a parecer mais brilhante, afiado e vivo.",
+    },
+    B: {
+      name: "Radiante",
+      description: "Um halo mais forte e energia mais rica deixam o perfil mais consolidado.",
+    },
+    A: {
+      name: "Ascendente",
+      description: "Glow premium, movimento mais rico e acentos mais fortes definem a experiência.",
+    },
+    S: {
+      name: "Soberano",
+      description: "Uma aura de assinatura elegante transforma o hero em uma presença rara.",
+    },
   },
   languageSwitcher: {
     label: "Idioma",

@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
 import Link from "next/link";
+import ProfileAuraBadge from "@/app/components/ProfileAuraBadge";
 import DashboardOnboardingChecklist from "@/app/dashboard/components/DashboardOnboardingChecklist";
 import {
   DashboardEmptyState,
@@ -107,6 +108,12 @@ export default async function DashboardPage() {
   );
   const resolvedAuraRank = resolvedUser.auraRank || getAuraRank(resolvedUser.auraScore);
   const auraProgress = getAuraProgress(resolvedUser.auraScore);
+  const auraLevelCopy = getAuraLevelCopy(t, resolvedAuraRank);
+  const auraNextRankText = auraProgress.nextRank
+    ? `${auraProgress.pointsToNextRank.toLocaleString()} ${t("common.untilRank", {
+        rank: auraProgress.nextRank,
+      })}`
+    : t("dashboard.overview.auraMaxRank");
   const topLinks = [...resolvedUser.links]
     .sort((a, b) => b._count.clicks - a._count.clicks)
     .slice(0, 5);
@@ -173,21 +180,17 @@ export default async function DashboardPage() {
           description={t("dashboard.overview.auraDescription")}
         />
 
-        <AuraProgressCard
+        <ProfileAuraBadge
           score={resolvedUser.auraScore}
           rank={resolvedAuraRank}
-          progressPercent={auraProgress.progressPercent}
-          progressLabel={t("dashboard.overview.auraProgress")}
-          scoreLabel={t("dashboard.overview.auraScore")}
-          rankLabel={t("dashboard.overview.auraRank")}
-          nextLabel={
-            auraProgress.nextRank
-              ? t("dashboard.overview.auraPointsToNext", {
-                  count: auraProgress.pointsToNextRank,
-                  rank: auraProgress.nextRank,
-                })
-              : t("dashboard.overview.auraMaxRank")
-          }
+          variant="dashboard"
+          auraLabel={t("common.aura")}
+          rankLabel={t("common.rank")}
+          nextRankLabel={t("common.nextRank")}
+          nextRankText={auraNextRankText}
+          description={auraLevelCopy.name}
+          motivationalCopy={auraLevelCopy.description}
+          progress={auraProgress}
         />
       </section>
 
@@ -322,52 +325,6 @@ function StatCard({
   );
 }
 
-function AuraProgressCard({
-  score,
-  rank,
-  progressPercent,
-  progressLabel,
-  scoreLabel,
-  rankLabel,
-  nextLabel,
-}: {
-  score: number;
-  rank: string;
-  progressPercent: number;
-  progressLabel: string;
-  scoreLabel: string;
-  rankLabel: string;
-  nextLabel: string;
-}) {
-  return (
-    <article style={auraCardStyle}>
-      <div style={auraHeaderRowStyle}>
-        <div style={{ display: "grid", gap: "10px", minWidth: 0 }}>
-          <div style={auraScoreLabelStyle}>{scoreLabel}</div>
-          <div style={auraScoreValueStyle}>{score.toLocaleString()}</div>
-        </div>
-        <div style={auraRankChipStyle}>
-          <span style={auraRankLabelStyle}>{rankLabel}</span>
-          <strong style={auraRankValueStyle}>{rank}</strong>
-        </div>
-      </div>
-
-      <div style={{ display: "grid", gap: "10px" }}>
-        <div style={auraProgressLabelStyle}>{progressLabel}</div>
-        <div style={auraProgressTrackStyle}>
-          <div
-            style={{
-              ...auraProgressFillStyle,
-              width: `${Math.max(0, Math.min(100, progressPercent))}%`,
-            }}
-          />
-        </div>
-        <div style={statHintStyle}>{nextLabel}</div>
-      </div>
-    </article>
-  );
-}
-
 const heroStatsGridStyle: CSSProperties = {
   display: "grid",
   gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 150px), 1fr))",
@@ -399,91 +356,6 @@ const statHintStyle: CSSProperties = {
   lineHeight: 1.6,
 };
 
-const auraCardStyle: CSSProperties = {
-  display: "grid",
-  gap: "18px",
-  padding: "22px",
-  borderRadius: "24px",
-  border: "1px solid rgba(255,255,255,0.08)",
-  background:
-    "radial-gradient(circle at top right, rgba(255,110,168,0.12), transparent 28%), linear-gradient(180deg, rgba(20,23,34,0.98), rgba(10,12,19,0.98))",
-};
-
-const auraHeaderRowStyle: CSSProperties = {
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "space-between",
-  gap: "16px",
-  flexWrap: "wrap",
-};
-
-const auraScoreLabelStyle: CSSProperties = {
-  color: "#f2bfd7",
-  fontSize: "12px",
-  fontWeight: 800,
-  letterSpacing: "0.12em",
-  textTransform: "uppercase",
-};
-
-const auraScoreValueStyle: CSSProperties = {
-  color: "#ffffff",
-  fontSize: "clamp(34px, 6vw, 44px)",
-  lineHeight: 1,
-  fontWeight: 900,
-  letterSpacing: "-0.05em",
-};
-
-const auraRankChipStyle: CSSProperties = {
-  display: "grid",
-  justifyItems: "center",
-  gap: "6px",
-  minWidth: "108px",
-  padding: "14px 16px",
-  borderRadius: "20px",
-  border: "1px solid rgba(255,110,168,0.18)",
-  background: "rgba(255,110,168,0.08)",
-};
-
-const auraRankLabelStyle: CSSProperties = {
-  color: "#efb7cf",
-  fontSize: "11px",
-  fontWeight: 800,
-  letterSpacing: "0.12em",
-  textTransform: "uppercase",
-};
-
-const auraRankValueStyle: CSSProperties = {
-  color: "#ffffff",
-  fontSize: "28px",
-  lineHeight: 1,
-  fontWeight: 900,
-};
-
-const auraProgressLabelStyle: CSSProperties = {
-  color: "#b9c5da",
-  fontSize: "12px",
-  fontWeight: 800,
-  letterSpacing: "0.08em",
-  textTransform: "uppercase",
-};
-
-const auraProgressTrackStyle: CSSProperties = {
-  position: "relative",
-  overflow: "hidden",
-  height: "12px",
-  borderRadius: "999px",
-  background: "rgba(255,255,255,0.06)",
-  border: "1px solid rgba(255,255,255,0.06)",
-};
-
-const auraProgressFillStyle: CSSProperties = {
-  height: "100%",
-  borderRadius: "999px",
-  background:
-    "linear-gradient(90deg, rgba(125,196,255,0.94), rgba(255,110,168,0.94))",
-  boxShadow: "0 0 24px rgba(255,110,168,0.18)",
-};
-
 const listStyle: CSSProperties = {
   display: "grid",
   gap: "12px",
@@ -506,3 +378,41 @@ const rowTitleStyle: CSSProperties = {
   fontWeight: 800,
   overflowWrap: "anywhere",
 };
+
+function getAuraLevelCopy(
+  t: ReturnType<typeof createTranslator>,
+  rank: string,
+) {
+  switch (rank) {
+    case "S":
+      return {
+        name: t("auraLevels.S.name"),
+        description: t("auraLevels.S.description"),
+      };
+    case "A":
+      return {
+        name: t("auraLevels.A.name"),
+        description: t("auraLevels.A.description"),
+      };
+    case "B":
+      return {
+        name: t("auraLevels.B.name"),
+        description: t("auraLevels.B.description"),
+      };
+    case "C":
+      return {
+        name: t("auraLevels.C.name"),
+        description: t("auraLevels.C.description"),
+      };
+    case "D":
+      return {
+        name: t("auraLevels.D.name"),
+        description: t("auraLevels.D.description"),
+      };
+    default:
+      return {
+        name: t("auraLevels.E.name"),
+        description: t("auraLevels.E.description"),
+      };
+  }
+}

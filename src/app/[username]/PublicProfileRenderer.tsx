@@ -8,7 +8,14 @@ import {
   LuMusic4,
   LuSparkles,
 } from "react-icons/lu";
+import ProfileAuraBadge from "@/app/components/ProfileAuraBadge";
 import { getLinkPlatform } from "@/app/lib/link-icons";
+import { getAuraProgress, type AuraProgress } from "@/app/lib/aura";
+import {
+  getAuraRankTone,
+  getAuraVisualProfile,
+  type AuraVisualProfile,
+} from "@/app/lib/aura-visuals";
 import {
   getProfileFloatingCompositionPlan,
   getProfileCompositionSpacingScale,
@@ -79,6 +86,7 @@ import {
   adaptProfileBackgroundIntensity,
   adaptProfileMotionLevel,
   getAdaptiveMotionDebugSummary,
+  type AdaptivePerformanceProfile,
 } from "@/app/lib/performance";
 import LivingProfileBackground from "./LivingProfileBackground";
 import ProfileBannerMedia from "./ProfileBannerMedia";
@@ -136,6 +144,29 @@ export type PublicProfileHeroPill = {
   text: string;
   icon: ReactNode;
   color: string;
+};
+
+type AuraMotionPolicy = "off" | "subtle" | "full";
+
+type AuraRuntimeVisuals = {
+  motionPolicy: AuraMotionPolicy;
+  intensity: number;
+  motion: number;
+  ambientDotOpacity: number;
+  avatarHaloScale: number;
+  badgeAccentBoost: number;
+  showAmbientDots: boolean;
+  rootVariables: CSSProperties;
+};
+
+type AuraPresentation = {
+  badgeThemeColor: string;
+  levelName: string;
+  levelDescription: string;
+  nextRankText: string | null;
+  progress: AuraProgress;
+  visual: AuraVisualProfile;
+  runtime: AuraRuntimeVisuals;
 };
 
 type Props = {
@@ -259,6 +290,27 @@ export default function PublicProfileRenderer({
     aura,
     themeColor: safeThemeColor,
   });
+  const auraVisual = getAuraVisualProfile(auraRank);
+  const auraProgress = getAuraProgress(auraScore);
+  const auraLevelCopy = getAuraLevelCopy(t, auraVisual.rank);
+  const auraRuntime = resolveAuraVisualRuntime(auraVisual, adaptivePerformance);
+  const auraPresentation: AuraPresentation = {
+    badgeThemeColor: mixHexColors(
+      sceneAppearance.linkThemeColor,
+      auraVisual.accentColor,
+      clampNumber(0.12 + auraRuntime.badgeAccentBoost * 0.56, 0.12, 0.54),
+    ),
+    levelName: auraLevelCopy.name,
+    levelDescription: auraLevelCopy.description,
+    nextRankText: auraProgress.nextRank
+      ? `${auraProgress.pointsToNextRank.toLocaleString()} ${t("common.untilRank", {
+          rank: auraProgress.nextRank,
+        })}`
+      : null,
+    progress: auraProgress,
+    visual: auraVisual,
+    runtime: auraRuntime,
+  };
   const { presence, depth } = sceneAppearance;
   const compositionDensityScale = getProfileCompositionSpacingScale(
     safeComposition.density,
@@ -521,9 +573,9 @@ export default function PublicProfileRenderer({
         previewMessage={previewMessage}
         displayName={safeDisplayName}
         auraScore={auraScore}
-        auraRank={auraRank}
         user={safeUser}
         themeColor={safeThemeColor}
+        auraPresentation={auraPresentation}
         mood={mood}
         aura={aura}
         sceneAppearance={sceneAppearance}
@@ -568,9 +620,9 @@ export default function PublicProfileRenderer({
         preview={preview}
         displayName={safeDisplayName}
         auraScore={auraScore}
-        auraRank={auraRank}
         user={safeUser}
         themeColor={safeThemeColor}
+        auraPresentation={auraPresentation}
         mood={mood}
         aura={aura}
         sceneAppearance={sceneAppearance}
@@ -653,6 +705,9 @@ export default function PublicProfileRenderer({
   return (
     <main
       className="yotei-public-profile-root yotei-scrollbar-hidden"
+      data-aura-rank={auraPresentation.visual.rank}
+      data-aura-tone={getAuraRankTone(auraPresentation.visual.rank)}
+      data-aura-motion={auraPresentation.runtime.motionPolicy}
       style={{
         minHeight: preview ? "auto" : "100vh",
         position: "relative",
@@ -661,6 +716,7 @@ export default function PublicProfileRenderer({
         fontFamily:
           '"Space Grotesk", Inter, Arial, Helvetica, system-ui, sans-serif',
         background: `
+          radial-gradient(circle at 50% 18%, var(--aura-rank-glow) 0%, transparent 24%),
           radial-gradient(circle at top, ${withAlpha(sceneAppearance.linkThemeColor, "18")} 0%, transparent 24%),
           radial-gradient(circle at 84% 14%, ${withAlpha(presence.accent, "16")} 0%, transparent 18%),
           radial-gradient(circle at 50% 100%, ${withAlpha(presence.soft, "10")} 0%, transparent 32%),
@@ -715,6 +771,7 @@ export default function PublicProfileRenderer({
         "--profile-panel-blur": `${Math.max(0, Math.round(10 * dnaTuning.blurScale))}px`,
         "--profile-dna-label-scale": `${dnaTuning.typographyScale}`,
         "--profile-dna-surface-opacity": `${surfaceOpacityScale.toFixed(3)}`,
+        ...auraPresentation.runtime.rootVariables,
       } as CSSProperties}
     >
       <style>{`
@@ -741,6 +798,103 @@ export default function PublicProfileRenderer({
           z-index: 0;
         }
 
+        .avatar-shell,
+        .floating-avatar-shell,
+        .profile-intro-avatar {
+          isolation: isolate;
+        }
+
+        .avatar-shell::before,
+        .floating-avatar-shell::before,
+        .profile-intro-avatar::before {
+          content: "";
+          position: absolute;
+          inset: -12px;
+          border-radius: 999px;
+          pointer-events: none;
+          z-index: 0;
+          background:
+            radial-gradient(circle at 50% 50%, var(--aura-rank-glow) 0%, transparent 60%),
+            radial-gradient(circle at 24% 26%, color-mix(in srgb, var(--aura-rank-soft) 30%, transparent) 0%, transparent 22%);
+          opacity: calc(var(--aura-rank-intensity) * 0.92);
+          transform: scale(var(--aura-rank-avatar-scale));
+          filter: blur(calc(10px + var(--aura-rank-motion) * 20px));
+          animation: aura-halo-breathe calc(10s - var(--aura-rank-motion) * 4s) ease-in-out infinite;
+        }
+
+        .avatar-shell::after,
+        .floating-avatar-shell::after,
+        .profile-intro-avatar::after {
+          content: "";
+          position: absolute;
+          inset: -2px;
+          border-radius: 999px;
+          pointer-events: none;
+          z-index: 0;
+          border: 1px solid color-mix(in srgb, var(--aura-rank-color) calc(8% + var(--aura-rank-signature) * 32%), transparent);
+          opacity: calc(0.14 + var(--aura-rank-signature) * 0.52);
+          box-shadow: 0 0 18px color-mix(in srgb, var(--aura-rank-color) calc(10% + var(--aura-rank-signature) * 24%), transparent);
+        }
+
+        .profile-aura-dots {
+          position: absolute;
+          inset: -10px;
+          z-index: 1;
+          pointer-events: none;
+          opacity: var(--aura-rank-dot-opacity);
+        }
+
+        .profile-aura-dots span {
+          position: absolute;
+          width: 6px;
+          height: 6px;
+          border-radius: 999px;
+          background:
+            radial-gradient(circle at 35% 35%, rgba(255,255,255,0.96) 0%, var(--aura-rank-soft) 42%, transparent 74%);
+          box-shadow: 0 0 14px var(--aura-rank-glow);
+          mix-blend-mode: screen;
+        }
+
+        .profile-aura-dots .dot-one {
+          left: 10%;
+          top: 16%;
+          animation: aura-dot-float calc(8.2s - var(--aura-rank-motion) * 2.4s) ease-in-out infinite;
+        }
+
+        .profile-aura-dots .dot-two {
+          right: 12%;
+          top: 24%;
+          width: 5px;
+          height: 5px;
+          animation: aura-dot-float calc(9.1s - var(--aura-rank-motion) * 2s) ease-in-out infinite reverse;
+        }
+
+        .profile-aura-dots .dot-three {
+          left: 18%;
+          bottom: 14%;
+          width: 4px;
+          height: 4px;
+          animation: aura-dot-float calc(7.6s - var(--aura-rank-motion) * 1.8s) ease-in-out infinite;
+        }
+
+        .yotei-public-profile-root[data-aura-motion="off"] .floating-avatar-shell::before,
+        .yotei-public-profile-root[data-aura-motion="off"] .profile-aura-dots span {
+          animation: none !important;
+        }
+
+        .yotei-public-profile-root[data-aura-motion="off"] .floating-avatar-shell::before,
+        .yotei-public-profile-root[data-aura-motion="off"] .profile-intro-avatar::before,
+        .yotei-public-profile-root[data-aura-motion="off"] .profile-aura-dots span {
+          animation: none !important;
+        }
+
+        .yotei-public-profile-root[data-aura-motion="off"] .avatar-shell::before,
+        .yotei-public-profile-root[data-aura-motion="off"] .floating-avatar-shell::before,
+        .yotei-public-profile-root[data-aura-motion="off"] .profile-intro-avatar::before,
+        .yotei-public-profile-root[data-aura-motion="off"] .profile-aura-dots span {
+          animation: none !important;
+        }
+
         .profile-stage-media {
           width: 100%;
           height: 100%;
@@ -754,9 +908,10 @@ export default function PublicProfileRenderer({
 
         .profile-stage-light {
           background:
+            radial-gradient(circle at 50% 18%, color-mix(in srgb, var(--aura-rank-color) 16%, transparent) 0%, transparent 20%),
             radial-gradient(circle at 18% 16%, ${withAlpha(presence.accent, "12")} 0%, transparent 22%),
             radial-gradient(circle at 82% 22%, ${withAlpha(presence.soft, "0d")} 0%, transparent 24%);
-          opacity: calc(${Math.max(0.1, depth.lightingOpacity * 0.68)} + var(--profile-scroll-focus) * 0.12);
+          opacity: calc(${Math.max(0.1, depth.lightingOpacity * 0.68)} + var(--aura-rank-intensity) * 0.18 + var(--profile-scroll-focus) * 0.12);
           transform: translate3d(0, calc(var(--profile-scroll-settle) * -0.24), 0);
           animation: ambient-drift var(--profile-ambient-drift-duration) var(--profile-motion-ease) infinite;
         }
@@ -764,8 +919,9 @@ export default function PublicProfileRenderer({
         .profile-stage-bloom {
           background:
             radial-gradient(circle at 50% 22%, rgba(255,255,255,0.08) 0%, transparent 18%),
+            radial-gradient(circle at 50% 48%, color-mix(in srgb, var(--aura-rank-soft) 18%, transparent) 0%, transparent 30%),
             radial-gradient(circle at 50% 34%, ${withAlpha(presence.soft, "1d")} 0%, transparent 34%);
-          opacity: calc(var(--profile-atmosphere-bloom) * 0.72 + var(--profile-scroll-focus) * 0.08);
+          opacity: calc(var(--profile-atmosphere-bloom) * 0.72 + var(--aura-rank-intensity) * 0.18 + var(--profile-scroll-focus) * 0.08);
           mix-blend-mode: screen;
           filter: blur(calc(18px + var(--profile-blur-breath-distance) * 1.2));
           transform: translate3d(0, calc(var(--profile-scroll-settle) * -0.3), 0) scale(calc(1 + var(--profile-scroll-progress) * 0.02));
@@ -776,10 +932,12 @@ export default function PublicProfileRenderer({
 
         .profile-stage-aura {
           background:
+            radial-gradient(circle at 50% 24%, color-mix(in srgb, var(--aura-rank-color) 14%, transparent) 0%, transparent 18%),
+            radial-gradient(circle at 50% 40%, var(--aura-rank-glow) 0%, transparent 28%),
             radial-gradient(circle at 50% 40%, ${withAlpha(presence.accent, "18")} 0%, transparent 28%),
             radial-gradient(circle at 50% 58%, ${withAlpha(presence.soft, "14")} 0%, transparent 36%);
-          opacity: calc(var(--profile-hero-aura-opacity) * 0.78 + var(--profile-scroll-focus) * 0.08);
-          filter: blur(calc(12px + var(--profile-blur-breath-distance)));
+          opacity: calc(var(--profile-hero-aura-opacity) * 0.72 + var(--aura-rank-intensity) * 0.26 + var(--profile-scroll-focus) * 0.08);
+          filter: blur(calc(12px + var(--profile-blur-breath-distance) + var(--aura-rank-motion) * 12px));
           transform: translate3d(0, calc(var(--profile-scroll-settle) * -0.34), 0) scale(calc(1 + var(--profile-scroll-progress) * 0.018));
           mix-blend-mode: screen;
           animation: ambient-drift calc(var(--profile-ambient-drift-duration) * 1.05) var(--profile-motion-ease) infinite reverse;
@@ -860,9 +1018,11 @@ export default function PublicProfileRenderer({
         }
 
         .profile-stage-glow {
-          background: ${presence.stageGlow};
+          background:
+            radial-gradient(circle at 50% 32%, color-mix(in srgb, var(--aura-rank-color) 18%, transparent) 0%, transparent 26%),
+            ${presence.stageGlow};
           filter: blur(calc(${tunedStageGlowBlur}px + var(--profile-blur-breath-distance) + var(--profile-scroll-blur-shift)));
-          opacity: calc(${tunedStageGlowOpacity} * 0.72 + var(--profile-glow-pulse-opacity) * 0.46 + var(--profile-scroll-focus) * 0.04);
+          opacity: calc(${tunedStageGlowOpacity} * 0.68 + var(--aura-rank-intensity) * 0.16 + var(--profile-glow-pulse-opacity) * 0.46 + var(--profile-scroll-focus) * 0.04);
           animation:
             glow-breathe var(--profile-glow-pulse-duration) var(--profile-motion-ease) infinite,
             ambient-drift calc(var(--profile-ambient-drift-duration) * 1.14) var(--profile-motion-ease) infinite;
@@ -938,6 +1098,7 @@ export default function PublicProfileRenderer({
           box-shadow:
             0 ${Math.round(18 * depth.shadowDepth * dnaTuning.shadowScale)}px ${Math.round(42 * depth.shadowDepth * dnaTuning.shadowScale)}px rgba(0, 0, 0, calc(var(--profile-shadow-alpha) - 0.01)),
             0 0 0 1px rgba(255,255,255,0.016),
+            0 0 26px color-mix(in srgb, var(--aura-rank-glow) calc(16% + var(--aura-rank-intensity) * 24%), transparent),
             inset 0 1px 0 rgba(255, 255, 255, 0.05);
           overflow: hidden;
           backdrop-filter: ${resolvedPanelBackdropFilter};
@@ -955,6 +1116,7 @@ export default function PublicProfileRenderer({
           inset: 0;
           background:
             linear-gradient(120deg, rgba(255, 255, 255, 0.07), transparent 18%),
+            radial-gradient(circle at 82% 18%, color-mix(in srgb, var(--aura-rank-color) 18%, transparent) 0%, transparent 22%),
             radial-gradient(circle at top right, ${withAlpha(presence.accent, "16")} 0%, transparent 28%),
             radial-gradient(circle at 14% 32%, rgba(255,255,255,0.05) 0%, transparent 18%),
             ${presence.auraOverlay};
@@ -1076,9 +1238,12 @@ export default function PublicProfileRenderer({
           position: absolute;
           inset: 6px;
           border-radius: 999px;
-          background: ${presence.avatarAuraBackground};
-          filter: blur(calc(14px + var(--profile-blur-breath-distance) * 0.8));
-          transform: scale(1.1);
+          background:
+            radial-gradient(circle at 50% 50%, var(--aura-rank-glow) 0%, transparent 58%),
+            ${presence.avatarAuraBackground};
+          filter: blur(calc(14px + var(--profile-blur-breath-distance) * 0.8 + var(--aura-rank-motion) * 6px));
+          opacity: calc(0.62 + var(--aura-rank-intensity) * 0.44);
+          transform: scale(calc(1.04 + var(--aura-rank-avatar-scale) * 0.06));
           animation: ${avatarAuraAnimation};
         }
 
@@ -1176,6 +1341,7 @@ export default function PublicProfileRenderer({
           letter-spacing: -0.085em;
           text-shadow:
             0 10px 20px rgba(0, 0, 0, 0.22),
+            0 0 calc(16px + var(--aura-rank-intensity) * 28px) var(--aura-rank-glow),
             0 0 28px rgba(255,255,255,0.04);
           transition: transform var(--profile-transition-duration) var(--profile-motion-emphasis);
         }
@@ -1214,11 +1380,17 @@ export default function PublicProfileRenderer({
           font-size: ${Math.max(10, Math.round(11 * dnaTuning.chipScale))}px;
           font-weight: 800;
           letter-spacing: 0.02em;
-          border: 1px solid rgba(255, 255, 255, calc(var(--profile-border-alpha) - 0.01));
-          background: linear-gradient(180deg, rgba(255,255,255,0.034), rgba(8,10,16,0.36));
-          box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+          border: 1px solid color-mix(in srgb, rgba(255,255,255,calc(var(--profile-border-alpha) - 0.01)) 76%, var(--aura-rank-color) 24%);
+          background: linear-gradient(180deg, color-mix(in srgb, var(--aura-rank-color) 10%, rgba(255,255,255,0.034)), rgba(8,10,16,0.36));
+          box-shadow:
+            inset 0 1px 0 rgba(255,255,255,0.03),
+            0 0 18px color-mix(in srgb, var(--aura-rank-glow) calc(8% + var(--aura-rank-intensity) * 14%), transparent);
           backdrop-filter: blur(8px) saturate(108%);
           -webkit-backdrop-filter: blur(8px) saturate(108%);
+        }
+
+        .profile-badge-rail {
+          filter: drop-shadow(0 0 14px color-mix(in srgb, var(--aura-rank-glow) calc(10% + var(--aura-rank-intensity) * 18%), transparent));
         }
 
         .profile-bio {
@@ -1507,6 +1679,30 @@ export default function PublicProfileRenderer({
           50% { opacity: calc(1 + var(--profile-glow-pulse-opacity)); }
         }
 
+        @keyframes aura-halo-breathe {
+          0%, 100% {
+            transform: scale(var(--aura-rank-avatar-scale));
+            opacity: calc(var(--aura-rank-intensity) * 0.82);
+          }
+
+          50% {
+            transform: scale(calc(var(--aura-rank-avatar-scale) + var(--aura-rank-motion) * 0.06));
+            opacity: calc(var(--aura-rank-intensity) * 0.98);
+          }
+        }
+
+        @keyframes aura-dot-float {
+          0%, 100% {
+            transform: translate3d(0, 0, 0) scale(0.92);
+            opacity: calc(0.42 + var(--aura-rank-dot-opacity) * 0.4);
+          }
+
+          50% {
+            transform: translate3d(0, calc(var(--aura-rank-motion) * -10px), 0) scale(1.04);
+            opacity: calc(0.58 + var(--aura-rank-dot-opacity) * 0.42);
+          }
+        }
+
         @media (max-width: 920px) {
           .profile-shell {
             width: min(100% - 28px, ${preview ? Math.min(shellMaxWidth, 780) : shellMaxWidth}px);
@@ -1669,6 +1865,7 @@ export default function PublicProfileRenderer({
                   <div className="avatar-and-copy">
                     <div className="avatar-shell">
                       <div className="avatar-aura" />
+                      {auraPresentation.runtime.showAmbientDots ? <AuraAmbientDots /> : null}
 
                       <LivingAvatar
                         avatarUrl={sanitizeRenderableUrl(safeUser.avatarUrl)}
@@ -1708,19 +1905,30 @@ export default function PublicProfileRenderer({
                         nameClassName="profile-name"
                         usernameClassName="profile-username"
                       />
-                      <AuraIdentityStrip
+                      <ProfileAuraBadge
                         score={auraScore}
-                        rank={auraRank}
-                        align={safeComposition.alignment === "center" ? "center" : "start"}
-                        accentColor={sceneAppearance.linkThemeColor}
-                        scoreLabel={t("publicProfile.auraScore")}
-                        rankLabel={t("publicProfile.auraRank")}
+                        rank={auraPresentation.visual.rank}
+                        variant="hero"
+                        auraLabel={t("common.aura")}
+                        rankLabel={t("common.rank")}
+                        nextRankLabel={
+                          auraPresentation.progress.nextRank ? t("common.nextRank") : undefined
+                        }
+                        nextRankText={auraPresentation.nextRankText}
+                        description={auraPresentation.levelName}
+                        progress={auraPresentation.progress}
+                        style={{
+                          justifySelf:
+                            safeComposition.alignment === "center" ? "center" : "start",
+                          width: "min(100%, 360px)",
+                          marginTop: "14px",
+                        }}
                       />
                       {safeComposition.metadata.showBadges ? (
                         <ProfileIdentityBadges
                           badges={safeFeaturedBadges}
                           extraBadgeCount={safeExtraBadgeCount}
-                          themeColor={sceneAppearance.linkThemeColor}
+                          themeColor={auraPresentation.badgeThemeColor}
                           mode={safeComposition.metadata.badgeMode}
                           styleVariant={safeComposition.metadata.badgeStyle}
                           seasonalTheme={safeComposition.metadata.badgeSeason}
@@ -1866,9 +2074,9 @@ function FloatingProfileScene({
   preview,
   displayName,
   auraScore,
-  auraRank,
   user,
   themeColor,
+  auraPresentation,
   mood,
   aura,
   sceneAppearance,
@@ -1907,9 +2115,9 @@ function FloatingProfileScene({
   preview: boolean;
   displayName: string;
   auraScore: number;
-  auraRank: string;
   user: PublicProfileRenderUser;
   themeColor: string;
+  auraPresentation: AuraPresentation;
   mood: ProfileMood;
   aura: ProfileAura;
   sceneAppearance: ReturnType<typeof getProfileSceneAppearance>;
@@ -2056,6 +2264,9 @@ function FloatingProfileScene({
   return (
     <main
       className="yotei-public-profile-root yotei-scrollbar-hidden"
+      data-aura-rank={auraPresentation.visual.rank}
+      data-aura-tone={getAuraRankTone(auraPresentation.visual.rank)}
+      data-aura-motion={auraPresentation.runtime.motionPolicy}
       style={{
         minHeight: preview ? "auto" : "100vh",
         position: "relative",
@@ -2064,6 +2275,7 @@ function FloatingProfileScene({
         fontFamily:
           '"Space Grotesk", Inter, Arial, Helvetica, system-ui, sans-serif',
         background: `
+          radial-gradient(circle at 50% 18%, var(--aura-rank-glow) 0%, transparent 26%),
           radial-gradient(circle at top, ${withAlpha(linkThemeColor, "22")} 0%, transparent 30%),
           radial-gradient(circle at 84% 16%, ${withAlpha(presence.accent, "16")} 0%, transparent 20%),
           linear-gradient(180deg, #05060a 0%, #040508 46%, #030407 100%)
@@ -2091,6 +2303,7 @@ function FloatingProfileScene({
         "--floating-atmosphere-grain": `${floatingGrainOpacity.toFixed(3)}`,
         "--floating-atmosphere-bloom": `${floatingBloomOpacity.toFixed(3)}`,
         "--floating-hero-aura-opacity": `${floatingHeroAuraOpacity.toFixed(3)}`,
+        ...auraPresentation.runtime.rootVariables,
       } as CSSProperties}
     >
       <style>{`
@@ -2108,6 +2321,82 @@ function FloatingProfileScene({
           pointer-events: none;
         }
 
+        .floating-avatar-shell,
+        .profile-intro-avatar {
+          isolation: isolate;
+        }
+
+        .floating-avatar-shell::before,
+        .profile-intro-avatar::before {
+          content: "";
+          position: absolute;
+          inset: -12px;
+          border-radius: 999px;
+          pointer-events: none;
+          z-index: 0;
+          background:
+            radial-gradient(circle at 50% 50%, var(--aura-rank-glow) 0%, transparent 60%),
+            radial-gradient(circle at 24% 26%, color-mix(in srgb, var(--aura-rank-soft) 30%, transparent) 0%, transparent 22%);
+          opacity: calc(var(--aura-rank-intensity) * 0.92);
+          transform: scale(var(--aura-rank-avatar-scale));
+          filter: blur(calc(10px + var(--aura-rank-motion) * 20px));
+          animation: aura-halo-breathe calc(10s - var(--aura-rank-motion) * 4s) ease-in-out infinite;
+        }
+
+        .floating-avatar-shell::after,
+        .profile-intro-avatar::after {
+          content: "";
+          position: absolute;
+          inset: -2px;
+          border-radius: 999px;
+          pointer-events: none;
+          z-index: 0;
+          border: 1px solid color-mix(in srgb, var(--aura-rank-color) calc(8% + var(--aura-rank-signature) * 32%), transparent);
+          opacity: calc(0.14 + var(--aura-rank-signature) * 0.52);
+          box-shadow: 0 0 18px color-mix(in srgb, var(--aura-rank-color) calc(10% + var(--aura-rank-signature) * 24%), transparent);
+        }
+
+        .profile-aura-dots {
+          position: absolute;
+          inset: -10px;
+          z-index: 1;
+          pointer-events: none;
+          opacity: var(--aura-rank-dot-opacity);
+        }
+
+        .profile-aura-dots span {
+          position: absolute;
+          width: 6px;
+          height: 6px;
+          border-radius: 999px;
+          background:
+            radial-gradient(circle at 35% 35%, rgba(255,255,255,0.96) 0%, var(--aura-rank-soft) 42%, transparent 74%);
+          box-shadow: 0 0 14px var(--aura-rank-glow);
+          mix-blend-mode: screen;
+        }
+
+        .profile-aura-dots .dot-one {
+          left: 10%;
+          top: 16%;
+          animation: aura-dot-float calc(8.2s - var(--aura-rank-motion) * 2.4s) ease-in-out infinite;
+        }
+
+        .profile-aura-dots .dot-two {
+          right: 12%;
+          top: 24%;
+          width: 5px;
+          height: 5px;
+          animation: aura-dot-float calc(9.1s - var(--aura-rank-motion) * 2s) ease-in-out infinite reverse;
+        }
+
+        .profile-aura-dots .dot-three {
+          left: 18%;
+          bottom: 14%;
+          width: 4px;
+          height: 4px;
+          animation: aura-dot-float calc(7.6s - var(--aura-rank-motion) * 1.8s) ease-in-out infinite;
+        }
+
         .floating-profile-stage-media {
           width: 100%;
           height: 100%;
@@ -2121,6 +2410,7 @@ function FloatingProfileScene({
         .floating-profile-stage-overlay {
           background:
             linear-gradient(180deg, rgba(4,5,9,0.22) 0%, rgba(4,5,9,0.44) 36%, rgba(4,5,9,0.78) 100%),
+            radial-gradient(circle at 50% 16%, color-mix(in srgb, var(--aura-rank-color) 18%, transparent) 0%, transparent 24%),
             radial-gradient(circle at 50% 18%, ${withAlpha(presence.accent, "26")} 0%, transparent 38%),
             radial-gradient(circle at 50% 56%, ${withAlpha(presence.soft, decimalOpacityToHex(motionPersonalityTokens.heroSpillOpacity))} 0%, transparent 50%);
         }
@@ -2128,8 +2418,9 @@ function FloatingProfileScene({
         .floating-profile-stage-bloom {
           background:
             radial-gradient(circle at 50% 20%, rgba(255,255,255,0.08) 0%, transparent 18%),
+            radial-gradient(circle at 50% 44%, color-mix(in srgb, var(--aura-rank-soft) 18%, transparent) 0%, transparent 30%),
             radial-gradient(circle at 50% 34%, ${withAlpha(presence.soft, "1a")} 0%, transparent 36%);
-          opacity: calc(var(--floating-atmosphere-bloom) * 0.72 + var(--floating-scroll-focus) * 0.06);
+          opacity: calc(var(--floating-atmosphere-bloom) * 0.68 + var(--aura-rank-intensity) * 0.18 + var(--floating-scroll-focus) * 0.06);
           filter: blur(calc(16px + var(--floating-blur-breath-distance) * 1.2));
           mix-blend-mode: screen;
           animation:
@@ -2139,10 +2430,11 @@ function FloatingProfileScene({
 
         .floating-profile-stage-aura {
           background:
+            radial-gradient(circle at 50% 28%, var(--aura-rank-glow) 0%, transparent 28%),
             radial-gradient(circle at 50% 42%, ${withAlpha(presence.accent, "16")} 0%, transparent 30%),
             radial-gradient(circle at 50% 58%, ${withAlpha(presence.soft, "12")} 0%, transparent 38%);
-          opacity: calc(var(--floating-hero-aura-opacity) * 0.78 + var(--floating-scroll-focus) * 0.08);
-          filter: blur(calc(10px + var(--floating-blur-breath-distance)));
+          opacity: calc(var(--floating-hero-aura-opacity) * 0.72 + var(--aura-rank-intensity) * 0.28 + var(--floating-scroll-focus) * 0.08);
+          filter: blur(calc(10px + var(--floating-blur-breath-distance) + var(--aura-rank-motion) * 12px));
           transform: translate3d(0, calc(var(--floating-scroll-settle) * -0.28), 0) scale(calc(1 + var(--floating-scroll-progress) * 0.016));
           mix-blend-mode: screen;
           animation: ambient-drift calc(var(--floating-ambient-drift-duration) * 1.04) var(--floating-motion-ease) infinite reverse;
@@ -2160,9 +2452,11 @@ function FloatingProfileScene({
         }
 
         .floating-profile-stage-glow {
-          background: ${presence.stageGlow};
+          background:
+            radial-gradient(circle at 50% 28%, color-mix(in srgb, var(--aura-rank-color) 18%, transparent) 0%, transparent 24%),
+            ${presence.stageGlow};
           filter: blur(calc(${Math.max(14, Math.round(depth.stageGlowBlur * dnaTuning.ambientScale * dnaTuning.glowScale))}px + var(--floating-blur-breath-distance)));
-          opacity: calc(${clampNumber(depth.stageGlowOpacity * 0.48 * dnaTuning.ambientScale, 0.18, 0.68)} + var(--floating-glow-pulse-opacity) * 0.5);
+          opacity: calc(${clampNumber(depth.stageGlowOpacity * 0.48 * dnaTuning.ambientScale, 0.18, 0.68)} + var(--aura-rank-intensity) * 0.16 + var(--floating-glow-pulse-opacity) * 0.5);
           animation:
             glow-breathe var(--floating-glow-pulse-duration) var(--floating-motion-ease) infinite,
             ambient-drift var(--floating-ambient-drift-duration) var(--floating-motion-ease) infinite;
@@ -2218,6 +2512,7 @@ function FloatingProfileScene({
               : "none"};
           box-shadow:
             0 ${Math.round(20 * dnaTuning.shadowScale)}px ${Math.round(48 * dnaTuning.shadowScale)}px rgba(0,0,0,${clampNumber(0.18 * dnaTuning.shadowScale, 0.1, 0.3).toFixed(3)}),
+            0 0 24px color-mix(in srgb, var(--aura-rank-glow) calc(10% + var(--aura-rank-intensity) * 20%), transparent),
             inset 0 1px 0 rgba(255,255,255,0.04);
           backdrop-filter: ${cardStyle === "glass" ? `blur(${Math.max(8, Math.round(10 * dnaTuning.blurScale))}px) saturate(${Math.round(108 + (dnaTuning.glowScale - 1) * 20)}%)` : "none"};
           -webkit-backdrop-filter: ${cardStyle === "glass" ? `blur(${Math.max(8, Math.round(10 * dnaTuning.blurScale))}px) saturate(${Math.round(108 + (dnaTuning.glowScale - 1) * 20)}%)` : "none"};
@@ -2235,6 +2530,14 @@ function FloatingProfileScene({
           gap: 8px;
           flex-wrap: wrap;
           min-width: 0;
+        }
+
+        .floating-avatar-shell {
+          position: relative;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          margin-inline: auto;
         }
 
         .floating-preview-chip {
@@ -2260,7 +2563,9 @@ function FloatingProfileScene({
           font-size: clamp(30px, 4.4vw, 48px);
           line-height: 0.92;
           letter-spacing: -0.08em;
-          text-shadow: 0 18px 40px rgba(0,0,0,0.3);
+          text-shadow:
+            0 18px 40px rgba(0,0,0,0.3),
+            0 0 calc(18px + var(--aura-rank-intensity) * 28px) var(--aura-rank-glow);
         }
 
         .floating-username {
@@ -2280,9 +2585,11 @@ function FloatingProfileScene({
           gap: 5px;
           font-size: 10px;
           font-weight: 800;
-          border: 1px solid rgba(255,255,255,0.07);
-          background: linear-gradient(180deg, rgba(255,255,255,0.045), rgba(8,10,16,0.48));
-          box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+          border: 1px solid color-mix(in srgb, rgba(255,255,255,0.07) 76%, var(--aura-rank-color) 24%);
+          background: linear-gradient(180deg, color-mix(in srgb, var(--aura-rank-color) 10%, rgba(255,255,255,0.045)), rgba(8,10,16,0.48));
+          box-shadow:
+            inset 0 1px 0 rgba(255,255,255,0.04),
+            0 0 16px color-mix(in srgb, var(--aura-rank-glow) calc(8% + var(--aura-rank-intensity) * 14%), transparent);
         }
 
         .floating-bio-strip {
@@ -2504,6 +2811,30 @@ function FloatingProfileScene({
           50% { opacity: calc(1 + var(--floating-glow-pulse-opacity)); }
         }
 
+        @keyframes aura-halo-breathe {
+          0%, 100% {
+            transform: scale(var(--aura-rank-avatar-scale));
+            opacity: calc(var(--aura-rank-intensity) * 0.82);
+          }
+
+          50% {
+            transform: scale(calc(var(--aura-rank-avatar-scale) + var(--aura-rank-motion) * 0.06));
+            opacity: calc(var(--aura-rank-intensity) * 0.98);
+          }
+        }
+
+        @keyframes aura-dot-float {
+          0%, 100% {
+            transform: translate3d(0, 0, 0) scale(0.92);
+            opacity: calc(0.42 + var(--aura-rank-dot-opacity) * 0.4);
+          }
+
+          50% {
+            transform: translate3d(0, calc(var(--aura-rank-motion) * -10px), 0) scale(1.04);
+            opacity: calc(0.58 + var(--aura-rank-dot-opacity) * 0.42);
+          }
+        }
+
         @media (prefers-reduced-motion: reduce) {
           .floating-profile-stage-media,
           .floating-profile-stage-bloom,
@@ -2513,6 +2844,8 @@ function FloatingProfileScene({
           .floating-profile-stage-noise,
           .floating-profile-body,
           .floating-identity-block,
+          .floating-avatar-shell::before,
+          .profile-aura-dots span,
           .floating-bio-strip,
           .floating-module {
             transition: none !important;
@@ -2556,27 +2889,30 @@ function FloatingProfileScene({
             </div>
           ) : null}
 
-          <LivingAvatar
-            avatarUrl={sanitizeRenderableUrl(user.avatarUrl)}
-            avatarInitials={avatarInitials}
-            avatarAlt={user.username}
-            selectedDecoration={user.selectedDecoration}
-            themeColor={themeColor}
-            accentColor={presence.accent}
-            contrastColor={presence.contrast}
-            softColor={presence.soft}
-            pulseColor={presence.pulse}
-            auraBackground={presence.avatarAuraBackground}
-            ringColor={presence.avatarRing}
-            glowColor={presence.avatarGlow}
-            size={floatingAvatarSize}
-            frameInset={7}
-            decorationScale={decorationScale}
-            decorationOffsetX={decorationOffsetX}
-            decorationOffsetY={decorationOffsetY}
-            interactive={!preview}
-            emphasized
-          />
+          <div className="floating-avatar-shell">
+            {auraPresentation.runtime.showAmbientDots ? <AuraAmbientDots /> : null}
+            <LivingAvatar
+              avatarUrl={sanitizeRenderableUrl(user.avatarUrl)}
+              avatarInitials={avatarInitials}
+              avatarAlt={user.username}
+              selectedDecoration={user.selectedDecoration}
+              themeColor={themeColor}
+              accentColor={presence.accent}
+              contrastColor={presence.contrast}
+              softColor={presence.soft}
+              pulseColor={presence.pulse}
+              auraBackground={presence.avatarAuraBackground}
+              ringColor={presence.avatarRing}
+              glowColor={presence.avatarGlow}
+              size={floatingAvatarSize}
+              frameInset={7}
+              decorationScale={decorationScale}
+              decorationOffsetX={decorationOffsetX}
+              decorationOffsetY={decorationOffsetY}
+              interactive={!preview}
+              emphasized
+            />
+          </div>
 
           <ProfileNamePlate
             displayName={displayName}
@@ -2588,20 +2924,24 @@ function FloatingProfileScene({
             nameClassName="floating-name"
             usernameClassName="floating-username"
           />
-          <AuraIdentityStrip
+          <ProfileAuraBadge
             score={auraScore}
-            rank={auraRank}
-            align="center"
-            accentColor={linkThemeColor}
-            scoreLabel={t("publicProfile.auraScore")}
-            rankLabel={t("publicProfile.auraRank")}
-            compact
+            rank={auraPresentation.visual.rank}
+            variant="compact"
+            auraLabel={t("common.aura")}
+            rankLabel={t("common.rank")}
+            nextRankLabel={
+              auraPresentation.progress.nextRank ? t("common.nextRank") : undefined
+            }
+            nextRankText={auraPresentation.nextRankText}
+            description={auraPresentation.levelName}
+            progress={auraPresentation.progress}
           />
           {composition.metadata.showBadges ? (
             <ProfileIdentityBadges
               badges={featuredBadges}
               extraBadgeCount={extraBadgeCount}
-              themeColor={linkThemeColor}
+              themeColor={auraPresentation.badgeThemeColor}
               align="center"
               mode={composition.metadata.badgeMode}
               styleVariant={composition.metadata.badgeStyle}
@@ -2807,106 +3147,12 @@ function renderIdentityMetadataSlot(
   );
 }
 
-function AuraIdentityStrip({
-  score,
-  rank,
-  align = "start",
-  accentColor,
-  scoreLabel,
-  rankLabel,
-  compact = false,
-}: {
-  score: number;
-  rank: string;
-  align?: "start" | "center";
-  accentColor: string;
-  scoreLabel: string;
-  rankLabel: string;
-  compact?: boolean;
-}) {
-  const safeScore = Math.max(0, Math.floor(score));
-  const rowStyle: CSSProperties = {
-    display: "flex",
-    flexWrap: "wrap",
-    gap: compact ? "8px" : "10px",
-    justifyContent: align === "center" ? "center" : "flex-start",
-    marginTop: compact ? "10px" : "12px",
-  };
-  const chipStyle: CSSProperties = {
-    display: "inline-flex",
-    alignItems: "center",
-    gap: compact ? "8px" : "9px",
-    minHeight: compact ? "34px" : "38px",
-    padding: compact ? "0 12px" : "0 14px",
-    borderRadius: "999px",
-    border: `1px solid ${withAlpha(accentColor, compact ? "24" : "2b")}`,
-    background: `linear-gradient(135deg, ${withAlpha(accentColor, compact ? "12" : "16")}, rgba(255,255,255,0.03))`,
-    boxShadow: `0 ${compact ? 12 : 16}px ${compact ? 28 : 34}px ${withAlpha(
-      accentColor,
-      compact ? "10" : "14",
-    )}`,
-    color: "#f7fbff",
-    backdropFilter: "blur(14px) saturate(116%)",
-    WebkitBackdropFilter: "blur(14px) saturate(116%)",
-  };
-
+function AuraAmbientDots() {
   return (
-    <div style={rowStyle}>
-      <div style={chipStyle}>
-        <LuSparkles size={compact ? 13 : 14} color={accentColor} />
-        <span
-          style={{
-            fontSize: "11px",
-            fontWeight: 700,
-            letterSpacing: "0.1em",
-            textTransform: "uppercase",
-            color: "#9fb0c9",
-          }}
-        >
-          {scoreLabel}
-        </span>
-        <strong
-          style={{
-            fontSize: compact ? "13px" : "14px",
-            fontWeight: 800,
-            letterSpacing: "-0.01em",
-          }}
-        >
-          {safeScore.toLocaleString()}
-        </strong>
-      </div>
-
-      <div style={chipStyle}>
-        <span
-          style={{
-            fontSize: "11px",
-            fontWeight: 700,
-            letterSpacing: "0.1em",
-            textTransform: "uppercase",
-            color: "#9fb0c9",
-          }}
-        >
-          {rankLabel}
-        </span>
-        <strong
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-            minWidth: compact ? "24px" : "28px",
-            minHeight: compact ? "24px" : "28px",
-            padding: "0 8px",
-            borderRadius: "999px",
-            background: withAlpha(accentColor, compact ? "1f" : "26"),
-            color: "#ffffff",
-            fontSize: compact ? "13px" : "14px",
-            fontWeight: 900,
-            letterSpacing: "0.08em",
-          }}
-        >
-          {rank}
-        </strong>
-      </div>
+    <div className="profile-aura-dots" aria-hidden="true">
+      <span className="dot-one" />
+      <span className="dot-two" />
+      <span className="dot-three" />
     </div>
   );
 }
@@ -3094,9 +3340,9 @@ function IntroProfileStage({
   previewMessage,
   displayName,
   auraScore,
-  auraRank,
   user,
   themeColor,
+  auraPresentation,
   mood,
   aura,
   sceneAppearance,
@@ -3138,9 +3384,9 @@ function IntroProfileStage({
   previewMessage: string;
   displayName: string;
   auraScore: number;
-  auraRank: string;
   user: PublicProfileRenderUser;
   themeColor: string;
+  auraPresentation: AuraPresentation;
   mood: ProfileMood;
   aura: ProfileAura;
   sceneAppearance: ReturnType<typeof getProfileSceneAppearance>;
@@ -3445,6 +3691,9 @@ function IntroProfileStage({
   return (
     <main
       className="yotei-public-profile-root yotei-scrollbar-hidden"
+      data-aura-rank={auraPresentation.visual.rank}
+      data-aura-tone={getAuraRankTone(auraPresentation.visual.rank)}
+      data-aura-motion={auraPresentation.runtime.motionPolicy}
       style={{
         minHeight: preview ? "auto" : "100vh",
         position: "relative",
@@ -3453,6 +3702,7 @@ function IntroProfileStage({
         fontFamily:
           '"Space Grotesk", Inter, Arial, Helvetica, system-ui, sans-serif',
         background: `
+          radial-gradient(circle at 50% 18%, var(--aura-rank-glow) 0%, transparent 24%),
           radial-gradient(circle at top, ${withAlpha(linkThemeColor, mode === "cinematic" || floating ? "22" : "16")} 0%, transparent 28%),
           radial-gradient(circle at 82% 14%, ${withAlpha(presence.accent, "18")} 0%, transparent 18%),
           linear-gradient(180deg, #05060a 0%, #040508 46%, #030407 100%)
@@ -3485,6 +3735,7 @@ function IntroProfileStage({
         "--intro-atmosphere-grain": `${introGrainOpacity.toFixed(3)}`,
         "--intro-atmosphere-bloom": `${introBloomOpacity.toFixed(3)}`,
         "--intro-hero-aura-opacity": `${introHeroAuraOpacity.toFixed(3)}`,
+        ...auraPresentation.runtime.rootVariables,
       } as CSSProperties}
     >
       <style>{`
@@ -3501,6 +3752,84 @@ function IntroProfileStage({
           position: absolute;
           inset: 0;
           pointer-events: none;
+        }
+
+        .profile-intro-avatar {
+          isolation: isolate;
+        }
+
+        .profile-intro-avatar::before {
+          content: "";
+          position: absolute;
+          inset: -12px;
+          border-radius: 999px;
+          pointer-events: none;
+          z-index: 0;
+          background:
+            radial-gradient(circle at 50% 50%, var(--aura-rank-glow) 0%, transparent 60%),
+            radial-gradient(circle at 24% 26%, color-mix(in srgb, var(--aura-rank-soft) 30%, transparent) 0%, transparent 22%);
+          opacity: calc(var(--aura-rank-intensity) * 0.92);
+          transform: scale(var(--aura-rank-avatar-scale));
+          filter: blur(calc(10px + var(--aura-rank-motion) * 20px));
+          animation: aura-halo-breathe calc(10s - var(--aura-rank-motion) * 4s) ease-in-out infinite;
+        }
+
+        .profile-intro-avatar::after {
+          content: "";
+          position: absolute;
+          inset: -2px;
+          border-radius: 999px;
+          pointer-events: none;
+          z-index: 0;
+          border: 1px solid color-mix(in srgb, var(--aura-rank-color) calc(8% + var(--aura-rank-signature) * 32%), transparent);
+          opacity: calc(0.14 + var(--aura-rank-signature) * 0.52);
+          box-shadow: 0 0 18px color-mix(in srgb, var(--aura-rank-color) calc(10% + var(--aura-rank-signature) * 24%), transparent);
+        }
+
+        .profile-aura-dots {
+          position: absolute;
+          inset: -10px;
+          z-index: 1;
+          pointer-events: none;
+          opacity: var(--aura-rank-dot-opacity);
+        }
+
+        .profile-aura-dots span {
+          position: absolute;
+          width: 6px;
+          height: 6px;
+          border-radius: 999px;
+          background:
+            radial-gradient(circle at 35% 35%, rgba(255,255,255,0.96) 0%, var(--aura-rank-soft) 42%, transparent 74%);
+          box-shadow: 0 0 14px var(--aura-rank-glow);
+          mix-blend-mode: screen;
+        }
+
+        .profile-aura-dots .dot-one {
+          left: 10%;
+          top: 16%;
+          animation: aura-dot-float calc(8.2s - var(--aura-rank-motion) * 2.4s) ease-in-out infinite;
+        }
+
+        .profile-aura-dots .dot-two {
+          right: 12%;
+          top: 24%;
+          width: 5px;
+          height: 5px;
+          animation: aura-dot-float calc(9.1s - var(--aura-rank-motion) * 2s) ease-in-out infinite reverse;
+        }
+
+        .profile-aura-dots .dot-three {
+          left: 18%;
+          bottom: 14%;
+          width: 4px;
+          height: 4px;
+          animation: aura-dot-float calc(7.6s - var(--aura-rank-motion) * 1.8s) ease-in-out infinite;
+        }
+
+        .yotei-public-profile-root[data-aura-motion="off"] .profile-intro-avatar::before,
+        .yotei-public-profile-root[data-aura-motion="off"] .profile-aura-dots span {
+          animation: none !important;
         }
 
         .profile-intro-stage {
@@ -3527,15 +3856,17 @@ function IntroProfileStage({
               rgba(4, 5, 9, ${mode === "cinematic" ? "0.34" : "0.54"}) 38%,
               rgba(4, 5, 9, 0.82) 100%
             ),
+            radial-gradient(circle at 50% 14%, color-mix(in srgb, var(--aura-rank-color) 18%, transparent) 0%, transparent 24%),
             radial-gradient(circle at 50% 16%, ${withAlpha(presence.accent, mode === "cinematic" ? "2e" : "18")} 0%, transparent 38%);
         }
 
         .profile-intro-stage-bloom {
           background:
             radial-gradient(circle at 50% 18%, rgba(255,255,255,0.14) 0%, transparent 18%),
+            radial-gradient(circle at 50% 42%, color-mix(in srgb, var(--aura-rank-soft) 18%, transparent) 0%, transparent 28%),
             radial-gradient(circle at 50% 30%, ${withAlpha(presence.soft, mode === "cinematic" ? "28" : "20")} 0%, transparent 42%),
             radial-gradient(circle at 50% 76%, ${withAlpha(presence.accent, "18")} 0%, transparent 34%);
-          opacity: calc(var(--intro-atmosphere-bloom) + var(--intro-scroll-focus) * 0.12);
+          opacity: calc(var(--intro-atmosphere-bloom) * 0.88 + var(--aura-rank-intensity) * 0.2 + var(--intro-scroll-focus) * 0.12);
           mix-blend-mode: screen;
           filter: blur(calc(28px + var(--intro-blur-breath-distance) * 2));
           transform: translate3d(0, calc(var(--intro-scroll-settle) * -0.34), 0) scale(calc(1 + var(--intro-scroll-progress) * 0.03));
@@ -3546,10 +3877,11 @@ function IntroProfileStage({
 
         .profile-intro-stage-aura {
           background:
+            radial-gradient(circle at 50% 24%, var(--aura-rank-glow) 0%, transparent 28%),
             radial-gradient(circle at 50% 38%, ${withAlpha(presence.accent, mode === "cinematic" ? "28" : "20")} 0%, transparent 30%),
             radial-gradient(circle at 50% 54%, ${withAlpha(presence.soft, mode === "cinematic" ? "1c" : "16")} 0%, transparent 44%);
-          opacity: calc(var(--intro-hero-aura-opacity) + var(--intro-scroll-focus) * 0.12);
-          filter: blur(calc(18px + var(--intro-blur-breath-distance)));
+          opacity: calc(var(--intro-hero-aura-opacity) * 0.9 + var(--aura-rank-intensity) * 0.26 + var(--intro-scroll-focus) * 0.12);
+          filter: blur(calc(18px + var(--intro-blur-breath-distance) + var(--aura-rank-motion) * 12px));
           transform: translate3d(0, calc(var(--intro-scroll-settle) * -0.5), 0) scale(calc(1 + var(--intro-scroll-progress) * 0.036));
           mix-blend-mode: screen;
           animation: intro-aura-breathe calc(var(--intro-glow-pulse-duration) * 1.14) var(--intro-motion-ease) infinite;
@@ -3567,9 +3899,11 @@ function IntroProfileStage({
         }
 
         .profile-intro-stage-glow {
-          background: ${presence.stageGlow};
+          background:
+            radial-gradient(circle at 50% 26%, color-mix(in srgb, var(--aura-rank-color) 18%, transparent) 0%, transparent 24%),
+            ${presence.stageGlow};
           filter: blur(calc(${mode === "cinematic" ? Math.max(depth.stageGlowBlur, 16) : 12}px + var(--intro-blur-breath-distance) + var(--intro-scroll-focus) * 2px));
-          opacity: calc(${mode === "cinematic" ? Math.max(depth.stageGlowOpacity * 0.7, 0.4) : 0.26} + var(--intro-glow-pulse-opacity) + var(--intro-scroll-focus) * 0.08);
+          opacity: calc(${mode === "cinematic" ? Math.max(depth.stageGlowOpacity * 0.7, 0.4) : 0.26} + var(--aura-rank-intensity) * 0.18 + var(--intro-glow-pulse-opacity) + var(--intro-scroll-focus) * 0.08);
           animation:
             intro-glow-breathe var(--intro-glow-pulse-duration) var(--intro-motion-ease) infinite,
             intro-ambient-drift var(--intro-ambient-drift-duration) var(--intro-motion-ease) infinite;
@@ -3656,6 +3990,7 @@ function IntroProfileStage({
           transform: translateX(-50%);
           border-radius: 999px;
           background:
+            radial-gradient(circle, var(--aura-rank-glow) 0%, transparent 58%),
             radial-gradient(circle, ${withAlpha(presence.soft, mode === "cinematic" ? "20" : "16")} 0%, transparent 62%);
           filter: blur(18px);
           pointer-events: none;
@@ -3718,14 +4053,15 @@ function IntroProfileStage({
           display: inline-flex;
           align-items: center;
           gap: 6px;
-          border: 1px solid rgba(255,255,255,0.08);
-          background: rgba(255,255,255,0.035);
+          border: 1px solid color-mix(in srgb, rgba(255,255,255,0.08) 74%, var(--aura-rank-color) 26%);
+          background: linear-gradient(180deg, color-mix(in srgb, var(--aura-rank-color) 10%, rgba(255,255,255,0.035)), rgba(255,255,255,0.02));
           color: #eef3fc;
           font-size: 10px;
           font-weight: 800;
           letter-spacing: var(--intro-label-tracking);
           text-transform: uppercase;
           opacity: var(--intro-label-opacity);
+          box-shadow: 0 0 18px color-mix(in srgb, var(--aura-rank-glow) calc(8% + var(--aura-rank-intensity) * 16%), transparent);
         }
 
         .profile-intro-chip.preview {
@@ -3751,7 +4087,9 @@ function IntroProfileStage({
           font-size: clamp(${mode === "cinematic" ? "38px" : "30px"}, ${mode === "cinematic" ? "5vw" : "4.6vw"}, ${mode === "cinematic" ? "58px" : "46px"});
           line-height: 0.9;
           letter-spacing: -0.075em;
-          text-shadow: 0 10px 20px rgba(0, 0, 0, 0.22);
+          text-shadow:
+            0 10px 20px rgba(0, 0, 0, 0.22),
+            0 0 calc(18px + var(--aura-rank-intensity) * 30px) var(--aura-rank-glow);
           transition:
             transform var(--intro-transition-duration) var(--intro-motion-emphasis),
             opacity var(--intro-transition-duration) var(--intro-motion-ease);
@@ -4729,6 +5067,30 @@ function IntroProfileStage({
           50% { opacity: calc(1 + var(--intro-glow-pulse-opacity)); }
         }
 
+        @keyframes aura-halo-breathe {
+          0%, 100% {
+            transform: scale(var(--aura-rank-avatar-scale));
+            opacity: calc(var(--aura-rank-intensity) * 0.82);
+          }
+
+          50% {
+            transform: scale(calc(var(--aura-rank-avatar-scale) + var(--aura-rank-motion) * 0.06));
+            opacity: calc(var(--aura-rank-intensity) * 0.98);
+          }
+        }
+
+        @keyframes aura-dot-float {
+          0%, 100% {
+            transform: translate3d(0, 0, 0) scale(0.92);
+            opacity: calc(0.42 + var(--aura-rank-dot-opacity) * 0.4);
+          }
+
+          50% {
+            transform: translate3d(0, calc(var(--aura-rank-motion) * -10px), 0) scale(1.04);
+            opacity: calc(0.58 + var(--aura-rank-dot-opacity) * 0.42);
+          }
+        }
+
         @media (max-width: 920px) {
           .profile-intro-chapter,
           .profile-intro-divider-row,
@@ -4932,6 +5294,7 @@ function IntroProfileStage({
 
           <div className="profile-intro-identity">
             <div className="profile-intro-avatar">
+              {auraPresentation.runtime.showAmbientDots ? <AuraAmbientDots /> : null}
               <LivingAvatar
                 avatarUrl={sanitizeRenderableUrl(user.avatarUrl)}
                 avatarInitials={avatarInitials}
@@ -4966,21 +5329,25 @@ function IntroProfileStage({
                 nameClassName="profile-intro-name"
                 usernameClassName="profile-intro-username"
               />
-              <AuraIdentityStrip
+              <ProfileAuraBadge
                 score={auraScore}
-                rank={auraRank}
-                align={composition.alignment === "center" ? "center" : "start"}
-                accentColor={themeColor}
-                scoreLabel={t("publicProfile.auraScore")}
-                rankLabel={t("publicProfile.auraRank")}
-                compact
+                rank={auraPresentation.visual.rank}
+                variant="compact"
+                auraLabel={t("common.aura")}
+                rankLabel={t("common.rank")}
+                nextRankLabel={
+                  auraPresentation.progress.nextRank ? t("common.nextRank") : undefined
+                }
+                nextRankText={auraPresentation.nextRankText}
+                description={auraPresentation.levelName}
+                progress={auraPresentation.progress}
               />
               {composition.metadata.showBadges ? (
                 <div className="profile-intro-badge-row">
                   <ProfileIdentityBadges
                     badges={featuredBadges}
                     extraBadgeCount={extraBadgeCount}
-                    themeColor={themeColor}
+                    themeColor={auraPresentation.badgeThemeColor}
                     align="center"
                     mode={composition.metadata.badgeMode}
                     styleVariant={composition.metadata.badgeStyle}
@@ -6645,6 +7012,28 @@ function normalizeThemeColor(value: string) {
   return /^#([0-9a-fA-F]{6})$/.test(trimmed) ? trimmed : "#f472b6";
 }
 
+function mixHexColors(baseHex: string, accentHex: string, ratio: number) {
+  const base = hexToRgb(normalizeThemeColor(baseHex));
+  const accent = hexToRgb(normalizeThemeColor(accentHex));
+  const blend = clampNumber(ratio, 0, 1);
+  const mixChannel = (start: number, end: number) =>
+    Math.round(start + (end - start) * blend);
+
+  return `#${[mixChannel(base.r, accent.r), mixChannel(base.g, accent.g), mixChannel(base.b, accent.b)]
+    .map((value) => value.toString(16).padStart(2, "0"))
+    .join("")}`;
+}
+
+function hexToRgb(hex: string) {
+  const normalized = normalizeThemeColor(hex).slice(1);
+
+  return {
+    r: Number.parseInt(normalized.slice(0, 2), 16),
+    g: Number.parseInt(normalized.slice(2, 4), 16),
+    b: Number.parseInt(normalized.slice(4, 6), 16),
+  };
+}
+
 function getLinkHostname(url: string) {
   try {
     return new URL(url).hostname.replace(/^www\./, "");
@@ -6662,4 +7051,111 @@ function decimalOpacityToHex(value: number) {
   return Math.round(clamped * 255)
     .toString(16)
     .padStart(2, "0");
+}
+
+function resolveAuraVisualRuntime(
+  visual: AuraVisualProfile,
+  performance: AdaptivePerformanceProfile,
+): AuraRuntimeVisuals {
+  const motionPolicy: AuraMotionPolicy =
+    performance.reducedMotion || !performance.allowMotion
+      ? "off"
+      : performance.safeMode || performance.tier === "low"
+        ? "off"
+        : performance.tier === "high" && performance.allowDecorativeMotion
+          ? "full"
+          : "subtle";
+  const intensityScale =
+    motionPolicy === "full" ? 1 : motionPolicy === "subtle" ? 0.72 : 0.34;
+  const motionScale =
+    motionPolicy === "full" ? 1 : motionPolicy === "subtle" ? 0.46 : 0;
+  const intensity = clampNumber(
+    Math.max(0.06, visual.intensity * intensityScale),
+    0.06,
+    0.92,
+  );
+  const motion = clampNumber(visual.motion * motionScale, 0, 0.88);
+  const ambientDotOpacity =
+    motionPolicy === "off" || !visual.hasAmbientDots || !performance.allowDeferredVisuals
+      ? 0
+      : clampNumber(
+          visual.ambientDotOpacity *
+            (motionPolicy === "full" ? 1 : 0.58) *
+            performance.particleDensity,
+          0,
+          0.64,
+        );
+  const avatarHaloScale = Number(
+    (
+      1 +
+      (visual.avatarHaloScale - 1) *
+        (motionPolicy === "full" ? 1 : motionPolicy === "subtle" ? 0.58 : 0.2)
+    ).toFixed(3),
+  );
+  const badgeAccentBoost = clampNumber(
+    visual.badgeAccentBoost *
+      (motionPolicy === "full" ? 1 : motionPolicy === "subtle" ? 0.68 : 0.24),
+    0.02,
+    0.62,
+  );
+
+  return {
+    motionPolicy,
+    intensity,
+    motion,
+    ambientDotOpacity,
+    avatarHaloScale,
+    badgeAccentBoost,
+    showAmbientDots: ambientDotOpacity > 0.04,
+    rootVariables: {
+      "--aura-rank-color": visual.accentColor,
+      "--aura-rank-soft": visual.softColor,
+      "--aura-rank-glow": visual.glowColor,
+      "--aura-rank-ring": visual.ringColor,
+      "--aura-rank-surface": visual.surfaceColor,
+      "--aura-rank-intensity": intensity.toFixed(3),
+      "--aura-rank-motion": motion.toFixed(3),
+      "--aura-rank-dot-opacity": ambientDotOpacity.toFixed(3),
+      "--aura-rank-avatar-scale": avatarHaloScale.toFixed(3),
+      "--aura-rank-signature": visual.hasSignatureCrest ? "1" : "0",
+    } as CSSProperties,
+  };
+}
+
+function getAuraLevelCopy(
+  t: ReturnType<typeof useI18n>["t"],
+  rank: AuraVisualProfile["rank"],
+) {
+  switch (rank) {
+    case "S":
+      return {
+        name: t("auraLevels.S.name"),
+        description: t("auraLevels.S.description"),
+      };
+    case "A":
+      return {
+        name: t("auraLevels.A.name"),
+        description: t("auraLevels.A.description"),
+      };
+    case "B":
+      return {
+        name: t("auraLevels.B.name"),
+        description: t("auraLevels.B.description"),
+      };
+    case "C":
+      return {
+        name: t("auraLevels.C.name"),
+        description: t("auraLevels.C.description"),
+      };
+    case "D":
+      return {
+        name: t("auraLevels.D.name"),
+        description: t("auraLevels.D.description"),
+      };
+    default:
+      return {
+        name: t("auraLevels.E.name"),
+        description: t("auraLevels.E.description"),
+      };
+  }
 }

@@ -185,10 +185,13 @@ const namePlateStyles = `
     --profile-name-aura-opacity: 0.58;
     --profile-name-rgb-split: 0.012em;
     --profile-name-halo-opacity: 0;
+    --profile-name-aura-color: var(--aura-rank-soft, rgba(255, 208, 232, 0.88));
+    --profile-name-accent-color: var(--aura-rank-color, rgba(244, 114, 182, 0.88));
+    --profile-name-halo-color: var(--aura-rank-glow, rgba(244, 114, 182, 0.18));
     --profile-name-glow-shadow:
-      0 0 8px rgba(244, 114, 182, 0.18),
-      0 0 18px rgba(192, 132, 252, 0.1),
-      0 0 28px rgba(125, 211, 252, 0.08);
+      0 0 8px var(--profile-name-halo-color),
+      0 0 18px color-mix(in srgb, var(--profile-name-accent-color) 28%, transparent),
+      0 0 28px color-mix(in srgb, var(--profile-name-aura-color) 22%, transparent);
   }
 
   .profile-name-plate::before,
@@ -204,8 +207,8 @@ const namePlateStyles = `
     border-radius: 999px;
     background:
       radial-gradient(circle at 50% 50%, rgba(255,255,255,0.06) 0%, transparent 22%),
-      radial-gradient(circle at 26% 40%, rgba(244,114,182,0.16) 0%, transparent 32%),
-      radial-gradient(circle at 74% 52%, rgba(125,211,252,0.14) 0%, transparent 34%);
+      radial-gradient(circle at 26% 40%, color-mix(in srgb, var(--profile-name-accent-color) 22%, transparent) 0%, transparent 32%),
+      radial-gradient(circle at 74% 52%, color-mix(in srgb, var(--profile-name-aura-color) 20%, transparent) 0%, transparent 34%);
     opacity: var(--profile-name-halo-opacity);
     filter: blur(8px);
     mix-blend-mode: screen;
@@ -367,13 +370,13 @@ const namePlateStyles = `
   .profile-name-aura-layer {
     z-index: 0;
     opacity: var(--profile-name-aura-opacity);
-    color: rgba(255, 208, 232, 0.88);
+    color: var(--profile-name-aura-color);
     filter: blur(var(--profile-name-aura-blur)) saturate(1.15);
     transform: translate3d(0, 0, 0) scale(1.012);
     text-shadow:
-      0 0 10px rgba(244, 114, 182, 0.22),
-      0 0 18px rgba(125, 211, 252, 0.12),
-      0 0 28px rgba(192, 132, 252, 0.08);
+      0 0 10px var(--profile-name-halo-color),
+      0 0 18px color-mix(in srgb, var(--profile-name-aura-color) 24%, transparent),
+      0 0 28px color-mix(in srgb, var(--profile-name-accent-color) 18%, transparent);
     pointer-events: none;
     mix-blend-mode: screen;
   }
@@ -498,8 +501,8 @@ const namePlateStyles = `
   .profile-name-plate.effect-glow .profile-name-typewriter-layer {
     text-shadow:
       var(--profile-name-glow-shadow),
-      0 0 42px rgba(244,114,182,0.06);
-    filter: drop-shadow(0 0 5px rgba(255,196,228,0.06));
+      0 0 42px color-mix(in srgb, var(--profile-name-accent-color) 14%, transparent);
+    filter: drop-shadow(0 0 5px color-mix(in srgb, var(--profile-name-aura-color) 16%, transparent));
   }
 
   .profile-name-plate.effect-rainbow .profile-name-main-layer,
