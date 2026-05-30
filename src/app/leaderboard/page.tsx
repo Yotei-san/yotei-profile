@@ -114,7 +114,7 @@ export default async function LeaderboardPage({
           width: min(1240px, 100%);
           margin: 0 auto;
           display: grid;
-          gap: 18px;
+          gap: 22px;
         }
 
         .leaderboard-hero,
@@ -165,23 +165,36 @@ export default async function LeaderboardPage({
 
         .leaderboard-podium {
           display: grid;
-          grid-template-columns: 1.25fr 1fr 1fr;
-          gap: 14px;
+          grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.18fr) minmax(0, 0.92fr);
+          gap: 20px;
+          align-items: end;
         }
 
         .leaderboard-podium-card.rank-1 {
-          transform: translateY(-6px);
+          order: 2;
+          transform: translateY(-12px);
+          min-height: 100%;
+        }
+
+        .leaderboard-podium-card.rank-2 {
+          order: 1;
+          margin-top: 28px;
+        }
+
+        .leaderboard-podium-card.rank-3 {
+          order: 3;
+          margin-top: 28px;
         }
 
         .leaderboard-list {
           display: grid;
-          gap: 12px;
+          gap: 14px;
         }
 
         .leaderboard-row {
           display: grid;
-          grid-template-columns: minmax(0, 1.35fr) minmax(250px, 1fr) auto;
-          gap: 16px;
+          grid-template-columns: minmax(0, 1.35fr) minmax(220px, 0.8fr) minmax(0, 1fr) auto;
+          gap: 18px;
           align-items: center;
         }
 
@@ -199,14 +212,41 @@ export default async function LeaderboardPage({
           min-width: 0;
         }
 
-        .leaderboard-metric-grid {
-          display: grid;
-          grid-template-columns: repeat(4, minmax(0, 1fr));
+        .leaderboard-hero-metrics,
+        .leaderboard-secondary-metrics,
+        .leaderboard-row-meta,
+        .leaderboard-row-score {
+          display: flex;
+          flex-wrap: wrap;
           gap: 10px;
+          min-width: 0;
         }
 
-        .leaderboard-podium .leaderboard-metric-grid {
-          grid-template-columns: repeat(2, minmax(0, 1fr));
+        .leaderboard-hero-metrics {
+          align-items: stretch;
+        }
+
+        .leaderboard-row-score {
+          justify-content: center;
+        }
+
+        .leaderboard-row-meta {
+          justify-content: flex-start;
+        }
+
+        .leaderboard-podium-card .leaderboard-open-profile {
+          width: 100%;
+        }
+
+        .leaderboard-row-cta {
+          display: flex;
+          justify-content: flex-end;
+        }
+
+        .leaderboard-row-identity-block {
+          display: grid;
+          gap: 10px;
+          min-width: 0;
         }
 
         @media (max-width: 1100px) {
@@ -220,10 +260,30 @@ export default async function LeaderboardPage({
 
           .leaderboard-podium-card.rank-1 {
             grid-column: 1 / -1;
+            order: 1;
+            transform: none;
+          }
+
+          .leaderboard-podium-card.rank-2,
+          .leaderboard-podium-card.rank-3 {
+            margin-top: 0;
           }
 
           .leaderboard-row {
-            grid-template-columns: 1fr;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+          }
+
+          .leaderboard-row-meta,
+          .leaderboard-row-cta {
+            grid-column: 1 / -1;
+          }
+
+          .leaderboard-row-cta {
+            justify-content: stretch;
+          }
+
+          .leaderboard-row-cta .leaderboard-open-profile {
+            width: 100%;
           }
         }
 
@@ -246,12 +306,24 @@ export default async function LeaderboardPage({
             grid-template-columns: 1fr;
           }
 
-          .leaderboard-podium-card.rank-1 {
-            transform: none;
+          .leaderboard-podium-card.rank-1,
+          .leaderboard-podium-card.rank-2,
+          .leaderboard-podium-card.rank-3 {
+            order: initial;
+            margin-top: 0;
           }
 
-          .leaderboard-metric-grid {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
+          .leaderboard-row {
+            grid-template-columns: 1fr;
+          }
+
+          .leaderboard-row-score {
+            justify-content: flex-start;
+          }
+
+          .leaderboard-row-cta,
+          .leaderboard-row-meta {
+            grid-column: auto;
           }
         }
 
@@ -273,6 +345,10 @@ export default async function LeaderboardPage({
             padding: 16px !important;
           }
 
+          .leaderboard-open-profile {
+            width: 100%;
+          }
+
           .leaderboard-identity {
             align-items: flex-start;
           }
@@ -288,8 +364,14 @@ export default async function LeaderboardPage({
             border-radius: 16px !important;
           }
 
-          .leaderboard-metric-grid {
-            grid-template-columns: 1fr;
+          .leaderboard-hero-metrics {
+            flex-direction: column;
+          }
+
+          .leaderboard-secondary-metrics,
+          .leaderboard-row-meta,
+          .leaderboard-row-score {
+            gap: 8px;
           }
         }
       `}</style>
@@ -390,7 +472,9 @@ function LeaderboardHeroCard({
   labels: LeaderboardLabels;
 }) {
   const aura = getAuraVisualProfile(entry.auraRank);
-  const metrics = getLeaderboardMetrics(entry, tab, locale, labels);
+  const highlightMetrics = getPodiumHighlightMetrics(entry, tab, locale, labels);
+  const supportMetrics = getPodiumSupportMetrics(entry, tab, locale, labels);
+  const showBadgeStrip = tab === "aura" || tab === "collectors";
 
   return (
     <article
@@ -436,7 +520,7 @@ function LeaderboardHeroCard({
             </div>
           </div>
 
-          {entry.featuredBadges.length > 0 ? (
+          {showBadgeStrip && entry.featuredBadges.length > 0 ? (
             <BadgeShowcase
               badges={entry.featuredBadges}
               extraCount={entry.extraBadgeCount}
@@ -445,16 +529,30 @@ function LeaderboardHeroCard({
           ) : null}
         </div>
 
-        <div className="leaderboard-metric-grid">
-          {metrics.map((metric) => (
-            <MetricPill
+        <div className="leaderboard-hero-metrics">
+          {highlightMetrics.map((metric, index) => (
+            <SpotlightMetric
               key={`${entry.id}-${metric.label}`}
               label={metric.label}
               value={metric.value}
               highlight={metric.highlight}
+              size={index === 0 ? (entry.rank === 1 ? "hero" : "feature") : "feature"}
             />
           ))}
         </div>
+
+        {supportMetrics.length > 0 ? (
+          <div className="leaderboard-secondary-metrics">
+            {supportMetrics.map((metric) => (
+              <CompactMetricPill
+                key={`${entry.id}-support-${metric.label}`}
+                label={metric.label}
+                value={metric.value}
+                highlight={metric.highlight}
+              />
+            ))}
+          </div>
+        ) : null}
 
         <Link
           className="leaderboard-open-profile"
@@ -482,7 +580,8 @@ function LeaderboardRankRow({
   labels: LeaderboardLabels;
 }) {
   const aura = getAuraVisualProfile(entry.auraRank);
-  const metrics = getLeaderboardMetrics(entry, tab, locale, labels);
+  const rowHeroMetrics = getRowHeroMetrics(entry, labels);
+  const rowMetaMetrics = getRowMetaMetrics(entry, tab, locale, labels);
   const showBadgeStrip = tab === "aura" || tab === "collectors";
 
   return (
@@ -491,7 +590,7 @@ function LeaderboardRankRow({
       data-aura-rank={entry.auraRank}
       style={rowStyle(aura)}
     >
-      <div style={{ display: "grid", gap: "10px", minWidth: 0 }}>
+      <div className="leaderboard-row-identity-block">
         <div className="leaderboard-identity">
           <div className="leaderboard-rank-badge" style={rankBadgeStyle(aura)}>
             #{entry.rank}
@@ -504,7 +603,6 @@ function LeaderboardRankRow({
           <div style={{ display: "grid", gap: "8px", minWidth: 0 }}>
             <div style={identityRowStyle}>
               <div style={displayNameStyle}>{entry.displayName}</div>
-              <AuraRankPill auraRank={entry.auraRank} label={labels.auraRank} />
               {entry.isPremium ? <IndicatorPill label="Premium" tone="pink" /> : null}
             </div>
             <div style={usernameStyle}>@{entry.username}</div>
@@ -517,12 +615,24 @@ function LeaderboardRankRow({
             extraCount={entry.extraBadgeCount}
             accentColor={aura.accentColor}
           />
-        ) : null}
+          ) : null}
       </div>
 
-      <div className="leaderboard-metric-grid">
-        {metrics.map((metric) => (
-          <MetricPill
+      <div className="leaderboard-row-score">
+        {rowHeroMetrics.map((metric) => (
+          <CompactMetricPill
+            key={`${entry.id}-hero-${metric.label}`}
+            label={metric.label}
+            value={metric.value}
+            highlight={metric.highlight}
+            emphasis="strong"
+          />
+        ))}
+      </div>
+
+      <div className="leaderboard-row-meta">
+        {rowMetaMetrics.map((metric) => (
+          <CompactMetricPill
             key={`${entry.id}-${metric.label}`}
             label={metric.label}
             value={metric.value}
@@ -531,15 +641,17 @@ function LeaderboardRankRow({
         ))}
       </div>
 
-      <Link
-        className="leaderboard-open-profile"
-        href={`/${entry.username}`}
-        style={primaryButtonStyle}
-        target="_blank"
-        rel="noreferrer"
-      >
-        {labels.openProfile}
-      </Link>
+      <div className="leaderboard-row-cta">
+        <Link
+          className="leaderboard-open-profile"
+          href={`/${entry.username}`}
+          style={primaryButtonStyle}
+          target="_blank"
+          rel="noreferrer"
+        >
+          {labels.openProfile}
+        </Link>
+      </div>
     </article>
   );
 }
@@ -682,7 +794,7 @@ function BadgeShowcase({
           title={badge.name}
           style={badgeChipStyle(badge.color || accentColor, badge.rarity)}
         >
-          <span style={{ fontSize: "15px", lineHeight: 1 }}>{badge.icon}</span>
+          <span style={badgeMonogramStyle}>{getBadgeMonogram(badge.icon || badge.name)}</span>
         </span>
       ))}
       {extraCount > 0 ? (
@@ -691,15 +803,16 @@ function BadgeShowcase({
             display: "inline-flex",
             alignItems: "center",
             justifyContent: "center",
-            minWidth: "34px",
-            minHeight: "34px",
+            minWidth: "32px",
+            minHeight: "32px",
             padding: "0 10px",
             borderRadius: "999px",
-            border: "1px solid rgba(255,255,255,0.1)",
-            background: "rgba(255,255,255,0.04)",
+            border: "1px solid rgba(255,255,255,0.09)",
+            background: "rgba(255,255,255,0.045)",
             color: "#d5deef",
-            fontSize: "12px",
+            fontSize: "11px",
             fontWeight: 800,
+            letterSpacing: "0.04em",
           }}
         >
           +{extraCount}
@@ -709,36 +822,167 @@ function BadgeShowcase({
   );
 }
 
-function MetricPill({
+function SpotlightMetric({
   label,
   value,
   highlight = false,
+  size = "feature",
 }: {
   label: string;
   value: number | string;
   highlight?: boolean;
+  size?: "hero" | "feature";
 }) {
+  const isHero = size === "hero";
+
   return (
     <div
       style={{
         display: "grid",
-        gap: "5px",
+        gap: isHero ? "8px" : "6px",
         minWidth: 0,
-        padding: "11px 12px",
-        borderRadius: "16px",
+        flex: isHero ? "1 1 220px" : "1 1 160px",
+        padding: isHero ? "18px 18px" : "14px 14px",
+        borderRadius: isHero ? "24px" : "20px",
         border: highlight
-          ? "1px solid rgba(255,110,168,0.24)"
-          : "1px solid rgba(255,255,255,0.07)",
-        background: highlight ? "rgba(255,110,168,0.10)" : "rgba(255,255,255,0.035)",
-        textAlign: "center",
+          ? "1px solid rgba(255,193,122,0.22)"
+          : "1px solid rgba(255,255,255,0.08)",
+        background: highlight
+          ? "linear-gradient(180deg, rgba(255,191,120,0.12), rgba(255,255,255,0.04))"
+          : "linear-gradient(180deg, rgba(255,255,255,0.055), rgba(255,255,255,0.02))",
+        boxShadow: isHero ? "0 20px 40px rgba(0,0,0,0.22)" : "0 12px 24px rgba(0,0,0,0.14)",
       }}
     >
-      <div style={metricLabelStyle}>{label}</div>
-      <div style={metricValueStyle}>
-        {typeof value === "number" ? value.toLocaleString() : value}
+      <div style={spotlightMetricLabelStyle}>{label}</div>
+      <div style={spotlightMetricValueStyle(isHero)}>
+        {formatMetricValue(value)}
       </div>
     </div>
   );
+}
+
+function CompactMetricPill({
+  label,
+  value,
+  highlight = false,
+  emphasis = "default",
+}: {
+  label: string;
+  value: number | string;
+  highlight?: boolean;
+  emphasis?: "default" | "strong";
+}) {
+  const isStrong = emphasis === "strong";
+
+  return (
+    <div
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: "10px",
+        minWidth: 0,
+        padding: isStrong ? "11px 14px" : "9px 12px",
+        borderRadius: "999px",
+        border: highlight
+          ? "1px solid rgba(255,181,113,0.20)"
+          : "1px solid rgba(255,255,255,0.08)",
+        background: highlight
+          ? "rgba(255,181,113,0.10)"
+          : isStrong
+            ? "rgba(255,255,255,0.055)"
+            : "rgba(255,255,255,0.03)",
+        boxShadow: isStrong ? "0 10px 24px rgba(0,0,0,0.14)" : "none",
+      }}
+    >
+      <span style={compactMetricLabelStyle}>{label}</span>
+      <span style={compactMetricValueStyle(isStrong)}>{formatMetricValue(value)}</span>
+    </div>
+  );
+}
+
+function getPodiumHighlightMetrics(
+  entry: LeaderboardEntry,
+  tab: LeaderboardTab,
+  locale: Locale,
+  labels: LeaderboardLabels,
+) {
+  const metrics = getLeaderboardMetrics(entry, tab, locale, labels);
+  const primaryMetric: MetricItem = {
+    label: labels.auraScore,
+    value: entry.auraScore,
+    highlight: true,
+  };
+
+  const secondaryMetric =
+    metrics.find((metric) => metric.label !== labels.auraScore) ?? null;
+
+  return dedupeMetrics([primaryMetric, secondaryMetric].filter(Boolean) as MetricItem[]);
+}
+
+function getPodiumSupportMetrics(
+  entry: LeaderboardEntry,
+  tab: LeaderboardTab,
+  locale: Locale,
+  labels: LeaderboardLabels,
+) {
+  const hiddenLabels = new Set(
+    getPodiumHighlightMetrics(entry, tab, locale, labels).map((metric) => metric.label),
+  );
+
+  return getLeaderboardMetrics(entry, tab, locale, labels)
+    .filter((metric) => !hiddenLabels.has(metric.label))
+    .slice(0, entry.rank === 1 ? 3 : 2);
+}
+
+function getRowHeroMetrics(entry: LeaderboardEntry, labels: LeaderboardLabels) {
+  return [
+    { label: labels.auraScore, value: entry.auraScore, highlight: true },
+    { label: labels.auraRank, value: entry.auraRank },
+  ];
+}
+
+function getRowMetaMetrics(
+  entry: LeaderboardEntry,
+  tab: LeaderboardTab,
+  locale: Locale,
+  labels: LeaderboardLabels,
+) {
+  return getLeaderboardMetrics(entry, tab, locale, labels)
+    .filter((metric) => metric.label !== labels.auraScore && metric.label !== labels.auraRank)
+    .slice(0, 3);
+}
+
+function dedupeMetrics(metrics: MetricItem[]) {
+  const seen = new Set<string>();
+
+  return metrics.filter((metric) => {
+    if (seen.has(metric.label)) {
+      return false;
+    }
+
+    seen.add(metric.label);
+    return true;
+  });
+}
+
+function formatMetricValue(value: number | string) {
+  return typeof value === "number" ? value.toLocaleString() : value;
+}
+
+function getBadgeMonogram(value: string) {
+  const cleaned = value
+    .split(/[^a-zA-Z0-9]+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part.slice(0, 1).toUpperCase())
+    .join("");
+
+  if (cleaned.length >= 2) {
+    return cleaned;
+  }
+
+  const fallback = value.replace(/[^a-zA-Z0-9]/g, "").slice(0, 2).toUpperCase();
+  return fallback || "BD";
 }
 
 function getLeaderboardMetrics(
@@ -823,17 +1067,17 @@ function podiumCardStyle(
   aura: ReturnType<typeof getAuraVisualProfile>,
 ): CSSProperties {
   return {
-    padding: rank === 1 ? "22px" : "20px",
-    borderRadius: "26px",
-    border: `1px solid ${rank === 1 ? aura.glowColor : aura.surfaceColor}`,
+    padding: rank === 1 ? "28px" : "22px",
+    borderRadius: rank === 1 ? "30px" : "26px",
+    border: `1px solid ${rank === 1 ? aura.glowColor : `${aura.surfaceColor}cc`}`,
     background:
       rank === 1
-        ? `linear-gradient(180deg, rgba(26,20,18,0.98), rgba(10,10,14,0.98))`
-        : `linear-gradient(180deg, rgba(18,19,28,0.98), rgba(8,10,15,0.98))`,
+        ? `linear-gradient(180deg, rgba(28,23,19,0.98), rgba(11,11,16,0.98))`
+        : `linear-gradient(180deg, rgba(18,20,30,0.96), rgba(7,9,14,0.98))`,
     boxShadow:
       rank === 1
-        ? `0 26px 60px rgba(0,0,0,0.28), 0 0 0 1px ${aura.surfaceColor}`
-        : `0 18px 42px rgba(0,0,0,0.24)`,
+        ? `0 32px 70px rgba(0,0,0,0.34), 0 0 48px ${aura.glowColor}`
+        : `0 22px 46px rgba(0,0,0,0.22), 0 0 30px ${aura.surfaceColor}22`,
   };
 }
 
@@ -841,12 +1085,12 @@ function rowStyle(
   aura: ReturnType<typeof getAuraVisualProfile>,
 ): CSSProperties {
   return {
-    padding: "17px",
-    borderRadius: "22px",
-    border: `1px solid ${aura.surfaceColor}`,
+    padding: "18px 20px",
+    borderRadius: "24px",
+    border: `1px solid ${aura.surfaceColor}aa`,
     background:
-      "linear-gradient(180deg, rgba(17,19,29,0.98), rgba(9,10,15,0.98))",
-    boxShadow: `0 14px 34px rgba(0,0,0,0.16)`,
+      "linear-gradient(180deg, rgba(15,17,27,0.98), rgba(8,9,14,0.98))",
+    boxShadow: `0 18px 34px rgba(0,0,0,0.15)`,
   };
 }
 
@@ -909,9 +1153,10 @@ function badgeChipStyle(color: string, rarity: string | null): CSSProperties {
     display: "inline-flex",
     alignItems: "center",
     justifyContent: "center",
-    width: "34px",
-    height: "34px",
-    borderRadius: "14px",
+    minWidth: "32px",
+    height: "32px",
+    padding: "0 9px",
+    borderRadius: "999px",
     border: `1px solid ${color}55`,
     background: `${color}${opacity}`,
     color: "#ffffff",
@@ -949,7 +1194,7 @@ function podiumNameStyle(
 const pageStyle: CSSProperties = {
   minHeight: "100vh",
   background:
-    "radial-gradient(circle at top, rgba(255,110,168,0.14), transparent 22%), radial-gradient(circle at 88% 10%, rgba(125,196,255,0.16), transparent 20%), linear-gradient(180deg, #06070c 0%, #030408 100%)",
+    "radial-gradient(circle at 50% 0%, rgba(255,173,94,0.15), transparent 24%), radial-gradient(circle at 88% 10%, rgba(125,196,255,0.14), transparent 20%), radial-gradient(circle at 14% 16%, rgba(255,110,168,0.12), transparent 18%), linear-gradient(180deg, #06070c 0%, #030408 100%)",
   color: "#ffffff",
   padding: "28px 18px 44px",
   fontFamily: '"Space Grotesk", Arial, Helvetica, sans-serif',
@@ -963,10 +1208,10 @@ const heroStyle: CSSProperties = {
   flexWrap: "wrap",
   padding: "28px",
   borderRadius: "30px",
-  border: "1px solid rgba(255,255,255,0.08)",
+  border: "1px solid rgba(255,255,255,0.07)",
   background:
-    "linear-gradient(180deg, rgba(17,20,31,0.98), rgba(8,10,17,0.98))",
-  boxShadow: "0 26px 62px rgba(0,0,0,0.26)",
+    "linear-gradient(180deg, rgba(16,18,29,0.98), rgba(8,10,17,0.98))",
+  boxShadow: "0 28px 62px rgba(0,0,0,0.28)",
 };
 
 const eyebrowStyle: CSSProperties = {
@@ -1000,12 +1245,13 @@ const heroActionsStyle: CSSProperties = {
 
 const boardStyle: CSSProperties = {
   display: "grid",
-  gap: "16px",
-  padding: "22px",
-  borderRadius: "28px",
-  border: "1px solid rgba(255,255,255,0.08)",
+  gap: "20px",
+  padding: "26px",
+  borderRadius: "30px",
+  border: "1px solid rgba(255,255,255,0.07)",
   background:
-    "linear-gradient(180deg, rgba(12,14,23,0.98), rgba(6,8,14,0.98))",
+    "linear-gradient(180deg, rgba(11,13,22,0.98), rgba(5,7,12,0.98))",
+  boxShadow: "0 24px 54px rgba(0,0,0,0.24)",
 };
 
 const boardHeadStyle: CSSProperties = {
@@ -1103,7 +1349,7 @@ const identityRowStyle: CSSProperties = {
 
 const displayNameStyle: CSSProperties = {
   color: "#ffffff",
-  fontSize: "18px",
+  fontSize: "19px",
   fontWeight: 800,
   overflowWrap: "anywhere",
 };
@@ -1113,33 +1359,59 @@ const usernameStyle: CSSProperties = {
   fontSize: "13px",
 };
 
-const metricLabelStyle: CSSProperties = {
-  color: "#8b99b4",
+const spotlightMetricLabelStyle: CSSProperties = {
+  color: "#90a0bb",
   fontSize: "11px",
-  fontWeight: 700,
-  letterSpacing: "0.06em",
+  fontWeight: 800,
+  letterSpacing: "0.12em",
   textTransform: "uppercase",
 };
 
-const metricValueStyle: CSSProperties = {
+const spotlightMetricValueStyle = (hero: boolean): CSSProperties => ({
   color: "#ffffff",
-  fontSize: "15px",
+  fontSize: hero ? "clamp(28px, 4vw, 36px)" : "22px",
+  lineHeight: 1,
+  fontWeight: 900,
+  letterSpacing: "-0.05em",
+});
+
+const compactMetricLabelStyle: CSSProperties = {
+  color: "#8190ac",
+  fontSize: "10px",
   fontWeight: 800,
+  letterSpacing: "0.12em",
+  textTransform: "uppercase",
+  whiteSpace: "nowrap",
+};
+
+const compactMetricValueStyle = (strong: boolean): CSSProperties => ({
+  color: "#ffffff",
+  fontSize: strong ? "14px" : "13px",
+  fontWeight: 800,
+  lineHeight: 1,
+});
+
+const badgeMonogramStyle: CSSProperties = {
+  fontSize: "10px",
+  lineHeight: 1,
+  fontWeight: 900,
+  letterSpacing: "0.12em",
 };
 
 const primaryButtonStyle: CSSProperties = {
   textDecoration: "none",
-  minHeight: "42px",
-  padding: "0 15px",
-  borderRadius: "14px",
+  minHeight: "44px",
+  padding: "0 16px",
+  borderRadius: "16px",
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
   background:
-    "linear-gradient(135deg, rgba(135,118,255,0.94), rgba(255,110,168,0.9))",
+    "linear-gradient(135deg, rgba(255,173,94,0.96), rgba(255,110,168,0.9))",
   color: "#ffffff",
   fontWeight: 800,
   whiteSpace: "nowrap",
+  boxShadow: "0 14px 32px rgba(255,110,168,0.18)",
 };
 
 const secondaryButtonStyle: CSSProperties = {
@@ -1160,9 +1432,9 @@ const podiumGlowStyle = (
   aura: ReturnType<typeof getAuraVisualProfile>,
 ): CSSProperties => ({
   position: "absolute",
-  inset: "-24% auto auto -10%",
-  width: "58%",
-  height: "58%",
+  inset: "-24% auto auto -6%",
+  width: "64%",
+  height: "62%",
   background: `radial-gradient(circle, ${aura.glowColor} 0%, transparent 70%)`,
   pointerEvents: "none",
 });
@@ -1171,9 +1443,9 @@ const podiumSecondaryGlowStyle = (
   aura: ReturnType<typeof getAuraVisualProfile>,
 ): CSSProperties => ({
   position: "absolute",
-  inset: "auto -12% -24% auto",
-  width: "42%",
-  height: "42%",
+  inset: "auto -10% -22% auto",
+  width: "48%",
+  height: "46%",
   background: `radial-gradient(circle, ${aura.surfaceColor} 0%, transparent 72%)`,
   pointerEvents: "none",
 });
